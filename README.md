@@ -15,7 +15,7 @@
 
 - Install the requirements.txt file with "pip install -r requirements.txt" and then install torch and cuda with "pip install torch==2.7.1+cu128 torchvision==0.22.1+cu128 --index-url https://download.pytorch.org/whl/cu128"
 
-- Run only using "app-multicontrolnet.py"
+- Run only using "app-multicontrolnet.py" on root (don't use the "gradio demo" folder)
 
 [**Qixun Wang**](https://github.com/wangqixun)<sup>12</sup> · [**Xu Bai**](https://huggingface.co/baymin0220)<sup>12</sup> · [**Haofan Wang**](https://haofanwang.github.io/)<sup>12*</sup> · [**Zekui Qin**](https://github.com/ZekuiQin)<sup>12</sup> · [**Anthony Chen**](https://antonioo-c.github.io/)<sup>123</sup>
 
