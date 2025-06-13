@@ -13,7 +13,7 @@
 - Added many more styles in the style template
 - And many many more improvements
 
-- Install the requirements.txt file with "pip install -r requirements.txt" and then install torch and cuda with "pip install torch==2.7.1+cu128 torchvision==0.18.1+cu128 --index-url https://download.pytorch.org/whl/cu128"
+- Install the requirements.txt file with "pip install -r requirements.txt" and then install torch and cuda with "pip install torch==2.7.1+cu128 torchvision==0.22.1+cu128 --index-url https://download.pytorch.org/whl/cu128"
 
 - Run only using "app-multicontrolnet.py"
 
