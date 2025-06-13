@@ -1,23 +1,21 @@
 <div align="center">
 <h1>InstantID: Zero-shot Identity-Preserving Generation in Seconds</h1>
 
-This fork adds the following:
+## This fork adds the following:
+- Autosave of each generated image with an "open output folder" button in the gradio GUI. 
+- Resolution slider.
+- Restart Server button.
+- Model selector dropdown.
+- Auto opening of gradio interfance after it's launched.
+- Negative Prompt Profiles dropdown.
+- Ability to choose how many images to be generated after clicking on "generate", each with random seed.
+- Improved VRAM usage compared to the original repo.
+- Added many more styles in the style template
+- And many many more improvements
 
-Model selector dropdown
-Autosave of each generated image with an "open output folder" button in the gradio GUI
-Resolution slider
-Restart Server button
-Auto opening of gradio interfance after it's launched
-Negative Prompt Profiles
-Ability to choose how many images to be generated after clicking on "generate", each with random seed
-Improved VRAM usage compared to the original repo
-Added many more styles in the style template
-And many more improvements
+- Install the requirements.txt file with "pip install -r requirements.txt" and then install torch and cuda with "pip install torch==2.7.1+cu128 torchvision==0.18.1+cu128 --index-url https://download.pytorch.org/whl/cu128"
 
-
-Install the requirements.txt file with "pip install -r requirements.txt" and then install torch and cuda with "pip install torch==2.7.1+cu128 torchvision==0.18.1+cu128 --index-url https://download.pytorch.org/whl/cu128"
-
-Run only using "app-multicontrolnet.py"
+- Run only using "app-multicontrolnet.py"
 
 [**Qixun Wang**](https://github.com/wangqixun)<sup>12</sup> · [**Xu Bai**](https://huggingface.co/baymin0220)<sup>12</sup> · [**Haofan Wang**](https://haofanwang.github.io/)<sup>12*</sup> · [**Zekui Qin**](https://github.com/ZekuiQin)<sup>12</sup> · [**Anthony Chen**](https://antonioo-c.github.io/)<sup>123</sup>
 
