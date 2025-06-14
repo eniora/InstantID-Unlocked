@@ -6,6 +6,7 @@
 - Resolution slider.
 - Restart Server button.
 - Model selector dropdown.
+- Dropdown menu for the ability to change the Det Size for face detection in input/reference photos.
 - Auto opening of gradio interface after it's launched.
 - Negative Prompt Profiles dropdown.
 - New default RealVisXL 4.0 model, which is much better than the default YamerMIX (you can still download the base model of your choice by changing the huggingface model path inside instant-id-gradio-unlocked.py file and it will be downloaded automatically in the "models" folder on root).
