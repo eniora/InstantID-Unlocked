@@ -306,7 +306,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lcm_arg
             )
 
         pipe.load_ip_adapter_instantid(face_adapter)
-        pipe.load_lora_weights("./models/models--latent-consistency--lcm-lora-sdxl/snapshots/a18548dd4956b174ec5b0d78d340c8dae0a129cd", weight_name="pytorch_lora_weights.safetensors")
+        pipe.load_lora_weights("latent-consistency/lcm-lora-sdxl")
         pipe.disable_lora()
         
         return pipe
