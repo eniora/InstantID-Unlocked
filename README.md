@@ -8,17 +8,17 @@
 - Model selector dropdown.
 - Auto opening of gradio interface after it's launched.
 - Negative Prompt Profiles dropdown.
-- New default RealVisXL 4.0 model, which is much better than the default YamerMIX (you can still download the base model of your choice by changing the huggingface model path inside app-multicontrolnet.py file and it will be downloaded automatically in the "models" folder on root)
+- New default RealVisXL 4.0 model, which is much better than the default YamerMIX (you can still download the base model of your choice by changing the huggingface model path inside app-multicontrolnet.py file and it will be downloaded automatically in the "models" folder on root).
 - Ability to choose how many images to be generated after clicking on "generate", each with random seed.
 - Improved VRAM usage compared to the original repo.
-- Added many more styles in the style template
-- And many many more improvements
+- Added many more styles in the style template.
+- And many many more improvements.
 
 ## How to use and run:
 Git clone this fork (Git clone https://github.com/eniora/InstantID-Unlocked/) then:
 - Install the requirements.txt file with "pip install -r requirements.txt" and then install torch and cuda with "pip install torch==2.7.1+cu128 torchvision==0.22.1+cu128 --index-url https://download.pytorch.org/whl/cu128"
 
-- Run only using "app-multicontrolnet.py" from the root folder, you don't need the normal non-multicontrolnet app.py file, I modified this one to include everything in app.py and with the same load on VRAM.
+- Run only using "instant-id-gradio-unlocked.py" from the root folder.
 - Tested only on Windows, you may need to do extra steps to run the gradio interface successfully on MacOS/Linux
 
 [**Qixun Wang**](https://github.com/wangqixun)<sup>12</sup> · [**Xu Bai**](https://huggingface.co/baymin0220)<sup>12</sup> · [**Haofan Wang**](https://haofanwang.github.io/)<sup>12*</sup> · [**Zekui Qin**](https://github.com/ZekuiQin)<sup>12</sup> · [**Anthony Chen**](https://antonioo-c.github.io/)<sup>123</sup>
