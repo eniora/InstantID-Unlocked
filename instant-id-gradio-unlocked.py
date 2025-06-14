@@ -100,8 +100,17 @@ def get_available_models():
 AVAILABLE_MODELS = get_available_models()
 DEFAULT_MODEL = "SG161222/RealVisXL_V4.0"
 
+# Detection size options
+DET_SIZE_OPTIONS = {
+    "640x640 (default)": (640, 640),
+    "800x800": (800, 800),
+    "1024x1024": (1024, 1024),
+    "1280x1280": (1280, 1280)
+}
+
 # Initialize face encoder as None, will be loaded when needed
 app = None
+current_det_size = (640, 640)
 controlnet_identitynet = None
 face_adapter = f"./checkpoints/ip-adapter.bin"
 controlnet_path = f"./checkpoints/ControlNetModel"
@@ -122,15 +131,17 @@ controlnet_map_fn = {
     "depth": get_depth_map,
 }
 
-def initialize_face_analysis():
-    global app
-    if app is None:
+def initialize_face_analysis(det_size_name="640x640 (default)"):
+    global app, current_det_size
+    new_size = DET_SIZE_OPTIONS[det_size_name]
+    if app is None or new_size != current_det_size:
+        current_det_size = new_size
         app = FaceAnalysis(
             name="antelopev2",
             root="./",
             providers=["CUDAExecutionProvider", "CPUExecutionProvider"],
         )
-        app.prepare(ctx_id=0, det_size=(640, 640))
+        app.prepare(ctx_id=0, det_size=current_det_size)
 
 def initialize_controlnet():
     global controlnet_identitynet
@@ -332,12 +343,13 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lcm_arg
         enhance_face_region,
         num_outputs,
         model_name,
+        det_size_name,
         progress=gr.Progress(track_tqdm=True),
     ):
         nonlocal pipe
         
-        # Initialize face analysis if not already done
-        initialize_face_analysis()
+        # Initialize face analysis with selected size
+        initialize_face_analysis(det_size_name)
         
         # Load selected model if it's different from current
         if pipe is None or model_name != getattr(pipe, "_current_model", None):
@@ -437,7 +449,8 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lcm_arg
         generator = torch.Generator(device=device).manual_seed(seed)
 
         print("Start inference...")
-        print(f"[Debug] Prompt: {prompt}, \n[Debug] Neg Prompt: {negative_prompt}")
+        print(f"Prompt: {prompt}, \nNegative Prompt: {negative_prompt}")
+        print(f"Detection size: {current_det_size}")
 
         pipe.set_ip_adapter_scale(adapter_strength_ratio)
         images = []
@@ -503,6 +516,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lcm_arg
     2. If you feel that the saturation is too high, first decrease the Adapter strength. If it remains too high, then decrease the IdentityNet strength.
     3. If you find that text control is not as expected, decrease Adapter strength.
     4. If you find that realistic style is not good enough, go for our Github repo and use a more realistic base model.
+    5. If you're having trouble detecting faces, try increasing the "Face Detection Size" setting.
     """
 
     css = """
@@ -545,7 +559,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lcm_arg
                     maximum=2284,
                     step=90,
                     value=1280,
-                    info="Controls the max_side for face and pose image resizing. Default is 1280. Higher than ~1400 may result in artifacts/bad anatomy but up to 1924 can sometimes yield good results",
+                    info="Controls the max_side for face and pose image resizing. Default is 1280. Higher than 1300 may result in artifacts/bad anatomy but up to 1924 can sometimes yield good results",
                 )
                 num_outputs = gr.Slider(
                     label="Number of images to generate",
@@ -655,6 +669,12 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lcm_arg
                         value=DEFAULT_MODEL,
                         info="Select the model to use for generation"
                     )
+                    det_size_name = gr.Dropdown(
+                        label="Face Detection Size",
+                        choices=list(DET_SIZE_OPTIONS.keys()),
+                        value="640x640 (default)",
+                        info="Higher values can detect smaller faces if the face in the input/reference image is small or distant but it uses much more VRAM, you may get CUDA error: out of memory if it's above 640x640. This is an experimental feature"
+                    )
                     enable_LCM = gr.Checkbox(
                         label="Enable Fast Inference with LCM", value=enable_lcm_arg,
                         info="LCM speeds up the inference step, the trade-off is the quality of the generated image. It performs better with portrait face images rather than distant faces",
@@ -705,6 +725,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lcm_arg
                     enhance_face_region,
                     num_outputs,
                     model_name,
+                    det_size_name,
                 ],
                 outputs=[gallery, usage_tips],
             )
