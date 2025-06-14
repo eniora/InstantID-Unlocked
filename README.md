@@ -2,7 +2,7 @@
 <h1>InstantID: Zero-shot Identity-Preserving Generation in Seconds</h1>
 
 ## This fork adds the following:
-- Autosave of each generated image with an "open output folder" button in the gradio GUI. 
+- Autosave of each generated image in a folder named "output" that will be created automatically on root after generating the first image, with an "open output folder" button in the gradio GUI. 
 - Resolution slider.
 - Restart Server button.
 - Model selector dropdown.
