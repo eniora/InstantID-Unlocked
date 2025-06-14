@@ -164,7 +164,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lcm_arg
         else:
             return (
                 gr.update(minimum=5, maximum=100, step=1, value=30),
-                gr.update(minimum=0.1, maximum=20.0, step=0.1, value=5),
+                gr.update(minimum=0.1, maximum=20.0, step=0.1, value=4),
             )
 
     def randomize_seed_fn(seed: int, randomize_seed: bool) -> int:
