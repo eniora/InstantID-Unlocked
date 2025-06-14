@@ -14,6 +14,8 @@
 - Added many more styles in the style template
 - And many many more improvements
 
+## How to use and run:
+Git clone this fork then:
 - Install the requirements.txt file with "pip install -r requirements.txt" and then install torch and cuda with "pip install torch==2.7.1+cu128 torchvision==0.22.1+cu128 --index-url https://download.pytorch.org/whl/cu128"
 
 - Run only using "app-multicontrolnet.py" from the root folder, you don't need the normal non-multicontrolnet app.py file, I modified this one to include everything in app.py and with the same load on VRAM.
