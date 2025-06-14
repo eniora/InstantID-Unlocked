@@ -16,7 +16,7 @@
 
 - Install the requirements.txt file with "pip install -r requirements.txt" and then install torch and cuda with "pip install torch==2.7.1+cu128 torchvision==0.22.1+cu128 --index-url https://download.pytorch.org/whl/cu128"
 
-- Run only using "app-multicontrolnet.py" on root.
+- Run only using "app-multicontrolnet.py" from the root folder, you don't need the normal non-multicontrolnet app.py file, I modified this one to include everything in app.py and with the same load on VRAM.
 - Tested only on Windows, you may need to do extra steps to run the gradio interface successfully on MacOS/Linux
 
 [**Qixun Wang**](https://github.com/wangqixun)<sup>12</sup> · [**Xu Bai**](https://huggingface.co/baymin0220)<sup>12</sup> · [**Haofan Wang**](https://haofanwang.github.io/)<sup>12*</sup> · [**Zekui Qin**](https://github.com/ZekuiQin)<sup>12</sup> · [**Anthony Chen**](https://antonioo-c.github.io/)<sup>123</sup>
