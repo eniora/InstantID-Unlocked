@@ -100,11 +100,22 @@ def get_available_models():
 AVAILABLE_MODELS = get_available_models()
 DEFAULT_MODEL = "SG161222/RealVisXL_V4.0"
 
-# Initialize face encoder as None, will be loaded when needed
-app = None
-controlnet_identitynet = None
+# Load face encoder
+app = FaceAnalysis(
+    name="antelopev2",
+    root="./",
+    providers=["CUDAExecutionProvider", "CPUExecutionProvider"],
+)
+app.prepare(ctx_id=0, det_size=(640, 640))
+
+# Path to InstantID models
 face_adapter = f"./checkpoints/ip-adapter.bin"
 controlnet_path = f"./checkpoints/ControlNetModel"
+
+# Load pipeline face ControlNetModel
+controlnet_identitynet = ControlNetModel.from_pretrained(
+    controlnet_path, torch_dtype=dtype
+)
 
 # controlnet-pose
 controlnet_pose_model = "thibaud/controlnet-openpose-sdxl-1.0"
@@ -122,23 +133,6 @@ controlnet_map_fn = {
     "depth": get_depth_map,
 }
 
-def initialize_face_analysis():
-    global app
-    if app is None:
-        app = FaceAnalysis(
-            name="antelopev2",
-            root="./",
-            providers=["CUDAExecutionProvider", "CPUExecutionProvider"],
-        )
-        app.prepare(ctx_id=0, det_size=(640, 640))
-
-def initialize_controlnet():
-    global controlnet_identitynet
-    if controlnet_identitynet is None:
-        controlnet_identitynet = ControlNetModel.from_pretrained(
-            controlnet_path, torch_dtype=dtype
-        )
-
 def restart_server():
     """Restart the current python process"""
     python = sys.executable
@@ -153,7 +147,50 @@ def restart_server():
     os.execl(python, python, script, *args)
 
 def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lcm_arg=False):
-    pipe = None
+    if pretrained_model_name_or_path.endswith(
+        ".ckpt"
+    ) or pretrained_model_name_or_path.endswith(".safetensors"):
+        scheduler_kwargs = hf_hub_download(
+            repo_id="SG161222/RealVisXL_V4.0",
+            subfolder="scheduler",
+            filename="scheduler_config.json",
+        )
+
+        (tokenizers, text_encoders, unet, _, vae) = load_models_xl(
+            pretrained_model_name_or_path=pretrained_model_name_or_path,
+            scheduler_name=None,
+            weight_dtype=dtype,
+        )
+
+        scheduler = diffusers.EulerDiscreteScheduler.from_config(scheduler_kwargs)
+        pipe = StableDiffusionXLInstantIDPipeline(
+            vae=vae,
+            text_encoder=text_encoders[0],
+            text_encoder_2=text_encoders[1],
+            tokenizer=tokenizers[0],
+            tokenizer_2=tokenizers[1],
+            unet=unet,
+            scheduler=scheduler,
+            controlnet=[controlnet_identitynet],
+        ).to(device)
+
+    else:
+        pipe = StableDiffusionXLInstantIDPipeline.from_pretrained(
+            pretrained_model_name_or_path,
+            controlnet=[controlnet_identitynet],
+            torch_dtype=dtype,
+            safety_checker=None,
+            feature_extractor=None,
+        ).to(device)
+
+        pipe.scheduler = diffusers.EulerDiscreteScheduler.from_config(
+            pipe.scheduler.config
+        )
+
+    pipe.load_ip_adapter_instantid(face_adapter)
+    # load and disable LCM
+    pipe.load_lora_weights("latent-consistency/lcm-lora-sdxl")
+    pipe.disable_lora()
 
     def toggle_lcm_ui(value):
         if value:
@@ -266,8 +303,6 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lcm_arg
     def load_model_and_update_pipe(model_name):
         nonlocal pipe
         
-        initialize_controlnet()  # Ensure controlnet is loaded
-        
         if model_name.endswith(".ckpt") or model_name.endswith(".safetensors"):
             scheduler_kwargs = hf_hub_download(
                 repo_id="SG161222/RealVisXL_V4.0",
@@ -306,7 +341,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lcm_arg
             )
 
         pipe.load_ip_adapter_instantid(face_adapter)
-        pipe.load_lora_weights("latent-consistency/lcm-lora-sdxl")
+        pipe.load_lora_weights("./models/models--latent-consistency--lcm-lora-sdxl/snapshots/a18548dd4956b174ec5b0d78d340c8dae0a129cd", weight_name="pytorch_lora_weights.safetensors")
         pipe.disable_lora()
         
         return pipe
@@ -336,11 +371,8 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lcm_arg
     ):
         nonlocal pipe
         
-        # Initialize face analysis if not already done
-        initialize_face_analysis()
-        
         # Load selected model if it's different from current
-        if pipe is None or model_name != getattr(pipe, "_current_model", None):
+        if model_name != getattr(pipe, "_current_model", None):
             pipe = load_model_and_update_pipe(model_name)
             pipe._current_model = model_name
 
