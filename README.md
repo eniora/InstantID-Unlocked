@@ -6,8 +6,9 @@
 - Resolution slider.
 - Restart Server button.
 - Model selector dropdown.
-- Auto opening of gradio interfance after it's launched.
+- Auto opening of gradio interface after it's launched.
 - Negative Prompt Profiles dropdown.
+- New default RealVisXL 4.0 model, which is much better than the default YamerMIX (you can still download the base model of your choice by changing the huggingface model path inside app-multicontrolnet.py file and it will be downloaded automatically in the "models" folder on root)
 - Ability to choose how many images to be generated after clicking on "generate", each with random seed.
 - Improved VRAM usage compared to the original repo.
 - Added many more styles in the style template
