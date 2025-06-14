@@ -526,14 +526,6 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lcm_arg
                         type="filepath",
                     )
 
-                # model selection
-                model_name = gr.Dropdown(
-                    label="Model",
-                    choices=AVAILABLE_MODELS,
-                    value=DEFAULT_MODEL,
-                    info="Select the model to use for generation"
-                )
-
                 # prompt
                 prompt = gr.Textbox(
                     label="Prompt",
@@ -547,10 +539,6 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lcm_arg
                     value=DEFAULT_STYLE_NAME,
                 )
 
-                num_outputs = gr.Slider(
-                    label="Number of images to generate",
-                    minimum=1, maximum=50, step=1, value=1,
-                )
                 resize_max_side_slider = gr.Slider(
                     label="Max image size for resizing",
                     minimum=754,
@@ -558,6 +546,10 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lcm_arg
                     step=90,
                     value=1280,
                     info="Controls the max_side for face and pose image resizing. Default is 1280. Higher than 1300 may result in artifacts/bad anatomy but up to 1924 can sometimes yield good results",
+                )
+                num_outputs = gr.Slider(
+                    label="Number of images to generate",
+                    minimum=1, maximum=50, step=1, value=1,
                 )
                 generate = gr.Button("Generate", variant="primary")
                 open_folder_btn = gr.Button("Open Output Folder")
@@ -657,6 +649,12 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lcm_arg
                     )
                     randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
                     enhance_face_region = gr.Checkbox(label="Enhance non-face region", value=True)
+                    model_name = gr.Dropdown(
+                        label="Model",
+                        choices=AVAILABLE_MODELS,
+                        value=DEFAULT_MODEL,
+                        info="Select the model to use for generation"
+                    )
                     enable_LCM = gr.Checkbox(
                         label="Enable Fast Inference with LCM", value=enable_lcm_arg,
                         info="LCM speeds up the inference step, the trade-off is the quality of the generated image. It performs better with portrait face images rather than distant faces",
