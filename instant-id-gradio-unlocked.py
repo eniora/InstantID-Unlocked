@@ -102,10 +102,12 @@ DEFAULT_MODEL = "SG161222/RealVisXL_V4.0"
 
 # Detection size options
 DET_SIZE_OPTIONS = {
+    "320x320 (for very lowres portrait photos that are less than 320x320 in resolution)": (320, 320),
+    "400x400": (400, 400),
     "640x640 (default)": (640, 640),
     "800x800": (800, 800),
     "1024x1024": (1024, 1024),
-    "1280x1280": (1280, 1280)
+    "1280x1280 (Input/Reference image size must be larger than 1280x1280)": (1280, 1280)
 }
 
 # Initialize face encoder as None, will be loaded when needed
@@ -673,7 +675,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lcm_arg
                         label="Face Detection Size",
                         choices=list(DET_SIZE_OPTIONS.keys()),
                         value="640x640 (default)",
-                        info="Higher values can detect smaller faces if the face in the input/reference image is small or distant but it uses much more VRAM, you may get CUDA error: out of memory if it's above 640x640. This is an experimental feature"
+                        info="Higher values can detect smaller faces if the face in the input/reference image is too small or distant but it uses much more VRAM, you may get CUDA error: OOM if it's above 640x640. You don't need to change the value for most of the cases."
                     )
                     enable_LCM = gr.Checkbox(
                         label="Enable Fast Inference with LCM", value=enable_lcm_arg,
