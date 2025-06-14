@@ -725,7 +725,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lcm_arg
                         label="Face Detection Size",
                         choices=list(DET_SIZE_OPTIONS.keys()),
                         value="640x640 (default)",
-                        info="Higher values can detect smaller faces if the face in the input/reference image is too small or distant but it uses much more VRAM, you may get CUDA error: OOM if it's above 640x640. You don't need to change the value for most of the cases."
+                        info="Higher values can detect smaller faces if the face in the input/reference image is too small/distant or if you get a 'No face detected' message. Otherwise you don't need to change this value for most of the cases as the differences are barely noticeable."
                     )
                     enable_LCM = gr.Checkbox(
                         label="Enable Fast Inference with LCM", value=enable_lcm_arg,
