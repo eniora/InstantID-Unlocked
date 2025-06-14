@@ -491,7 +491,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lcm_arg
     2. (Optional) You can upload another image as a reference for the face pose. If you don't, we will use the first detected face image to extract facial landmarks. If you use a cropped face at step 1, it is recommended to upload it to define a new face pose.
     3. (Optional) You can select multiple ControlNet models to control the generation process. The default is to use the IdentityNet only. The ControlNet models include pose skeleton, canny, and depth. You can adjust the strength of each ControlNet model to control the generation process.
     4. Enter a text prompt, as done in normal text-to-image models.
-    5. Click the Generate button to begin customization.
+    5. Click the <b>Generate</b> button to begin customization.
     6. Share your customized photo with your friends and enjoy! 😊
     ```
     <b>Official Github page</b> for <a href='https://github.com/InstantID/InstantID' target='_blank'><b>InstantID: Zero-shot Identity-Preserving Generation in Seconds</b></a>.<br>
@@ -538,8 +538,13 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lcm_arg
                 prompt = gr.Textbox(
                     label="Prompt",
                     info="Giving a simple prompt is enough to achieve good face fidelity",
-                    placeholder="A man/woman/girl",
+                    placeholder="A man/woman/girl/boy in/with/as etc.",
                     value="",
+                )
+                style = gr.Dropdown(
+                    label="Style template",
+                    choices=STYLE_NAMES,
+                    value=DEFAULT_STYLE_NAME,
                 )
 
                 num_outputs = gr.Slider(
@@ -561,15 +566,6 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lcm_arg
                     inputs=[],
                     outputs=[],
                     queue=False,
-                )
-                enable_LCM = gr.Checkbox(
-                    label="Enable Fast Inference with LCM", value=enable_lcm_arg,
-                    info="LCM speeds up the inference step, the trade-off is the quality of the generated image. It performs better with portrait face images rather than distant faces",
-                )
-                style = gr.Dropdown(
-                    label="Style template",
-                    choices=STYLE_NAMES,
-                    value=DEFAULT_STYLE_NAME,
                 )
 
                 # strength
@@ -661,6 +657,10 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lcm_arg
                     )
                     randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
                     enhance_face_region = gr.Checkbox(label="Enhance non-face region", value=True)
+                    enable_LCM = gr.Checkbox(
+                        label="Enable Fast Inference with LCM", value=enable_lcm_arg,
+                        info="LCM speeds up the inference step, the trade-off is the quality of the generated image. It performs better with portrait face images rather than distant faces",
+                    )
 
             with gr.Column(scale=1):
                 gallery = gr.Gallery(label="Generated Images")
