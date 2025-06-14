@@ -107,7 +107,7 @@ DET_SIZE_OPTIONS = {
     "640x640 (default)": (640, 640),
     "800x800": (800, 800),
     "1024x1024": (1024, 1024),
-    "1280x1280 (Input/Reference image size must be larger than 1280x1280)": (1280, 1280)
+    "1280x1280 (Input/Reference image size should be larger than 1280x1280)": (1280, 1280)
 }
 
 # Initialize face encoder as None, will be loaded when needed
