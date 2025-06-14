@@ -10,9 +10,37 @@ import torch
 import random
 import numpy as np
 import argparse
+import warnings
+
+warnings.filterwarnings("ignore", message=".*Overwriting tiny_vit_.* in registry.*")
+
+os.environ["NO_ALBUMENTATIONS_UPDATE"] = "1"
+os.environ["HF_HUB_CACHE"] = "models"
+os.environ["HF_HUB_CACHE_OFFLINE"] = "true"
+
+def open_output_folder():
+    path = os.path.abspath("output")
+    os.system(f'start "" "{path}"')
 
 import PIL
 from PIL import Image
+
+
+def save_images(images, output_dir="output"):
+    os.makedirs(output_dir, exist_ok=True)
+
+    existing = [f for f in os.listdir(output_dir) if f.startswith("InstantID_") and f.endswith(".png")]
+    used_numbers = [int(f.split("_")[1].split(".")[0]) for f in existing if f.split("_")[1].split(".")[0].isdigit()]
+    start_index = max(used_numbers, default=-1) + 1
+
+    paths = []
+    for i, img in enumerate(images):
+        filename = f"InstantID_{start_index + i}.png"
+        path = os.path.join(output_dir, filename)
+        img.save(path)
+        paths.append(path)
+    return paths
+
 
 import diffusers
 from diffusers.utils import load_image
@@ -36,44 +64,57 @@ MAX_SEED = np.iinfo(np.int32).max
 device = get_torch_device()
 dtype = torch.float16 if str(device).__contains__("cuda") else torch.float32
 STYLE_NAMES = list(styles.keys())
-DEFAULT_STYLE_NAME = "Watercolor"
+DEFAULT_STYLE_NAME = "(No style)"
 
-# Load face encoder
-app = FaceAnalysis(
-    name="antelopev2",
-    root="./",
-    providers=["CUDAExecutionProvider", "CPUExecutionProvider"],
-)
-app.prepare(ctx_id=0, det_size=(640, 640))
+# Negative prompt presets
+NEGATIVE_PROMPT_PRESETS = {
+    "Default Negative Profile": "(lowres, low quality, worst quality:1.2), (text:1.2), watermark, (frame:1.2), deformed, ugly, deformed eyes, blurry, deformed cat, deformed photo, anthropomorphic cat, pet collar, drones, drone",
+    "Aggressive Negative Profile (InstantID default)": "(lowres, low quality, worst quality:1.2), (text:1.2), watermark, (frame:1.2), deformed, ugly, deformed eyes, blur, out of focus, blurry, deformed cat, deformed, photo, anthropomorphic cat, monochrome, photo, pet collar, gun, weapon, blue, 3d, drones, drone, buildings in background, green",
+    "Negative Profile 1 (General use)": "low quality, worst quality, text, watermark, deformed, ugly",
+    "Negative Profile 2 (Minimalist)": "(worst quality, low quality:1.2), deformed, blurry, mutated, extra limbs",
+    "Negative Profile 3 (Portraits)": "(worst quality:1.3), (low quality:1.2), bad anatomy, deformed, disfigured, fused fingers, missing fingers, extra limbs, poorly drawn face, poorly drawn hands, blurry",
+    "Negative Profile 4 (SDXL default)": "(worst quality, low quality:1.3), watermark, signature, text, frame, jpeg artifacts, blurry, deformed, extra limbs, bad hands, fused fingers, poorly drawn face",
+    "Negative Profile 5 (Realism)": "(worst quality, low quality:1.3), anime, cartoon, illustration, cgi, 3d render, painting, drawing, deformed, extra fingers, fused fingers, blurry, unrealistic",
+    "Negative Profile 6 (Stylized / Illustration)": "(worst quality:1.3), bad anatomy, deformed eyes, bad hands, long neck, lowres, jpeg artifacts, text, watermark, extra fingers",
+    "Negative Profile 7 (Digital Illustration)": "(worst quality, low quality:1.3), bad anatomy, blurry, duplicate, signature, watermark, jpeg artifacts",
+    "Negative Profile 8 (Anime)": "(worst quality:1.2), photorealistic, real life, realistic skin, 3d render, painting, extra limbs, fused fingers, bad anatomy, blurry, text, watermark",
+    "Negative Profile 9 (Ultra Minimal)": "low quality, deformed",
+    "Negative Profile 10 (3D Render)": "photo, photorealistic, realistic, painting, sketch, drawing, anime, cartoon, 2d, flat color, low detail, text, watermark, blurry",
+    "Negative Profile 11 (Plastic Toy Render)": "photo, illustration, sketch, painting, anime, blurry, lowres, noisy, realistic skin, lifelike eyes, textureless",
+    "Negative Profile 12 (Game Character (Stylized 3D))": "photo, painting, sketch, drawing, anime, real skin texture, flat shading, realistic proportions, soft shadows, photorealistic",
+    "Negative Profile 13 (Sculpted Statue Render)": "cartoon, photo, realism, painterly, anime, soft brush, flat colors, 2d, smooth shading",
+    "Negative Profile 14 (Low Poly Stylized)": "realism, photo, anime, high detail, highres, 2d, blurry, smooth shading, overrendered, soft shadows",
+}
 
-# Path to InstantID models
+# Get available models from the models folder
+def get_available_models():
+    models_dir = "models"
+    model_folders = []
+    if os.path.exists(models_dir):
+        for folder in os.listdir(models_dir):
+            if folder.startswith("models--"):
+                model_name = folder.replace("models--", "").replace("--", "/")
+                model_folders.append(model_name)
+    return model_folders
+
+AVAILABLE_MODELS = get_available_models()
+DEFAULT_MODEL = "SG161222/RealVisXL_V4.0"
+
+# Initialize face encoder as None, will be loaded when needed
+app = None
+controlnet_identitynet = None
 face_adapter = f"./checkpoints/ip-adapter.bin"
 controlnet_path = f"./checkpoints/ControlNetModel"
-
-# Load pipeline face ControlNetModel
-controlnet_identitynet = ControlNetModel.from_pretrained(
-    controlnet_path, torch_dtype=dtype
-)
 
 # controlnet-pose
 controlnet_pose_model = "thibaud/controlnet-openpose-sdxl-1.0"
 controlnet_canny_model = "diffusers/controlnet-canny-sdxl-1.0"
 controlnet_depth_model = "diffusers/controlnet-depth-sdxl-1.0-small"
 
-controlnet_pose = ControlNetModel.from_pretrained(
-    controlnet_pose_model, torch_dtype=dtype
-).to(device)
-controlnet_canny = ControlNetModel.from_pretrained(
-    controlnet_canny_model, torch_dtype=dtype
-).to(device)
-controlnet_depth = ControlNetModel.from_pretrained(
-    controlnet_depth_model, torch_dtype=dtype
-).to(device)
-
-controlnet_map = {
-    "pose": controlnet_pose,
-    "canny": controlnet_canny,
-    "depth": controlnet_depth,
+controlnet_model_paths = {
+    "pose": controlnet_pose_model,
+    "canny": controlnet_canny_model,
+    "depth": controlnet_depth_model,
 }
 controlnet_map_fn = {
     "pose": openpose,
@@ -81,52 +122,38 @@ controlnet_map_fn = {
     "depth": get_depth_map,
 }
 
+def initialize_face_analysis():
+    global app
+    if app is None:
+        app = FaceAnalysis(
+            name="antelopev2",
+            root="./",
+            providers=["CUDAExecutionProvider", "CPUExecutionProvider"],
+        )
+        app.prepare(ctx_id=0, det_size=(640, 640))
 
-def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=False):
-    if pretrained_model_name_or_path.endswith(
-        ".ckpt"
-    ) or pretrained_model_name_or_path.endswith(".safetensors"):
-        scheduler_kwargs = hf_hub_download(
-            repo_id="wangqixun/YamerMIX_v8",
-            subfolder="scheduler",
-            filename="scheduler_config.json",
+def initialize_controlnet():
+    global controlnet_identitynet
+    if controlnet_identitynet is None:
+        controlnet_identitynet = ControlNetModel.from_pretrained(
+            controlnet_path, torch_dtype=dtype
         )
 
-        (tokenizers, text_encoders, unet, _, vae) = load_models_xl(
-            pretrained_model_name_or_path=pretrained_model_name_or_path,
-            scheduler_name=None,
-            weight_dtype=dtype,
-        )
+def restart_server():
+    """Restart the current python process"""
+    python = sys.executable
+    script = os.path.abspath(sys.argv[0])
+    args = sys.argv[1:]
+    os.environ["IN_BROWSER"] = "0"
+    
+    # Clear GPU memory
+    torch.cuda.empty_cache()
+    
+    # Kill the current process
+    os.execl(python, python, script, *args)
 
-        scheduler = diffusers.EulerDiscreteScheduler.from_config(scheduler_kwargs)
-        pipe = StableDiffusionXLInstantIDPipeline(
-            vae=vae,
-            text_encoder=text_encoders[0],
-            text_encoder_2=text_encoders[1],
-            tokenizer=tokenizers[0],
-            tokenizer_2=tokenizers[1],
-            unet=unet,
-            scheduler=scheduler,
-            controlnet=[controlnet_identitynet],
-        ).to(device)
-
-    else:
-        pipe = StableDiffusionXLInstantIDPipeline.from_pretrained(
-            pretrained_model_name_or_path,
-            controlnet=[controlnet_identitynet],
-            torch_dtype=dtype,
-            safety_checker=None,
-            feature_extractor=None,
-        ).to(device)
-
-        pipe.scheduler = diffusers.EulerDiscreteScheduler.from_config(
-            pipe.scheduler.config
-        )
-
-    pipe.load_ip_adapter_instantid(face_adapter)
-    # load and disable LCM
-    pipe.load_lora_weights("latent-consistency/lcm-lora-sdxl")
-    pipe.disable_lora()
+def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lcm_arg=False):
+    pipe = None
 
     def toggle_lcm_ui(value):
         if value:
@@ -147,67 +174,6 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
 
     def remove_tips():
         return gr.update(visible=False)
-
-    def get_example():
-        case = [
-            [
-                "./examples/yann-lecun_resize.jpg",
-                None,
-                "a man",
-                "Snow",
-                "(lowres, low quality, worst quality:1.2), (text:1.2), watermark, (frame:1.2), deformed, ugly, deformed eyes, blur, out of focus, blurry, deformed cat, deformed, photo, anthropomorphic cat, monochrome, photo, pet collar, gun, weapon, blue, 3d, drones, drone, buildings in background, green",
-            ],
-            [
-                "./examples/musk_resize.jpeg",
-                "./examples/poses/pose2.jpg",
-                "a man flying in the sky in Mars",
-                "Mars",
-                "(lowres, low quality, worst quality:1.2), (text:1.2), watermark, (frame:1.2), deformed, ugly, deformed eyes, blur, out of focus, blurry, deformed cat, deformed, photo, anthropomorphic cat, monochrome, photo, pet collar, gun, weapon, blue, 3d, drones, drone, buildings in background, green",
-            ],
-            [
-                "./examples/sam_resize.png",
-                "./examples/poses/pose4.jpg",
-                "a man doing a silly pose wearing a suite",
-                "Jungle",
-                "(lowres, low quality, worst quality:1.2), (text:1.2), watermark, (frame:1.2), deformed, ugly, deformed eyes, blur, out of focus, blurry, deformed cat, deformed, photo, anthropomorphic cat, monochrome, photo, pet collar, gun, weapon, blue, 3d, drones, drone, buildings in background, gree",
-            ],
-            [
-                "./examples/schmidhuber_resize.png",
-                "./examples/poses/pose3.jpg",
-                "a man sit on a chair",
-                "Neon",
-                "(lowres, low quality, worst quality:1.2), (text:1.2), watermark, (frame:1.2), deformed, ugly, deformed eyes, blur, out of focus, blurry, deformed cat, deformed, photo, anthropomorphic cat, monochrome, photo, pet collar, gun, weapon, blue, 3d, drones, drone, buildings in background, green",
-            ],
-            [
-                "./examples/kaifu_resize.png",
-                "./examples/poses/pose.jpg",
-                "a man",
-                "Vibrant Color",
-                "(lowres, low quality, worst quality:1.2), (text:1.2), watermark, (frame:1.2), deformed, ugly, deformed eyes, blur, out of focus, blurry, deformed cat, deformed, photo, anthropomorphic cat, monochrome, photo, pet collar, gun, weapon, blue, 3d, drones, drone, buildings in background, green",
-            ],
-        ]
-        return case
-
-    def run_for_examples(face_file, pose_file, prompt, style, negative_prompt):
-        return generate_image(
-            face_file,
-            pose_file,
-            prompt,
-            negative_prompt,
-            style,
-            20,  # num_steps
-            0.8,  # identitynet_strength_ratio
-            0.8,  # adapter_strength_ratio
-            0.4,  # pose_strength
-            0.3,  # canny_strength
-            0.5,  # depth_strength
-            ["pose", "canny"],  # controlnet_selection
-            5.0,  # guidance_scale
-            42,  # seed
-            "EulerDiscreteScheduler",  # scheduler
-            False,  # enable_LCM
-            True,  # enable_Face_Region
-        )
 
     def convert_from_cv2_to_image(img: np.ndarray) -> Image:
         return Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
@@ -262,8 +228,8 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
 
     def resize_img(
         input_image,
-        max_side=1280,
-        min_side=1024,
+        max_side=2284,
+        min_side=754,
         size=None,
         pad_to_max_side=False,
         mode=PIL.Image.BILINEAR,
@@ -297,7 +263,56 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
         p, n = styles.get(style_name, styles[DEFAULT_STYLE_NAME])
         return p.replace("{prompt}", positive), n + " " + negative
 
+    def load_model_and_update_pipe(model_name):
+        nonlocal pipe
+        
+        initialize_controlnet()  # Ensure controlnet is loaded
+        
+        if model_name.endswith(".ckpt") or model_name.endswith(".safetensors"):
+            scheduler_kwargs = hf_hub_download(
+                repo_id="SG161222/RealVisXL_V4.0",
+                subfolder="scheduler",
+                filename="scheduler_config.json",
+            )
+
+            (tokenizers, text_encoders, unet, _, vae) = load_models_xl(
+                pretrained_model_name_or_path=model_name,
+                scheduler_name=None,
+                weight_dtype=dtype,
+            )
+
+            scheduler = diffusers.EulerDiscreteScheduler.from_config(scheduler_kwargs)
+            pipe = StableDiffusionXLInstantIDPipeline(
+                vae=vae,
+                text_encoder=text_encoders[0],
+                text_encoder_2=text_encoders[1],
+                tokenizer=tokenizers[0],
+                tokenizer_2=tokenizers[1],
+                unet=unet,
+                scheduler=scheduler,
+                controlnet=[controlnet_identitynet],
+            ).to(device)
+        else:
+            pipe = StableDiffusionXLInstantIDPipeline.from_pretrained(
+                model_name,
+                controlnet=[controlnet_identitynet],
+                torch_dtype=dtype,
+                safety_checker=None,
+                feature_extractor=None,
+            ).to(device)
+
+            pipe.scheduler = diffusers.EulerDiscreteScheduler.from_config(
+                pipe.scheduler.config
+            )
+
+        pipe.load_ip_adapter_instantid(face_adapter)
+        pipe.load_lora_weights("./models/models--latent-consistency--lcm-lora-sdxl/snapshots/a18548dd4956b174ec5b0d78d340c8dae0a129cd", weight_name="pytorch_lora_weights.safetensors")
+        pipe.disable_lora()
+        
+        return pipe
+
     def generate_image(
+        resize_max_side,
         face_image_path,
         pose_image_path,
         prompt,
@@ -315,8 +330,19 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
         scheduler,
         enable_LCM,
         enhance_face_region,
+        num_outputs,
+        model_name,
         progress=gr.Progress(track_tqdm=True),
     ):
+        nonlocal pipe
+        
+        # Initialize face analysis if not already done
+        initialize_face_analysis()
+        
+        # Load selected model if it's different from current
+        if pipe is None or model_name != getattr(pipe, "_current_model", None):
+            pipe = load_model_and_update_pipe(model_name)
+            pipe._current_model = model_name
 
         if enable_LCM:
             pipe.scheduler = diffusers.LCMScheduler.from_config(pipe.scheduler.config)
@@ -345,7 +371,7 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
         prompt, negative_prompt = apply_style(style_name, prompt, negative_prompt)
 
         face_image = load_image(face_image_path)
-        face_image = resize_img(face_image, max_side=1024)
+        face_image = resize_img(face_image, max_side=resize_max_side)
         face_image_cv2 = convert_from_image_to_cv2(face_image)
         height, width, _ = face_image_cv2.shape
 
@@ -363,7 +389,7 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
         img_controlnet = face_image
         if pose_image_path is not None:
             pose_image = load_image(pose_image_path)
-            pose_image = resize_img(pose_image, max_side=1024)
+            pose_image = resize_img(pose_image, max_side=resize_max_side)
             img_controlnet = pose_image
             pose_image_cv2 = convert_from_image_to_cv2(pose_image)
 
@@ -394,17 +420,15 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
                 "canny": canny_strength,
                 "depth": depth_strength,
             }
-            pipe.controlnet = MultiControlNetModel(
-                [controlnet_identitynet]
-                + [controlnet_map[s] for s in controlnet_selection]
-            )
-            control_scales = [float(identitynet_strength_ratio)] + [
-                controlnet_scales[s] for s in controlnet_selection
-            ]
-            control_images = [face_kps] + [
-                controlnet_map_fn[s](img_controlnet).resize((width, height))
-                for s in controlnet_selection
-            ]
+            controlnet_models = []
+            controlnet_images = []
+            for s in controlnet_selection:
+                model = ControlNetModel.from_pretrained(controlnet_model_paths[s], torch_dtype=dtype).to(device)
+                controlnet_models.append(model)
+                controlnet_images.append(controlnet_map_fn[s](img_controlnet).resize((width, height)))
+            pipe.controlnet = MultiControlNetModel([controlnet_identitynet] + controlnet_models)
+            control_scales = [float(identitynet_strength_ratio)] + [controlnet_scales[s] for s in controlnet_selection]
+            control_images = [face_kps] + controlnet_images
         else:
             pipe.controlnet = controlnet_identitynet
             control_scales = float(identitynet_strength_ratio)
@@ -416,21 +440,39 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
         print(f"[Debug] Prompt: {prompt}, \n[Debug] Neg Prompt: {negative_prompt}")
 
         pipe.set_ip_adapter_scale(adapter_strength_ratio)
-        images = pipe(
-            prompt=prompt,
-            negative_prompt=negative_prompt,
-            image_embeds=face_emb,
-            image=control_images,
-            control_mask=control_mask,
-            controlnet_conditioning_scale=control_scales,
-            num_inference_steps=num_steps,
-            guidance_scale=guidance_scale,
-            height=height,
-            width=width,
-            generator=generator,
-        ).images
+        images = []
+        for i in range(num_outputs):
+            print(f"Generating image {i + 1} of {num_outputs}...")
+            print(f"Steps: {num_steps}")
+            print(f"Guidance scale: {guidance_scale}")
+            print(f"Seed: {seed}")
+            print(f"Model: {model_name}")
+            print(f"ControlNet selection: {controlnet_selection}")
+            print(f"Image size: {width}x{height}\n")
+            generator = torch.Generator(device=device).manual_seed(seed + i)
+            result = pipe(
+                prompt=prompt,
+                negative_prompt=negative_prompt,
+                image_embeds=face_emb,
+                image=control_images,
+                control_mask=control_mask,
+                controlnet_conditioning_scale=control_scales,
+                num_inference_steps=num_steps,
+                guidance_scale=guidance_scale,
+                height=height,
+                width=width,
+                generator=generator,
+                callback=lambda step, timestep, latents: print(f"Step {step + 1} of {num_steps}"),
+                callback_steps=1,
+            )
+            image = result.images[0]
+            images.append(image)
 
-        return images[0], gr.update(visible=True)
+            # Save each image immediately
+            save_images([image])
+            print(f"(√) Finished generating image {i + 1} of {num_outputs}\n")
+
+        return images, gr.update(visible=True)
 
     # Description
     title = r"""
@@ -438,32 +480,21 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
     """
 
     description = r"""
-    <b>Official 🤗 Gradio demo</b> for <a href='https://github.com/InstantID/InstantID' target='_blank'><b>InstantID: Zero-shot Identity-Preserving Generation in Seconds</b></a>.<br>
+    <b>In some cases minimizing the browser/Gradio window while an image is being generated can help speed up the generation process significantly. You can track the progress in the CMD/Terminal window.</b>
+    """
 
-    How to use:<br>
+    article = r"""
+    ---
+    📝 **Tips**
+    ```bibtex
     1. Upload an image with a face. For images with multiple faces, we will only detect the largest face. Ensure the face is not too small and is clearly visible without significant obstructions or blurring.
     2. (Optional) You can upload another image as a reference for the face pose. If you don't, we will use the first detected face image to extract facial landmarks. If you use a cropped face at step 1, it is recommended to upload it to define a new face pose.
     3. (Optional) You can select multiple ControlNet models to control the generation process. The default is to use the IdentityNet only. The ControlNet models include pose skeleton, canny, and depth. You can adjust the strength of each ControlNet model to control the generation process.
     4. Enter a text prompt, as done in normal text-to-image models.
-    5. Click the <b>Submit</b> button to begin customization.
-    6. Share your customized photo with your friends and enjoy! 😊"""
-
-    article = r"""
-    ---
-    📝 **Citation**
-    <br>
-    If our work is helpful for your research or applications, please cite us via:
-    ```bibtex
-    @article{wang2024instantid,
-    title={InstantID: Zero-shot Identity-Preserving Generation in Seconds},
-    author={Wang, Qixun and Bai, Xu and Wang, Haofan and Qin, Zekui and Chen, Anthony},
-    journal={arXiv preprint arXiv:2401.07519},
-    year={2024}
-    }
+    5. Click the Generate button to begin customization.
+    6. Share your customized photo with your friends and enjoy! 😊
     ```
-    📧 **Contact**
-    <br>
-    If you have any questions, please feel free to open an issue or directly reach us out at <b>haofanwang.ai@gmail.com</b>.
+    <b>Official Github page</b> for <a href='https://github.com/InstantID/InstantID' target='_blank'><b>InstantID: Zero-shot Identity-Preserving Generation in Seconds</b></a>.<br>
     """
 
     tips = r"""
@@ -495,15 +526,42 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
                         type="filepath",
                     )
 
+                # model selection
+                model_name = gr.Dropdown(
+                    label="Model",
+                    choices=AVAILABLE_MODELS,
+                    value=DEFAULT_MODEL,
+                    info="Select the model to use for generation"
+                )
+
                 # prompt
                 prompt = gr.Textbox(
                     label="Prompt",
-                    info="Give simple prompt is enough to achieve good face fidelity",
-                    placeholder="A photo of a person",
+                    info="Giving a simple prompt is enough to achieve good face fidelity",
+                    placeholder="A man/woman/girl",
                     value="",
                 )
 
-                submit = gr.Button("Submit", variant="primary")
+                num_outputs = gr.Slider(
+                    label="Number of images to generate",
+                    minimum=1, maximum=50, step=1, value=1,
+                )
+                resize_max_side_slider = gr.Slider(
+                    label="Max image size for resizing",
+                    minimum=754,
+                    maximum=2284,
+                    step=90,
+                    value=1280,
+                    info="Controls the max_side for face and pose image resizing. Default is 1280. Higher than 1300 may result in artifacts/bad anatomy but up to 1924 can sometimes yield good results",
+                )
+                generate = gr.Button("Generate", variant="primary")
+                open_folder_btn = gr.Button("Open Output Folder")
+                open_folder_btn.click(
+                    fn=open_output_folder,
+                    inputs=[],
+                    outputs=[],
+                    queue=False,
+                )
                 enable_LCM = gr.Checkbox(
                     label="Enable Fast Inference with LCM", value=enable_lcm_arg,
                     info="LCM speeds up the inference step, the trade-off is the quality of the generated image. It performs better with portrait face images rather than distant faces",
@@ -520,18 +578,18 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
                     minimum=0,
                     maximum=1.5,
                     step=0.05,
-                    value=0.80,
+                    value=0.75,
                 )
                 adapter_strength_ratio = gr.Slider(
                     label="Image adapter strength (for detail)",
                     minimum=0,
                     maximum=1.5,
                     step=0.05,
-                    value=0.80,
+                    value=0.75,
                 )
                 with gr.Accordion("Controlnet"):
                     controlnet_selection = gr.CheckboxGroup(
-                        ["pose", "canny", "depth"], label="Controlnet", value=["pose"],
+                        ["pose", "canny", "depth"], label="Controlnet", value=[],
                         info="Use pose for skeleton inference, canny for edge detection, and depth for depth map estimation. You can try all three to control the generation process"
                     )
                     pose_strength = gr.Slider(
@@ -555,11 +613,17 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
                         step=0.05,
                         value=0.40,
                     )
-                with gr.Accordion(open=False, label="Advanced Options"):
+                with gr.Accordion(open=True, label="Advanced Options"):
+                    negative_prompt_preset = gr.Dropdown(
+                        label="Negative Prompt Profile",
+                        choices=list(NEGATIVE_PROMPT_PRESETS.keys()),
+                        value="Default Negative Profile",
+                        info="Select a Negative Prompt Profile, default one is fine but you may want to select a different one depending on your prompt style"
+                    )
                     negative_prompt = gr.Textbox(
                         label="Negative Prompt",
                         placeholder="low quality",
-                        value="(lowres, low quality, worst quality:1.2), (text:1.2), watermark, (frame:1.2), deformed, ugly, deformed eyes, blur, out of focus, blurry, deformed cat, deformed, photo, anthropomorphic cat, monochrome, pet collar, gun, weapon, blue, 3d, drones, drone, buildings in background, green",
+                        value=NEGATIVE_PROMPT_PRESETS["Default Negative Profile"],
                     )
                     num_steps = gr.Slider(
                         label="Number of sample steps",
@@ -573,7 +637,7 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
                         minimum=0.1,
                         maximum=20.0,
                         step=0.1,
-                        value=0.0 if enable_lcm_arg else 5.0,
+                        value=0.0 if enable_lcm_arg else 4,
                     )
                     seed = gr.Slider(
                         label="Seed",
@@ -599,12 +663,19 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
                     enhance_face_region = gr.Checkbox(label="Enhance non-face region", value=True)
 
             with gr.Column(scale=1):
-                gallery = gr.Image(label="Generated Images")
+                gallery = gr.Gallery(label="Generated Images")
                 usage_tips = gr.Markdown(
                     label="InstantID Usage Tips", value=tips, visible=False
                 )
 
-            submit.click(
+            # Update negative prompt when preset is changed
+            negative_prompt_preset.change(
+                fn=lambda x: NEGATIVE_PROMPT_PRESETS[x],
+                inputs=negative_prompt_preset,
+                outputs=negative_prompt,
+            )
+
+            generate.click(
                 fn=remove_tips,
                 outputs=usage_tips,
             ).then(
@@ -616,6 +687,7 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
             ).then(
                 fn=generate_image,
                 inputs=[
+                    resize_max_side_slider,
                     face_file,
                     pose_file,
                     prompt,
@@ -633,6 +705,8 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
                     scheduler,
                     enable_LCM,
                     enhance_face_region,
+                    num_outputs,
+                    model_name,
                 ],
                 outputs=[gallery, usage_tips],
             )
@@ -644,23 +718,24 @@ def main(pretrained_model_name_or_path="wangqixun/YamerMIX_v8", enable_lcm_arg=F
                 queue=False,
             )
 
-        gr.Examples(
-            examples=get_example(),
-            inputs=[face_file, pose_file, prompt, style, negative_prompt],
-            fn=run_for_examples,
-            outputs=[gallery, usage_tips],
-            cache_examples=True,
-        )
-
         gr.Markdown(article)
 
-    demo.launch()
+        with gr.Row():
+            restart_btn = gr.Button("Restart Server", variant="stop", scale=1)
+            restart_btn.click(
+                fn=restart_server,
+                inputs=None,
+                outputs=None,
+                queue=False,
+            )
+
+    demo.launch(inbrowser=os.environ.get("IN_BROWSER", "1") == "1")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--pretrained_model_name_or_path", type=str, default="wangqixun/YamerMIX_v8"
+        "--pretrained_model_name_or_path", type=str, default="SG161222/RealVisXL_V4.0"
     )
     parser.add_argument(
         "--enable_LCM", type=bool, default=os.environ.get("ENABLE_LCM", False)
