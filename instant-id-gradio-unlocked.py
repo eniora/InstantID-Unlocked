@@ -103,7 +103,6 @@ DEFAULT_MODEL = "SG161222/RealVisXL_V4.0"
 # Detection size options
 DET_SIZE_OPTIONS = {
     "320x320 (for very lowres portrait photos that are less than 320x320 in resolution)": (320, 320),
-    "400x400": (400, 400),
     "640x640 (default)": (640, 640),
     "800x800": (800, 800),
     "1024x1024": (1024, 1024),
@@ -132,6 +131,17 @@ controlnet_map_fn = {
     "canny": get_canny_image,
     "depth": get_depth_map,
 }
+
+def read_png_metadata(filepath):
+    """Read metadata from PNG file"""
+    try:
+        with Image.open(filepath) as img:
+            metadata = img.info
+            if "Generation Parameters" in metadata:
+                return metadata["Generation Parameters"]
+            return "No generation metadata found in this PNG file."
+    except Exception as e:
+        return f"Error reading metadata: {str(e)}"
 
 def initialize_face_analysis(det_size_name="640x640 (default)"):
     global app, current_det_size
@@ -755,6 +765,115 @@ Scheduler: {scheduler}"""
                 inputs=[enable_LCM],
                 outputs=[num_steps, guidance_scale],
                 queue=False,
+            )
+
+        with gr.Accordion("PNG Metadata Reader", open=False):
+            metadata_input = gr.File(
+                label="Drop PNG file here to read generation metadata",
+                type="filepath",
+                file_types=[".png"]
+            )
+            metadata_output = gr.Textbox(
+                label="Generation Metadata",
+                interactive=False,
+                lines=10,
+                max_lines=20
+            )
+            with gr.Row():
+                read_metadata_btn = gr.Button("Read Metadata")
+                apply_metadata_btn = gr.Button("Apply All Settings", variant="secondary")
+            
+            metadata_input.change(
+                fn=read_png_metadata,
+                inputs=metadata_input,
+                outputs=metadata_output
+            )
+            read_metadata_btn.click(
+                fn=read_png_metadata,
+                inputs=metadata_input,
+                outputs=metadata_output
+            )
+            
+            def extract_all_settings(metadata_text):
+                settings = {
+                    "prompt": "",
+                    "negative_prompt": "",
+                    "seed": 42,
+                    "num_steps": 30,
+                    "guidance_scale": 4.0,
+                    "identitynet_strength_ratio": 0.75,
+                    "adapter_strength_ratio": 0.75,
+                    "pose_strength": 0.40,
+                    "canny_strength": 0.40,
+                    "depth_strength": 0.40,
+                    "scheduler": "EulerDiscreteScheduler",
+                    "enable_LCM": False,
+                    "enhance_face_region": True,
+                    "style": DEFAULT_STYLE_NAME
+                }
+                
+                if metadata_text:
+                    for line in metadata_text.split('\n'):
+                        if line.startswith("Prompt:"):
+                            settings["prompt"] = line.replace("Prompt:", "").strip()
+                        elif line.startswith("Negative Prompt:"):
+                            settings["negative_prompt"] = line.replace("Negative Prompt:", "").strip()
+                        elif line.startswith("Seed:"):
+                            settings["seed"] = int(line.replace("Seed:", "").strip())
+                        elif line.startswith("Steps:"):
+                            settings["num_steps"] = int(line.replace("Steps:", "").strip())
+                        elif line.startswith("Guidance scale:"):
+                            settings["guidance_scale"] = float(line.replace("Guidance scale:", "").strip())
+                        elif line.startswith("IdentityNet strength:"):
+                            settings["identitynet_strength_ratio"] = float(line.replace("IdentityNet strength:", "").strip())
+                        elif line.startswith("Adapter strength:"):
+                            settings["adapter_strength_ratio"] = float(line.replace("Adapter strength:", "").strip())
+                        elif line.startswith("Pose strength:"):
+                            settings["pose_strength"] = float(line.replace("Pose strength:", "").strip())
+                        elif line.startswith("Canny strength:"):
+                            settings["canny_strength"] = float(line.replace("Canny strength:", "").strip())
+                        elif line.startswith("Depth strength:"):
+                            settings["depth_strength"] = float(line.replace("Depth strength:", "").strip())
+                        elif line.startswith("Style:"):
+                            style_name = line.replace("Style:", "").strip()
+                            settings["style"] = style_name if style_name in STYLE_NAMES else DEFAULT_STYLE_NAME
+                
+                return [
+                    settings["prompt"],
+                    settings["negative_prompt"],
+                    settings["style"],
+                    settings["num_steps"],
+                    settings["identitynet_strength_ratio"],
+                    settings["adapter_strength_ratio"],
+                    settings["pose_strength"],
+                    settings["canny_strength"],
+                    settings["depth_strength"],
+                    settings["guidance_scale"],
+                    settings["seed"],
+                    settings["scheduler"],
+                    settings["enable_LCM"],
+                    settings["enhance_face_region"]
+                ]
+            
+            apply_metadata_btn.click(
+                fn=extract_all_settings,
+                inputs=metadata_output,
+                outputs=[
+                    prompt,
+                    negative_prompt,
+                    style,
+                    num_steps,
+                    identitynet_strength_ratio,
+                    adapter_strength_ratio,
+                    pose_strength,
+                    canny_strength,
+                    depth_strength,
+                    guidance_scale,
+                    seed,
+                    scheduler,
+                    enable_LCM,
+                    enhance_face_region
+                ]
             )
 
         gr.Markdown(article)
