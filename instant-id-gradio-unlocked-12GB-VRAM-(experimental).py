@@ -616,7 +616,7 @@ Scheduler: {scheduler}"""
                     # optional: upload a reference pose image
                     pose_file = gr.Image(
                         label="Upload a reference pose image (Optional)",
-                        type="filepath",
+                        type="filepath"
                     )
 
                 # prompt
@@ -817,24 +817,27 @@ Scheduler: {scheduler}"""
             )
 
         with gr.Accordion("PNG Metadata Reader", open=False):
-            metadata_input = gr.File(
-                label="Drop PNG file here to read generation metadata",
-                type="filepath",
-                file_types=[".png"]
-            )
-            metadata_output = gr.Textbox(
-                label="Generation Metadata",
-                interactive=False,
-                lines=10,
-                max_lines=20
-            )
+            with gr.Row():
+                metadata_input = gr.Image(
+                    label="Drop PNG file here to read generation metadata",
+                    type="filepath",
+                    height=500,
+                    width=500
+                )
+                metadata_output = gr.Textbox(
+                    label="Generation Metadata",
+                    interactive=False,
+                    lines=10,
+                    max_lines=20
+                )
+
             with gr.Row():
                 apply_metadata_btn = gr.Button("Apply All Settings", variant="secondary")
             
             metadata_input.change(
-                fn=read_png_metadata,
+                fn=lambda x: (x, read_png_metadata(x)),  # Returns both image path and metadata
                 inputs=metadata_input,
-                outputs=metadata_output
+                outputs=[metadata_input, metadata_output]
             )
             
             def extract_all_settings(metadata_text):
