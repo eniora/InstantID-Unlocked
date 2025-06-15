@@ -6,6 +6,7 @@
 - Resolution slider.
 - Restart Server button.
 - Model selector dropdown.
+- PNG auto metadata writer in the autosaved images and a gradio box to read info from them
 - Dropdown menu for the ability to change the Det Size for face detection in input/reference photos.
 - Auto opening of gradio interface after it's launched.
 - Negative Prompt Profiles dropdown.
