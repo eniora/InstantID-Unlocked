@@ -119,6 +119,9 @@ app.prepare(ctx_id=0, det_size=current_det_size)
 
 def read_png_metadata(filepath):
     """Read metadata from PNG file"""
+    if filepath is None:
+        return "No image selected"
+
     try:
         with Image.open(filepath) as img:
             metadata = img.info
@@ -835,7 +838,7 @@ Scheduler: {scheduler}"""
                 apply_metadata_btn = gr.Button("Apply All Settings", variant="secondary")
             
             metadata_input.change(
-                fn=lambda x: (x, read_png_metadata(x)),  # Returns both image path and metadata
+                fn=lambda x: (x, read_png_metadata(x) if x is not None else "No image selected"),
                 inputs=metadata_input,
                 outputs=[metadata_input, metadata_output]
             )
