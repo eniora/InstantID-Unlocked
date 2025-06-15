@@ -11,6 +11,7 @@ import random
 import numpy as np
 import argparse
 import warnings
+import PIL.PngImagePlugin
 
 warnings.filterwarnings("ignore", message=".*Overwriting tiny_vit_.* in registry.*")
 
@@ -26,7 +27,7 @@ import PIL
 from PIL import Image
 
 
-def save_images(images, output_dir="output"):
+def save_images(images, output_dir="output", generation_info=None):
     os.makedirs(output_dir, exist_ok=True)
 
     existing = [f for f in os.listdir(output_dir) if f.startswith("InstantID_") and f.endswith(".png")]
@@ -37,10 +38,9 @@ def save_images(images, output_dir="output"):
     for i, img in enumerate(images):
         filename = f"InstantID_{start_index + i}.png"
         path = os.path.join(output_dir, filename)
-        img.save(path)
+        img.save(path, pnginfo=generation_info[i] if generation_info else None)
         paths.append(path)
     return paths
-
 
 import diffusers
 from diffusers.utils import load_image
@@ -456,11 +456,12 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lcm_arg
 
         pipe.set_ip_adapter_scale(adapter_strength_ratio)
         images = []
+        generation_infos = []
         for i in range(num_outputs):
             print(f"Generating image {i + 1} of {num_outputs}...")
             print(f"Steps: {num_steps}")
             print(f"Guidance scale: {guidance_scale}")
-            print(f"Seed: {seed}")
+            print(f"Seed: {seed + i}")
             print(f"Model: {model_name}")
             print(f"ControlNet selection: {controlnet_selection}")
             print(f"Image size: {width}x{height}\n")
@@ -483,8 +484,25 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lcm_arg
             image = result.images[0]
             images.append(image)
 
-            # Save each image immediately
-            save_images([image])
+            # Create generation info
+            info_text = f"""Prompt: {prompt}
+Negative Prompt: {negative_prompt}
+Detection size: {current_det_size}
+Generating image {i + 1} of {num_outputs}...
+Steps: {num_steps}
+Guidance scale: {guidance_scale}
+Seed: {seed + i}
+Model: {model_name}
+ControlNet selection: {controlnet_selection}
+Image size: {width}x{height}
+IdentityNet strength: {identitynet_strength_ratio}
+Adapter strength: {adapter_strength_ratio}
+Scheduler: {scheduler}"""
+
+            png_info = PIL.PngImagePlugin.PngInfo()
+            png_info.add_text("Generation Parameters", info_text)
+            generation_infos.append(png_info)
+            save_images([image], generation_info=[png_info])
             print(f"(√) Finished generating image {i + 1} of {num_outputs}\n")
 
         return images, gr.update(visible=True)
