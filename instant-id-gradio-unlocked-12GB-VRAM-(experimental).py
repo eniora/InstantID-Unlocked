@@ -829,15 +829,9 @@ Scheduler: {scheduler}"""
                 max_lines=20
             )
             with gr.Row():
-                read_metadata_btn = gr.Button("Read Metadata")
                 apply_metadata_btn = gr.Button("Apply All Settings", variant="secondary")
             
             metadata_input.change(
-                fn=read_png_metadata,
-                inputs=metadata_input,
-                outputs=metadata_output
-            )
-            read_metadata_btn.click(
                 fn=read_png_metadata,
                 inputs=metadata_input,
                 outputs=metadata_output
