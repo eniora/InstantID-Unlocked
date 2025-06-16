@@ -473,6 +473,8 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lora_ar
             print(f"Seed: {seed + i}")
             print(f"Model: {model_name}")
             print(f"ControlNet selection: {controlnet_selection}")
+            print(f"IdentityNet strength: {identitynet_strength_ratio}")
+            print(f"Adapter strength: {adapter_strength_ratio}")
             print(f"Image size: {width}x{height}\n")
             generator = torch.Generator(device=device).manual_seed(seed + i)
             result = pipe(
