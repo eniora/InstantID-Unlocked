@@ -4,6 +4,7 @@
 ## This fork adds the following:
 - Autosave of each generated image in the "output" folder, with an "Open Output Folder" button in the gradio GUI.
 - Resolution slider.
+- Lora loader (not LCM lora, real lora loader)
 - Restart Server button.
 - Model selector dropdown.
 - PNG auto metadata writer in the autosaved images and a gradio box to read info from them
