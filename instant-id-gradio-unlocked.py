@@ -178,20 +178,11 @@ def restart_server():
     # Kill the current process
     os.execl(python, python, script, *args)
 
-def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lcm_arg=False):
+def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lora_arg=False):
     pipe = None
 
-    def toggle_lcm_ui(value):
-        if value:
-            return (
-                gr.update(minimum=0, maximum=100, step=1, value=5),
-                gr.update(minimum=0.1, maximum=20.0, step=0.1, value=1.5),
-            )
-        else:
-            return (
-                gr.update(minimum=5, maximum=100, step=1, value=30),
-                gr.update(minimum=0.1, maximum=20.0, step=0.1, value=4),
-            )
+    def toggle_lora_ui(value):
+        pass
 
     def randomize_seed_fn(seed: int, randomize_seed: bool) -> int:
         if randomize_seed:
@@ -332,8 +323,14 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lcm_arg
             )
 
         pipe.load_ip_adapter_instantid(face_adapter)
-        pipe.load_lora_weights("latent-consistency/lcm-lora-sdxl")
-        pipe.disable_lora()
+
+        lora_path = "./models/Loras/Lora.safetensors"
+        if os.path.exists(lora_path):
+            pipe.load_lora_weights("./models/Loras", weight_name="Lora.safetensors")
+            pipe.disable_lora()
+            print("LoRA loaded and disabled by default.")
+        else:
+            print(f"LoRA not found at {lora_path}, skipping load.")
         
         return pipe
 
@@ -354,7 +351,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lcm_arg
         guidance_scale,
         seed,
         scheduler,
-        enable_LCM,
+        enable_lora,
         enhance_face_region,
         num_outputs,
         model_name,
@@ -371,8 +368,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lcm_arg
             pipe = load_model_and_update_pipe(model_name)
             pipe._current_model = model_name
 
-        if enable_LCM:
-            pipe.scheduler = diffusers.LCMScheduler.from_config(pipe.scheduler.config)
+        if enable_lora:
             pipe.enable_lora()
         else:
             pipe.disable_lora()
@@ -665,14 +661,14 @@ Scheduler: {scheduler}"""
                         minimum=1,
                         maximum=100,
                         step=1,
-                        value=5 if enable_lcm_arg else 30,
+                        value=30,
                     )
                     guidance_scale = gr.Slider(
                         label="Guidance scale",
                         minimum=0.1,
                         maximum=20.0,
                         step=0.1,
-                        value=0.0 if enable_lcm_arg else 4,
+                        value=4,
                     )
                     seed = gr.Slider(
                         label="Seed",
@@ -708,9 +704,9 @@ Scheduler: {scheduler}"""
                         value="640x640 (default)",
                         info="Higher values can detect smaller faces if the face in the input/reference image is too small/distant or if you get a 'No face detected' message. Otherwise you don't need to change this value for most of the cases as the differences are barely noticeable."
                     )
-                    enable_LCM = gr.Checkbox(
-                        label="Enable Fast Inference with LCM", value=enable_lcm_arg,
-                        info="LCM speeds up the inference step, the trade-off is the quality of the generated image. It performs better with portrait face images rather than distant faces",
+                    enable_lora = gr.Checkbox(
+                        label="Enable Lora from your Loras folder", value=enable_lora_arg,
+                        info="Currently only one lora can be loaded, just place it in /models/loras/ and rename the lora Safetensors file to lora.safetensors. Restart InstantID or use the Restart Server button at the bottom after copying a Lora file",
                     )
 
             with gr.Column(scale=1):
@@ -754,7 +750,7 @@ Scheduler: {scheduler}"""
                     guidance_scale,
                     seed,
                     scheduler,
-                    enable_LCM,
+                    enable_lora,
                     enhance_face_region,
                     num_outputs,
                     model_name,
@@ -763,10 +759,9 @@ Scheduler: {scheduler}"""
                 outputs=[gallery, usage_tips],
             )
 
-            enable_LCM.input(
-                fn=toggle_lcm_ui,
-                inputs=[enable_LCM],
-                outputs=[num_steps, guidance_scale],
+            enable_lora.input(
+                fn=toggle_lora_ui,
+                inputs=[enable_lora],
                 queue=False,
             )
 
@@ -808,7 +803,7 @@ Scheduler: {scheduler}"""
                     "canny_strength": 0.40,
                     "depth_strength": 0.40,
                     "scheduler": "EulerDiscreteScheduler",
-                    "enable_LCM": False,
+                    "enable_lora": False,
                     "enhance_face_region": True,
                     "style": DEFAULT_STYLE_NAME
                 }
@@ -852,7 +847,7 @@ Scheduler: {scheduler}"""
                     settings["guidance_scale"],
                     settings["seed"],
                     settings["scheduler"],
-                    settings["enable_LCM"],
+                    settings["enable_lora"],
                     settings["enhance_face_region"]
                 ]
             
@@ -872,7 +867,7 @@ Scheduler: {scheduler}"""
                     guidance_scale,
                     seed,
                     scheduler,
-                    enable_LCM,
+                    enable_lora,
                     enhance_face_region
                 ]
             )
@@ -897,8 +892,8 @@ if __name__ == "__main__":
         "--pretrained_model_name_or_path", type=str, default="SG161222/RealVisXL_V4.0"
     )
     parser.add_argument(
-        "--enable_LCM", type=bool, default=os.environ.get("ENABLE_LCM", False)
+        "--enable_lora", type=bool, default=os.environ.get("ENABLE_lora", False)
     )
     args = parser.parse_args()
 
-    main(args.pretrained_model_name_or_path, args.enable_LCM)
+    main(args.pretrained_model_name_or_path, args.enable_lora)
