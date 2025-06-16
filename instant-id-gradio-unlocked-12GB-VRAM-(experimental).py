@@ -227,17 +227,6 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lora_ar
             pipe.scheduler.config
         )
 
-    pipe.load_ip_adapter_instantid(face_adapter)
-
-    lora_path = "./models/Loras/Lora.safetensors"
-    if os.path.exists(lora_path):
-        pipe.load_lora_weights("./models/Loras", weight_name="Lora.safetensors")
-        pipe.disable_lora()
-        print("LoRA loaded and disabled by default.")
-    else:
-        print(f"LoRA not found at {lora_path}, skipping load.")
-
-
     def toggle_lora_ui(value):
         pass
 
