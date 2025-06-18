@@ -909,7 +909,8 @@ Scheduler: {scheduler}"""
                     "lora_scale": 1.0,
                     "enhance_face_region": True,
                     "style": DEFAULT_STYLE_NAME,
-                    "lora_selection": ""
+                    "lora_selection": "",
+                    "randomize_seed": False
                 }
                 
                 if metadata_text:
@@ -963,7 +964,8 @@ Scheduler: {scheduler}"""
                     settings["enable_lora"],
                     settings["enhance_face_region"],
                     settings["lora_scale"],
-                    settings["lora_selection"] if settings["enable_lora"] else None
+                    settings["lora_selection"] if settings["enable_lora"] else None,
+                    settings["randomize_seed"]
                 ]
             
             apply_metadata_btn.click(
@@ -985,7 +987,8 @@ Scheduler: {scheduler}"""
                     enable_lora,
                     enhance_face_region,
                     lora_scale,
-                    lora_selection
+                    lora_selection,
+                    randomize_seed
                 ]
             )
 
