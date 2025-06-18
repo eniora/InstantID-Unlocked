@@ -742,7 +742,7 @@ Scheduler: {scheduler}"""
                         lora_selection = gr.Dropdown(
                             label="Select LoRA",
                             choices=get_available_loras(),
-                            value=get_available_loras()[0] if get_available_loras() else None,
+                            value=None,
                             info="Select a LoRA from your /models/Loras folder. Only SDXL, pony and Illustrious Loras supported"
                         )
                         lora_scale = gr.Slider(
@@ -757,7 +757,7 @@ Scheduler: {scheduler}"""
                     
                     def refresh_lora_list():
                         loras = get_available_loras()
-                        return gr.update(choices=loras, value=loras[0] if loras else None)
+                        return gr.update(choices=loras, value=None)
                     
                     refresh_loras.click(
                         fn=refresh_lora_list,
@@ -863,7 +863,8 @@ Scheduler: {scheduler}"""
                     "enable_lora": False,
                     "lora_scale": 1.0,
                     "enhance_face_region": True,
-                    "style": DEFAULT_STYLE_NAME
+                    "style": DEFAULT_STYLE_NAME,
+                    "lora_selection": ""
                 }
                 
                 if metadata_text:
@@ -879,9 +880,14 @@ Scheduler: {scheduler}"""
                         elif line.startswith("Guidance scale:"):
                             settings["guidance_scale"] = float(line.replace("Guidance scale:", "").strip())
                         elif line.startswith("LoRA selection:"):
-                            settings["lora_selection"] = line.replace("LoRA selection:", "").strip()
+                            lora_selection = line.replace("LoRA selection:", "").strip()
+                            settings["lora_selection"] = lora_selection if lora_selection != "None" else None
+                            settings["enable_lora"] = lora_selection != "None"
                         elif line.startswith("LoRA scale:"):
-                            settings["lora_scale"] = float(line.replace("LoRA scale:", "").strip())
+                            lora_scale_str = line.replace("LoRA scale:", "").strip()
+                            if lora_scale_str != "Disabled":
+                                settings["lora_scale"] = float(lora_scale_str)
+                            settings["enable_lora"] = lora_scale_str != "Disabled"
                         elif line.startswith("IdentityNet strength:"):
                             settings["identitynet_strength_ratio"] = float(line.replace("IdentityNet strength:", "").strip())
                         elif line.startswith("Adapter strength:"):
@@ -912,7 +918,7 @@ Scheduler: {scheduler}"""
                     settings["enable_lora"],
                     settings["enhance_face_region"],
                     settings["lora_scale"],
-                    settings.get("lora_selection", "")
+                    settings["lora_selection"] if settings["enable_lora"] else None
                 ]
             
             apply_metadata_btn.click(
