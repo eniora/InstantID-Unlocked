@@ -26,7 +26,6 @@ def open_output_folder():
 import PIL
 from PIL import Image
 
-
 def save_images(images, output_dir="output", generation_info=None):
     os.makedirs(output_dir, exist_ok=True)
 
@@ -132,6 +131,17 @@ controlnet_map_fn = {
     "depth": get_depth_map,
 }
 
+def get_available_loras():
+    loras_dir = "./models/Loras"
+    if not os.path.exists(loras_dir):
+        return []
+    
+    lora_files = []
+    for file in os.listdir(loras_dir):
+        if file.endswith(('.safetensors', '.ckpt', '.pt')):
+            lora_files.append(file)
+    return lora_files
+
 def read_png_metadata(filepath):
     """Read metadata from PNG file"""
     if filepath is None:
@@ -181,8 +191,12 @@ def restart_server():
 def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lora_arg=False):
     pipe = None
 
-    def toggle_lora_ui(value):
-        pass
+    def toggle_lora_ui(enable_lora):
+        return [
+            gr.update(visible=enable_lora),
+            gr.update(visible=enable_lora),
+            gr.update(visible=enable_lora)
+        ]
 
     def randomize_seed_fn(seed: int, randomize_seed: bool) -> int:
         if randomize_seed:
@@ -324,14 +338,6 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lora_ar
 
         pipe.load_ip_adapter_instantid(face_adapter)
 
-        lora_path = "./models/Loras/Lora.safetensors"
-        if os.path.exists(lora_path):
-            pipe.load_lora_weights("./models/Loras", weight_name="Lora.safetensors")
-            pipe.disable_lora()
-            print("LoRA loaded and disabled by default.")
-        else:
-            print(f"LoRA not found at {lora_path}, skipping load.")
-        
         return pipe
 
     def generate_image(
@@ -352,6 +358,8 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lora_ar
         seed,
         scheduler,
         enable_lora,
+        lora_scale,
+        lora_selection,
         enhance_face_region,
         num_outputs,
         model_name,
@@ -368,10 +376,17 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lora_ar
             pipe = load_model_and_update_pipe(model_name)
             pipe._current_model = model_name
 
-        if enable_lora:
-            pipe.enable_lora()
+        if enable_lora and lora_selection:
+            lora_path = os.path.join("./models/Loras", lora_selection)
+            if os.path.exists(lora_path):
+                pipe.load_lora_weights("./models/Loras", weight_name=lora_selection)
+                pipe.fuse_lora(lora_scale=lora_scale)
+                print(f"LoRA {lora_selection} loaded with scale {lora_scale}")
+            else:
+                print(f"LoRA not found at {lora_path}, skipping load.")
         else:
             pipe.disable_lora()
+
             scheduler_class_name = scheduler.split("-")[0]
 
             add_kwargs = {}
@@ -475,6 +490,8 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lora_ar
             print(f"ControlNet selection: {controlnet_selection}")
             print(f"IdentityNet strength: {identitynet_strength_ratio}")
             print(f"Adapter strength: {adapter_strength_ratio}")
+            print(f"LoRA scale: {lora_scale if enable_lora else 'Disabled'}")
+            print(f"LoRA selection: {lora_selection if enable_lora else 'None'}")
             print(f"Image size: {width}x{height}\n")
             generator = torch.Generator(device=device).manual_seed(seed + i)
             result = pipe(
@@ -508,6 +525,8 @@ ControlNet selection: {controlnet_selection}
 Image size: {width}x{height}
 IdentityNet strength: {identitynet_strength_ratio}
 Adapter strength: {adapter_strength_ratio}
+LoRA scale: {lora_scale if enable_lora else 'Disabled'}
+LoRA selection: {lora_selection if enable_lora else 'None'}
 Scheduler: {scheduler}"""
 
             png_info = PIL.PngImagePlugin.PngInfo()
@@ -707,8 +726,42 @@ Scheduler: {scheduler}"""
                         info="Higher values can detect smaller faces if the face in the input/reference image is too small/distant or if you get a 'No face detected' message. Otherwise you don't need to change this value for most of the cases as the differences are barely noticeable."
                     )
                     enable_lora = gr.Checkbox(
-                        label="Enable Lora from your Loras folder", value=enable_lora_arg,
-                        info="Currently only one lora can be loaded, just place it in /models/loras/ and rename the lora Safetensors file to lora.safetensors. Restart InstantID or use the Restart Server button at the bottom after copying a Lora file",
+                        label="Enable Lora from your Loras folder",
+                        value=enable_lora_arg,
+                    )
+                    lora_info = gr.Markdown(
+                        "Only one lora can be loaded. Use LoRA Scale strength 0 in the slider if you want to disable the Lora because if you generate an image with a Lora then uncheck the box for 'Enable Lora' and generate any image while it's disabled, you have to restart InstantID or click on the Restart Server button if you want it to be effective again.",
+                        visible=enable_lora_arg
+                    )
+                    enable_lora.change(
+                        fn=lambda x: gr.Markdown(visible=x),
+                        inputs=enable_lora,
+                        outputs=lora_info
+                    )
+                    with gr.Row(visible=False) as lora_row:
+                        lora_selection = gr.Dropdown(
+                            label="Select LoRA",
+                            choices=get_available_loras(),
+                            value=get_available_loras()[0] if get_available_loras() else None,
+                            info="Select a LoRA from your /models/Loras folder. Only SDXL, pony and Illustrious Loras supported"
+                        )
+                        lora_scale = gr.Slider(
+                            label="LoRA Scale",
+                            minimum=0.0,
+                            maximum=2.0,
+                            step=0.05,
+                            value=1.0,
+                            info="Strength of the LoRA effect. Not recommended to go above ~1.4"
+                        )
+                        refresh_loras = gr.Button("🔄", elem_classes="toolbutton")
+                    
+                    def refresh_lora_list():
+                        loras = get_available_loras()
+                        return gr.update(choices=loras, value=loras[0] if loras else None)
+                    
+                    refresh_loras.click(
+                        fn=refresh_lora_list,
+                        outputs=lora_selection
                     )
 
             with gr.Column(scale=1):
@@ -753,6 +806,8 @@ Scheduler: {scheduler}"""
                     seed,
                     scheduler,
                     enable_lora,
+                    lora_scale,
+                    lora_selection,
                     enhance_face_region,
                     num_outputs,
                     model_name,
@@ -764,6 +819,7 @@ Scheduler: {scheduler}"""
             enable_lora.input(
                 fn=toggle_lora_ui,
                 inputs=[enable_lora],
+                outputs=[lora_row, lora_selection, lora_scale],
                 queue=False,
             )
 
@@ -774,7 +830,6 @@ Scheduler: {scheduler}"""
                     type="filepath",
                     height=500,
                     width=500
-
                 )
                 metadata_output = gr.Textbox(
                     label="Generation Metadata",
@@ -806,6 +861,7 @@ Scheduler: {scheduler}"""
                     "depth_strength": 0.40,
                     "scheduler": "EulerDiscreteScheduler",
                     "enable_lora": False,
+                    "lora_scale": 1.0,
                     "enhance_face_region": True,
                     "style": DEFAULT_STYLE_NAME
                 }
@@ -822,6 +878,10 @@ Scheduler: {scheduler}"""
                             settings["num_steps"] = int(line.replace("Steps:", "").strip())
                         elif line.startswith("Guidance scale:"):
                             settings["guidance_scale"] = float(line.replace("Guidance scale:", "").strip())
+                        elif line.startswith("LoRA selection:"):
+                            settings["lora_selection"] = line.replace("LoRA selection:", "").strip()
+                        elif line.startswith("LoRA scale:"):
+                            settings["lora_scale"] = float(line.replace("LoRA scale:", "").strip())
                         elif line.startswith("IdentityNet strength:"):
                             settings["identitynet_strength_ratio"] = float(line.replace("IdentityNet strength:", "").strip())
                         elif line.startswith("Adapter strength:"):
@@ -850,7 +910,9 @@ Scheduler: {scheduler}"""
                     settings["seed"],
                     settings["scheduler"],
                     settings["enable_lora"],
-                    settings["enhance_face_region"]
+                    settings["enhance_face_region"],
+                    settings["lora_scale"],
+                    settings.get("lora_selection", "")
                 ]
             
             apply_metadata_btn.click(
@@ -870,7 +932,9 @@ Scheduler: {scheduler}"""
                     seed,
                     scheduler,
                     enable_lora,
-                    enhance_face_region
+                    enhance_face_region,
+                    lora_scale,
+                    lora_selection
                 ]
             )
 
