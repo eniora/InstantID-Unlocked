@@ -9,7 +9,7 @@ einops==0.8.1
 onnxruntime-gpu==1.22.0
 spaces==0.19.4
 omegaconf==2.3.0
-huggingface-hub==0.20.2
+huggingface-hub==0.23.1
 opencv-python==4.11.0.86
 insightface==0.7.3
 gradio==5.32.1
