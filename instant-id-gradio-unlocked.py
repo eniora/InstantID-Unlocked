@@ -492,6 +492,7 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
             print(f"Adapter strength: {adapter_strength_ratio}")
             print(f"LoRA scale: {lora_scale if enable_lora else 'Disabled'}")
             print(f"LoRA selection: {lora_selection if enable_lora else 'None'}")
+            print(f"Scheduler: {scheduler}")
             print(f"Image size: {width}x{height}\n")
             generator = torch.Generator(device=device).manual_seed(seed + i)
             result = pipe(
@@ -882,6 +883,7 @@ Scheduler: {scheduler}"""
                 
                 if metadata_text:
                     for line in metadata_text.split('\n'):
+                        line = line.strip()
                         if line.startswith("Prompt:"):
                             settings["prompt"] = line.replace("Prompt:", "").strip()
                         elif line.startswith("Negative Prompt:"):
@@ -903,6 +905,14 @@ Scheduler: {scheduler}"""
                             settings["enable_lora"] = lora_scale_str != "Disabled"
                         elif line.startswith("IdentityNet strength:"):
                             settings["identitynet_strength_ratio"] = float(line.replace("IdentityNet strength:", "").strip())
+                        elif line.startswith("Scheduler:"):
+                            scheduler_text = line.replace("Scheduler:", "").strip()
+                            if "scheduling_" in scheduler_text:  # If it's a full class path
+                                scheduler_name = scheduler_text.split(".")[-1].replace("'>", "").replace("Scheduler", "Scheduler")
+                            else:
+                                scheduler_name = scheduler_text
+                            if scheduler_name in schedulers:
+                                settings["scheduler"] = scheduler_name
                         elif line.startswith("Adapter strength:"):
                             settings["adapter_strength_ratio"] = float(line.replace("Adapter strength:", "").strip())
                         elif line.startswith("Pose strength:"):
