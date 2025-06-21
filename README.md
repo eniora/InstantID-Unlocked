@@ -11,7 +11,7 @@
 - Dropdown menu for the ability to change the Det Size for face detection in input/reference photos.
 - Auto opening of gradio interface after it's launched.
 - Negative Prompt Profiles dropdown.
-- New default RealVisXL 4.0 model, which is much better than the default YamerMIX (you can still download the base model of your choice by changing the huggingface model path inside instant-id-gradio-unlocked.py file and it will be downloaded automatically in the "models" folder on root). /John6666/albedobase-xl-v31large-sdxl/ is a very good model for styles and general use as well, almost wanted to make it the default one.
+- New default CyberRealistic XL 5.8 model, which is much better than the default YamerMIX (you can still download the base model of your choice by changing the huggingface model path inside instant-id-gradio-unlocked.py file and it will be downloaded automatically in the "models" folder on root). /John6666/albedobase-xl-v31large-sdxl/ or SG161222/RealVisXL_V4.0 are very good models for styles and general use as well.
 - Ability to choose how many images to be generated after clicking on "generate", each with random seed.
 - Improved VRAM usage compared to the original repo.
 - Added many more styles in the style template.
