@@ -387,15 +387,15 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lora_ar
         else:
             pipe.disable_lora()
 
-            scheduler_class_name = scheduler.split("-")[0]
+        scheduler_class_name = scheduler.split("-")[0]
 
-            add_kwargs = {}
-            if len(scheduler.split("-")) > 1:
-                add_kwargs["use_karras_sigmas"] = True
-            if len(scheduler.split("-")) > 2:
-                add_kwargs["algorithm_type"] = "sde-dpmsolver++"
-            scheduler = getattr(diffusers, scheduler_class_name)
-            pipe.scheduler = scheduler.from_config(pipe.scheduler.config, **add_kwargs)
+        add_kwargs = {}
+        if len(scheduler.split("-")) > 1:
+            add_kwargs["use_karras_sigmas"] = True
+        if len(scheduler.split("-")) > 2:
+            add_kwargs["algorithm_type"] = "sde-dpmsolver++"
+        scheduler = getattr(diffusers, scheduler_class_name)
+        pipe.scheduler = scheduler.from_config(pipe.scheduler.config, **add_kwargs)
 
         if face_image_path is None:
             raise gr.Error(
@@ -682,7 +682,7 @@ Scheduler: {scheduler}"""
                         minimum=1,
                         maximum=100,
                         step=1,
-                        value=30,
+                        value=25,
                     )
                     guidance_scale = gr.Slider(
                         label="Guidance scale",
@@ -699,17 +699,29 @@ Scheduler: {scheduler}"""
                         value=42,
                     )
                     schedulers = [
-                        "DEISMultistepScheduler",
-                        "HeunDiscreteScheduler",
                         "EulerDiscreteScheduler",
+                        "DPMSolverSDEScheduler",
+                        "KDPM2AncestralDiscreteScheduler",
+                        "DDIMScheduler",
+                        "DDPMScheduler",
+                        "PNDMScheduler",
+                        "EulerAncestralDiscreteScheduler",
+                        "HeunDiscreteScheduler",
+                        "LMSDiscreteScheduler",
+                        "DEISMultistepScheduler",
+                        "KDPM2DiscreteScheduler",
                         "DPMSolverMultistepScheduler",
                         "DPMSolverMultistepScheduler-Karras",
                         "DPMSolverMultistepScheduler-Karras-SDE",
+                        "UniPCMultistepScheduler",
+                        "UnCLIPScheduler",
+                        "LCMScheduler",
                     ]
                     scheduler = gr.Dropdown(
                         label="Schedulers",
                         choices=schedulers,
                         value="EulerDiscreteScheduler",
+                        info="EulerDiscreteScheduler and DPMSolverSDEScheduler are usually the best, Euler is fast and relatively good that's why it's the default one"
                     )
                     randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
                     enhance_face_region = gr.Checkbox(label="Enhance non-face region", value=True)
@@ -852,7 +864,7 @@ Scheduler: {scheduler}"""
                     "prompt": "",
                     "negative_prompt": "",
                     "seed": 42,
-                    "num_steps": 30,
+                    "num_steps": 25,
                     "guidance_scale": 4.0,
                     "identitynet_strength_ratio": 0.75,
                     "adapter_strength_ratio": 0.75,
