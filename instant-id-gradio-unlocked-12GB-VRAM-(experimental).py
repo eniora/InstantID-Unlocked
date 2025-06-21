@@ -532,7 +532,7 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
             print(f"Guidance scale: {guidance_scale}")
             print(f"Seed: {seed + i}")
             print(f"Model: {model_name}")
-            print(f"ControlNet selection: {controlnet_selection}")
+            print(f"ControlNet selection: {controlnet_selection} | Strengths - Pose: {pose_strength}, Canny: {canny_strength}, Depth: {depth_strength}")
             print(f"IdentityNet strength: {identitynet_strength_ratio}")
             print(f"Adapter strength: {adapter_strength_ratio}")
             print(f"LoRA scale: {lora_scale if enable_lora else 'Disabled'}")
@@ -571,6 +571,9 @@ ControlNet selection: {controlnet_selection}
 Image size: {width}x{height}
 IdentityNet strength: {identitynet_strength_ratio}
 Adapter strength: {adapter_strength_ratio}
+Pose strength: {pose_strength}
+Canny strength: {canny_strength}
+Depth strength: {depth_strength}
 LoRA scale: {lora_scale if enable_lora else 'Disabled'}
 LoRA selection: {lora_selection if enable_lora else 'None'}
 Scheduler: {scheduler}"""
@@ -923,7 +926,9 @@ Scheduler: {scheduler}"""
                     "enhance_face_region": True,
                     "style": DEFAULT_STYLE_NAME,
                     "lora_selection": "",
-                    "randomize_seed": False
+                    "randomize_seed": False,
+                    "controlnet_selection": [],
+                    "model_name": DEFAULT_MODEL
                 }
                 
                 if metadata_text:
@@ -969,6 +974,19 @@ Scheduler: {scheduler}"""
                         elif line.startswith("Style:"):
                             style_name = line.replace("Style:", "").strip()
                             settings["style"] = style_name if style_name in STYLE_NAMES else DEFAULT_STYLE_NAME
+                        elif line.startswith("ControlNet selection:"):
+                            cn_selection = line.replace("ControlNet selection:", "").strip()
+                            if cn_selection.startswith("["):
+                                try:
+                                    cn_list = eval(cn_selection)
+                                    if isinstance(cn_list, list):
+                                        settings["controlnet_selection"] = [x.strip("'\" ") for x in cn_list]
+                                except:
+                                    pass
+                        elif line.startswith("Model:"):
+                            model_name = line.replace("Model:", "").strip()
+                            if model_name in AVAILABLE_MODELS:
+                                settings["model_name"] = model_name
                 
                 return [
                     settings["prompt"],
@@ -987,7 +1005,9 @@ Scheduler: {scheduler}"""
                     settings["enhance_face_region"],
                     settings["lora_scale"],
                     settings["lora_selection"] if settings["enable_lora"] else None,
-                    settings["randomize_seed"]
+                    settings["randomize_seed"],
+                    settings["controlnet_selection"],
+                    settings["model_name"]
                 ]
             
             apply_metadata_btn.click(
@@ -1010,7 +1030,9 @@ Scheduler: {scheduler}"""
                     enhance_face_region,
                     lora_scale,
                     lora_selection,
-                    randomize_seed
+                    randomize_seed,
+                    controlnet_selection,
+                    model_name
                 ]
             )
 
