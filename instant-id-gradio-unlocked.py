@@ -706,6 +706,8 @@ Scheduler: {scheduler}"""
                     schedulers = [
                         "EulerDiscreteScheduler",
                         "DPMSolverSDEScheduler",
+                        "DPMSolverMultistepScheduler-Karras-SDE",
+                        "DPMSolverMultistepScheduler-SDE",
                         "KDPM2AncestralDiscreteScheduler",
                         "DDIMScheduler",
                         "DDPMScheduler",
@@ -716,8 +718,6 @@ Scheduler: {scheduler}"""
                         "DEISMultistepScheduler",
                         "KDPM2DiscreteScheduler",
                         "DPMSolverMultistepScheduler",
-                        "DPMSolverMultistepScheduler-Karras",
-                        "DPMSolverMultistepScheduler-Karras-SDE",
                         "UniPCMultistepScheduler",
                         "UnCLIPScheduler",
                         "LCMScheduler",
@@ -726,7 +726,7 @@ Scheduler: {scheduler}"""
                         label="Schedulers",
                         choices=schedulers,
                         value="EulerDiscreteScheduler",
-                        info="EulerDiscreteScheduler and DPMSolverSDEScheduler are usually the best, Euler is fast and relatively good that's why it's the default one"
+                        info="EulerDiscreteScheduler and DPMSolverSDE/Multistep Schedulers are usually the best, Euler is fast and relatively good that's why it's the default one"
                     )
                     randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
                     enhance_face_region = gr.Checkbox(label="Enhance non-face region", value=True)
