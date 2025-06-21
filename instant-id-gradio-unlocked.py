@@ -97,7 +97,7 @@ def get_available_models():
     return model_folders
 
 AVAILABLE_MODELS = get_available_models()
-DEFAULT_MODEL = "SG161222/RealVisXL_V4.0"
+DEFAULT_MODEL = "John6666/cyberrealistic-xl-v58-sdxl"
 
 # Detection size options
 DET_SIZE_OPTIONS = {
@@ -188,7 +188,7 @@ def restart_server():
     # Kill the current process
     os.execl(python, python, script, *args)
 
-def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lora_arg=False):
+def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", enable_lora_arg=False):
     pipe = None
 
     def toggle_lora_ui(enable_lora):
@@ -301,7 +301,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lora_ar
         
         if model_name.endswith(".ckpt") or model_name.endswith(".safetensors"):
             scheduler_kwargs = hf_hub_download(
-                repo_id="SG161222/RealVisXL_V4.0",
+                repo_id="John6666/cyberrealistic-xl-v58-sdxl",
                 subfolder="scheduler",
                 filename="scheduler_config.json",
             )
@@ -977,7 +977,7 @@ Scheduler: {scheduler}"""
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--pretrained_model_name_or_path", type=str, default="SG161222/RealVisXL_V4.0"
+        "--pretrained_model_name_or_path", type=str, default="John6666/cyberrealistic-xl-v58-sdxl"
     )
     parser.add_argument(
         "--enable_lora", type=bool, default=os.environ.get("ENABLE_lora", False)
