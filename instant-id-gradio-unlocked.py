@@ -394,8 +394,8 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
             add_kwargs["use_karras_sigmas"] = True
         if len(scheduler.split("-")) > 2:
             add_kwargs["algorithm_type"] = "sde-dpmsolver++"
-        scheduler = getattr(diffusers, scheduler_class_name)
-        pipe.scheduler = scheduler.from_config(pipe.scheduler.config, **add_kwargs)
+        scheduler_class = getattr(diffusers, scheduler_class_name)
+        pipe.scheduler = scheduler_class.from_config(pipe.scheduler.config, **add_kwargs)
 
         if face_image_path is None:
             raise gr.Error(
