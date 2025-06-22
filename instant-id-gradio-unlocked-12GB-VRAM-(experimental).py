@@ -432,6 +432,9 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
         else:
             pipe.disable_lora()
 
+        face_image_filename = os.path.basename(face_image_path) if face_image_path else "None"
+        pose_image_filename = os.path.basename(pose_image_path) if pose_image_path else "None"
+
         scheduler_class_name = scheduler.split("-")[0]
 
         add_kwargs = {}
@@ -528,6 +531,8 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
         generation_infos = []
         for i in range(num_outputs):
             print(f"Generating image {i + 1} of {num_outputs}...")
+            print(f"Input face image: {os.path.basename(face_image_path) if face_image_path else 'None'}")
+            print(f"Reference pose image: {os.path.basename(pose_image_path) if pose_image_path else 'None'}")
             print(f"Steps: {num_steps}")
             print(f"Guidance scale: {guidance_scale}")
             print(f"Seed: {seed + i}")
@@ -539,6 +544,7 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
             print(f"LoRA selection: {lora_selection if enable_lora else 'None'}")
             print(f"Scheduler: {scheduler}")
             print(f"Image size: {width}x{height}\n")
+
             generator = torch.Generator(device=device).manual_seed(seed + i)
             result = pipe(
                 prompt=prompt,
@@ -561,6 +567,8 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
             # Create generation info
             info_text = f"""Prompt: {prompt}
 Negative Prompt: {negative_prompt}
+Input Face Image: {face_image_filename}
+Reference Pose Image: {pose_image_filename}
 Detection size: {current_det_size}
 Generating image {i + 1} of {num_outputs}...
 Steps: {num_steps}
@@ -900,7 +908,7 @@ Scheduler: {scheduler}"""
                 )
 
             with gr.Row():
-                apply_metadata_btn = gr.Button("Apply All Settings", variant="secondary")
+                apply_metadata_btn = gr.Button("Apply to all fields (except for image size resolution)", variant="secondary")
             
             metadata_input.change(
                 fn=lambda x: (x, read_png_metadata(x) if x is not None else "No image selected"),
