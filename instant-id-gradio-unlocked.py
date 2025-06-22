@@ -489,6 +489,7 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
             print(f"Input face image: {os.path.basename(face_image_path) if face_image_path else 'None'}")
             print(f"Reference pose image: {os.path.basename(pose_image_path) if pose_image_path else 'None'}")
             print(f"Steps: {num_steps}")
+            print(f"Enhance non-face region: {'True' if enhance_face_region else 'False'}")
             print(f"Guidance scale: {guidance_scale}")
             print(f"Seed: {seed + i}")
             print(f"Model: {model_name}")
@@ -532,6 +533,7 @@ Seed: {seed + i}
 Model: {model_name}
 ControlNet selection: {controlnet_selection}
 Image size: {width}x{height}
+Enhance non-face region: {enhance_face_region}
 IdentityNet strength: {identitynet_strength_ratio}
 Adapter strength: {adapter_strength_ratio}
 Pose strength: {pose_strength}
@@ -551,7 +553,7 @@ Scheduler: {scheduler}"""
 
     # Description
     title = r"""
-    <h1 align="center">InstantID: Zero-shot Identity-Preserving Generation in Seconds</h1>
+    <h1 align="center">InstantID: Unlocked. Zero-shot Identity-Preserving Generation</h1>
     """
 
     description = r"""
@@ -567,9 +569,8 @@ Scheduler: {scheduler}"""
     3. (Optional) You can select multiple ControlNet models to control the generation process. The default is to use the IdentityNet only. The ControlNet models include pose skeleton, canny, and depth. You can adjust the strength of each ControlNet model to control the generation process.
     4. Enter a text prompt, as done in normal text-to-image models.
     5. Click the Generate button to begin customization.
-    6. Share your customized photo with your friends and enjoy! 😊
     ```
-    <b>Official Github page</b> for <a href='https://github.com/InstantID/InstantID' target='_blank'><b>InstantID: Zero-shot Identity-Preserving Generation in Seconds</b></a>.<br>
+    <b>Github fork page</b> for <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>InstantID: Unlocked</b></a>.<br>
     """
 
     tips = r"""
@@ -916,6 +917,8 @@ Scheduler: {scheduler}"""
                             if lora_scale_str != "Disabled":
                                 settings["lora_scale"] = float(lora_scale_str)
                             settings["enable_lora"] = lora_scale_str != "Disabled"
+                        elif line.startswith("Enhance non-face region:"):
+                            settings["enhance_face_region"] = "true" in line.lower()
                         elif line.startswith("IdentityNet strength:"):
                             settings["identitynet_strength_ratio"] = float(line.replace("IdentityNet strength:", "").strip())
                         elif line.startswith("Scheduler:"):
