@@ -1,5 +1,5 @@
 <div align="center">
-<h1>InstantID: Zero-shot Identity-Preserving Generation in Seconds</h1>
+<h1>InstantID: Unlocked. Zero-shot Identity-Preserving Generation</h1>
 
 ## This fork adds the following:
 - Autosave of each generated image in the "output" folder, with an "Open Output Folder" button in the gradio GUI.
