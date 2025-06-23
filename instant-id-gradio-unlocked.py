@@ -371,6 +371,7 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
         file_prefix,
         progress=gr.Progress(track_tqdm=True),
     ):
+        file_prefix = f"InstantID_{file_prefix}" if file_prefix.strip() else "InstantID_"
         nonlocal pipe
         
         # Initialize face analysis with selected size
@@ -634,10 +635,9 @@ Scheduler: {scheduler}"""
                     minimum=1, maximum=50, step=1, value=1,
                 )
                 file_prefix = gr.Textbox(
-                    label="Saved file_name prefix",
-                    value=DEFAULT_FILE_PREFIX,
-                    placeholder="Default is InstantID_",
-                    info="Prefix for saved image filenames. It's recommended to keep 'InstantID_' in the name prefix so you know the image was generated from InstantID."
+                    label="Saved file name prefix. Leave empty to use the default 'InstantID_'",
+                    value="",
+                    placeholder="Optional, append a name to be added after 'InstantID_' in the saved images",
                 )
                 generate = gr.Button("Generate", variant="primary")
                 open_folder_btn = gr.Button("Open Output Folder")
