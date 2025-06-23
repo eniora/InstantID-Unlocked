@@ -259,7 +259,7 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
 
     def resize_img(
         input_image,
-        max_side=2284,
+        max_side=4084,
         min_side=754,
         size=None,
         pad_to_max_side=False,
@@ -619,10 +619,10 @@ Scheduler: {scheduler}"""
                 resize_max_side_slider = gr.Slider(
                     label="Max image size for resizing",
                     minimum=754,
-                    maximum=2284,
+                    maximum=4084,
                     step=90,
                     value=1280,
-                    info="Controls the max_side for face and pose image resizing. Default is 1280. Higher than 1300 may result in artifacts/bad anatomy but up to 1924 can sometimes yield good results",
+                    info="Controls the max_side for face/pose image resizing. Default is 1280 which is good. Up to 1924 can sometimes yield good results. Above 2000 is mostly only for super ultra wide/vertical input/reference pose photos where the resolution will be high only on one side, and it works well.",
                 )
                 num_outputs = gr.Slider(
                     label="Number of images to generate",
