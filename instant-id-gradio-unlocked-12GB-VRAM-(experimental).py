@@ -26,16 +26,18 @@ def open_output_folder():
 import PIL
 from PIL import Image
 
-def save_images(images, output_dir="output", generation_info=None):
+DEFAULT_FILE_PREFIX = "InstantID_"
+
+def save_images(images, output_dir="output", generation_info=None, prefix=DEFAULT_FILE_PREFIX):
     os.makedirs(output_dir, exist_ok=True)
 
-    existing = [f for f in os.listdir(output_dir) if f.startswith("InstantID_") and f.endswith(".png")]
-    used_numbers = [int(f.split("_")[1].split(".")[0]) for f in existing if f.split("_")[1].split(".")[0].isdigit()]
+    existing = [f for f in os.listdir(output_dir) if f.startswith(prefix) and f.endswith(".png")]
+    used_numbers = [int(f[len(prefix):].split(".")[0]) for f in existing if f[len(prefix):].split(".")[0].isdigit()]
     start_index = max(used_numbers, default=-1) + 1
 
     paths = []
     for i, img in enumerate(images):
-        filename = f"InstantID_{start_index + i}.png"
+        filename = f"{prefix}{start_index + i}.png"
         path = os.path.join(output_dir, filename)
         img.save(path, pnginfo=generation_info[i] if generation_info else None)
         paths.append(path)
@@ -238,6 +240,8 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
             pipe.scheduler.config
         )
 
+    file_prefix = DEFAULT_FILE_PREFIX
+
     def toggle_lora_ui(enable_lora):
         return [
             gr.update(visible=enable_lora),
@@ -409,6 +413,7 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
         num_outputs,
         model_name,
         det_size_name,
+        file_prefix,
         progress=gr.Progress(track_tqdm=True),
     ):
         nonlocal pipe
@@ -591,7 +596,7 @@ Scheduler: {scheduler}"""
             png_info = PIL.PngImagePlugin.PngInfo()
             png_info.add_text("Generation Parameters", info_text)
             generation_infos.append(png_info)
-            save_images([image], generation_info=[png_info])
+            save_images([image], generation_info=[png_info], prefix=file_prefix)
             print(f"(√) Finished generating image {i + 1} of {num_outputs}\n")
 
         return images, gr.update(visible=True)
@@ -672,6 +677,12 @@ Scheduler: {scheduler}"""
                 num_outputs = gr.Slider(
                     label="Number of images to generate",
                     minimum=1, maximum=50, step=1, value=1,
+                )
+                file_prefix = gr.Textbox(
+                    label="Saved file_name prefix",
+                    value=DEFAULT_FILE_PREFIX,
+                    placeholder="Default is InstantID_",
+                    info="Prefix for saved image filenames. It's recommended to keep 'InstantID_' in the name prefix so you know the image was generated from InstantID."
                 )
                 generate = gr.Button("Generate", variant="primary")
                 open_folder_btn = gr.Button("Open Output Folder")
@@ -882,6 +893,7 @@ Scheduler: {scheduler}"""
                     num_outputs,
                     model_name,
                     det_size_name,
+                    file_prefix,
                 ],
                 outputs=[gallery, usage_tips],
             )
