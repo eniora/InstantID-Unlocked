@@ -16,6 +16,7 @@ import PIL.PngImagePlugin
 warnings.filterwarnings("ignore", message=".*Overwriting tiny_vit_.* in registry.*")
 
 os.environ["NO_ALBUMENTATIONS_UPDATE"] = "1"
+# os.environ["TRANSFORMERS_OFFLINE"] = "1"
 os.environ["HF_HUB_CACHE"] = "models"
 os.environ["HF_HUB_CACHE_OFFLINE"] = "true"
 
@@ -769,19 +770,22 @@ Scheduler: {scheduler}"""
                     )
                     schedulers = [
                         "EulerDiscreteScheduler",
-                        "DPMSolverSDEScheduler",
-                        "DPMSolverMultistepScheduler-Karras-SDE",
+                        "DPMSolverMultistepScheduler-Karras",
                         "DPMSolverMultistepScheduler-SDE",
+                        "DPMSolverMultistepScheduler",
                         "KDPM2AncestralDiscreteScheduler",
+                        "KDPM2DiscreteScheduler",
+                        "DPMSolverSinglestepScheduler-Karras",
+                        "DPMSolverSinglestepScheduler",
+                        "DPMSolverSDEScheduler-Karras",
+                        "DPMSolverSDEScheduler",
+                        "EulerAncestralDiscreteScheduler",
                         "DDIMScheduler",
                         "DDPMScheduler",
                         "PNDMScheduler",
-                        "EulerAncestralDiscreteScheduler",
                         "HeunDiscreteScheduler",
                         "LMSDiscreteScheduler",
                         "DEISMultistepScheduler",
-                        "KDPM2DiscreteScheduler",
-                        "DPMSolverMultistepScheduler",
                         "UniPCMultistepScheduler",
                         "UnCLIPScheduler",
                         "LCMScheduler",
@@ -790,7 +794,7 @@ Scheduler: {scheduler}"""
                         label="Schedulers",
                         choices=schedulers,
                         value="EulerDiscreteScheduler",
-                        info="EulerDiscreteScheduler and DPMSolverSDE/Multistep Schedulers are usually the best, Euler is fast and relatively good that's why it's the default one"
+                        info="EulerDiscreteScheduler, DPMSolverMultistep/SDE and KDPM2 Schedulers are usually the best, Euler is fast and relatively good that's why it's the default one"
                     )
                     randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
                     enhance_face_region = gr.Checkbox(label="Enhance non-face region", value=True)
