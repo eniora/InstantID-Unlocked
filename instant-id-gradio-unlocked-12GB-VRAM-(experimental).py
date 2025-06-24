@@ -770,23 +770,21 @@ Scheduler: {scheduler}"""
                     )
                     schedulers = [
                         "EulerDiscreteScheduler",
-                        "DPMSolverMultistepScheduler-Karras",
-                        "DPMSolverMultistepScheduler-SDE",
+                        "DPMSolverMultistepScheduler-Karras-SDE",
                         "DPMSolverMultistepScheduler",
                         "KDPM2AncestralDiscreteScheduler",
                         "KDPM2DiscreteScheduler",
-                        "DPMSolverSinglestepScheduler-Karras",
                         "DPMSolverSinglestepScheduler",
-                        "DPMSolverSDEScheduler-Karras",
+                        "DPMSolverSDEScheduler-Karras-SDE",
                         "DPMSolverSDEScheduler",
                         "EulerAncestralDiscreteScheduler",
                         "DDIMScheduler",
                         "DDPMScheduler",
-                        "PNDMScheduler",
                         "HeunDiscreteScheduler",
                         "LMSDiscreteScheduler",
                         "DEISMultistepScheduler",
                         "UniPCMultistepScheduler",
+                        "DPMSolverSinglestepScheduler-Karras-SDE",
                         "LCMScheduler",
                     ]
                     scheduler = gr.Dropdown(
