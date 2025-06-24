@@ -787,7 +787,6 @@ Scheduler: {scheduler}"""
                         "LMSDiscreteScheduler",
                         "DEISMultistepScheduler",
                         "UniPCMultistepScheduler",
-                        "UnCLIPScheduler",
                         "LCMScheduler",
                     ]
                     scheduler = gr.Dropdown(
