@@ -1,7 +1,7 @@
 # torch and torchvision must be installed separately with the correct CUDA version:
 # pip install torch==2.7.1+cu128 torchvision==0.22.1+cu128 --index-url https://download.pytorch.org/whl/cu128
 
-diffusers==0.25.1
+diffusers==0.33.1
 transformers==4.37.1
 accelerate==0.32.1
 safetensors==0.5.3
@@ -9,7 +9,7 @@ einops==0.8.1
 onnxruntime-gpu==1.22.0
 spaces==0.19.4
 omegaconf==2.3.0
-huggingface-hub==0.23.1
+huggingface-hub==0.33.0
 opencv-python==4.11.0.86
 insightface==0.7.3
 gradio==5.32.1
