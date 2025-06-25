@@ -17,3 +17,4 @@ gradio-client==1.10.2
 controlnet_aux==0.0.10
 gdown==5.2.0
 peft==0.13.2
+torchsde==0.2.6
