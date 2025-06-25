@@ -401,7 +401,9 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
             scheduler_config = dict(pipe.scheduler.config.items())
 
             del pipe.scheduler
-            torch.cuda.empty_cache()
+
+            if not controlnet_selection:
+                torch.cuda.empty_cache()
 
             use_karras = "Karras" in scheduler
             use_sde = "SDE" in scheduler
