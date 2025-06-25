@@ -397,15 +397,25 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
         face_image_filename = os.path.basename(face_image_path) if face_image_path else "None"
         pose_image_filename = os.path.basename(pose_image_path) if pose_image_path else "None"
 
-        scheduler_class_name = scheduler.split("-")[0]
+        with torch.no_grad():
+            scheduler_config = dict(pipe.scheduler.config.items())
 
-        add_kwargs = {}
-        if len(scheduler.split("-")) > 1:
-            add_kwargs["use_karras_sigmas"] = True
-        if len(scheduler.split("-")) > 2:
-            add_kwargs["algorithm_type"] = "sde-dpmsolver++"
-        scheduler_class = getattr(diffusers, scheduler_class_name)
-        pipe.scheduler = scheduler_class.from_config(pipe.scheduler.config, **add_kwargs)
+            del pipe.scheduler
+            torch.cuda.empty_cache()
+
+            use_karras = "Karras" in scheduler
+            use_sde = "SDE" in scheduler
+    
+            if "DPMSolver" in scheduler.split("-")[0]:
+                scheduler_class = getattr(diffusers, scheduler.split("-")[0])
+                pipe.scheduler = scheduler_class.from_config(
+                    scheduler_config,
+                    use_karras_sigmas=use_karras,
+                    algorithm_type="sde-dpmsolver++" if use_sde else "dpmsolver++"
+                )
+            else:
+                scheduler_class = getattr(diffusers, scheduler.split("-")[0])
+                pipe.scheduler = scheduler_class.from_config(scheduler_config)
 
         if face_image_path is None:
             raise gr.Error(
@@ -556,6 +566,7 @@ Scheduler: {scheduler}"""
             save_images([image], generation_info=[png_info], prefix=file_prefix)
             print(f"(√) Finished generating image {i + 1} of {num_outputs}\n")
 
+        torch.cuda.empty_cache()
         return images, gr.update(visible=True)
 
     # Description
@@ -727,11 +738,13 @@ Scheduler: {scheduler}"""
                         "DPMSolverMultistepScheduler",
                         "DPMSolverMultistepScheduler-Karras",
                         "DPMSolverMultistepScheduler-Karras-SDE",
+                        "DPMSolverSDEScheduler-Karras",
+                        "DPMSolverSDEScheduler",
                         "KDPM2AncestralDiscreteScheduler",
                         "KDPM2DiscreteScheduler",
                         "DPMSolverSinglestepScheduler",
-                        "DPMSolverSDEScheduler-Karras-SDE",
-                        "DPMSolverSDEScheduler",
+                        "DPMSolverSinglestepScheduler-Karras",
+                        "DPMSolverSinglestepScheduler-Karras-SDE",
                         "EulerAncestralDiscreteScheduler",
                         "DDIMScheduler",
                         "DDPMScheduler",
@@ -739,7 +752,6 @@ Scheduler: {scheduler}"""
                         "LMSDiscreteScheduler",
                         "DEISMultistepScheduler",
                         "UniPCMultistepScheduler",
-                        "DPMSolverSinglestepScheduler-Karras-SDE",
                         "LCMScheduler",
                     ]
                     scheduler = gr.Dropdown(
