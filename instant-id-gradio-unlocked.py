@@ -654,14 +654,14 @@ Scheduler: {scheduler}"""
                     minimum=0,
                     maximum=1.5,
                     step=0.05,
-                    value=0.75,
+                    value=0.7,
                 )
                 adapter_strength_ratio = gr.Slider(
                     label="Image adapter strength (for detail)",
                     minimum=0,
                     maximum=1.5,
                     step=0.05,
-                    value=0.75,
+                    value=0.65,
                 )
                 with gr.Accordion("Controlnet", open=False):
                     controlnet_selection = gr.CheckboxGroup(
