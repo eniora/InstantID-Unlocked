@@ -724,9 +724,9 @@ Scheduler: {scheduler}"""
                     )
                     schedulers = [
                         "EulerDiscreteScheduler",
-                        "DPMSolverMultistepScheduler-Karras-SDE",
-                        "DPMSolverMultistepScheduler-Karras",
                         "DPMSolverMultistepScheduler",
+                        "DPMSolverMultistepScheduler-Karras",
+                        "DPMSolverMultistepScheduler-Karras-SDE",
                         "KDPM2AncestralDiscreteScheduler",
                         "KDPM2DiscreteScheduler",
                         "DPMSolverSinglestepScheduler",
