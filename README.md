@@ -22,7 +22,7 @@ Git clone this fork (Git clone https://github.com/eniora/InstantID-Unlocked/) th
 - Install the requirements.txt file with "pip install -r requirements.txt" and then install torch and cuda with "pip install torch==2.7.1+cu128 torchvision==0.22.1+cu128 --index-url https://download.pytorch.org/whl/cu128"
 - For downloading the face encoder models and instructions see the original repo description below.
 
-- Run only using "instant-id-gradio-unlocked.py" from the root folder. The file "instant-id-gradio-unlocked-12GB-VRAM-(experimental).py" is just an experimental file I modified from "instant-id-gradio-unlocked.py" and it's much faster at image generation on 12GB VRAM cards such as the RTX 3060, it's probably also faster on 8GB cards but I only tried it on 12GB. If you have 16GB VRAM or more just use the normal "instant-id-gradio-unlocked.py" file.
+- Run only using "instant-id-gradio-unlocked.py" from the root folder. The file "instant-id-gradio-unlocked-24GB-VRAM.py" is just an experimental file I modified from "instant-id-gradio-unlocked.py" and it's a bit faster at image generation on 24GB VRAM cards such as the RTX 3090.
 - Tested only on Windows, you may need to do extra steps to run the gradio interface successfully on MacOS/Linux
 
 [**Qixun Wang**](https://github.com/wangqixun)<sup>12</sup> · [**Xu Bai**](https://huggingface.co/baymin0220)<sup>12</sup> · [**Haofan Wang**](https://haofanwang.github.io/)<sup>12*</sup> · [**Zekui Qin**](https://github.com/ZekuiQin)<sup>12</sup> · [**Anthony Chen**](https://antonioo-c.github.io/)<sup>123</sup>
