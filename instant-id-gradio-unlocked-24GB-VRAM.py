@@ -518,6 +518,7 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
             print(f"LoRA scale: {lora_scale if enable_lora else 'Disabled'}")
             print(f"LoRA selection: {lora_selection if enable_lora else 'None'}")
             print(f"Scheduler: {scheduler}")
+            print(f"Max resize side: {resize_max_side}")
             print(f"Image size: {width}x{height}\n")
 
             generator = torch.Generator(device=device).manual_seed(seed + i)
@@ -550,6 +551,7 @@ Guidance scale: {guidance_scale}
 Seed: {seed + i}
 Model: {model_name}
 ControlNet selection: {controlnet_selection}
+Max resize side: {resize_max_side}
 Image size: {width}x{height}
 Enhance non-face region: {enhance_face_region}
 IdentityNet strength: {identitynet_strength_ratio}
@@ -890,7 +892,7 @@ Scheduler: {scheduler}"""
                 )
 
             with gr.Row():
-                apply_metadata_btn = gr.Button("Apply to all fields (except for image size resolution)", variant="secondary")
+                apply_metadata_btn = gr.Button("Apply to all fields", variant="secondary")
             
             metadata_input.change(
                 fn=lambda x: (x, read_png_metadata(x) if x is not None else "No image selected"),
@@ -902,6 +904,7 @@ Scheduler: {scheduler}"""
                 settings = {
                     "prompt": "",
                     "negative_prompt": "",
+                    "resize_max_side": 1280,
                     "seed": 42,
                     "num_steps": 25,
                     "guidance_scale": 4.0,
@@ -985,6 +988,11 @@ Scheduler: {scheduler}"""
                             for key, value in DET_SIZE_OPTIONS.items():
                                 if str(value) == size:
                                     settings["det_size_name"] = key
+                        elif line.startswith("Max resize side:"):
+                            try:
+                                settings["resize_max_side"] = int(line.replace("Max resize side:", "").strip())
+                            except:
+                                pass
                 
                 return [
                     settings["prompt"],
@@ -1006,7 +1014,8 @@ Scheduler: {scheduler}"""
                     settings["randomize_seed"],
                     settings["controlnet_selection"],
                     settings["model_name"],
-                    settings["det_size_name"]
+                    settings["det_size_name"],
+                    settings["resize_max_side"]
                 ]
             
             apply_metadata_btn.click(
@@ -1032,7 +1041,8 @@ Scheduler: {scheduler}"""
                     randomize_seed,
                     controlnet_selection,
                     model_name,
-                    det_size_name
+                    det_size_name,
+                    resize_max_side_slider
                 ]
             )
 
