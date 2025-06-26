@@ -989,11 +989,10 @@ Scheduler: {scheduler}"""
                                 if str(value) == size:
                                     settings["det_size_name"] = key
                         elif line.startswith("Max resize side:"):
-                            try:
-                                settings["resize_max_side"] = int(line.replace("Max resize side:", "").strip())
-                            except:
-                                pass
-                
+                            size_str = line.replace("Max resize side:", "").strip()
+                            if size_str.isdigit():
+                                settings["resize_max_side"] = int(size_str)
+
                 return [
                     settings["prompt"],
                     settings["negative_prompt"],
@@ -1017,7 +1016,7 @@ Scheduler: {scheduler}"""
                     settings["det_size_name"],
                     settings["resize_max_side"]
                 ]
-            
+
             apply_metadata_btn.click(
                 fn=extract_all_settings,
                 inputs=metadata_output,
