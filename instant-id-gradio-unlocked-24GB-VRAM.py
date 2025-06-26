@@ -578,7 +578,6 @@ Scheduler: {scheduler}"""
     """
 
     description = r"""
-    <b>In some cases minimizing the browser/Gradio window while an image is being generated can help speed up the generation process significantly. You can track the progress in the CMD/Terminal window.</b>
     """
 
     article = r"""
@@ -590,6 +589,7 @@ Scheduler: {scheduler}"""
     3. (Optional) You can select multiple ControlNet models to control the generation process. The default is to use the IdentityNet only. The ControlNet models include pose skeleton, canny, and depth. You can adjust the strength of each ControlNet model to control the generation process.
     4. Enter a text prompt, as done in normal text-to-image models.
     5. Click the Generate button to begin customization.
+    6. In some cases, minimizing the browser/Gradio window while an image is being generated can help speed up the generation process significantly. You can track the progress in the CMD/Terminal window.
     ```
     <b>Github fork page</b> for <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>InstantID: Unlocked</b></a>.<br>
     """
