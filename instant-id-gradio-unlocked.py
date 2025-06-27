@@ -70,7 +70,7 @@ DEFAULT_STYLE_NAME = "(No style)"
 
 # Negative prompt presets
 NEGATIVE_PROMPT_PRESETS = {
-    "Default Negative Profile": "(lowres, low quality, worst quality:1.2), (text:1.2), watermark, deformed, ugly, blurry, long neck",
+    "Default Negative Profile": "(lowres, low quality, worst quality:1.2), (text:1.2), watermark, (frame:1.2), deformed, ugly, blurry, deformed cat, deformed photo",
     "Aggressive Negative Profile (InstantID default)": "(lowres, low quality, worst quality:1.2), (text:1.2), watermark, (frame:1.2), deformed, ugly, deformed eyes, blur, out of focus, blurry, deformed cat, deformed, photo, anthropomorphic cat, monochrome, photo, pet collar, gun, weapon, blue, 3d, drones, drone, buildings in background, green",
     "Negative Profile 1 (General use)": "low quality, worst quality, text, watermark, deformed, ugly",
     "Negative Profile 2 (Minimalist)": "(worst quality, low quality:1.2), deformed, blurry, mutated, extra limbs",
