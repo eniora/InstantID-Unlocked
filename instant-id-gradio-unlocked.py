@@ -550,7 +550,7 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
         generator = torch.Generator(device=device).manual_seed(seed)
 
         print("Start inference...")
-        print(f"Prompt: {prompt}, \nNegative Prompt: {negative_prompt}")
+        print(f"Prompt: {prompt}\nNegative Prompt: {negative_prompt}")
         print(f"Detection size: {current_det_size}")
 
         pipe.set_ip_adapter_scale(adapter_strength_ratio)
