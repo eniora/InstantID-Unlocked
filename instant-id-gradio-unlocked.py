@@ -70,7 +70,7 @@ DEFAULT_STYLE_NAME = "(No style)"
 
 # Negative prompt presets
 NEGATIVE_PROMPT_PRESETS = {
-    "Default Negative Profile": "(lowres, low quality, worst quality:1.2), (text:1.2), watermark, (frame:1.2), deformed, ugly, deformed eyes, blurry, deformed cat, deformed photo, anthropomorphic cat, pet collar, drones, drone",
+    "Default Negative Profile": "(lowres, low quality, worst quality:1.2), (text:1.2), watermark, deformed, ugly, blurry, long neck",
     "Aggressive Negative Profile (InstantID default)": "(lowres, low quality, worst quality:1.2), (text:1.2), watermark, (frame:1.2), deformed, ugly, deformed eyes, blur, out of focus, blurry, deformed cat, deformed, photo, anthropomorphic cat, monochrome, photo, pet collar, gun, weapon, blue, 3d, drones, drone, buildings in background, green",
     "Negative Profile 1 (General use)": "low quality, worst quality, text, watermark, deformed, ugly",
     "Negative Profile 2 (Minimalist)": "(worst quality, low quality:1.2), deformed, blurry, mutated, extra limbs",
@@ -87,6 +87,14 @@ NEGATIVE_PROMPT_PRESETS = {
     "Negative Profile 13 (Sculpted Statue Render)": "cartoon, photo, realism, painterly, anime, soft brush, flat colors, 2d, smooth shading",
     "Negative Profile 14 (Low Poly Stylized)": "realism, photo, anime, high detail, highres, 2d, blurry, smooth shading, overrendered, soft shadows",
 }
+
+DEFAULT_NEGATIVE_PROFILE = NEGATIVE_PROMPT_PRESETS["Default Negative Profile"]
+
+def on_style_change(style_name):
+    if style_name == "(No style)":
+        return gr.update(value=DEFAULT_NEGATIVE_PROFILE)
+    else:
+        return gr.update(value="")
 
 # Get available models from the models folder
 def get_available_models():
@@ -469,8 +477,8 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
                 f"Cannot find any input face image! Please upload the face image"
             )
 
-        if prompt is None:
-            prompt = "a person"
+        if not prompt:
+            prompt = "high quality"
 
         # apply the style template
         prompt, negative_prompt = apply_style(style_name, prompt, negative_prompt)
@@ -758,9 +766,10 @@ Scheduler: {scheduler}"""
                     )
                     negative_prompt = gr.Textbox(
                         label="Negative Prompt",
-                        placeholder="low quality",
+                        placeholder="When a Style template is selected, this becomes empty because styles have their own neg prompts. You can still add to it",
                         value=NEGATIVE_PROMPT_PRESETS["Default Negative Profile"],
                     )
+                    style.change(fn=on_style_change, inputs=style, outputs=negative_prompt)
                     num_steps = gr.Slider(
                         label="Number of sample steps",
                         minimum=1,
