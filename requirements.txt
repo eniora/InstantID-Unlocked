@@ -1,5 +1,6 @@
 # torch and torchvision must be installed separately with the correct CUDA version:
 # pip install torch==2.7.1+cu128 torchvision==0.22.1+cu128 --index-url https://download.pytorch.org/whl/cu128
+# you must have these exact same versions of packages listed below for full functionality of the program
 
 diffusers==0.32.2
 transformers==4.37.1
