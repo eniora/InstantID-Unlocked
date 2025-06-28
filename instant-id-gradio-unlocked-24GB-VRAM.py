@@ -399,6 +399,7 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
                 print(f"LoRA {lora_selection} loaded with scale {lora_scale}")
             else:
                 print(f"LoRA not found at {lora_path}, skipping load.")
+                gr.Warning(f"LoRA not found at {lora_path}. Skipping LoRA.")
         else:
             pipe.disable_lora()
 
