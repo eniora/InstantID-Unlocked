@@ -622,7 +622,12 @@ Scheduler: {scheduler}"""
             save_images([image], generation_info=[png_info], prefix=file_prefix)
             print(f"(√) Finished generating image {i + 1} of {num_outputs}\n")
 
+        if enable_lora and lora_selection:
+            pipe.unfuse_lora()
+            pipe.unload_lora_weights()
+
         torch.cuda.empty_cache()
+        import gc; gc.collect()
         return images, gr.update(visible=True)
 
     # Description
@@ -833,11 +838,11 @@ Scheduler: {scheduler}"""
                         info="Higher values can detect smaller faces if the face in the input/reference image is too small/distant or if you get a 'No face detected' message. Otherwise you don't need to change this value for most of the cases as the differences are barely noticeable."
                     )
                     enable_lora = gr.Checkbox(
-                        label="Enable Lora from your Loras folder",
+                        label="Enable a LoRA from your Loras folder",
                         value=enable_lora_arg,
                     )
                     lora_info = gr.Markdown(
-                        "Only one lora can be loaded. Use LoRA Scale strength 0 in the slider if you want to disable the Lora because if you generate an image with a Lora then uncheck the box for 'Enable Lora' and generate any image while it's disabled, you have to restart InstantID or click on the Restart Server button if you want it to be effective again.",
+                        "Only one lora can be loaded.",
                         visible=enable_lora_arg
                     )
                     enable_lora.change(
@@ -858,7 +863,7 @@ Scheduler: {scheduler}"""
                             maximum=2.0,
                             step=0.05,
                             value=1.0,
-                            info="Strength of the LoRA effect. Not recommended to go above ~1.4"
+                            info="Strength of the LoRA effect. Not recommended to go above ~1.3"
                         )
                         refresh_loras = gr.Button("🔄", elem_classes="toolbutton")
                     
