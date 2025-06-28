@@ -843,7 +843,7 @@ Scheduler: {scheduler}"""
                         value=enable_lora_arg,
                     )
                     lora_info = gr.Markdown(
-                        "Only one lora can be loaded. It's recommended to decrease IdentityNet and Adapter strengths to ~0.5 or even lower when using a LoRA.",
+                        "Only one lora can be loaded. Sometimes it's good to decrease IdentityNet/Adapter strengths when using a LoRA.",
                         visible=enable_lora_arg
                     )
                     enable_lora.change(
