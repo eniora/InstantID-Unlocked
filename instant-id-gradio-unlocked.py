@@ -954,8 +954,8 @@ Scheduler: {scheduler}"""
             with gr.Row():
                 apply_metadata_btn = gr.Button("Apply to all fields", variant="secondary")
             
-            metadata_input.change(
-                fn=lambda x: (x, read_png_metadata(x) if x is not None else "No image selected"),
+            metadata_input.upload(
+                fn=lambda x: (x, read_png_metadata(x) if x is not None else ""),
                 inputs=metadata_input,
                 outputs=[metadata_input, metadata_output]
             )
