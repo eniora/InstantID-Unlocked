@@ -523,8 +523,8 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
             print(f"ControlNet selection: {controlnet_selection} | Strengths - Pose: {pose_strength}, Canny: {canny_strength}, Depth: {depth_strength}")
             print(f"IdentityNet strength: {identitynet_strength_ratio}")
             print(f"Adapter strength: {adapter_strength_ratio}")
-            print(f"LoRA scale: {lora_scale if enable_lora else 'Disabled'}")
-            print(f"LoRA selection: {lora_selection if enable_lora else 'None'}")
+            print(f"LoRA scale: {'Disabled' if not (enable_lora and lora_selection and os.path.exists(os.path.join('./models/Loras', lora_selection))) else lora_scale}")
+            print(f"LoRA selection: {'None' if not (enable_lora and lora_selection and os.path.exists(os.path.join('./models/Loras', lora_selection))) else lora_selection}")
             print(f"Scheduler: {scheduler}")
             print(f"Max resize side: {resize_max_side}")
             print(f"Image size: {width}x{height}\n")
@@ -567,8 +567,8 @@ Adapter strength: {adapter_strength_ratio}
 Pose strength: {pose_strength}
 Canny strength: {canny_strength}
 Depth strength: {depth_strength}
-LoRA scale: {lora_scale if enable_lora else 'Disabled'}
-LoRA selection: {lora_selection if enable_lora else 'None'}
+LoRA scale: {'Disabled' if not (enable_lora and lora_selection and os.path.exists(os.path.join("./models/Loras", lora_selection))) else lora_scale}
+LoRA selection: {'None' if not (enable_lora and lora_selection and os.path.exists(os.path.join("./models/Loras", lora_selection))) else lora_selection}
 Scheduler: {scheduler}"""
 
             png_info = PIL.PngImagePlugin.PngInfo()
@@ -808,6 +808,7 @@ Scheduler: {scheduler}"""
                             label="Select LoRA",
                             choices=get_available_loras(),
                             value=None,
+                            allow_custom_value=True,
                             info="Select a LoRA from your /models/Loras folder. Only SDXL, pony and Illustrious Loras supported"
                         )
                         lora_scale = gr.Slider(
