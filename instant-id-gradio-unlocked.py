@@ -469,7 +469,13 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
                 )
             else:
                 scheduler_class = getattr(diffusers, scheduler.split("-")[0])
-                pipe.scheduler = scheduler_class.from_config(scheduler_config)
+                if scheduler.split("-")[0] in ["KDPM2AncestralDiscreteScheduler", "KDPM2DiscreteScheduler"] and use_karras:
+                    pipe.scheduler = scheduler_class.from_config(
+                        scheduler_config,
+                        use_karras_sigmas=use_karras
+                    )
+                else:
+                    pipe.scheduler = scheduler_class.from_config(scheduler_config)
 
         if face_image_path is None:
             raise gr.Error(
@@ -803,6 +809,8 @@ Scheduler: {scheduler}"""
                         "DPMSolverSDEScheduler-Karras",
                         "DPMSolverSDEScheduler",
                         "KDPM2DiscreteScheduler",
+                        "KDPM2DiscreteScheduler-Karras",
+                        "KDPM2AncestralDiscreteScheduler-Karras",
                         "DPMSolverSinglestepScheduler",
                         "DPMSolverSinglestepScheduler-Karras",
                         "DPMSolverSinglestepScheduler-Karras-SDE",
@@ -818,7 +826,7 @@ Scheduler: {scheduler}"""
                         label="Schedulers",
                         choices=schedulers,
                         value="DPMSolverMultistepScheduler",
-                        info="DPMSolverMultistep/SDE, KDPM2 and Euler schedulers are usually the best."
+                        info="DPMSolverMultistep/SDE, KDPM2, Euler and KDPM2 schedulers are usually the best."
                     )
                     randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
                     enhance_face_region = gr.Checkbox(label="Enhance non-face region", value=True)
