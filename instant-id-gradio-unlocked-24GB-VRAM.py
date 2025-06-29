@@ -779,7 +779,7 @@ Scheduler: {scheduler}"""
                         label="Schedulers",
                         choices=schedulers,
                         value="DPMSolverMultistepScheduler",
-                        info="DPMSolverMultistep/SDE, KDPM2, Euler and KDPM2 schedulers are usually the best."
+                        info="DPMSolver, KDPM2 and Euler are usually the best."
                     )
                     randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
                     enhance_face_region = gr.Checkbox(label="Enhance non-face region", value=True)
