@@ -1063,6 +1063,10 @@ Scheduler: {scheduler}"""
                     resize_max_side_slider,
                     controlnet_accordion
                 ]
+            ).then(
+                fn=toggle_lora_ui,
+                inputs=[enable_lora],
+                outputs=[lora_row, lora_selection, lora_scale]
             )
 
         gr.Markdown(article)
