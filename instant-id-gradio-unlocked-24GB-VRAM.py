@@ -649,11 +649,28 @@ Scheduler: {scheduler}"""
                     placeholder="A man/woman/girl/boy in/with/as etc.",
                     value="",
                 )
-                style = gr.Dropdown(
-                    label="Style template",
-                    choices=STYLE_NAMES,
-                    value=DEFAULT_STYLE_NAME,
+                negative_prompt = gr.Textbox(
+                    label="Negative Prompt",
+                    placeholder="When a Style template is selected, this becomes empty because styles have their own neg prompts. You can still add to it",
+                    value=NEGATIVE_PROMPT_PRESETS["Default Negative Profile"]
                 )
+                with gr.Accordion("Style Template, Negative Prompt Presets and File name prefix", open=False):
+                    style = gr.Dropdown(
+                        label="Style template",
+                        choices=STYLE_NAMES,
+                        value=DEFAULT_STYLE_NAME,
+                    )
+                    negative_prompt_preset = gr.Dropdown(
+                        label="Negative Prompt Profile",
+                        choices=list(NEGATIVE_PROMPT_PRESETS.keys()),
+                        value="Default Negative Profile",
+                        info="Select a Negative Prompt Profile, default one is fine but you may want to select a different one depending on your prompt style"
+                    )
+                    file_prefix = gr.Textbox(
+                        label="Saved file name prefix. Leave empty to use the default 'InstantID_'",
+                        value="",
+                        placeholder="Optional, append a name to be added after 'InstantID_' in the saved images",
+                    )
                 resize_max_side_slider = gr.Slider(
                     label="Max image size for resizing",
                     minimum=754,
@@ -665,11 +682,6 @@ Scheduler: {scheduler}"""
                 num_outputs = gr.Slider(
                     label="Number of images to generate",
                     minimum=1, maximum=50, step=1, value=1,
-                )
-                file_prefix = gr.Textbox(
-                    label="Saved file name prefix. Leave empty to use the default 'InstantID_'",
-                    value="",
-                    placeholder="Optional, append a name to be added after 'InstantID_' in the saved images",
                 )
                 generate = gr.Button("Generate", variant="primary")
                 open_folder_btn = gr.Button("Open Output Folder")
@@ -721,17 +733,6 @@ Scheduler: {scheduler}"""
                         value=0.40,
                     )
                 with gr.Accordion(open=True, label="Advanced Options"):
-                    negative_prompt_preset = gr.Dropdown(
-                        label="Negative Prompt Profile",
-                        choices=list(NEGATIVE_PROMPT_PRESETS.keys()),
-                        value="Default Negative Profile",
-                        info="Select a Negative Prompt Profile, default one is fine but you may want to select a different one depending on your prompt style"
-                    )
-                    negative_prompt = gr.Textbox(
-                        label="Negative Prompt",
-                        placeholder="When a Style template is selected, this becomes empty because styles have their own neg prompts. You can still add to it",
-                        value=NEGATIVE_PROMPT_PRESETS["Default Negative Profile"],
-                    )
                     style.change(fn=on_style_change, inputs=style, outputs=negative_prompt)
                     num_steps = gr.Slider(
                         label="Number of sample steps",
@@ -938,7 +939,7 @@ Scheduler: {scheduler}"""
                     "enhance_face_region": True,
                     "style": DEFAULT_STYLE_NAME,
                     "lora_selection": "",
-                    "randomize_seed": False,
+                    "randomize_seed": True,
                     "controlnet_selection": [],
                     "model_name": DEFAULT_MODEL,
                     "det_size_name": "640x640 (default)"
