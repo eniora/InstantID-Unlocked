@@ -796,9 +796,9 @@ Scheduler: {scheduler}"""
                         value=42,
                     )
                     schedulers = [
+                        "DPMSolverMultistepScheduler",
                         "DPMSolverMultistepScheduler-Karras",
                         "DPMSolverMultistepScheduler-Karras-SDE",
-                        "DPMSolverMultistepScheduler",
                         "EulerDiscreteScheduler",
                         "DPMSolverSDEScheduler-Karras",
                         "DPMSolverSDEScheduler",
@@ -817,7 +817,7 @@ Scheduler: {scheduler}"""
                     scheduler = gr.Dropdown(
                         label="Schedulers",
                         choices=schedulers,
-                        value="DPMSolverMultistepScheduler-Karras",
+                        value="DPMSolverMultistepScheduler",
                         info="DPMSolverMultistep/SDE, KDPM2 and Euler schedulers are usually the best."
                     )
                     randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
@@ -971,7 +971,7 @@ Scheduler: {scheduler}"""
                     "pose_strength": 0.40,
                     "canny_strength": 0.40,
                     "depth_strength": 0.40,
-                    "scheduler": "DPMSolverMultistepScheduler-Karras",
+                    "scheduler": "DPMSolverMultistepScheduler",
                     "enable_lora": False,
                     "lora_scale": 1.0,
                     "enhance_face_region": True,
