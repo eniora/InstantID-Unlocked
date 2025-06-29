@@ -454,8 +454,6 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
         with torch.no_grad():
             scheduler_config = dict(pipe.scheduler.config.items())
 
-            del pipe.scheduler
-
             if not controlnet_selection:
                 torch.cuda.empty_cache()
 
@@ -804,7 +802,6 @@ Scheduler: {scheduler}"""
                         "DPMSolverMultistepScheduler-Karras-SDE",
                         "DPMSolverSDEScheduler-Karras",
                         "DPMSolverSDEScheduler",
-                        "KDPM2AncestralDiscreteScheduler",
                         "KDPM2DiscreteScheduler",
                         "DPMSolverSinglestepScheduler",
                         "DPMSolverSinglestepScheduler-Karras",
@@ -814,15 +811,14 @@ Scheduler: {scheduler}"""
                         "DDPMScheduler",
                         "HeunDiscreteScheduler",
                         "LMSDiscreteScheduler",
-                        "DEISMultistepScheduler",
                         "UniPCMultistepScheduler",
                         "LCMScheduler",
                     ]
                     scheduler = gr.Dropdown(
                         label="Schedulers",
                         choices=schedulers,
-                        value="EulerDiscreteScheduler",
-                        info="EulerDiscreteScheduler, DPMSolverMultistep/SDE and KDPM2 Schedulers are usually the best, Euler is fast and relatively good that's why it's the default one"
+                        value="DPMSolverMultistepScheduler-Karras",
+                        info="EulerDiscreteScheduler, DPMSolverMultistep/SDE and KDPM2 Schedulers are usually the best."
                     )
                     randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
                     enhance_face_region = gr.Checkbox(label="Enhance non-face region", value=True)
