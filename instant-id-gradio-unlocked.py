@@ -737,7 +737,7 @@ Scheduler: {scheduler}"""
                     step=0.05,
                     value=0.65,
                 )
-                with gr.Accordion("Controlnet", open=False):
+                with gr.Accordion("Controlnet", open=False) as controlnet_accordion:
                     controlnet_selection = gr.CheckboxGroup(
                         ["pose", "canny", "depth"], label="Controlnet", value=[],
                         info="Use pose for skeleton inference, canny for edge detection, and depth for depth map estimation. You can try all three to control the generation process"
@@ -938,7 +938,7 @@ Scheduler: {scheduler}"""
                 queue=False,
             )
 
-        with gr.Accordion("PNG Metadata Reader", open=False):
+        with gr.Accordion("PNG Metadata Reader", open=True):
             with gr.Row():
                 metadata_input = gr.Image(
                     label="Drop PNG file here to read generation metadata",
@@ -961,8 +961,8 @@ Scheduler: {scheduler}"""
                 inputs=metadata_input,
                 outputs=[metadata_input, metadata_output]
             )
-            
             def extract_all_settings(metadata_text):
+                accordion_update = gr.update(open=False)
                 settings = {
                     "prompt": "",
                     "negative_prompt": "",
@@ -986,7 +986,6 @@ Scheduler: {scheduler}"""
                     "model_name": DEFAULT_MODEL,
                     "det_size_name": "640x640 (default)"
                 }
-                
                 if metadata_text:
                     for line in metadata_text.split('\n'):
                         line = line.strip()
@@ -1038,7 +1037,11 @@ Scheduler: {scheduler}"""
                                 try:
                                     cn_list = eval(cn_selection)
                                     if isinstance(cn_list, list):
-                                        settings["controlnet_selection"] = [x.strip("'\" ") for x in cn_list]
+                                        clean_list = [x.strip("'\" ") for x in cn_list]
+                                        settings["controlnet_selection"] = clean_list
+                                        known_cn = {"pose", "canny", "depth"}
+                                        if set(clean_list) & known_cn:
+                                            accordion_update = gr.update(open=True)
                                 except:
                                     pass
                         elif line.startswith("Model:"):
@@ -1076,7 +1079,8 @@ Scheduler: {scheduler}"""
                     settings["controlnet_selection"],
                     settings["model_name"],
                     settings["det_size_name"],
-                    settings["resize_max_side"]
+                    settings["resize_max_side"],
+                    accordion_update
                 ]
 
             apply_metadata_btn.click(
@@ -1103,7 +1107,8 @@ Scheduler: {scheduler}"""
                     controlnet_selection,
                     model_name,
                     det_size_name,
-                    resize_max_side_slider
+                    resize_max_side_slider,
+                    controlnet_accordion
                 ]
             )
 
