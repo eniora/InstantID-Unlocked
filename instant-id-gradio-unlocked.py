@@ -427,7 +427,6 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
     ):
         file_prefix = f"InstantID_{file_prefix}" if file_prefix.strip() else "InstantID_"
         nonlocal pipe
-
         import time
         overall_start_time = time.time()
         
