@@ -241,7 +241,6 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
             pretrained_model_name_or_path,
             controlnet=[controlnet_identitynet],
             torch_dtype=dtype,
-            safety_checker=None,
             feature_extractor=None,
         ).to(device)
 
@@ -386,7 +385,6 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
                 model_name,
                 controlnet=[controlnet_identitynet],
                 torch_dtype=dtype,
-                safety_checker=None,
                 feature_extractor=None,
             ).to(device)
 
