@@ -582,11 +582,12 @@ Scheduler: {scheduler}"""
             save_images([image], generation_info=[png_info], prefix=file_prefix)
             print(f"(√) Finished generating image {i + 1} of {num_outputs}\n")
 
+            torch.cuda.empty_cache()
+
         if enable_lora and lora_selection:
             pipe.unfuse_lora()
             pipe.unload_lora_weights()
 
-        torch.cuda.empty_cache()
         import gc; gc.collect()
         return images, gr.update(visible=True)
 
