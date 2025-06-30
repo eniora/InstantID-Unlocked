@@ -427,6 +427,9 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
     ):
         file_prefix = f"InstantID_{file_prefix}" if file_prefix.strip() else "InstantID_"
         nonlocal pipe
+
+        import time
+        overall_start_time = time.time()
         
         # Update detection size if changed
         update_det_size(det_size_name)
@@ -634,6 +637,8 @@ Scheduler: {scheduler}"""
             pipe.unload_lora_weights()
 
         import gc; gc.collect()
+        overall_elapsed_time = time.time() - overall_start_time
+        print(f"Total generation time: {overall_elapsed_time:.2f} seconds\n")
         return images, gr.update(visible=True)
 
     # Description
