@@ -494,6 +494,15 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
                 y1 = max(0, y1 - padding_y)
                 x2 = min(width, x2 + padding_x)
                 y2 = min(height, y2 + padding_y)
+            elif enhance_strength == "Extreme enhancement":
+                # Expand the box by 40%
+                padding_x = int((x2 - x1) * 0.4)
+                padding_y = int((y2 - y1) * 0.4)
+
+                x1 = max(0, x1 - padding_x)
+                y1 = max(0, y1 - padding_y)
+                x2 = min(width, x2 + padding_x)
+                y2 = min(height, y2 + padding_y)
 
             control_mask[y1:y2, x1:x2] = 255
             control_mask = Image.fromarray(control_mask)
@@ -804,7 +813,7 @@ Scheduler: {scheduler}"""
                         enhance_face_region = gr.Checkbox(label="Enhance non-face region", value=True)
                         enhance_strength = gr.Dropdown(
                             label="Enhance Non-Face Region Amount",
-                            choices=["Default enhancement", "More enhancement"],
+                            choices=["Default enhancement", "More enhancement", "Extreme enhancement"],
                             value="Default enhancement",
                             info="Controls how much area around the face is enhanced. More = bigger mask."
                         )
