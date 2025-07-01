@@ -531,9 +531,9 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
             x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
 
             # Determine padding ratio
-            if enhance_strength == "More enhancement":
+            if enhance_strength == "Balanced":
                 padding_ratio = 0.2
-            elif enhance_strength == "Extreme enhancement":
+            elif enhance_strength == "High":
                 padding_ratio = 0.4
             elif enhance_strength == "Custom":
                 padding_ratio = custom_enhance_padding
@@ -858,15 +858,15 @@ Scheduler: {scheduler}"""
                         enhance_face_region = gr.Checkbox(label="Enhance non-face region", value=True)
                         enhance_strength = gr.Dropdown(
                             label="Enhance Non-Face Region Amount",
-                            choices=["Default enhancement", "More enhancement", "Extreme enhancement", "Custom"],
-                            value="More enhancement",
+                            choices=["Default", "Balanced", "High", "Custom"],
+                            value="Balanced",
                             info="Controls how much area around the face is enhanced. More = bigger mask. Default is good if you for example want to change the hair style from the input image."
                         )
                         custom_enhance_padding = gr.Slider(
                             label="Custom enhancement padding (%)",
                             minimum=0.0,
                             maximum=1.0,
-                            step=0.01,
+                            step=0.05,
                             value=0.2,
                             visible=False,
                             interactive=True
@@ -1034,7 +1034,7 @@ Scheduler: {scheduler}"""
                     "enable_lora": False,
                     "lora_scale": 1.0,
                     "enhance_face_region": True,
-                    "enhance_strength": "More enhancement",
+                    "enhance_strength": "Balanced",
                     "custom_enhance_padding": 0.20,
                     "style": DEFAULT_STYLE_NAME,
                     "lora_selection": "",
