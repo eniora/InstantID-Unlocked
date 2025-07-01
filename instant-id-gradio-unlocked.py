@@ -418,6 +418,7 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
         lora_selection,
         enhance_face_region,
         enhance_strength,
+        custom_enhance_padding,
         num_outputs,
         model_name,
         det_size_name,
@@ -529,24 +530,23 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
             x1, y1, x2, y2 = face_info["bbox"]
             x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
 
+            # Determine padding ratio
             if enhance_strength == "More enhancement":
-                # Expand the box by 20%
-                padding_x = int((x2 - x1) * 0.2)
-                padding_y = int((y2 - y1) * 0.2)
-
-                x1 = max(0, x1 - padding_x)
-                y1 = max(0, y1 - padding_y)
-                x2 = min(width, x2 + padding_x)
-                y2 = min(height, y2 + padding_y)
+                padding_ratio = 0.2
             elif enhance_strength == "Extreme enhancement":
-                # Expand the box by 40%
-                padding_x = int((x2 - x1) * 0.4)
-                padding_y = int((y2 - y1) * 0.4)
+                padding_ratio = 0.4
+            elif enhance_strength == "Custom":
+                padding_ratio = custom_enhance_padding
+            else:
+                padding_ratio = 0.0  # Default
 
-                x1 = max(0, x1 - padding_x)
-                y1 = max(0, y1 - padding_y)
-                x2 = min(width, x2 + padding_x)
-                y2 = min(height, y2 + padding_y)
+            padding_x = int((x2 - x1) * padding_ratio)
+            padding_y = int((y2 - y1) * padding_ratio)
+
+            x1 = max(0, x1 - padding_x)
+            y1 = max(0, y1 - padding_y)
+            x2 = min(width, x2 + padding_x)
+            y2 = min(height, y2 + padding_y)
 
             control_mask[y1:y2, x1:x2] = 255
             control_mask = Image.fromarray(control_mask)
@@ -587,7 +587,7 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
             print(f"Input face image: {os.path.basename(face_image_path) if face_image_path else 'None'}")
             print(f"Reference pose image: {os.path.basename(pose_image_path) if pose_image_path else 'None'}")
             print(f"Steps: {num_steps}")
-            print(f"Enhance non-face region: {'True' if enhance_face_region else 'False'} ({enhance_strength})")
+            print(f"Enhance non-face region: {'True' if enhance_face_region else 'False'} ({enhance_strength}{f' | Padding: {custom_enhance_padding:.2f}' if enhance_strength == 'Custom' else ''})")
             print(f"Guidance scale: {guidance_scale}")
             print(f"Seed: {seed + i}")
             print(f"Model: {model_name}")
@@ -634,6 +634,7 @@ Max resize side: {resize_max_side}
 Image size: {width}x{height}
 Enhance non-face region: {enhance_face_region}
 Enhance region profile: {enhance_strength}
+Enhance padding ratio: {custom_enhance_padding}
 IdentityNet strength: {identitynet_strength_ratio}
 Adapter strength: {adapter_strength_ratio}
 Pose strength: {pose_strength}
@@ -857,15 +858,32 @@ Scheduler: {scheduler}"""
                         enhance_face_region = gr.Checkbox(label="Enhance non-face region", value=True)
                         enhance_strength = gr.Dropdown(
                             label="Enhance Non-Face Region Amount",
-                            choices=["Default enhancement", "More enhancement", "Extreme enhancement"],
+                            choices=["Default enhancement", "More enhancement", "Extreme enhancement", "Custom"],
                             value="More enhancement",
                             info="Controls how much area around the face is enhanced. More = bigger mask."
+                        )
+                        custom_enhance_padding = gr.Slider(
+                            label="Custom enhancement padding (%)",
+                            minimum=0.0,
+                            maximum=1.0,
+                            step=0.01,
+                            value=0.2,
+                            visible=False,
+                            interactive=True
                         )
                     model_name = gr.Dropdown(
                         label="Model",
                         choices=AVAILABLE_MODELS,
                         value=DEFAULT_MODEL,
                         info="Select the model to use for generation"
+                    )
+                    def toggle_custom_padding_dropdown(value):
+                        return gr.update(visible=(value == "Custom"))
+
+                    enhance_strength.change(
+                        fn=toggle_custom_padding_dropdown,
+                        inputs=enhance_strength,
+                        outputs=custom_enhance_padding
                     )
                     det_size_name = gr.Dropdown(
                         label="Face Detection Size",
@@ -959,6 +977,7 @@ Scheduler: {scheduler}"""
                     lora_selection,
                     enhance_face_region,
                     enhance_strength,
+                    custom_enhance_padding,
                     num_outputs,
                     model_name,
                     det_size_name,
@@ -1016,6 +1035,7 @@ Scheduler: {scheduler}"""
                     "lora_scale": 1.0,
                     "enhance_face_region": True,
                     "enhance_strength": "More enhancement",
+                    "custom_enhance_padding": 0.20,
                     "style": DEFAULT_STYLE_NAME,
                     "lora_selection": "",
                     "randomize_seed": True,
@@ -1049,6 +1069,11 @@ Scheduler: {scheduler}"""
                             settings["enhance_face_region"] = "true" in line.lower()
                         elif line.startswith("Enhance region profile:"):
                             settings["enhance_strength"] = line.replace("Enhance region profile:", "").strip()
+                        elif line.startswith("Enhance padding ratio:"):
+                            try:
+                                settings["custom_enhance_padding"] = float(line.replace("Enhance padding ratio:", "").strip())
+                            except:
+                                pass
                         elif line.startswith("IdentityNet strength:"):
                             settings["identitynet_strength_ratio"] = float(line.replace("IdentityNet strength:", "").strip())
                         elif line.startswith("Scheduler:"):
@@ -1113,6 +1138,7 @@ Scheduler: {scheduler}"""
                     settings["enable_lora"],
                     settings["enhance_face_region"],
                     settings["enhance_strength"],
+                    settings["custom_enhance_padding"],
                     settings["lora_scale"],
                     settings["lora_selection"] if settings["enable_lora"] else None,
                     settings["randomize_seed"],
@@ -1142,6 +1168,7 @@ Scheduler: {scheduler}"""
                     enable_lora,
                     enhance_face_region,
                     enhance_strength,
+                    custom_enhance_padding,
                     lora_scale,
                     lora_selection,
                     randomize_seed,
