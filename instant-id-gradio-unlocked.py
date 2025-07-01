@@ -854,7 +854,7 @@ Scheduler: {scheduler}"""
                     )
                     randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
                     with gr.Row():
-                        enhance_face_region = gr.Checkbox(label="Enhance non-face region", value=False)
+                        enhance_face_region = gr.Checkbox(label="Enhance non-face region", value=True)
                         enhance_strength = gr.Dropdown(
                             label="Enhance Non-Face Region Amount",
                             choices=["Default enhancement", "More enhancement", "Extreme enhancement"],
@@ -1014,7 +1014,7 @@ Scheduler: {scheduler}"""
                     "scheduler": "DPMSolverMultistepScheduler",
                     "enable_lora": False,
                     "lora_scale": 1.0,
-                    "enhance_face_region": False,
+                    "enhance_face_region": True,
                     "enhance_strength": "More enhancement",
                     "style": DEFAULT_STYLE_NAME,
                     "lora_selection": "",
