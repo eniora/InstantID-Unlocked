@@ -816,7 +816,7 @@ Scheduler: {scheduler}"""
                             label="Enhance Non-Face Region Amount",
                             choices=["Default enhancement", "More enhancement", "Extreme enhancement", "Custom"],
                             value="More enhancement",
-                            info="Controls how much area around the face is enhanced. More = bigger mask."
+                            info="Controls how much area around the face is enhanced. More = bigger mask. Default is good if you for example want to change the hair style from the input image."
                         )
                         custom_enhance_padding = gr.Slider(
                             label="Custom enhancement padding (%)",
