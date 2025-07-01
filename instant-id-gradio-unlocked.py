@@ -417,6 +417,7 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
         lora_scale,
         lora_selection,
         enhance_face_region,
+        enhance_strength,
         num_outputs,
         model_name,
         det_size_name,
@@ -524,11 +525,22 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
             width, height = face_kps.size
 
         if enhance_face_region:
-            control_mask = np.zeros([height, width, 3])
+            control_mask = np.zeros([height, width, 3], dtype=np.uint8)
             x1, y1, x2, y2 = face_info["bbox"]
             x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+
+            if enhance_strength == "More enhancement":
+                # Expand the box by 20%
+                padding_x = int((x2 - x1) * 0.2)
+                padding_y = int((y2 - y1) * 0.2)
+
+                x1 = max(0, x1 - padding_x)
+                y1 = max(0, y1 - padding_y)
+                x2 = min(width, x2 + padding_x)
+                y2 = min(height, y2 + padding_y)
+
             control_mask[y1:y2, x1:x2] = 255
-            control_mask = Image.fromarray(control_mask.astype(np.uint8))
+            control_mask = Image.fromarray(control_mask)
         else:
             control_mask = None
 
@@ -566,7 +578,7 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
             print(f"Input face image: {os.path.basename(face_image_path) if face_image_path else 'None'}")
             print(f"Reference pose image: {os.path.basename(pose_image_path) if pose_image_path else 'None'}")
             print(f"Steps: {num_steps}")
-            print(f"Enhance non-face region: {'True' if enhance_face_region else 'False'}")
+            print(f"Enhance non-face region: {'True' if enhance_face_region else 'False'} ({enhance_strength})")
             print(f"Guidance scale: {guidance_scale}")
             print(f"Seed: {seed + i}")
             print(f"Model: {model_name}")
@@ -612,6 +624,7 @@ ControlNet selection: {controlnet_selection}
 Max resize side: {resize_max_side}
 Image size: {width}x{height}
 Enhance non-face region: {enhance_face_region}
+Enhance region profile: {enhance_strength}
 IdentityNet strength: {identitynet_strength_ratio}
 Adapter strength: {adapter_strength_ratio}
 Pose strength: {pose_strength}
@@ -831,7 +844,14 @@ Scheduler: {scheduler}"""
                         info="DPMSolver, KDPM2 and Euler are usually the best."
                     )
                     randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
-                    enhance_face_region = gr.Checkbox(label="Enhance non-face region", value=True)
+                    with gr.Row():
+                        enhance_face_region = gr.Checkbox(label="Enhance non-face region", value=True)
+                        enhance_strength = gr.Dropdown(
+                            label="Enhance Non-Face Region Amount",
+                            choices=["Default enhancement", "More enhancement"],
+                            value="Default enhancement",
+                            info="Controls how much area around the face is enhanced. More = bigger mask."
+                        )
                     model_name = gr.Dropdown(
                         label="Model",
                         choices=AVAILABLE_MODELS,
@@ -929,6 +949,7 @@ Scheduler: {scheduler}"""
                     lora_scale,
                     lora_selection,
                     enhance_face_region,
+                    enhance_strength,
                     num_outputs,
                     model_name,
                     det_size_name,
@@ -985,6 +1006,7 @@ Scheduler: {scheduler}"""
                     "enable_lora": False,
                     "lora_scale": 1.0,
                     "enhance_face_region": True,
+                    "enhance_strength": "Default enhancement",
                     "style": DEFAULT_STYLE_NAME,
                     "lora_selection": "",
                     "randomize_seed": True,
@@ -1016,6 +1038,8 @@ Scheduler: {scheduler}"""
                             settings["enable_lora"] = lora_scale_str != "Disabled"
                         elif line.startswith("Enhance non-face region:"):
                             settings["enhance_face_region"] = "true" in line.lower()
+                        elif line.startswith("Enhance region profile:"):
+                            settings["enhance_strength"] = line.replace("Enhance region profile:", "").strip()
                         elif line.startswith("IdentityNet strength:"):
                             settings["identitynet_strength_ratio"] = float(line.replace("IdentityNet strength:", "").strip())
                         elif line.startswith("Scheduler:"):
@@ -1079,6 +1103,7 @@ Scheduler: {scheduler}"""
                     settings["scheduler"],
                     settings["enable_lora"],
                     settings["enhance_face_region"],
+                    settings["enhance_strength"],
                     settings["lora_scale"],
                     settings["lora_selection"] if settings["enable_lora"] else None,
                     settings["randomize_seed"],
@@ -1107,6 +1132,7 @@ Scheduler: {scheduler}"""
                     scheduler,
                     enable_lora,
                     enhance_face_region,
+                    enhance_strength,
                     lora_scale,
                     lora_selection,
                     randomize_seed,
