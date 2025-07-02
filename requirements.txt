@@ -3,7 +3,7 @@
 # you must have these exact same versions of packages listed below for full functionality of the program
 
 diffusers==0.32.2
-transformers==4.37.1
+transformers==4.53.0
 accelerate==0.32.1
 safetensors==0.5.3
 einops==0.8.1
@@ -17,5 +17,6 @@ gradio==5.32.1
 gradio-client==1.10.2
 controlnet_aux==0.0.10
 gdown==5.2.0
-peft==0.13.2
+peft==0.15.2
+tokenizers==0.21.2
 torchsde==0.2.6
