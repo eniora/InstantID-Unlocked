@@ -480,6 +480,9 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
                     pipe.scheduler = scheduler_class.from_config(scheduler_config)
 
         if face_image_path is None:
+            if enable_lora and lora_selection:
+                pipe.unfuse_lora()
+                pipe.unload_lora_weights()
             raise gr.Error(
                 f"Cannot find any input face image! Please upload the face image"
             )
@@ -499,6 +502,9 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
         face_info = app.get(face_image_cv2)
 
         if len(face_info) == 0:
+            if enable_lora and lora_selection:
+                pipe.unfuse_lora()
+                pipe.unload_lora_weights()
             raise gr.Error(
                 f"Unable to detect a face in the image. Please upload a different photo with a clear face."
             )
@@ -516,6 +522,9 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
             face_info = app.get(pose_image_cv2)
 
             if len(face_info) == 0:
+                if enable_lora and lora_selection:
+                    pipe.unfuse_lora()
+                    pipe.unload_lora_weights()
                 raise gr.Error(
                     f"Cannot find any face in the reference image! Please upload another person image"
                 )
