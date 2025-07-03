@@ -23,7 +23,7 @@ Git clone this fork (Git clone https://github.com/eniora/InstantID-Unlocked/) th
 - For downloading the face encoder models and instructions see the original repo description below.
 
 - Run only using "instant-id-gradio-unlocked.py" from the root folder. The file "instant-id-gradio-unlocked-24GB-VRAM.py" is just an experimental file I modified from "instant-id-gradio-unlocked.py" and it's a bit faster at image generation on 24GB VRAM cards such as the RTX 3090.
-- Tested only on Windows, you may need to do extra steps to run the gradio interface successfully on MacOS/Linux
+- Tested only on Windows and Python 3.10.6, you may need to do extra steps to run the gradio interface successfully on MacOS/Linux
 
 [**Qixun Wang**](https://github.com/wangqixun)<sup>12</sup> · [**Xu Bai**](https://huggingface.co/baymin0220)<sup>12</sup> · [**Haofan Wang**](https://haofanwang.github.io/)<sup>12*</sup> · [**Zekui Qin**](https://github.com/ZekuiQin)<sup>12</sup> · [**Anthony Chen**](https://antonioo-c.github.io/)<sup>123</sup>
 
