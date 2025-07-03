@@ -423,6 +423,7 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
         model_name,
         det_size_name,
         file_prefix,
+        enable_vae_tiling,
         progress=gr.Progress(track_tqdm=True),
     ):
         file_prefix = f"InstantID_{file_prefix}" if file_prefix.strip() else "InstantID_"
@@ -437,6 +438,11 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
         if model_name != getattr(pipe, "_current_model", None):
             pipe = load_model_and_update_pipe(model_name)
             pipe._current_model = model_name
+
+        if enable_vae_tiling:
+            pipe.enable_vae_tiling()
+        else:
+            pipe.disable_vae_tiling()
 
         if enable_lora and lora_selection:
             lora_path = os.path.join("./models/Loras", lora_selection)
@@ -734,7 +740,7 @@ Scheduler: {scheduler}"""
                     placeholder="When a Style template is selected, this becomes empty because styles have their own neg prompts. You can still add to it",
                     value=NEGATIVE_PROMPT_PRESETS["Default Negative Profile"]
                 )
-                with gr.Accordion("Style Template, Negative Prompt Presets and File name prefix", open=False):
+                with gr.Accordion("Style Template, Negative Prompt Presets, File name prefix and VAE tiling", open=False):
                     style = gr.Dropdown(
                         label="Style template",
                         choices=STYLE_NAMES,
@@ -750,6 +756,11 @@ Scheduler: {scheduler}"""
                         label="Saved file name prefix. Leave empty to use the default 'InstantID_'",
                         value="",
                         placeholder="Optional, append a name to be added after 'InstantID_' in the saved images",
+                    )
+                    enable_vae_tiling = gr.Checkbox(
+                        label="Enable VAE Tiling (saves VRAM for large images)",
+                        value=True,
+                        info="Reduces memory usage when generating large images by processing them in tiles."
                     )
                 resize_max_side_slider = gr.Slider(
                     label="Max image size for resizing",
@@ -869,12 +880,12 @@ Scheduler: {scheduler}"""
                             label="Enhance Non-Face Region Amount",
                             choices=["Default", "Balanced", "High", "Custom"],
                             value="Balanced",
-                            info="Controls how much area around the face is enhanced. More = bigger mask. Default is good if you for example want to change the hair style from the input image."
+                            info="Controls how much area around the face is enhanced. More = bigger mask. Default is best if you for example want to change the hair style from the input image."
                         )
                         custom_enhance_padding = gr.Slider(
                             label="Custom enhancement padding (%)",
                             minimum=0.0,
-                            maximum=1.0,
+                            maximum=0.9,
                             step=0.05,
                             value=0.2,
                             visible=False,
@@ -991,6 +1002,7 @@ Scheduler: {scheduler}"""
                     model_name,
                     det_size_name,
                     file_prefix,
+                    enable_vae_tiling,
                 ],
                 outputs=[gallery, usage_tips],
             )
