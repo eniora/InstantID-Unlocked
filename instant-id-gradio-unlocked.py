@@ -758,9 +758,9 @@ Scheduler: {scheduler}"""
                         placeholder="Optional, append a name to be added after 'InstantID_' in the saved images",
                     )
                     enable_vae_tiling = gr.Checkbox(
-                        label="Enable VAE Tiling (saves VRAM for large images)",
+                        label="Enable VAE Tiling (saves VRAM for large images at the last generation step)",
                         value=True,
-                        info="Reduces memory usage when generating large images by processing them in tiles."
+                        info="Processes images in tiles to reduce VRAM usage during the final VAE decoding step without any quality loss."
                     )
                 resize_max_side_slider = gr.Slider(
                     label="Max image size for resizing",
