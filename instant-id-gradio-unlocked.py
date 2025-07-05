@@ -108,7 +108,7 @@ def get_available_models():
     return model_folders
 
 AVAILABLE_MODELS = get_available_models()
-DEFAULT_MODEL = "John6666/cyberrealistic-xl-v58-sdxl"
+DEFAULT_MODEL = "stablediffusionapi/protovision-xl-high-fidel"
 
 # Detection size options
 DET_SIZE_OPTIONS = {
@@ -208,12 +208,12 @@ def update_det_size(det_size_name):
     
     return f"Detection size set to {current_det_size}"
 
-def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", enable_lora_arg=False):
+def main(pretrained_model_name_or_path="stablediffusionapi/protovision-xl-high-fidel", enable_lora_arg=False):
     if pretrained_model_name_or_path.endswith(
         ".ckpt"
     ) or pretrained_model_name_or_path.endswith(".safetensors"):
         scheduler_kwargs = hf_hub_download(
-            repo_id="John6666/cyberrealistic-xl-v58-sdxl",
+            repo_id="stablediffusionapi/protovision-xl-high-fidel",
             subfolder="scheduler",
             filename="scheduler_config.json",
         )
@@ -358,7 +358,7 @@ def main(pretrained_model_name_or_path="John6666/cyberrealistic-xl-v58-sdxl", en
         
         if model_name.endswith(".ckpt") or model_name.endswith(".safetensors"):
             scheduler_kwargs = hf_hub_download(
-                repo_id="John6666/cyberrealistic-xl-v58-sdxl",
+                repo_id="stablediffusionapi/protovision-xl-high-fidel",
                 subfolder="scheduler",
                 filename="scheduler_config.json",
             )
@@ -689,7 +689,7 @@ Scheduler: {scheduler}"""
     📝 **Tips**
     ```bibtex
     1. Upload an image with a face. For images with multiple faces, we will only detect the largest face. Ensure the face is not too small and is clearly visible without significant obstructions or blurring.
-    2. (Optional) You can upload another image as a reference for the face pose. If you don't, we will use the first detected face image to extract facial landmarks. If you use a cropped face at step 1, it is recommended to upload it to define a new face pose.
+    2. (Optional) You can upload another image as a reference for the face pose. If you don't, the first detected face image will be used to extract facial landmarks. If you use a cropped face at step 1, it is recommended to upload it to define a new face pose.
     3. (Optional) You can select multiple ControlNet models to control the generation process. The default is to use the IdentityNet only. The ControlNet models include pose skeleton, canny, and depth. You can adjust the strength of each ControlNet model to control the generation process.
     4. Enter a text prompt, as done in normal text-to-image models.
     5. Click the Generate button to begin customization.
@@ -703,7 +703,7 @@ Scheduler: {scheduler}"""
     1. If you're not satisfied with the similarity, try increasing the weight of "IdentityNet Strength" and "Adapter Strength."    
     2. If you feel that the saturation is too high, first decrease the Adapter strength. If it remains too high, then decrease the IdentityNet strength.
     3. If you find that text control is not as expected, decrease Adapter strength.
-    4. If you find that realistic style is not good enough, try another base model.
+    4. If you find that the style or generated images are not good enough, try another base model.
     5. If you're having trouble detecting faces, try changing the "Face Detection Size" setting or try another input face photo.
     """
 
@@ -759,7 +759,7 @@ Scheduler: {scheduler}"""
                     )
                     enable_vae_tiling = gr.Checkbox(
                         label="Enable VAE Tiling (saves VRAM for large images at the last generation step)",
-                        value=True,
+                        value=False,
                         info="Processes images in tiles to reduce VRAM usage during the final VAE decoding step without any quality loss."
                     )
                 resize_max_side_slider = gr.Slider(
@@ -895,7 +895,7 @@ Scheduler: {scheduler}"""
                         label="Model",
                         choices=AVAILABLE_MODELS,
                         value=DEFAULT_MODEL,
-                        info="Select the model to use for generation"
+                        info="Select the model to use for generation. For some models, setting the guidance scale to '3.5' is generally better."
                     )
                     def toggle_custom_padding_dropdown(value):
                         return gr.update(visible=(value == "Custom"))
@@ -1222,7 +1222,7 @@ Scheduler: {scheduler}"""
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--pretrained_model_name_or_path", type=str, default="John6666/cyberrealistic-xl-v58-sdxl"
+        "--pretrained_model_name_or_path", type=str, default="stablediffusionapi/protovision-xl-high-fidel"
     )
     parser.add_argument(
         "--enable_lora", type=bool, default=os.environ.get("ENABLE_lora", False)
