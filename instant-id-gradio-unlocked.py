@@ -108,7 +108,7 @@ def get_available_models():
     return model_folders
 
 AVAILABLE_MODELS = get_available_models()
-DEFAULT_MODEL = "stablediffusionapi/protovision-xl-high-fidel"
+DEFAULT_MODEL = "SG161222/RealVisXL_V4.0"
 
 # Detection size options
 DET_SIZE_OPTIONS = {
@@ -208,12 +208,12 @@ def update_det_size(det_size_name):
     
     return f"Detection size set to {current_det_size}"
 
-def main(pretrained_model_name_or_path="stablediffusionapi/protovision-xl-high-fidel", enable_lora_arg=False):
+def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lora_arg=False):
     if pretrained_model_name_or_path.endswith(
         ".ckpt"
     ) or pretrained_model_name_or_path.endswith(".safetensors"):
         scheduler_kwargs = hf_hub_download(
-            repo_id="stablediffusionapi/protovision-xl-high-fidel",
+            repo_id="SG161222/RealVisXL_V4.0",
             subfolder="scheduler",
             filename="scheduler_config.json",
         )
@@ -358,7 +358,7 @@ def main(pretrained_model_name_or_path="stablediffusionapi/protovision-xl-high-f
         
         if model_name.endswith(".ckpt") or model_name.endswith(".safetensors"):
             scheduler_kwargs = hf_hub_download(
-                repo_id="stablediffusionapi/protovision-xl-high-fidel",
+                repo_id="SG161222/RealVisXL_V4.0",
                 subfolder="scheduler",
                 filename="scheduler_config.json",
             )
@@ -1222,7 +1222,7 @@ Scheduler: {scheduler}"""
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--pretrained_model_name_or_path", type=str, default="stablediffusionapi/protovision-xl-high-fidel"
+        "--pretrained_model_name_or_path", type=str, default="SG161222/RealVisXL_V4.0"
     )
     parser.add_argument(
         "--enable_lora", type=bool, default=os.environ.get("ENABLE_lora", False)
