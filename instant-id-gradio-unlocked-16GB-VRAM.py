@@ -503,9 +503,9 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lora_ar
 
             # Determine padding ratio
             if enhance_strength == "Balanced":
-                padding_ratio = 0.2
+                padding_ratio = 0.15
             elif enhance_strength == "High":
-                padding_ratio = 0.4
+                padding_ratio = 0.3
             elif enhance_strength == "Custom":
                 padding_ratio = custom_enhance_padding
             else:
@@ -843,7 +843,7 @@ Scheduler: {scheduler}"""
                             minimum=0.0,
                             maximum=0.9,
                             step=0.05,
-                            value=0.2,
+                            value=0.15,
                             visible=False,
                             interactive=True
                         )
@@ -1012,7 +1012,7 @@ Scheduler: {scheduler}"""
                     "lora_scale": 1.0,
                     "enhance_face_region": True,
                     "enhance_strength": "Balanced",
-                    "custom_enhance_padding": 0.20,
+                    "custom_enhance_padding": 0.15,
                     "style": DEFAULT_STYLE_NAME,
                     "lora_selection": "",
                     "randomize_seed": True,
