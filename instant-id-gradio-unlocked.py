@@ -117,7 +117,8 @@ DET_SIZE_OPTIONS = {
     "640x640 (default)": (640, 640),
     "800x800": (800, 800),
     "1024x1024": (1024, 1024),
-    "1280x1280 (Input/Reference image size should be larger than 1280x1280)": (1280, 1280)
+    "1280x1280": (1280, 1280),
+    "2560x2560 (Input/Reference image size should be larger than 2560x2560)": (2560, 2560)
 }
 
 # Initialize face analysis with default size
