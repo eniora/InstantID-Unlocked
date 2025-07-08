@@ -112,7 +112,8 @@ DEFAULT_MODEL = "SG161222/RealVisXL_V4.0"
 
 # Detection size options
 DET_SIZE_OPTIONS = {
-    "320x320 (for very lowres portrait photos that are less than 320x320 in resolution)": (320, 320),
+    "160x160 (for very lowres portrait photos)": (160, 160),
+    "320x320": (320, 320),
     "640x640 (default)": (640, 640),
     "800x800": (800, 800),
     "1024x1024": (1024, 1024),
@@ -865,7 +866,7 @@ Scheduler: {scheduler}"""
                         label="Face Detection Size",
                         choices=list(DET_SIZE_OPTIONS.keys()),
                         value="640x640 (default)",
-                        info="Higher values can detect smaller faces if the face in the input/reference image is too small/distant or if you get a 'No face detected' message. Otherwise you don't need to change this value for most of the cases as the differences are barely noticeable."
+                        info="Higher values can detect smaller faces better if the face in the input/reference image is too small/distant. Change the value only if you get 'No face detected', it can help a lot in some face input photos."
                     )
                     enable_lora = gr.Checkbox(
                         label="Enable a LoRA from your Loras folder",
