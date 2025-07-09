@@ -14,6 +14,7 @@ import warnings
 import PIL.PngImagePlugin
 
 warnings.filterwarnings("ignore", message=".*Overwriting tiny_vit_.* in registry.*")
+warnings.filterwarnings("ignore", message=".*peft_config.*multiple adapters.*")
 
 os.environ["NO_ALBUMENTATIONS_UPDATE"] = "1"
 # os.environ["TRANSFORMERS_OFFLINE"] = "1"
