@@ -434,10 +434,11 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lora_ar
 
             if loras_to_load:
                 for i, lora_item in enumerate(loras_to_load):
-                    adapter_name = f"lora_{i}_{lora_item['name'].replace('.safetensors', '')}"
+                    sanitized_lora_name = lora_item['name'].replace('.safetensors', '').replace('.', '_')
+                    adapter_name = f"lora_{i}_{sanitized_lora_name}"
                     pipe.load_lora_weights("./models/Loras", weight_name=lora_item["name"], adapter_name=adapter_name)
                 
-                adapter_names = [f"lora_{i}_{lora_item['name'].replace('.safetensors', '')}" for i, lora_item in enumerate(loras_to_load)]
+                adapter_names = [f"lora_{i}_{lora_item['name'].replace('.safetensors', '').replace('.', '_')}" for i, lora_item in enumerate(loras_to_load)]
                 adapter_weights = [lora_item['scale'] for lora_item in loras_to_load]
                 
                 pipe.set_adapters(adapter_names, adapter_weights=adapter_weights)
