@@ -1149,7 +1149,7 @@ Scheduler: {scheduler}"""
                 accordion_update = gr.update(open=False)
                 settings = {
                     "prompt": "",
-                    "negative_prompt": "",
+                    "negative_prompt": DEFAULT_NEGATIVE_PROFILE,
                     "resize_max_side": 1280,
                     "seed": 42,
                     "num_steps": 25,
