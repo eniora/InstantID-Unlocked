@@ -209,7 +209,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lora_ar
 
     def toggle_lora_ui(enable_lora_checkbox):
         visibility = gr.update(visible=enable_lora_checkbox)
-        return [visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility]
+        return [visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility]
 
     def randomize_seed_fn(seed: int, randomize_seed: bool) -> int:
         if randomize_seed:
@@ -376,6 +376,8 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lora_ar
         lora_selection_2,
         lora_scale_3,
         lora_selection_3,
+        lora_scale_4,
+        lora_selection_4,
         enhance_face_region,
         enhance_strength,
         custom_enhance_padding,
@@ -432,6 +434,15 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lora_ar
                 else:
                     print(f"LoRA 3 not found at {lora_path_3}, skipping load.")
                     gr.Warning(f"LoRA 3 not found at {lora_path_3}. Skipping LoRA 3.")
+
+            if lora_selection_4:
+                lora_path_4 = os.path.join("./models/Loras", lora_selection_4)
+                if os.path.exists(lora_path_4):
+                    loras_to_load.append({"name": lora_selection_4, "scale": lora_scale_4})
+                    print(f"LoRA 4 selected: {lora_selection_4} with scale {lora_scale_4}")
+                else:
+                    print(f"LoRA 4 not found at {lora_path_4}, skipping load.")
+                    gr.Warning(f"LoRA 4 not found at {lora_path_4}. Skipping LoRA 4.")
 
             if loras_to_load:
                 for i, lora_item in enumerate(loras_to_load):
@@ -630,6 +641,13 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lora_ar
                 else:
                     lora_details.append("LoRA 3: None selected")
 
+                if lora_selection_4 and os.path.exists(os.path.join('./models/Loras', lora_selection_4)):
+                    lora_details.append(f"LoRA 4: {lora_selection_4} (Scale: {lora_scale_4})")
+                elif lora_selection_4:
+                    lora_details.append(f"LoRA 4: {lora_selection_4} (Not found, disabled)")
+                else:
+                    lora_details.append("LoRA 4: None selected")
+
                 lora_info_str = "; ".join(lora_details)
             print(f"LoRA(s): {lora_info_str}")
 
@@ -684,6 +702,8 @@ LoRA 2 selection: {'None' if not (enable_lora and lora_selection_2 and os.path.e
 LoRA 2 scale: {'Disabled' if not (enable_lora and lora_selection_2 and os.path.exists(os.path.join('./models/Loras', lora_selection_2))) else lora_scale_2}
 LoRA 3 selection: {'None' if not (enable_lora and lora_selection_3 and os.path.exists(os.path.join('./models/Loras', lora_selection_3))) else lora_selection_3}
 LoRA 3 scale: {'Disabled' if not (enable_lora and lora_selection_3 and os.path.exists(os.path.join('./models/Loras', lora_selection_3))) else lora_scale_3}
+LoRA 4 selection: {'None' if not (enable_lora and lora_selection_4 and os.path.exists(os.path.join('./models/Loras', lora_selection_4))) else lora_selection_4}
+LoRA 4 scale: {'Disabled' if not (enable_lora and lora_selection_4 and os.path.exists(os.path.join('./models/Loras', lora_selection_4))) else lora_scale_4}
 Scheduler: {scheduler}"""
 
             png_info = PIL.PngImagePlugin.PngInfo()
@@ -943,7 +963,7 @@ Scheduler: {scheduler}"""
                         value=enable_lora_arg,
                     )
                     lora_info = gr.Markdown(
-                        "Up to three LoRAs can be loaded. Only SDXL, pony and Illustrious Loras supported. When loading two or more loras, it's not good to go above ~0.7 strength on each. The first empty choice disables the Lora selection.",
+                        "Up to four LoRAs can be loaded. Only SDXL, pony and Illustrious Loras supported. When loading two or more loras, it's not good to go above ~0.7 strength on each. The first empty choice disables the Lora selection.",
                         visible=enable_lora_arg
                     )
                     enable_lora.change(
@@ -975,7 +995,7 @@ Scheduler: {scheduler}"""
                             choices=[""] + get_available_loras(),
                             value=None,
                             allow_custom_value=True,
-                            info="Select the second LoRA from your /models/Loras folder."
+                            info="Select the second LoRA."
                         )
                         lora_scale_2 = gr.Slider(
                             label="LoRA 2 Scale",
@@ -991,7 +1011,7 @@ Scheduler: {scheduler}"""
                             choices=[""] + get_available_loras(),
                             value=None,
                             allow_custom_value=True,
-                            info="Select the third LoRA from your /models/Loras folder."
+                            info="Select the third LoRA."
                         )
                         lora_scale_3 = gr.Slider(
                             label="LoRA 3 Scale",
@@ -1001,16 +1021,32 @@ Scheduler: {scheduler}"""
                             value=0.7,
                             info="Strength of the third LoRA effect."
                         )
+                    with gr.Row(visible=False) as lora_row_4:
+                        lora_selection_4 = gr.Dropdown(
+                            label="Select LoRA 4",
+                            choices=[""] + get_available_loras(),
+                            value=None,
+                            allow_custom_value=True,
+                            info="Select the fourth LoRA."
+                        )
+                        lora_scale_4 = gr.Slider(
+                            label="LoRA 4 Scale",
+                            minimum=0.0,
+                            maximum=2.0,
+                            step=0.05,
+                            value=0.7,
+                            info="Strength of the fourth LoRA effect."
+                        )
                     
                     refresh_loras = gr.Button("Refresh LoRAs 🔄", elem_classes="toolbutton")
                     
                     def refresh_lora_list():
                         loras = [""] + get_available_loras()
-                        return gr.update(choices=loras, value=None), gr.update(choices=loras, value=None), gr.update(choices=loras, value=None)
+                        return gr.update(choices=loras, value=None), gr.update(choices=loras, value=None), gr.update(choices=loras, value=None), gr.update(choices=loras, value=None)
                     
                     refresh_loras.click(
                         fn=refresh_lora_list,
-                        outputs=[lora_selection, lora_selection_2, lora_selection_3]
+                        outputs=[lora_selection, lora_selection_2, lora_selection_3, lora_selection_4]
                     )
 
             with gr.Column(scale=1):
@@ -1061,6 +1097,8 @@ Scheduler: {scheduler}"""
                     lora_selection_2,
                     lora_scale_3,
                     lora_selection_3,
+                    lora_scale_4,
+                    lora_selection_4,
                     enhance_face_region,
                     enhance_strength,
                     custom_enhance_padding,
@@ -1076,7 +1114,7 @@ Scheduler: {scheduler}"""
             enable_lora.input(
                 fn=toggle_lora_ui,
                 inputs=[enable_lora],
-                outputs=[lora_row_1, lora_selection, lora_scale, lora_row_2, lora_selection_2, lora_scale_2, lora_row_3, lora_selection_3, lora_scale_3],
+                outputs=[lora_row_1, lora_selection, lora_scale, lora_row_2, lora_selection_2, lora_scale_2, lora_row_3, lora_selection_3, lora_scale_3, lora_row_4, lora_selection_4, lora_scale_4],
                 queue=False,
             )
 
@@ -1125,6 +1163,8 @@ Scheduler: {scheduler}"""
                     "lora_selection_2": None,
                     "lora_scale_3": 0.7,
                     "lora_selection_3": None,
+                    "lora_scale_4": 0.7,
+                    "lora_selection_4": None,
                     "enhance_face_region": True,
                     "enhance_strength": "Balanced",
                     "custom_enhance_padding": 0.15,
@@ -1170,6 +1210,13 @@ Scheduler: {scheduler}"""
                             lora_scale_3_str = line.replace("LoRA 3 scale:", "").strip()
                             if lora_scale_3_str != "Disabled":
                                 settings["lora_scale_3"] = float(lora_scale_3_str)
+                        elif line.startswith("LoRA 4 selection:"):
+                            lora_selection_4 = line.replace("LoRA 4 selection:", "").strip()
+                            settings["lora_selection_4"] = lora_selection_4 if lora_selection_4 != "None" else None
+                        elif line.startswith("LoRA 4 scale:"):
+                            lora_scale_4_str = line.replace("LoRA 4 scale:", "").strip()
+                            if lora_scale_4_str != "Disabled":
+                                settings["lora_scale_4"] = float(lora_scale_4_str)
                         elif line.startswith("Enhance non-face region:"):
                             settings["enhance_face_region"] = "true" in line.lower()
                         elif line.startswith("Enhance region profile:"):
@@ -1250,6 +1297,8 @@ Scheduler: {scheduler}"""
                     settings["lora_selection_2"],
                     settings["lora_scale_3"],
                     settings["lora_selection_3"],
+                    settings["lora_scale_4"],
+                    settings["lora_selection_4"],
                     settings["randomize_seed"],
                     settings["controlnet_selection"],
                     settings["model_name"],
@@ -1284,6 +1333,8 @@ Scheduler: {scheduler}"""
                     lora_selection_2,
                     lora_scale_3,
                     lora_selection_3,
+                    lora_scale_4,
+                    lora_selection_4,
                     randomize_seed,
                     controlnet_selection,
                     model_name,
@@ -1294,7 +1345,7 @@ Scheduler: {scheduler}"""
             ).then(
                 fn=toggle_lora_ui,
                 inputs=[enable_lora],
-                outputs=[lora_row_1, lora_selection, lora_scale, lora_row_2, lora_selection_2, lora_scale_2, lora_row_3, lora_selection_3, lora_scale_3]
+                outputs=[lora_row_1, lora_selection, lora_scale, lora_row_2, lora_selection_2, lora_scale_2, lora_row_3, lora_selection_3, lora_scale_3, lora_row_4, lora_selection_4, lora_scale_4]
             )
 
         gr.Markdown(article)
