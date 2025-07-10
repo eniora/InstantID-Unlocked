@@ -1002,7 +1002,7 @@ Scheduler: {scheduler}"""
                             info="Strength of the third LoRA effect."
                         )
                     
-                    refresh_loras = gr.Button("🔄", elem_classes="toolbutton")
+                    refresh_loras = gr.Button("Refresh LoRAs 🔄", elem_classes="toolbutton")
                     
                     def refresh_lora_list():
                         loras = [""] + get_available_loras()
