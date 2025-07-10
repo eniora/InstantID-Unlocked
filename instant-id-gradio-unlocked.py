@@ -1007,7 +1007,7 @@ Scheduler: {scheduler}"""
                         value=enable_lora_arg,
                     )
                     lora_info = gr.Markdown(
-                        "Up to three LoRAs can be loaded. Only SDXL, pony and Illustrious Loras supported. When loading two or more loras, it's not good to go above ~0.7 strength on each. The first empty choice disables the Lora selection.",
+                        "Up to four LoRAs can be loaded. Only SDXL, pony and Illustrious Loras supported. When loading two or more loras, it's not good to go above ~0.7 strength on each. The first empty choice disables the Lora selection.",
                         visible=enable_lora_arg
                     )
                     enable_lora.change(
