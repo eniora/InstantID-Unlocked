@@ -1156,7 +1156,7 @@ Scheduler: {scheduler}"""
                     
                     def refresh_lora_list():
                         loras = [""] + get_available_loras()
-                        return gr.update(choices=loras, value=None), gr.update(choices=loras, value=None), gr.update(choices=loras, value=None), gr.update(choices=loras, value=None), gr.update(choices=loras, value=None)
+                        return gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras)
                     
                     refresh_loras.click(
                         fn=refresh_lora_list,
