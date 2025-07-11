@@ -15,6 +15,7 @@ import PIL.PngImagePlugin
 
 warnings.filterwarnings("ignore", message=".*Overwriting tiny_vit_.* in registry.*")
 warnings.filterwarnings("ignore", message=".*peft_config.*multiple adapters.*")
+warnings.filterwarnings("ignore", message="Already unmerged. Nothing to do.")
 
 os.environ["NO_ALBUMENTATIONS_UPDATE"] = "1"
 # os.environ["TRANSFORMERS_OFFLINE"] = "1"
@@ -407,6 +408,9 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lora_ar
             pipe.disable_vae_tiling()
 
         if enable_lora:
+            pipe.unfuse_lora()
+            pipe.unload_lora_weights()
+
             loras_to_load = []
             if lora_selection:
                 lora_path_1 = os.path.join("./models/Loras", lora_selection)
