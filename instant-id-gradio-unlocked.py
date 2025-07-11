@@ -1035,7 +1035,7 @@ Scheduler: {scheduler}"""
                             value=None,
                             allow_custom_value=True,
                             info="Select the first LoRA from your /models/Loras folder.",
-                            scale=2
+                            scale=3
                         )
                         lora_scale = gr.Slider(
                             label="LoRA 1 Scale",
@@ -1044,7 +1044,7 @@ Scheduler: {scheduler}"""
                             step=0.05,
                             value=1.0,
                             info="Strength of the first LoRA effect.",
-                            scale=2
+                            scale=3
                         )
                         disable_lora_1 = gr.Checkbox(
                             label="Disable LoRA 1",
@@ -1060,7 +1060,7 @@ Scheduler: {scheduler}"""
                             value=None,
                             allow_custom_value=True,
                             info="Select the second LoRA.",
-                            scale=2
+                            scale=3
                         )
                         lora_scale_2 = gr.Slider(
                             label="LoRA 2 Scale",
@@ -1069,7 +1069,7 @@ Scheduler: {scheduler}"""
                             step=0.05,
                             value=0.7,
                             info="Strength of the second LoRA effect.",
-                            scale=2
+                            scale=3
                         )
                         disable_lora_2 = gr.Checkbox(
                             label="Disable LoRA 2",
@@ -1084,7 +1084,7 @@ Scheduler: {scheduler}"""
                             value=None,
                             allow_custom_value=True,
                             info="Select the third LoRA.",
-                            scale=2
+                            scale=3
                         )
                         lora_scale_3 = gr.Slider(
                             label="LoRA 3 Scale",
@@ -1093,7 +1093,7 @@ Scheduler: {scheduler}"""
                             step=0.05,
                             value=0.7,
                             info="Strength of the third LoRA effect.",
-                            scale=2
+                            scale=3
                         )
                         disable_lora_3 = gr.Checkbox(
                             label="Disable LoRA 3",
@@ -1108,7 +1108,7 @@ Scheduler: {scheduler}"""
                             value=None,
                             allow_custom_value=True,
                             info="Select the fourth LoRA.",
-                            scale=2
+                            scale=3
                         )
                         lora_scale_4 = gr.Slider(
                             label="LoRA 4 Scale",
@@ -1117,7 +1117,7 @@ Scheduler: {scheduler}"""
                             step=0.05,
                             value=0.7,
                             info="Strength of the fourth LoRA effect.",
-                            scale=2
+                            scale=3
                         )
                         disable_lora_4 = gr.Checkbox(
                             label="Disable LoRA 4",
