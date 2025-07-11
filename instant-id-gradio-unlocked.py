@@ -1277,7 +1277,11 @@ Scheduler: {scheduler}"""
                     "randomize_seed": True,
                     "controlnet_selection": [],
                     "model_name": DEFAULT_MODEL,
-                    "det_size_name": "640x640 (default)"
+                    "det_size_name": "640x640 (default)",
+                    "disable_lora_1": False,
+                    "disable_lora_2": False,
+                    "disable_lora_3": False,
+                    "disable_lora_4": False
                 }
                 if metadata_text:
                     for line in metadata_text.split('\n'):
@@ -1409,6 +1413,10 @@ Scheduler: {scheduler}"""
                     settings["model_name"],
                     settings["det_size_name"],
                     settings["resize_max_side"],
+                    settings["disable_lora_1"],
+                    settings["disable_lora_2"],
+                    settings["disable_lora_3"],
+                    settings["disable_lora_4"],
                     accordion_update
                 ]
 
@@ -1445,6 +1453,10 @@ Scheduler: {scheduler}"""
                     model_name,
                     det_size_name,
                     resize_max_side_slider,
+                    disable_lora_1,
+                    disable_lora_2,
+                    disable_lora_3,
+                    disable_lora_4,
                     controlnet_accordion
                 ]
             ).then(
