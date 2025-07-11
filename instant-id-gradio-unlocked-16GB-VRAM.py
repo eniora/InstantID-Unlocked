@@ -1005,7 +1005,6 @@ Scheduler: {scheduler}"""
                         disable_lora_1 = gr.Checkbox(
                             label="Disable LoRA 1",
                             value=False,
-                            info="Check to disable this LoRA",
                             scale=1
                         )
 
@@ -1030,7 +1029,6 @@ Scheduler: {scheduler}"""
                         disable_lora_2 = gr.Checkbox(
                             label="Disable LoRA 2",
                             value=False,
-                            info="Check to disable this LoRA",
                             scale=1
                         )
                     with gr.Row(visible=False) as lora_row_3:
@@ -1054,7 +1052,6 @@ Scheduler: {scheduler}"""
                         disable_lora_3 = gr.Checkbox(
                             label="Disable LoRA 3",
                             value=False,
-                            info="Check to disable this LoRA",
                             scale=1
                         )
                     with gr.Row(visible=False) as lora_row_4:
@@ -1078,7 +1075,6 @@ Scheduler: {scheduler}"""
                         disable_lora_4 = gr.Checkbox(
                             label="Disable LoRA 4",
                             value=False,
-                            info="Check to disable this LoRA",
                             scale=1
                         )
 
