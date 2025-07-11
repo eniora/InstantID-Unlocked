@@ -1127,30 +1127,30 @@ Scheduler: {scheduler}"""
                         )
 
                     disable_lora_1.change(
-                        fn=lambda x: gr.update(interactive=not x),
+                        fn=lambda x: [gr.update(interactive=not x), gr.update(interactive=not x)],
                         inputs=disable_lora_1,
-                        outputs=lora_scale,
+                        outputs=[lora_selection, lora_scale],
                         queue=False
                     )
                     disable_lora_2.change(
-                        fn=lambda x: gr.update(interactive=not x),
+                        fn=lambda x: [gr.update(interactive=not x), gr.update(interactive=not x)],
                         inputs=disable_lora_2,
-                        outputs=lora_scale_2,
+                        outputs=[lora_selection_2, lora_scale_2],
                         queue=False
                     )
                     disable_lora_3.change(
-                        fn=lambda x: gr.update(interactive=not x),
+                        fn=lambda x: [gr.update(interactive=not x), gr.update(interactive=not x)],
                         inputs=disable_lora_3,
-                        outputs=lora_scale_3,
+                        outputs=[lora_selection_3, lora_scale_3],
                         queue=False
                     )
                     disable_lora_4.change(
-                        fn=lambda x: gr.update(interactive=not x),
+                        fn=lambda x: [gr.update(interactive=not x), gr.update(interactive=not x)],
                         inputs=disable_lora_4,
-                        outputs=lora_scale_4,
+                        outputs=[lora_selection_4, lora_scale_4],
                         queue=False
                     )
-                    
+
                     refresh_loras = gr.Button("Refresh LoRAs 🔄", elem_classes="toolbutton")
                     
                     def refresh_lora_list():
