@@ -1029,17 +1029,13 @@ Scheduler: {scheduler}"""
                     )
                     
                     with gr.Row(visible=False) as lora_row_1:
-                        disable_lora_1 = gr.Checkbox(
-                            label="Disable LoRA 1",
-                            value=False,
-                            info="Check to disable this LoRA"
-                        )
                         lora_selection = gr.Dropdown(
                             label="Select LoRA 1",
                             choices=[""] + get_available_loras(),
                             value=None,
                             allow_custom_value=True,
-                            info="Select the first LoRA from your /models/Loras folder."
+                            info="Select the first LoRA from your /models/Loras folder.",
+                            scale=2
                         )
                         lora_scale = gr.Slider(
                             label="LoRA 1 Scale",
@@ -1047,21 +1043,24 @@ Scheduler: {scheduler}"""
                             maximum=2.0,
                             step=0.05,
                             value=1.0,
-                            info="Strength of the first LoRA effect."
+                            info="Strength of the first LoRA effect.",
+                            scale=2
+                        )
+                        disable_lora_1 = gr.Checkbox(
+                            label="Disable LoRA 1",
+                            value=False,
+                            info="Check to disable this LoRA",
+                            scale=1
                         )
 
                     with gr.Row(visible=False) as lora_row_2:
-                        disable_lora_2 = gr.Checkbox(
-                            label="Disable LoRA 2",
-                            value=False,
-                            info="Check to disable this LoRA"
-                        )
                         lora_selection_2 = gr.Dropdown(
                             label="Select LoRA 2",
                             choices=[""] + get_available_loras(),
                             value=None,
                             allow_custom_value=True,
-                            info="Select the second LoRA."
+                            info="Select the second LoRA.",
+                            scale=2
                         )
                         lora_scale_2 = gr.Slider(
                             label="LoRA 2 Scale",
@@ -1069,20 +1068,23 @@ Scheduler: {scheduler}"""
                             maximum=2.0,
                             step=0.05,
                             value=0.7,
-                            info="Strength of the second LoRA effect."
+                            info="Strength of the second LoRA effect.",
+                            scale=2
+                        )
+                        disable_lora_2 = gr.Checkbox(
+                            label="Disable LoRA 2",
+                            value=False,
+                            info="Check to disable this LoRA",
+                            scale=1
                         )
                     with gr.Row(visible=False) as lora_row_3:
-                        disable_lora_3 = gr.Checkbox(
-                            label="Disable LoRA 3",
-                            value=False,
-                            info="Check to disable this LoRA"
-                        )
                         lora_selection_3 = gr.Dropdown(
                             label="Select LoRA 3",
                             choices=[""] + get_available_loras(),
                             value=None,
                             allow_custom_value=True,
-                            info="Select the third LoRA."
+                            info="Select the third LoRA.",
+                            scale=2
                         )
                         lora_scale_3 = gr.Slider(
                             label="LoRA 3 Scale",
@@ -1090,20 +1092,23 @@ Scheduler: {scheduler}"""
                             maximum=2.0,
                             step=0.05,
                             value=0.7,
-                            info="Strength of the third LoRA effect."
+                            info="Strength of the third LoRA effect.",
+                            scale=2
+                        )
+                        disable_lora_3 = gr.Checkbox(
+                            label="Disable LoRA 3",
+                            value=False,
+                            info="Check to disable this LoRA",
+                            scale=1
                         )
                     with gr.Row(visible=False) as lora_row_4:
-                        disable_lora_4 = gr.Checkbox(
-                            label="Disable LoRA 4",
-                            value=False,
-                            info="Check to disable this LoRA"
-                        )
                         lora_selection_4 = gr.Dropdown(
                             label="Select LoRA 4",
                             choices=[""] + get_available_loras(),
                             value=None,
                             allow_custom_value=True,
-                            info="Select the fourth LoRA."
+                            info="Select the fourth LoRA.",
+                            scale=2
                         )
                         lora_scale_4 = gr.Slider(
                             label="LoRA 4 Scale",
@@ -1111,7 +1116,14 @@ Scheduler: {scheduler}"""
                             maximum=2.0,
                             step=0.05,
                             value=0.7,
-                            info="Strength of the fourth LoRA effect."
+                            info="Strength of the fourth LoRA effect.",
+                            scale=2
+                        )
+                        disable_lora_4 = gr.Checkbox(
+                            label="Disable LoRA 4",
+                            value=False,
+                            info="Check to disable this LoRA",
+                            scale=1
                         )
 
                     disable_lora_1.change(
