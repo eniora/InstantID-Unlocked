@@ -1191,7 +1191,29 @@ Scheduler: {scheduler}"""
                 usage_tips = gr.Markdown(
                     label="InstantID Usage Tips", value=tips, visible=False
                 )
+                with gr.Accordion("PNG Metadata Reader", open=True):
+                    with gr.Row():
+                        metadata_input = gr.Image(
+                            label="Drop PNG file here to read generation metadata",
+                            type="filepath",
+                            height=500,
+                            width=500
+                        )
+                        metadata_output = gr.Textbox(
+                            label="Generation Metadata",
+                            interactive=False,
+                            lines=25,
+                            max_lines=25
+                        )
 
+                    with gr.Row():
+                        apply_metadata_btn = gr.Button("Apply to all fields", variant="secondary")
+            
+                    metadata_input.upload(
+                        fn=lambda x: (x, read_png_metadata(x) if x is not None else ""),
+                        inputs=metadata_input,
+                        outputs=[metadata_input, metadata_output]
+                    )
             # Update negative prompt when preset is changed
             negative_prompt_preset.change(
                 fn=lambda x: NEGATIVE_PROMPT_PRESETS[x],
@@ -1262,29 +1284,6 @@ Scheduler: {scheduler}"""
                 queue=False,
             )
 
-        with gr.Accordion("PNG Metadata Reader", open=True):
-            with gr.Row():
-                metadata_input = gr.Image(
-                    label="Drop PNG file here to read generation metadata",
-                    type="filepath",
-                    height=500,
-                    width=500
-                )
-                metadata_output = gr.Textbox(
-                    label="Generation Metadata",
-                    interactive=False,
-                    lines=10,
-                    max_lines=20
-                )
-
-            with gr.Row():
-                apply_metadata_btn = gr.Button("Apply to all fields", variant="secondary")
-            
-            metadata_input.upload(
-                fn=lambda x: (x, read_png_metadata(x) if x is not None else ""),
-                inputs=metadata_input,
-                outputs=[metadata_input, metadata_output]
-            )
             def extract_all_settings(metadata_text):
                 accordion_update = gr.update(open=False)
                 settings = {
