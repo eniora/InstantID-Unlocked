@@ -216,9 +216,6 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lora_ar
             seed = random.randint(0, MAX_SEED)
         return seed
 
-    def remove_tips():
-        return gr.update(visible=False)
-
     def convert_from_cv2_to_image(img: np.ndarray) -> Image:
         return Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
 
@@ -753,7 +750,7 @@ Scheduler: {scheduler}"""
         import gc; gc.collect()
         overall_elapsed_time = time.time() - overall_start_time
         print(f"Total generation time: {overall_elapsed_time:.2f} seconds\n")
-        return images, gr.update(visible=True)
+        return images
 
     # Description
     title = r"""
@@ -773,17 +770,15 @@ Scheduler: {scheduler}"""
     4. Enter a text prompt, as done in normal text-to-image models.
     5. Click the Generate button to begin customization.
     6. In some cases, minimizing the browser/Gradio window while an image is being generated can help speed up the generation process significantly. You can track the progress in the CMD/Terminal window.
-    ```
-    <b>Github fork page</b> for <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>InstantID: Unlocked</b></a>.<br>
-    """
-
-    tips = r"""
-    ### Usage tips of InstantID
+    
+    Usage tips of InstantID:
     1. If you're not satisfied with the similarity, try increasing the weight of "IdentityNet Strength" and "Adapter Strength."    
     2. If you feel that the saturation is too high, first decrease the Adapter strength. If it remains too high, then decrease the IdentityNet strength.
     3. If you find that text control is not as expected, decrease Adapter strength.
     4. If you find that the style or generated images are not good enough, try another base model.
     5. If you're having trouble detecting faces, try changing the "Face Detection Size" setting or try another input face photo.
+    ```
+    <b>Github fork page</b> for <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>InstantID: Unlocked</b></a>.<br>
     """
 
     css = """
@@ -990,207 +985,9 @@ Scheduler: {scheduler}"""
                         value="640x640 (default)",
                         info="Higher values can detect smaller faces better if the face in the input/reference image is too small/distant. Change the value only if you get 'No face detected', it can help a lot in some face input photos."
                     )
-                enable_lora = gr.Checkbox(
-                    label="Enable LoRA(s) from your Models\Loras folder",
-                    value=enable_lora_arg,
-                )
-                lora_info = gr.Markdown(
-                    "Up to five LoRAs can be loaded. Only SDXL and Pony LoRAs supported. When loading three or more loras, it's not good to go above ~0.5 strength on each. The 'Disable Lora' checkbox is only needed if you have a Lora selected.",
-                    visible=enable_lora_arg
-                )
-                enable_lora.change(
-                    fn=lambda x: gr.Markdown(visible=x),
-                    inputs=enable_lora,
-                    outputs=lora_info
-                )
-                
-                with gr.Row(visible=False) as lora_row_1:
-                    lora_selection = gr.Dropdown(
-                        label="Select LoRA 1",
-                        choices=[""] + get_available_loras(),
-                        value=None,
-                        allow_custom_value=True,
-                        info="Select the first LoRA.",
-                        scale=3
-                    )
-                    lora_scale = gr.Slider(
-                        label="LoRA 1 Scale",
-                        minimum=0.0,
-                        maximum=2.0,
-                        step=0.05,
-                        value=1.0,
-                        info="Strength of the first LoRA effect.",
-                        scale=3
-                    )
-                    disable_lora_1 = gr.Checkbox(
-                        label="Disable LoRA 1",
-                        value=False,
-                        scale=1
-                    )
-
-                with gr.Row(visible=False) as lora_row_2:
-                    lora_selection_2 = gr.Dropdown(
-                        label="Select LoRA 2",
-                        choices=[""] + get_available_loras(),
-                        value=None,
-                        allow_custom_value=True,
-                        info="Select a second LoRA.",
-                        scale=3
-                    )
-                    lora_scale_2 = gr.Slider(
-                        label="LoRA 2 Scale",
-                        minimum=0.0,
-                        maximum=2.0,
-                        step=0.05,
-                        value=0.7,
-                        info="Strength of the second LoRA effect.",
-                        scale=3
-                    )
-                    disable_lora_2 = gr.Checkbox(
-                        label="Disable LoRA 2",
-                        value=False,
-                        scale=1
-                    )
-                with gr.Row(visible=False) as lora_row_3:
-                    lora_selection_3 = gr.Dropdown(
-                        label="Select LoRA 3",
-                        choices=[""] + get_available_loras(),
-                        value=None,
-                        allow_custom_value=True,
-                        info="Select a third LoRA.",
-                        scale=3
-                    )
-                    lora_scale_3 = gr.Slider(
-                        label="LoRA 3 Scale",
-                        minimum=0.0,
-                        maximum=2.0,
-                        step=0.05,
-                        value=0.5,
-                        info="Strength of the third LoRA effect.",
-                        scale=3
-                    )
-                    disable_lora_3 = gr.Checkbox(
-                        label="Disable LoRA 3",
-                        value=False,
-                        scale=1
-                    )
-                with gr.Row(visible=False) as lora_row_4:
-                    lora_selection_4 = gr.Dropdown(
-                        label="Select LoRA 4",
-                        choices=[""] + get_available_loras(),
-                        value=None,
-                        allow_custom_value=True,
-                        info="Select a fourth LoRA.",
-                        scale=3
-                    )
-                    lora_scale_4 = gr.Slider(
-                        label="LoRA 4 Scale",
-                        minimum=0.0,
-                        maximum=2.0,
-                        step=0.05,
-                        value=0.5,
-                        info="Strength of the fourth LoRA effect.",
-                        scale=3
-                    )
-                    disable_lora_4 = gr.Checkbox(
-                        label="Disable LoRA 4",
-                        value=False,
-                        scale=1
-                    )
-                with gr.Row(visible=False) as lora_row_5:
-                    lora_selection_5 = gr.Dropdown(
-                        label="Select LoRA 5",
-                        choices=[""] + get_available_loras(),
-                        value=None,
-                        allow_custom_value=True,
-                        info="Select a fifth LoRA.",
-                        scale=3
-                    )
-                    lora_scale_5 = gr.Slider(
-                        label="LoRA 5 Scale",
-                        minimum=0.0,
-                        maximum=2.0,
-                        step=0.05,
-                        value=0.5,
-                        info="Strength of the fifth LoRA effect.",
-                        scale=3
-                    )
-                    disable_lora_5 = gr.Checkbox(
-                        label="Disable LoRA 5",
-                        value=False,
-                        scale=1
-                    )
-
-                disable_lora_1.change(
-                    fn=lambda x: [gr.update(interactive=not x), gr.update(interactive=not x)],
-                    inputs=disable_lora_1,
-                    outputs=[lora_selection, lora_scale],
-                    queue=False
-                )
-                disable_lora_2.change(
-                    fn=lambda x: [gr.update(interactive=not x), gr.update(interactive=not x)],
-                    inputs=disable_lora_2,
-                    outputs=[lora_selection_2, lora_scale_2],
-                    queue=False
-                )
-                disable_lora_3.change(
-                    fn=lambda x: [gr.update(interactive=not x), gr.update(interactive=not x)],
-                    inputs=disable_lora_3,
-                    outputs=[lora_selection_3, lora_scale_3],
-                    queue=False
-                )
-                disable_lora_4.change(
-                    fn=lambda x: [gr.update(interactive=not x), gr.update(interactive=not x)],
-                    inputs=disable_lora_4,
-                    outputs=[lora_selection_4, lora_scale_4],
-                    queue=False
-                )
-                disable_lora_5.change(
-                    fn=lambda x: [gr.update(interactive=not x), gr.update(interactive=not x)],
-                    inputs=disable_lora_5,
-                    outputs=[lora_selection_5, lora_scale_5],
-                    queue=False
-                )
-                with gr.Row():
-                    refresh_loras = gr.Button("Refresh LoRAs Lists 🔄", scale=2, elem_classes="toolbutton")
-                    clear_loras = gr.Button("Clear all LoRA selections ♻️", scale=1, elem_classes="toolbutton")
-                
-                def refresh_lora_list():
-                    loras = [""] + get_available_loras()
-                    return gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras)
-                
-                refresh_loras.click(
-                    fn=refresh_lora_list,
-                    outputs=[lora_selection, lora_selection_2, lora_selection_3, lora_selection_4, lora_selection_5]
-                )
-
-                def clear_lora_list():
-                    return (
-                        gr.update(value=None),
-                        gr.update(value=None),
-                        gr.update(value=None),
-                        gr.update(value=None),
-                        gr.update(value=None),
-                        gr.update(value=False),
-                        gr.update(value=False),
-                        gr.update(value=False),
-                        gr.update(value=False),
-                        gr.update(value=False)
-                    )
-                
-                clear_loras.click(
-                    fn=clear_lora_list,
-                    outputs=[
-                        lora_selection, lora_selection_2, lora_selection_3, lora_selection_4, lora_selection_5,
-                        disable_lora_1, disable_lora_2, disable_lora_3, disable_lora_4, disable_lora_5
-                    ]
-                )
 
             with gr.Column(scale=1):
                 gallery = gr.Gallery(label="Generated Images")
-                usage_tips = gr.Markdown(
-                    label="InstantID Usage Tips", value=tips, visible=False
-                )
                 with gr.Accordion("PNG Metadata Reader", open=True):
                     with gr.Row():
                         metadata_input = gr.Image(
@@ -1214,6 +1011,204 @@ Scheduler: {scheduler}"""
                         inputs=metadata_input,
                         outputs=[metadata_input, metadata_output]
                     )
+
+                with gr.Column():
+                    enable_lora = gr.Checkbox(
+                        label="Enable LoRA(s) from your Models\Loras folder",
+                        value=enable_lora_arg,
+                    )
+                    lora_info = gr.Markdown(
+                        "Up to five LoRAs can be loaded. Only SDXL and Pony LoRAs supported. When loading three or more loras, it's not good to go above ~0.5 strength on each. The 'Disable Lora' checkbox is only needed if you have a Lora selected.",
+                        visible=enable_lora_arg
+                    )
+                    enable_lora.change(
+                        fn=lambda x: gr.Markdown(visible=x),
+                        inputs=enable_lora,
+                        outputs=lora_info
+                    )
+                    
+                    with gr.Row(visible=False) as lora_row_1:
+                        lora_selection = gr.Dropdown(
+                            label="Select LoRA 1",
+                            choices=[""] + get_available_loras(),
+                            value=None,
+                            allow_custom_value=True,
+                            info="Select the first LoRA.",
+                            scale=3
+                        )
+                        lora_scale = gr.Slider(
+                            label="LoRA 1 Scale",
+                            minimum=0.0,
+                            maximum=2.0,
+                            step=0.05,
+                            value=1.0,
+                            info="Strength of the first LoRA effect.",
+                            scale=3
+                        )
+                        disable_lora_1 = gr.Checkbox(
+                            label="Disable LoRA 1",
+                            value=False,
+                            scale=1
+                        )
+
+                    with gr.Row(visible=False) as lora_row_2:
+                        lora_selection_2 = gr.Dropdown(
+                            label="Select LoRA 2",
+                            choices=[""] + get_available_loras(),
+                            value=None,
+                            allow_custom_value=True,
+                            info="Select a second LoRA.",
+                            scale=3
+                        )
+                        lora_scale_2 = gr.Slider(
+                            label="LoRA 2 Scale",
+                            minimum=0.0,
+                            maximum=2.0,
+                            step=0.05,
+                            value=0.7,
+                            info="Strength of the second LoRA effect.",
+                            scale=3
+                        )
+                        disable_lora_2 = gr.Checkbox(
+                            label="Disable LoRA 2",
+                            value=False,
+                            scale=1
+                        )
+                    with gr.Row(visible=False) as lora_row_3:
+                        lora_selection_3 = gr.Dropdown(
+                            label="Select LoRA 3",
+                            choices=[""] + get_available_loras(),
+                            value=None,
+                            allow_custom_value=True,
+                            info="Select a third LoRA.",
+                            scale=3
+                        )
+                        lora_scale_3 = gr.Slider(
+                            label="LoRA 3 Scale",
+                            minimum=0.0,
+                            maximum=2.0,
+                            step=0.05,
+                            value=0.5,
+                            info="Strength of the third LoRA effect.",
+                            scale=3
+                        )
+                        disable_lora_3 = gr.Checkbox(
+                            label="Disable LoRA 3",
+                            value=False,
+                            scale=1
+                        )
+                    with gr.Row(visible=False) as lora_row_4:
+                        lora_selection_4 = gr.Dropdown(
+                            label="Select LoRA 4",
+                            choices=[""] + get_available_loras(),
+                            value=None,
+                            allow_custom_value=True,
+                            info="Select a fourth LoRA.",
+                            scale=3
+                        )
+                        lora_scale_4 = gr.Slider(
+                            label="LoRA 4 Scale",
+                            minimum=0.0,
+                            maximum=2.0,
+                            step=0.05,
+                            value=0.5,
+                            info="Strength of the fourth LoRA effect.",
+                            scale=3
+                        )
+                        disable_lora_4 = gr.Checkbox(
+                            label="Disable LoRA 4",
+                            value=False,
+                            scale=1
+                        )
+                    with gr.Row(visible=False) as lora_row_5:
+                        lora_selection_5 = gr.Dropdown(
+                            label="Select LoRA 5",
+                            choices=[""] + get_available_loras(),
+                            value=None,
+                            allow_custom_value=True,
+                            info="Select a fifth LoRA.",
+                            scale=3
+                        )
+                        lora_scale_5 = gr.Slider(
+                            label="LoRA 5 Scale",
+                            minimum=0.0,
+                            maximum=2.0,
+                            step=0.05,
+                            value=0.5,
+                            info="Strength of the fifth LoRA effect.",
+                            scale=3
+                        )
+                        disable_lora_5 = gr.Checkbox(
+                            label="Disable LoRA 5",
+                            value=False,
+                            scale=1
+                        )
+
+                    disable_lora_1.change(
+                        fn=lambda x: [gr.update(interactive=not x), gr.update(interactive=not x)],
+                        inputs=disable_lora_1,
+                        outputs=[lora_selection, lora_scale],
+                        queue=False
+                    )
+                    disable_lora_2.change(
+                        fn=lambda x: [gr.update(interactive=not x), gr.update(interactive=not x)],
+                        inputs=disable_lora_2,
+                        outputs=[lora_selection_2, lora_scale_2],
+                        queue=False
+                    )
+                    disable_lora_3.change(
+                        fn=lambda x: [gr.update(interactive=not x), gr.update(interactive=not x)],
+                        inputs=disable_lora_3,
+                        outputs=[lora_selection_3, lora_scale_3],
+                        queue=False
+                    )
+                    disable_lora_4.change(
+                        fn=lambda x: [gr.update(interactive=not x), gr.update(interactive=not x)],
+                        inputs=disable_lora_4,
+                        outputs=[lora_selection_4, lora_scale_4],
+                        queue=False
+                    )
+                    disable_lora_5.change(
+                        fn=lambda x: [gr.update(interactive=not x), gr.update(interactive=not x)],
+                        inputs=disable_lora_5,
+                        outputs=[lora_selection_5, lora_scale_5],
+                        queue=False
+                    )
+                    with gr.Row():
+                        refresh_loras = gr.Button("Refresh LoRAs Lists 🔄", scale=2, elem_classes="toolbutton")
+                        clear_loras = gr.Button("Clear all LoRA selections ♻️", scale=1, elem_classes="toolbutton")
+                    
+                    def refresh_lora_list():
+                        loras = [""] + get_available_loras()
+                        return gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras)
+                    
+                    refresh_loras.click(
+                        fn=refresh_lora_list,
+                        outputs=[lora_selection, lora_selection_2, lora_selection_3, lora_selection_4, lora_selection_5]
+                    )
+
+                    def clear_lora_list():
+                        return (
+                            gr.update(value=None),
+                            gr.update(value=None),
+                            gr.update(value=None),
+                            gr.update(value=None),
+                            gr.update(value=None),
+                            gr.update(value=False),
+                            gr.update(value=False),
+                            gr.update(value=False),
+                            gr.update(value=False),
+                            gr.update(value=False)
+                        )
+                    
+                    clear_loras.click(
+                        fn=clear_lora_list,
+                        outputs=[
+                            lora_selection, lora_selection_2, lora_selection_3, lora_selection_4, lora_selection_5,
+                            disable_lora_1, disable_lora_2, disable_lora_3, disable_lora_4, disable_lora_5
+                        ]
+                    )
+
             # Update negative prompt when preset is changed
             negative_prompt_preset.change(
                 fn=lambda x: NEGATIVE_PROMPT_PRESETS[x],
@@ -1222,9 +1217,6 @@ Scheduler: {scheduler}"""
             )
 
             generate.click(
-                fn=remove_tips,
-                outputs=usage_tips,
-            ).then(
                 fn=randomize_seed_fn,
                 inputs=[seed, randomize_seed],
                 outputs=seed,
@@ -1274,7 +1266,7 @@ Scheduler: {scheduler}"""
                     file_prefix,
                     enable_vae_tiling,
                 ],
-                outputs=[gallery, usage_tips],
+                outputs=[gallery],
             )
 
             enable_lora.input(
