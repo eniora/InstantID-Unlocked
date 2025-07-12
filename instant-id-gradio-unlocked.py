@@ -13,8 +13,13 @@ import argparse
 import warnings
 import PIL.PngImagePlugin
 
+warnings.filterwarnings("ignore", message=".*timm.models.layers.*")
+warnings.filterwarnings("ignore", message=".*timm.models.registry.*")
 warnings.filterwarnings("ignore", message=".*Overwriting tiny_vit_.* in registry.*")
 warnings.filterwarnings("ignore", message=".*peft_config.*multiple adapters.*")
+warnings.filterwarnings("ignore", message=".*rcond.*will change to the default.*")
+warnings.filterwarnings("ignore", message=".*MultiControlNetModel.*is deprecated.*")
+warnings.filterwarnings("ignore", message=".*`resume_download` is deprecated.*")
 
 os.environ["NO_ALBUMENTATIONS_UPDATE"] = "1"
 # os.environ["TRANSFORMERS_OFFLINE"] = "1"
