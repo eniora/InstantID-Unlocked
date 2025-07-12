@@ -808,7 +808,7 @@ Scheduler: {scheduler}"""
     ---
     📝 **Tips**
     ```bibtex
-    1. Upload an image with a face. For images with multiple faces, we will only detect the largest face. Ensure the face is not too small and is clearly visible without significant obstructions or blurring.
+    1. Upload an image with a face. For images with multiple faces, only the largest face will be detected. Ensure the face is not too small and is clearly visible without significant obstructions or blurring.
     2. (Optional) You can upload another image as a reference for the face pose. If you don't, the first detected face image will be used to extract facial landmarks. If you use a cropped face at step 1, it is recommended to upload it to define a new face pose.
     3. (Optional) You can select multiple ControlNet models to control the generation process. The default is to use the IdentityNet only. The ControlNet models include pose skeleton, canny, and depth. You can adjust the strength of each ControlNet model to control the generation process.
     4. Enter a text prompt, as done in normal text-to-image models.
