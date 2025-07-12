@@ -1152,8 +1152,8 @@ Scheduler: {scheduler}"""
                     queue=False
                 )
                 with gr.Row():
-                    refresh_loras = gr.Button("Refresh LoRAs Lists 🔄", elem_classes="toolbutton")
-                    clear_loras = gr.Button("Clear all LoRA selections ♻️", elem_classes="toolbutton")
+                    refresh_loras = gr.Button("Refresh LoRAs Lists 🔄", scale=2, elem_classes="toolbutton")
+                    clear_loras = gr.Button("Clear all LoRA selections ♻️", scale=1, elem_classes="toolbutton")
                 
                 def refresh_lora_list():
                     loras = [""] + get_available_loras()
