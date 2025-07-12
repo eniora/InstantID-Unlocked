@@ -1109,7 +1109,7 @@ Scheduler: {scheduler}"""
                         minimum=0.0,
                         maximum=2.0,
                         step=0.05,
-                        value=0.7,
+                        value=0.5,
                         info="Strength of the third LoRA effect.",
                         scale=3
                     )
@@ -1132,7 +1132,7 @@ Scheduler: {scheduler}"""
                         minimum=0.0,
                         maximum=2.0,
                         step=0.05,
-                        value=0.7,
+                        value=0.5,
                         info="Strength of the fourth LoRA effect.",
                         scale=3
                     )
@@ -1155,7 +1155,7 @@ Scheduler: {scheduler}"""
                         minimum=0.0,
                         maximum=2.0,
                         step=0.05,
-                        value=0.7,
+                        value=0.5,
                         info="Strength of the fifth LoRA effect.",
                         scale=3
                     )
@@ -1349,11 +1349,11 @@ Scheduler: {scheduler}"""
                     "lora_selection": None,
                     "lora_scale_2": 0.7,
                     "lora_selection_2": None,
-                    "lora_scale_3": 0.7,
+                    "lora_scale_3": 0.5,
                     "lora_selection_3": None,
-                    "lora_scale_4": 0.7,
+                    "lora_scale_4": 0.5,
                     "lora_selection_4": None,
-                    "lora_scale_5": 0.7,
+                    "lora_scale_5": 0.5,
                     "lora_selection_5": None,
                     "enhance_face_region": True,
                     "enhance_strength": "Balanced",
