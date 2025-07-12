@@ -964,6 +964,7 @@ Scheduler: {scheduler}"""
                         step=1,
                         value=42,
                     )
+                    randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
                     schedulers = [
                         "DPMSolverMultistepScheduler",
                         "DPMSolverMultistepScheduler-Karras",
@@ -984,14 +985,14 @@ Scheduler: {scheduler}"""
                         "LMSDiscreteScheduler",
                         "UniPCMultistepScheduler",
                         "LCMScheduler",
-                    ]
-                    scheduler = gr.Dropdown(
-                        label="Schedulers",
-                        choices=schedulers,
-                        value="DPMSolverMultistepScheduler",
-                        info="DPMSolver, KDPM2 and Euler are usually the best."
-                    )
-                    randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
+                        ]
+                    with gr.Row():
+                        scheduler = gr.Dropdown(
+                            label="Schedulers",
+                            choices=schedulers,
+                            value="DPMSolverMultistepScheduler",
+                            info="DPMSolver, KDPM2 and Euler are usually the best."
+                        )
                     with gr.Row():
                         enhance_face_region = gr.Checkbox(label="Enhance non-face region", value=True)
                         enhance_strength = gr.Dropdown(
