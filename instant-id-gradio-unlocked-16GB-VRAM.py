@@ -44,7 +44,7 @@ def save_images(images, output_dir="output", generation_info=None, prefix=DEFAUL
 
     paths = []
     for i, img in enumerate(images):
-        filename = f"{prefix}{start_index + i}.png"
+        filename = f"{prefix}_{start_index + i}.png" if prefix != DEFAULT_FILE_PREFIX else f"{prefix}{start_index + i}.png"
         path = os.path.join(output_dir, filename)
         img.save(path, pnginfo=generation_info[i] if generation_info else None)
         paths.append(path)
