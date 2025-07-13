@@ -44,7 +44,7 @@ def save_images(images, output_dir="output", generation_info=None, prefix=DEFAUL
 
     paths = []
     for i, img in enumerate(images):
-        filename = f"{prefix}_{start_index + i}.png" if prefix != DEFAULT_FILE_PREFIX else f"{prefix}{start_index + i}.png"
+        filename = f"{prefix}{start_index + i}.png"
         path = os.path.join(output_dir, filename)
         img.save(path, pnginfo=generation_info[i] if generation_info else None)
         paths.append(path)
@@ -441,7 +441,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lora_ar
         enable_vae_tiling,
         progress=gr.Progress(track_tqdm=True),
     ):
-        file_prefix = f"InstantID_{file_prefix}" if file_prefix.strip() else "InstantID_"
+        file_prefix = f"InstantID_{file_prefix}_" if file_prefix.strip() else "InstantID_"
         nonlocal pipe
         import time
         overall_start_time = time.time()
