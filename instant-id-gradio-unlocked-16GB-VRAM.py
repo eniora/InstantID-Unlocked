@@ -9,7 +9,6 @@ import math
 import torch
 import random
 import numpy as np
-import argparse
 import gc
 import warnings
 import PIL.PngImagePlugin
