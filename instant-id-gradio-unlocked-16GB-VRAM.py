@@ -34,6 +34,7 @@ import PIL
 from PIL import Image
 
 DEFAULT_FILE_PREFIX = "InstantID_"
+FILENAME_SAFE_TRANS = str.maketrans('', '', '\\/:*?"<>|')
 
 def save_images(images, output_dir="output", generation_info=None, prefix=DEFAULT_FILE_PREFIX):
     os.makedirs(output_dir, exist_ok=True)
@@ -397,7 +398,8 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lora_ar
         enable_vae_tiling,
         progress=gr.Progress(track_tqdm=True),
     ):
-        file_prefix = f"InstantID_{file_prefix}_" if file_prefix.strip() else "InstantID_"
+        file_prefix = file_prefix.strip().translate(FILENAME_SAFE_TRANS)
+        file_prefix = f"InstantID_{file_prefix}_" if file_prefix else "InstantID_"
         nonlocal pipe
         import time
         overall_start_time = time.time()
