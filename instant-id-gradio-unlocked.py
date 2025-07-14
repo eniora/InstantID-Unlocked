@@ -218,7 +218,7 @@ def update_det_size(det_size_name):
     
     return f"Detection size set to {current_det_size}"
 
-def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0", enable_lora_arg=False):
+def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
     if pretrained_model_name_or_path.endswith(
         ".ckpt"
     ) or pretrained_model_name_or_path.endswith(".safetensors"):
@@ -1090,11 +1090,11 @@ Scheduler: {scheduler}"""
                 with gr.Column():
                     enable_lora = gr.Checkbox(
                         label="Enable LoRA(s) from your Models\Loras folder",
-                        value=enable_lora_arg,
+                        value=False,
                     )
                     lora_info = gr.Markdown(
                         "Up to six LoRAs can be loaded. Only SDXL and Pony LoRAs supported. When loading three or more loras, it's not good to go above ~0.5 strength on each. The 'Disable Lora' checkbox is only needed if you have a Lora selected.",
-                        visible=enable_lora_arg
+                        visible=False
                     )
                     enable_lora.change(
                         fn=lambda x: gr.Markdown(visible=x),
@@ -1649,15 +1649,4 @@ Scheduler: {scheduler}"""
 
     demo.launch(inbrowser=os.environ.get("IN_BROWSER", "1") == "1")
 
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--pretrained_model_name_or_path", type=str, default="SG161222/RealVisXL_V4.0"
-    )
-    parser.add_argument(
-        "--enable_lora", type=bool, default=os.environ.get("ENABLE_lora", False)
-    )
-    args = parser.parse_args()
-
-    main(args.pretrained_model_name_or_path, args.enable_lora)
+main()
