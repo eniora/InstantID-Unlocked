@@ -399,7 +399,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
         det_size_name,
         file_prefix,
         enable_vae_tiling,
-        progress=gr.Progress(track_tqdm=True),
+        progress=gr.Progress(),
     ):
         file_prefix = file_prefix.strip().translate(FILENAME_SAFE_TRANS)
         file_prefix = f"InstantID_{file_prefix}_" if file_prefix else "InstantID_"
@@ -639,6 +639,15 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
         generation_infos = []
         for i in range(num_outputs):
             print(f"Generating image {i + 1} of {num_outputs}...")
+
+            gradio_callback_lambda = lambda pipe_obj, step, timestep, callback_kwargs: (
+                progress(
+                    ((i / num_outputs) + (((step + 1) / num_steps) / num_outputs)),
+                    desc=f"Generating image {i + 1} of {num_outputs} (Step {step + 1}/{num_steps})"
+                ),
+                callback_kwargs
+            )[1]
+
             print(f"Input face image: {os.path.basename(face_image_path) if face_image_path else 'None'}")
             print(f"Reference pose image: {os.path.basename(pose_image_path) if pose_image_path else 'None'}")
             print(f"Steps: {num_steps}")
@@ -722,7 +731,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
                 height=height,
                 width=width,
                 generator=generator,
-                callback=lambda step, timestep, latents: print(f"Step {step + 1} of {num_steps}"),
+                callback_on_step_end=gradio_callback_lambda,
                 callback_steps=1,
             )
             image = result.images[0]
@@ -798,7 +807,6 @@ Scheduler: {scheduler}"""
     3. (Optional) You can select multiple ControlNet models to control the generation process. The default is to use the IdentityNet only. The ControlNet models include pose skeleton, canny, and depth. You can adjust the strength of each ControlNet model to control the generation process.
     4. Enter a text prompt, as done in normal text-to-image models.
     5. Click the Generate button to begin customization.
-    6. In some cases, minimizing the browser/Gradio window while an image is being generated can help speed up the generation process significantly. You can track the progress in the CMD/Terminal window.
     
     Other usage tips of InstantID:
     1. If you're not satisfied with the similarity, try increasing the weight of "IdentityNet Strength" and "Adapter Strength."    
