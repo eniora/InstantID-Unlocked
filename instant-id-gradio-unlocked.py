@@ -321,8 +321,8 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
 
     def resize_img(
         input_image,
-        max_side=4084,
-        min_side=754,
+        max_side=4096,
+        min_side=768,
         size=None,
         pad_to_max_side=False,
         mode=PIL.Image.BILINEAR,
@@ -919,11 +919,11 @@ Scheduler: {scheduler}"""
                     )
                 resize_max_side_slider = gr.Slider(
                     label="Max image size for resizing",
-                    minimum=754,
-                    maximum=4084,
-                    step=90,
+                    minimum=768,
+                    maximum=4096,
+                    step=64,
                     value=1280,
-                    info="Controls the max_side for face/pose image resizing. Default is 1280 which is good. Up to 1924 can sometimes yield good results. Above 2000 is mostly only for super ultra wide/vertical input/reference pose photos where the resolution will be high only on one side, and it works well.",
+                    info="Controls the max_side for face/pose image resizing. Default is 1280 which is good. Up to 1920 can sometimes yield good results. Above 2000 is mostly only for super ultra wide/vertical input/reference pose photos where the resolution will be high only on one side, and it works well.",
                 )
                 num_outputs = gr.Slider(
                     label="Number of images to generate",
