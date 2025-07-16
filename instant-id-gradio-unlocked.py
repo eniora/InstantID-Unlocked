@@ -776,7 +776,6 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
                 width=width,
                 generator=generator,
                 callback_on_step_end=gradio_callback_lambda,
-                callback_steps=1,
             )
             image = result.images[0]
             images.append(image)
@@ -851,6 +850,7 @@ Scheduler: {scheduler}"""
     3. (Optional) You can select multiple ControlNet models to control the generation process. The default is to use the IdentityNet only. The ControlNet models include pose skeleton, canny, and depth. You can adjust the strength of each ControlNet model to control the generation process.
     4. Enter a text prompt, as done in normal text-to-image models.
     5. Click the Generate button to begin customization.
+    6. In some cases, minimizing the browser/Gradio window while an image is being generated can help speed up the generation process. You can track the progress in the CMD/Terminal window.
     
     Other usage tips of InstantID:
     1. If you're not satisfied with the similarity, try increasing the weight of "IdentityNet Strength" and "Adapter Strength."    
@@ -917,17 +917,30 @@ Scheduler: {scheduler}"""
                         value=False,
                         info="Processes images in tiles to reduce VRAM usage during the final VAE decoding step without any quality loss. Best to enable only if you have 16GB VRAM or more."
                     )
-                resize_max_side_slider = gr.Slider(
-                    label="Max image size for resizing",
-                    minimum=768,
-                    maximum=4096,
-                    step=64,
-                    value=1280,
-                    info="Controls the max_side for face/pose image resizing. Default is 1280 which is good. Up to 1920 can sometimes yield good results. Above 2000 is mostly only for super ultra wide/vertical input/reference pose photos where the resolution will be high only on one side, and it works well.",
+                with gr.Row():
+                    resize_max_side_slider = gr.Slider(
+                        label="Max image size for resizing (output resolution)",
+                        minimum=768,
+                        maximum=4096,
+                        step=64,
+                        value=1280,
+                        scale=4,
+                        info="Controls the max_side for face/pose image resizing. Default is 1280. Up to 1920 can sometimes be good. Above 2000 is for super ultra wide/vertical images.",
+                    )
+                    enable_precise_resize = gr.Checkbox(
+                        label="Precise Resize Bar", value=False, scale=1
+                    )
+                def toggle_resize_step(precise):
+                    return gr.update(step=8 if precise else 64)
+
+                enable_precise_resize.change(
+                    fn=toggle_resize_step,
+                    inputs=enable_precise_resize,
+                    outputs=resize_max_side_slider
                 )
                 num_outputs = gr.Slider(
                     label="Number of images to generate",
-                    minimum=1, maximum=50, step=1, value=1,
+                    minimum=1, maximum=100, step=1, value=1,
                 )
                 generate = gr.Button("Generate", variant="primary")
                 open_folder_btn = gr.Button("Open Output Folder")
