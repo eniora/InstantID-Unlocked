@@ -18,7 +18,7 @@
 - Multiple schedulers to choose from.
 - And many many more improvements.
 
-I tried the most popular forgeui and comfyui implementations including the popular cubiq/ComfyUI_InstantID and it's really bad compared to my gradio fork of InstantID, comfyui tends to sometimes screw up the faces and similarity no matter what options and workflows I tried. Try this and judge for yourself. I agree that comfyui instantid is faster but the quality isn't so good really.
+I tried the most popular forgeui and comfyui implementations including the popular cubiq/ComfyUI_InstantID and it's really bad compared to my gradio fork of InstantID. cubiq/ComfyUI_InstantID (which was the best from the comfy implmenetations I tried) tends to sometimes screw up the faces and similarity no matter what options and workflows I tried, and the multi ID feature doesn't work well anyway and is overly complicated (even the author admits this). Try this and judge for yourself. I agree that comfyui instantid is faster but the quality isn't so good really.
 
 ## How to use and run:
 Git clone this fork (Git clone https://github.com/eniora/InstantID-Unlocked/) then:
