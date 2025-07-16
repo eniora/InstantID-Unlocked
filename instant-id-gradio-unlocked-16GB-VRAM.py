@@ -279,7 +279,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
         min_side=768,
         size=None,
         pad_to_max_side=False,
-        mode=PIL.Image.BILINEAR,
+        mode=PIL.Image.LANCZOS,
         base_pixel_number=64,
     ):
         w, h = input_image.size
@@ -399,6 +399,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
         det_size_name,
         file_prefix,
         enable_vae_tiling,
+        resize_mode,
         progress=gr.Progress(),
     ):
         file_prefix = file_prefix.strip().translate(FILENAME_SAFE_TRANS)
@@ -540,7 +541,8 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
         prompt, negative_prompt = apply_style(style_name, prompt, negative_prompt)
 
         face_image = load_image(face_image_path)
-        face_image = resize_img(face_image, max_side=resize_max_side)
+        resize_mode_enum = getattr(PIL.Image, resize_mode)
+        face_image = resize_img(face_image, max_side=resize_max_side, mode=resize_mode_enum)
         face_image_cv2 = convert_from_image_to_cv2(face_image)
         height, width, _ = face_image_cv2.shape
 
@@ -561,7 +563,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
         img_controlnet = face_image
         if pose_image_path is not None:
             pose_image = load_image(pose_image_path)
-            pose_image = resize_img(pose_image, max_side=resize_max_side)
+            pose_image = resize_img(pose_image, max_side=resize_max_side, mode=resize_mode_enum)
             img_controlnet = pose_image
             pose_image_cv2 = convert_from_image_to_cv2(pose_image)
 
@@ -655,6 +657,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
             print(f"Guidance scale: {guidance_scale}")
             print(f"Seed: {seed + i}")
             print(f"Model: {model_name}")
+            print(f"Resize mode: {resize_mode}")
             print(f"ControlNet selection: {controlnet_selection} | Strengths - Pose: {pose_strength}, Canny: {canny_strength}, Depth: {depth_strength}")
             print(f"IdentityNet strength: {identitynet_strength_ratio}")
             print(f"Adapter strength: {adapter_strength_ratio}")
@@ -752,6 +755,7 @@ Image size: {width}x{height}
 Enhance non-face region: {enhance_face_region}
 Enhance region profile: {enhance_strength}
 Enhance padding ratio: {custom_enhance_padding}
+Resize mode: {resize_mode}
 IdentityNet strength: {identitynet_strength_ratio}
 Adapter strength: {adapter_strength_ratio}
 Pose strength: {pose_strength}
@@ -872,6 +876,14 @@ Scheduler: {scheduler}"""
                         label="Enable VAE Tiling (saves VRAM for large images at the last generation step)",
                         value=True,
                         info="Processes images in tiles to reduce VRAM usage during the final VAE decoding step without any quality loss. Best to enable only if you have 16GB VRAM or more."
+                    )
+                    resize_mode_dropdown = gr.Dropdown(
+                        label="Resize Interpolation Mode",
+                        choices=[
+                            "LANCZOS", "BILINEAR", "HAMMING", "BICUBIC", "BOX", "NEAREST"
+                        ],
+                        value="LANCZOS",
+                        info="Interpolation method used when resizing input images, LANCZOS, BILINEAR and HAMMING are usually the best."
                     )
                 with gr.Row():
                     resize_max_side_slider = gr.Slider(
@@ -1350,6 +1362,7 @@ Scheduler: {scheduler}"""
                     det_size_name,
                     file_prefix,
                     enable_vae_tiling,
+                    resize_mode_dropdown,
                 ],
                 outputs=[gallery],
             )
@@ -1402,7 +1415,8 @@ Scheduler: {scheduler}"""
                     "disable_lora_3": False,
                     "disable_lora_4": False,
                     "disable_lora_5": False,
-                    "disable_lora_6": False
+                    "disable_lora_6": False,
+                    "resize_mode": "LANCZOS"
                 }
                 if metadata_text:
                     for line in metadata_text.split('\n'):
@@ -1517,6 +1531,8 @@ Scheduler: {scheduler}"""
                             size_str = line.replace("Max resize side:", "").strip()
                             if size_str.isdigit():
                                 settings["resize_max_side"] = int(size_str)
+                        elif line.startswith("Resize mode:"):
+                            settings["resize_mode"] = line.replace("Resize mode:", "").strip().upper()
 
                 return [
                     settings["prompt"],
@@ -1558,6 +1574,7 @@ Scheduler: {scheduler}"""
                     settings["disable_lora_4"],
                     settings["disable_lora_5"],
                     settings["disable_lora_6"],
+                    settings["resize_mode"],
                     accordion_update
                 ]
 
@@ -1604,6 +1621,7 @@ Scheduler: {scheduler}"""
                     disable_lora_4,
                     disable_lora_5,
                     disable_lora_6,
+                    resize_mode_dropdown,
                     controlnet_accordion
                 ]
             ).then(
