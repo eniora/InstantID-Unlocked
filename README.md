@@ -3,19 +3,22 @@
 
 ## This fork adds the following:
 - Autosave of each generated image in the "output" folder, with an "Open Output Folder" button in the gradio GUI.
-- Resolution slider.
-- Lora loader (not LCM lora, real lora loader)
-- Restart Server button.
+- Resolution slider, up to 4096.
+- Multiple Lora loader
 - Model selector dropdown.
-- PNG auto metadata writer in the autosaved images and a gradio box to read info from them
+- PNG metadata writer in the autosaved images and a gradio box to read info from them
 - Dropdown menu for the ability to change the Det Size for face detection in input/reference photos.
-- Auto opening of gradio interface after it's launched.
 - Negative Prompt Profiles dropdown.
 - New default RealVisXL_V4.0 model, which is much better than the default YamerMIX. You can still download the base model of your choice by changing the huggingface model path inside instant-id-gradio-unlocked.py file and replacing all "SG161222/RealVisXL_V4.0" fields and it will be downloaded automatically in the "models" folder on root. /John6666/albedobase-xl-v31large-sdxl/, ProtoVision XL 6.6 model, and John6666/cyberrealistic-xl-v58-sdxl are very good models for styles and general use as well.
 - Ability to choose how many images to be generated after clicking on "generate", each with random seed.
 - Improved VRAM usage compared to the original repo.
 - Added many more styles in the style template.
+- Enhance Non-Face Region Custom Padding Amount.
+- VAE tiling option.
+- Multiple schedulers to choose from.
 - And many many more improvements.
+
+I tried the most popular forgeui and comfyui implementations including the popular cubiq/ComfyUI_InstantID and it's really bad compared to my gradio fork of InstantID, comfyui tends to sometimes screw up the faces and similarity no matter what options and workflows I tried. Try this and judge for yourself. I agree that comfyui instantid is faster but the quality isn't so good really.
 
 ## How to use and run:
 Git clone this fork (Git clone https://github.com/eniora/InstantID-Unlocked/) then:
