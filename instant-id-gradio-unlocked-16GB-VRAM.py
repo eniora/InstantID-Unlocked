@@ -872,7 +872,7 @@ Scheduler: {scheduler}"""
                     placeholder="When a Style template is selected, this becomes empty because styles have their own neg prompts. You can still add to it",
                     value=NEGATIVE_PROMPT_PRESETS["Default Negative Profile"]
                 )
-                with gr.Accordion("Style template and other settings", open=False):
+                with gr.Accordion("Style template and other settings", open=False) as style_settings_accordion:
                     style = gr.Dropdown(
                         label="Style template",
                         choices=STYLE_NAMES,
@@ -1594,6 +1594,11 @@ Scheduler: {scheduler}"""
                             except:
                                 pass
 
+                open_settings_accordion = False
+
+                if settings["enable_custom_resize"] or settings["pad_to_max_side"]:
+                    open_settings_accordion = True
+
                 return [
                     settings["prompt"],
                     settings["negative_prompt"],
@@ -1639,7 +1644,8 @@ Scheduler: {scheduler}"""
                     settings["enable_custom_resize"],
                     settings["custom_resize_width"],
                     settings["custom_resize_height"],
-                    accordion_update
+                    accordion_update,
+                    gr.update(open=open_settings_accordion)
                 ]
 
             apply_metadata_btn.click(
@@ -1690,7 +1696,8 @@ Scheduler: {scheduler}"""
                     enable_custom_resize,
                     custom_resize_width,
                     custom_resize_height,
-                    controlnet_accordion
+                    controlnet_accordion,
+                    style_settings_accordion
                 ]
             ).then(
                 fn=toggle_lora_ui,
