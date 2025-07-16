@@ -400,6 +400,10 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
         file_prefix,
         enable_vae_tiling,
         resize_mode,
+        pad_to_max_side,
+        enable_custom_resize,
+        custom_resize_width,
+        custom_resize_height,
         progress=gr.Progress(),
     ):
         file_prefix = file_prefix.strip().translate(FILENAME_SAFE_TRANS)
@@ -541,8 +545,14 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
         prompt, negative_prompt = apply_style(style_name, prompt, negative_prompt)
 
         face_image = load_image(face_image_path)
+        custom_size = None
+        if enable_custom_resize:
+            try:
+                custom_size = (int(custom_resize_width), int(custom_resize_height))
+            except:
+                raise gr.Error("Custom resize values must be numeric and within bounds.")
         resize_mode_enum = getattr(PIL.Image, resize_mode)
-        face_image = resize_img(face_image, max_side=resize_max_side, mode=resize_mode_enum)
+        face_image = resize_img(face_image, size=custom_size, max_side=resize_max_side, mode=resize_mode_enum, pad_to_max_side=pad_to_max_side)
         face_image_cv2 = convert_from_image_to_cv2(face_image)
         height, width, _ = face_image_cv2.shape
 
@@ -563,7 +573,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
         img_controlnet = face_image
         if pose_image_path is not None:
             pose_image = load_image(pose_image_path)
-            pose_image = resize_img(pose_image, max_side=resize_max_side, mode=resize_mode_enum)
+            pose_image = resize_img(pose_image, size=custom_size, max_side=resize_max_side, mode=resize_mode_enum, pad_to_max_side=pad_to_max_side)
             img_controlnet = pose_image
             pose_image_cv2 = convert_from_image_to_cv2(pose_image)
 
@@ -658,6 +668,10 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
             print(f"Seed: {seed + i}")
             print(f"Model: {model_name}")
             print(f"Resize mode: {resize_mode}")
+            print(f"Pad to max side: {pad_to_max_side}")
+            print(f"Use custom resize: {enable_custom_resize}")
+            if enable_custom_resize:
+                print(f"Custom resize size: {custom_resize_width}x{custom_resize_height}")
             print(f"ControlNet selection: {controlnet_selection} | Strengths - Pose: {pose_strength}, Canny: {canny_strength}, Depth: {depth_strength}")
             print(f"IdentityNet strength: {identitynet_strength_ratio}")
             print(f"Adapter strength: {adapter_strength_ratio}")
@@ -756,6 +770,9 @@ Enhance non-face region: {enhance_face_region}
 Enhance region profile: {enhance_strength}
 Enhance padding ratio: {custom_enhance_padding}
 Resize mode: {resize_mode}
+Pad to max side: {pad_to_max_side}
+Use custom resize: {enable_custom_resize}
+Custom resize size: {custom_resize_width}x{custom_resize_height}
 IdentityNet strength: {identitynet_strength_ratio}
 Adapter strength: {adapter_strength_ratio}
 Pose strength: {pose_strength}
@@ -885,26 +902,50 @@ Scheduler: {scheduler}"""
                         value="LANCZOS",
                         info="Interpolation method used when resizing input images, LANCZOS, BILINEAR and HAMMING are usually the best."
                     )
-                with gr.Row():
-                    resize_max_side_slider = gr.Slider(
-                        label="Max image size for resizing (output resolution)",
+                    pad_to_max_checkbox = gr.Checkbox(
+                        label="Pad resized image to square",
+                        value=False,
+                        info="If enabled, resized images are padded to a square shape. Usually slower and uses more VRAM due to the square shape resolution."
+                    )
+                    enable_custom_resize = gr.Checkbox(
+                        label="Enable custom resolution (Don't use along with 'Pad resized image to square')",
+                        value=False,
+                        info="If enabled, you can set a custom resolution (width x height). This overrides Max image size for resizing. Only use if you know what you're doing."
+                    )
+                    custom_resize_width = gr.Slider(
+                        label="Custom Width",
+                        minimum=768,
+                        maximum=4096,
+                        step=64,
+                        value=960,
+                        visible=False,
+                        interactive=True
+                    )
+                    custom_resize_height = gr.Slider(
+                        label="Custom Height",
                         minimum=768,
                         maximum=4096,
                         step=64,
                         value=1280,
-                        scale=4,
-                        info="Controls the max_side for face/pose image resizing. Default is 1280. Up to 1920 can sometimes be good. Above 2000 is for super ultra wide/vertical images.",
+                        visible=False,
+                        interactive=True
                     )
-                    enable_precise_resize = gr.Checkbox(
-                        label="Precise Resize Bar", value=False, scale=1
-                    )
-                def toggle_resize_step(precise):
-                    return gr.update(step=8 if precise else 64)
+                    def toggle_custom_resize_controls(value):
+                        return gr.update(visible=value), gr.update(visible=value)
 
-                enable_precise_resize.change(
-                    fn=toggle_resize_step,
-                    inputs=enable_precise_resize,
-                    outputs=resize_max_side_slider
+                    enable_custom_resize.change(
+                        fn=toggle_custom_resize_controls,
+                        inputs=enable_custom_resize,
+                        outputs=[custom_resize_width, custom_resize_height]
+                    )
+                resize_max_side_slider = gr.Slider(
+                    label="Max image size for resizing (output resolution)",
+                    minimum=768,
+                    maximum=4096,
+                    step=64,
+                    value=1280,
+                    scale=4,
+                    info="Controls the max_side for face/pose image resizing. Default is 1280. Up to 1920 can sometimes be good. Above 2000 is for super ultra wide/vertical images.",
                 )
                 generate = gr.Button("Generate", variant="primary")
                 num_outputs = gr.Slider(
@@ -1363,6 +1404,10 @@ Scheduler: {scheduler}"""
                     file_prefix,
                     enable_vae_tiling,
                     resize_mode_dropdown,
+                    pad_to_max_checkbox,
+                    enable_custom_resize,
+                    custom_resize_width,
+                    custom_resize_height,
                 ],
                 outputs=[gallery],
             )
@@ -1416,7 +1461,11 @@ Scheduler: {scheduler}"""
                     "disable_lora_4": False,
                     "disable_lora_5": False,
                     "disable_lora_6": False,
-                    "resize_mode": "LANCZOS"
+                    "resize_mode": "LANCZOS",
+                    "pad_to_max_side": False,
+                    "enable_custom_resize": False,
+                    "custom_resize_width": 960,
+                    "custom_resize_height": 1280
                 }
                 if metadata_text:
                     for line in metadata_text.split('\n'):
@@ -1533,6 +1582,17 @@ Scheduler: {scheduler}"""
                                 settings["resize_max_side"] = int(size_str)
                         elif line.startswith("Resize mode:"):
                             settings["resize_mode"] = line.replace("Resize mode:", "").strip().upper()
+                        elif line.startswith("Pad to max side:"):
+                            settings["pad_to_max_side"] = "true" in line.lower()
+                        elif line.startswith("Use custom resize:"):
+                            settings["enable_custom_resize"] = "true" in line.lower()
+                        elif line.startswith("Custom resize size:"):
+                            try:
+                                dims = line.replace("Custom resize size:", "").strip().lower().split("x")
+                                settings["custom_resize_width"] = int(dims[0])
+                                settings["custom_resize_height"] = int(dims[1])
+                            except:
+                                pass
 
                 return [
                     settings["prompt"],
@@ -1575,6 +1635,10 @@ Scheduler: {scheduler}"""
                     settings["disable_lora_5"],
                     settings["disable_lora_6"],
                     settings["resize_mode"],
+                    settings["pad_to_max_side"],
+                    settings["enable_custom_resize"],
+                    settings["custom_resize_width"],
+                    settings["custom_resize_height"],
                     accordion_update
                 ]
 
@@ -1622,6 +1686,10 @@ Scheduler: {scheduler}"""
                     disable_lora_5,
                     disable_lora_6,
                     resize_mode_dropdown,
+                    pad_to_max_checkbox,
+                    enable_custom_resize,
+                    custom_resize_width,
+                    custom_resize_height,
                     controlnet_accordion
                 ]
             ).then(
