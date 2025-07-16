@@ -894,11 +894,11 @@ Scheduler: {scheduler}"""
                     inputs=enable_precise_resize,
                     outputs=resize_max_side_slider
                 )
+                generate = gr.Button("Generate", variant="primary")
                 num_outputs = gr.Slider(
                     label="Number of images to generate",
                     minimum=1, maximum=100, step=1, value=1,
                 )
-                generate = gr.Button("Generate", variant="primary")
                 open_folder_btn = gr.Button("Open Output Folder")
                 open_folder_btn.click(
                     fn=open_output_folder,
