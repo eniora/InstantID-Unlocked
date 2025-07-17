@@ -652,13 +652,29 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
         for i in range(num_outputs):
             print(f"Generating image {i + 1} of {num_outputs}...")
 
-            gradio_callback_lambda = lambda pipe_obj, step, timestep, callback_kwargs: (
-                progress(
-                    ((i / num_outputs) + (((step + 1) / num_steps) / num_outputs)),
-                    desc=f"Generating image {i + 1} of {num_outputs} (Step {step + 1}/{num_steps})"
-                ),
-                callback_kwargs
-            )[1]
+            step_tracker = {"last": -1, "total": 0}
+            is_slow_scheduler = any(x in scheduler for x in ["DPMSolverSDE", "KDPM2", "Heun"])
+            if is_slow_scheduler:
+                def gradio_callback_lambda(pipe_obj, step, timestep, callback_kwargs):
+                    if step != step_tracker["last"]:
+                        step_tracker["last"] = step
+                        step_tracker["total"] += 1
+
+                    est_total = num_steps * 2
+                    pct = int((step_tracker["total"] / est_total) * 100)
+                    progress(
+                        ((i / num_outputs) + (step_tracker["total"] / est_total) / num_outputs),
+                        desc=f"Generating image {i + 1} of {num_outputs} (Step {min(step_tracker['total'] // 2 + 1, num_steps)}/{num_steps})"
+                    )
+                    return callback_kwargs
+            else:
+                gradio_callback_lambda = lambda pipe_obj, step, timestep, callback_kwargs: (
+                    progress(
+                        ((i / num_outputs) + (((step + 1) / num_steps) / num_outputs)),
+                        desc=f"Generating image {i + 1} of {num_outputs} (Step {step + 1}/{num_steps})"
+                    ),
+                    callback_kwargs
+                )[1]
 
             print(f"Input face image: {os.path.basename(face_image_path) if face_image_path else 'None'}")
             print(f"Reference pose image: {os.path.basename(pose_image_path) if pose_image_path else 'None'}")
