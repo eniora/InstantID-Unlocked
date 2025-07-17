@@ -872,7 +872,7 @@ Scheduler: {scheduler}"""
                     placeholder="When a Style template is selected, this becomes empty because styles have their own neg prompts. You can still add to it",
                     value=NEGATIVE_PROMPT_PRESETS["Default Negative Profile"]
                 )
-                with gr.Accordion("Style template and other settings", open=False) as style_settings_accordion:
+                with gr.Accordion("Style template and other settings including custom resolution", open=False) as style_settings_accordion:
                     style = gr.Dropdown(
                         label="Style template",
                         choices=STYLE_NAMES,
@@ -884,33 +884,37 @@ Scheduler: {scheduler}"""
                         value="Default Negative Profile",
                         info="Select a Negative Prompt Profile, default one is fine but you may want to select a different one depending on your prompt style"
                     )
-                    file_prefix = gr.Textbox(
-                        label="Saved file name prefix. Leave empty to use the default 'InstantID_'",
-                        value="",
-                        placeholder="Optional, append a name to be added after 'InstantID_' in the saved images",
-                    )
-                    enable_vae_tiling = gr.Checkbox(
-                        label="Enable VAE Tiling (saves VRAM for large images at the last generation step)",
-                        value=True,
-                        info="Processes images in tiles to reduce VRAM usage during the final VAE decoding step without any quality loss. Best to enable only if you have 16GB VRAM or more."
-                    )
-                    resize_mode_dropdown = gr.Dropdown(
-                        label="Resize Interpolation Mode",
-                        choices=[
-                            "LANCZOS", "BILINEAR", "HAMMING", "BICUBIC", "BOX", "NEAREST"
-                        ],
-                        value="LANCZOS",
-                        info="Interpolation method used when resizing input images, LANCZOS, BILINEAR and HAMMING are usually the best."
-                    )
-                    pad_to_max_checkbox = gr.Checkbox(
-                        label="Pad resized image to square",
-                        value=False,
-                        info="If enabled, resized images are padded to a square shape. Usually slower and uses more VRAM due to the square shape resolution."
-                    )
+                    with gr.Row():
+                        file_prefix = gr.Textbox(
+                            label="Saved file name prefix. Leave empty to use the default 'InstantID_'",
+                            value="",
+                            placeholder="Optional, append a name to be added after 'InstantID_' in the saved images",
+                        )
+                    with gr.Row():
+                        enable_vae_tiling = gr.Checkbox(
+                            label="Enable VAE Tiling (saves VRAM for large images at the last generation step)",
+                            value=True,
+                            info="Processes images in tiles to reduce VRAM usage during the final VAE decoding step without any quality loss. Best to enable only if you have 16GB VRAM or more."
+                        )
+                    with gr.Row():
+                        resize_mode_dropdown = gr.Dropdown(
+                            label="Resize Interpolation Mode",
+                            choices=[
+                                "LANCZOS", "BILINEAR", "HAMMING", "BICUBIC", "BOX", "NEAREST"
+                            ],
+                            value="LANCZOS",
+                            info="Interpolation method used when resizing input images, LANCZOS, BILINEAR and HAMMING are usually the best."
+                        )
+                    with gr.Row():
+                        pad_to_max_checkbox = gr.Checkbox(
+                            label="Pad resized image to square",
+                            value=False,
+                            info="If enabled, resized images are padded to a square shape. Usually slower and uses more VRAM due to the square shape resolution."
+                        )
                     enable_custom_resize = gr.Checkbox(
-                        label="Enable custom resolution (Don't use along with 'Pad resized image to square')",
+                        label="Enable custom resolution",
                         value=False,
-                        info="If enabled, you can set a custom resolution (width x height). This overrides Max image size for resizing. Only use if you know what you're doing."
+                        info="If enabled, you can set a custom resolution (width x height). This overrides Max image size for resizing. Only use if you know what you're doing. Don't use along with 'Pad resized image to square' option above this one."
                     )
                     custom_resize_width = gr.Slider(
                         label="Custom Width",
@@ -1083,12 +1087,13 @@ Scheduler: {scheduler}"""
                         inputs=enhance_strength,
                         outputs=custom_enhance_padding
                     )
-                    det_size_name = gr.Dropdown(
-                        label="Face Detection Size",
-                        choices=list(DET_SIZE_OPTIONS.keys()),
-                        value="640x640 (default)",
-                        info="Higher values can detect smaller faces better if the face in the input/reference image is too small/distant. Change the value only if you get 'No face detected', it can help a lot in some face input photos."
-                    )
+                    with gr.Row():
+                        det_size_name = gr.Dropdown(
+                            label="Face Detection Size",
+                            choices=list(DET_SIZE_OPTIONS.keys()),
+                            value="640x640 (default)",
+                            info="Higher values can detect smaller faces better if the face in the input/reference image is too small/distant. Change the value only if you get 'No face detected', it can help a lot in some face input photos."
+                        )
 
             with gr.Column(scale=1):
                 gallery = gr.Gallery(label="Generated Images")
