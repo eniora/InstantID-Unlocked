@@ -68,15 +68,12 @@ from controlnet_util import openpose, get_depth_map, get_canny_image
 
 import gradio as gr
 
-
-# global variable
 MAX_SEED = np.iinfo(np.int32).max
 device = get_torch_device()
 dtype = torch.float16 if str(device).__contains__("cuda") else torch.float32
 STYLE_NAMES = list(styles.keys())
 DEFAULT_STYLE_NAME = "(No style)"
 
-# Negative prompt presets
 NEGATIVE_PROMPT_PRESETS = {
     "Default Negative Profile": "(lowres, low quality, worst quality:1.2), (text:1.2), watermark, (frame:1.2), deformed, ugly, blurry, deformed cat, deformed photo",
     "Aggressive Negative Profile (InstantID default)": "(lowres, low quality, worst quality:1.2), (text:1.2), watermark, (frame:1.2), deformed, ugly, deformed eyes, blur, out of focus, blurry, deformed cat, deformed, photo, anthropomorphic cat, monochrome, photo, pet collar, gun, weapon, blue, 3d, drones, drone, buildings in background, green",
@@ -104,7 +101,6 @@ def on_style_change(style_name):
     else:
         return gr.update(value="")
 
-# Get available models from the models folder
 def get_available_models():
     models_dir = "models"
     model_folders = []
@@ -118,7 +114,6 @@ def get_available_models():
 AVAILABLE_MODELS = get_available_models()
 DEFAULT_MODEL = "SG161222/RealVisXL_V4.0"
 
-# Detection size options
 DET_SIZE_OPTIONS = {
     "160x160 (for very lowres portrait photos)": (160, 160),
     "320x320": (320, 320),
@@ -129,14 +124,12 @@ DET_SIZE_OPTIONS = {
     "2560x2560 (Input/Reference image size should be larger than 2560x2560)": (2560, 2560)
 }
 
-# Initialize face encoder as None, will be loaded when needed
 app = None
 current_det_size = (640, 640)
 controlnet_identitynet = None
 face_adapter = f"./checkpoints/ip-adapter.bin"
 controlnet_path = f"./checkpoints/ControlNetModel"
 
-# controlnet-pose
 controlnet_pose_model = "thibaud/controlnet-openpose-sdxl-1.0"
 controlnet_canny_model = "diffusers/controlnet-canny-sdxl-1.0"
 controlnet_depth_model = "diffusers/controlnet-depth-sdxl-1.0-small"
@@ -203,10 +196,8 @@ def restart_server():
     args = sys.argv[1:]
     os.environ["IN_BROWSER"] = "0"
     
-    # Clear GPU memory
     torch.cuda.empty_cache()
     
-    # Kill the current process
     os.execl(python, python, script, *args)
 
 def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
@@ -314,7 +305,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
     def load_model_and_update_pipe(model_name):
         nonlocal pipe
         
-        initialize_controlnet()  # Ensure controlnet is loaded
+        initialize_controlnet()
         
         if model_name.endswith(".ckpt") or model_name.endswith(".safetensors"):
             scheduler_kwargs = hf_hub_download(
@@ -413,10 +404,8 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
         import time
         overall_start_time = time.time()
         
-        # Initialize face analysis with selected size
         initialize_face_analysis(det_size_name)
         
-        # Load selected model if it's different from current
         if pipe is None or model_name != getattr(pipe, "_current_model", None):
             pipe = load_model_and_update_pipe(model_name)
             pipe._current_model = model_name
@@ -542,7 +531,6 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
         if not prompt:
             prompt = "high quality"
 
-        # apply the style template
         prompt, negative_prompt = apply_style(style_name, prompt, negative_prompt)
 
         face_image = load_image(face_image_path)
@@ -557,7 +545,6 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
         face_image_cv2 = convert_from_image_to_cv2(face_image)
         height, width, _ = face_image_cv2.shape
 
-        # Extract face features
         face_info = app.get(face_image_cv2)
 
         if len(face_info) == 0:
@@ -568,7 +555,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
                 f"Unable to detect a face in the image. Please upload a different photo with a clear face."
             )
 
-        face_info = sorted(face_info, key=lambda x:(x['bbox'][2]-x['bbox'][0])*(x['bbox'][3]-x['bbox'][1]))[-1]  # only use the maximum face
+        face_info = sorted(face_info, key=lambda x:(x['bbox'][2]-x['bbox'][0])*(x['bbox'][3]-x['bbox'][1]))[-1]
         face_emb = face_info["embedding"]
         face_kps = draw_kps(convert_from_cv2_to_image(face_image_cv2), face_info["kps"])
         img_controlnet = face_image
@@ -598,7 +585,6 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
             x1, y1, x2, y2 = face_info["bbox"]
             x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
 
-            # Determine padding ratio
             if enhance_strength == "Balanced":
                 padding_ratio = 0.15
             elif enhance_strength == "High":
@@ -606,7 +592,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
             elif enhance_strength == "Custom":
                 padding_ratio = custom_enhance_padding
             else:
-                padding_ratio = 0.0  # Default
+                padding_ratio = 0.0
 
             padding_x = int((x2 - x1) * padding_ratio)
             padding_y = int((y2 - y1) * padding_ratio)
@@ -770,7 +756,6 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
             image = result.images[0]
             images.append(image)
 
-            # Create generation info
             info_text = f"""Prompt: {prompt}
 Negative Prompt: {negative_prompt}
 Input Face Image: {face_image_filename}
@@ -827,7 +812,6 @@ Scheduler: {scheduler}"""
         print(f"Total generation time: {overall_elapsed_time:.2f} seconds\n")
         return images
 
-    # Description
     title = r"""
     <h1 align="center">InstantID: Unlocked. Zero-shot Identity-Preserving Generation</h1>
     """
@@ -860,24 +844,20 @@ Scheduler: {scheduler}"""
     .gradio-container {width: 85% !important}
     """
     with gr.Blocks(css=css) as demo:
-        # description
         gr.Markdown(title)
         gr.Markdown(description)
 
         with gr.Row():
             with gr.Column():
                 with gr.Row(equal_height=True):
-                    # upload face image
                     face_file = gr.Image(
                         label="Upload a photo containing a face", type="filepath"
                     )
-                    # optional: upload a reference pose image
                     pose_file = gr.Image(
                         label="Upload a reference pose image (Optional)",
                         type="filepath"
                     )
 
-                # prompt
                 prompt = gr.Textbox(
                     label="Prompt",
                     info="Giving a simple prompt is enough to achieve good face fidelity",
@@ -968,15 +948,16 @@ Scheduler: {scheduler}"""
                     info="Controls the max_side for face/pose image resizing. Default is 1280. Up to 1920 can sometimes be good. Above 2000 is for super ultra wide/vertical images.",
                 )
                 enable_precise_resize = gr.Checkbox(
-                    label="Precise Resize Bar (8 steps instead of 64)", value=False
+                    label="Enable precise resolution resize bars (8 steps instead of 64)", value=False
                 )
                 def toggle_resize_step(precise):
-                    return gr.update(step=8 if precise else 64)
+                    new_step = 8 if precise else 64
+                    return gr.update(step=new_step), gr.update(step=new_step), gr.update(step=new_step)
 
                 enable_precise_resize.change(
                     fn=toggle_resize_step,
                     inputs=enable_precise_resize,
-                    outputs=resize_max_side_slider
+                    outputs=[resize_max_side_slider, custom_resize_width, custom_resize_height]
                 )
                 generate = gr.Button("Generate", variant="primary")
                 num_outputs = gr.Slider(
@@ -990,7 +971,6 @@ Scheduler: {scheduler}"""
                     outputs=[],
                     queue=False,
                 )
-                # strength
                 identitynet_strength_ratio = gr.Slider(
                     label="IdentityNet strength (for fidelity)",
                     minimum=0,
@@ -1377,7 +1357,6 @@ Scheduler: {scheduler}"""
                         ]
                     )
 
-            # Update negative prompt when preset is changed
             negative_prompt_preset.change(
                 fn=lambda x: NEGATIVE_PROMPT_PRESETS[x],
                 inputs=negative_prompt_preset,
@@ -1570,7 +1549,7 @@ Scheduler: {scheduler}"""
                             settings["identitynet_strength_ratio"] = float(line.replace("IdentityNet strength:", "").strip())
                         elif line.startswith("Scheduler:"):
                             scheduler_text = line.replace("Scheduler:", "").strip()
-                            if "scheduling_" in scheduler_text:  # If it's a full class path
+                            if "scheduling_" in scheduler_text:
                                 scheduler_name = scheduler_text.split(".")[-1].replace("'>", "").replace("Scheduler", "Scheduler")
                             else:
                                 scheduler_name = scheduler_text
