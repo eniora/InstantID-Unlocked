@@ -1091,6 +1091,7 @@ Scheduler: {scheduler}"""
                     randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
                     schedulers = [
                         "DPMSolverMultistepScheduler",
+                        "DPMSolverMultistepScheduler-SDE",
                         "DPMSolverMultistepScheduler-Karras",
                         "DPMSolverMultistepScheduler-Karras-SDE",
                         "EulerDiscreteScheduler",
