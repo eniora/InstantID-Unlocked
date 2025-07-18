@@ -20,13 +20,15 @@
 
 I tried the most popular forgeui and comfyui implementations including the popular cubiq/ComfyUI_InstantID and it's really bad compared to my gradio fork of InstantID. cubiq/ComfyUI_InstantID (which was the best from the comfy implementations I tried) tends to screw up the faces and similarity sometimes no matter what options and workflows I tried, and the multi ID feature doesn't work well anyway and is overly complicated (even the author admits this). Try this and judge for yourself. I agree that comfyui instantid is faster but the quality isn't so good really.
 
+And before lecturing me, I think it's worth mentioning that I am not too good with python and the code is full of workarounds/hacks + I used a lot of help from AI chatbots, but at least it works really well and everything is working as I intended with no issues at all. :D
+
 ## How to use and run:
 Git clone this fork (Git clone https://github.com/eniora/InstantID-Unlocked/) then:
 - Install the requirements.txt file with "pip install -r requirements.txt" and then install torch and cuda with "pip install torch==2.7.1+cu128 torchvision==0.22.1+cu128 --index-url https://download.pytorch.org/whl/cu128"
 - For downloading the face encoder models and instructions see the original repo description below.
 
 - Run only using "instant-id-gradio-unlocked.py" from the root folder. The file "instant-id-gradio-unlocked-16GB-VRAM.py" is just a file I modified from "instant-id-gradio-unlocked.py" and it's a bit faster at image generation on 16GB+ VRAM nvidia cards.
-- Tested only on Windows and Python 3.10.6, you may need to do extra steps to run the gradio interface successfully on MacOS/Linux
+- Tested only on Windows and Python 3.10.6, you may need to do extra steps to run the gradio interface successfully on MacOS/Linux.
 
 [**Qixun Wang**](https://github.com/wangqixun)<sup>12</sup> · [**Xu Bai**](https://huggingface.co/baymin0220)<sup>12</sup> · [**Haofan Wang**](https://haofanwang.github.io/)<sup>12*</sup> · [**Zekui Qin**](https://github.com/ZekuiQin)<sup>12</sup> · [**Anthony Chen**](https://antonioo-c.github.io/)<sup>123</sup>
 
