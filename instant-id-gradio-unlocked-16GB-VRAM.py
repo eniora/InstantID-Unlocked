@@ -965,8 +965,18 @@ Scheduler: {scheduler}"""
                     maximum=4096,
                     step=64,
                     value=1280,
-                    scale=4,
                     info="Controls the max_side for face/pose image resizing. Default is 1280. Up to 1920 can sometimes be good. Above 2000 is for super ultra wide/vertical images.",
+                )
+                enable_precise_resize = gr.Checkbox(
+                    label="Precise Resize Bar (8 steps instead of 64)", value=False
+                )
+                def toggle_resize_step(precise):
+                    return gr.update(step=8 if precise else 64)
+
+                enable_precise_resize.change(
+                    fn=toggle_resize_step,
+                    inputs=enable_precise_resize,
+                    outputs=resize_max_side_slider
                 )
                 generate = gr.Button("Generate", variant="primary")
                 num_outputs = gr.Slider(
