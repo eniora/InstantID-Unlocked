@@ -190,8 +190,7 @@ def restart_server(open_browser):
 
     os.environ["IN_BROWSER"] = "1" if open_browser else "0"
 
-    if 'torch' in sys.modules and hasattr(torch, 'cuda') and torch.cuda.is_available():
-        torch.cuda.empty_cache()
+    torch.cuda.empty_cache()
 
     if sys.platform == "win32":
         subprocess.Popen([python, script] + args, creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP)
