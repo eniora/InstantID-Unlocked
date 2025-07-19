@@ -11,6 +11,7 @@ import random
 import numpy as np
 import gc
 import warnings
+import subprocess
 import PIL.PngImagePlugin
 
 warnings.filterwarnings("ignore", message=".*timm.models.layers.*")
@@ -181,16 +182,23 @@ def get_available_loras():
             lora_files.append(file)
     return lora_files
 
-def restart_server():
-    """Restart the current python process"""
+def restart_server(open_browser):
+    """Restart the current python process aggressively with browser toggle option."""
     python = sys.executable
     script = os.path.abspath(sys.argv[0])
     args = sys.argv[1:]
-    os.environ["IN_BROWSER"] = "0"
-    
-    torch.cuda.empty_cache()
-    
-    os.execl(python, python, script, *args)
+
+    os.environ["IN_BROWSER"] = "1" if open_browser else "0"
+
+    if 'torch' in sys.modules and hasattr(torch, 'cuda') and torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+    if sys.platform == "win32":
+        subprocess.Popen([python, script] + args, creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP)
+    else:
+        subprocess.Popen([python, script] + args, preexec_fn=os.setsid)
+
+    os._exit(0)
 
 def update_det_size(det_size_name):
     """Update the face detection size"""
@@ -1790,13 +1798,18 @@ Scheduler: {scheduler}"""
         gr.Markdown(article)
 
         with gr.Row():
-            restart_btn = gr.Button("Restart Server", variant="stop", scale=1)
-            restart_btn.click(
-                fn=restart_server,
-                inputs=None,
-                outputs=None,
-                queue=False,
-            )
+            with gr.Column():
+                restart_btn = gr.Button("Restart Server", variant="stop", scale=1)
+                restart_browser_checkbox = gr.Checkbox(
+                    label="Automatically open a new InstantID browser window after the Restart Server button is clicked",
+                    value=False
+                )
+                restart_btn.click(
+                    fn=lambda open_browser: restart_server(open_browser),
+                    inputs=restart_browser_checkbox,
+                    outputs=None,
+                    queue=False,
+                )
 
     demo.launch(inbrowser=os.environ.get("IN_BROWSER", "1") == "1")
 
