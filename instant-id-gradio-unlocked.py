@@ -246,6 +246,9 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
             pipe.scheduler.config
         )
 
+    pipe.load_ip_adapter_instantid(face_adapter)
+    pipe._current_model = pretrained_model_name_or_path
+
     file_prefix = DEFAULT_FILE_PREFIX
 
     def toggle_lora_ui(enable_lora_checkbox):
@@ -347,7 +350,12 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
 
     def load_model_and_update_pipe(model_name):
         nonlocal pipe
-        
+
+        if pipe is not None:
+            del pipe
+            torch.cuda.empty_cache()
+            gc.collect()
+
         if model_name.endswith(".ckpt") or model_name.endswith(".safetensors"):
             scheduler_kwargs = hf_hub_download(
                 repo_id="SG161222/RealVisXL_V4.0",
@@ -385,6 +393,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
             )
 
         pipe.load_ip_adapter_instantid(face_adapter)
+        pipe._current_model = model_name
 
         return pipe
 
@@ -1126,7 +1135,7 @@ Scheduler: {scheduler}"""
                         label="Model",
                         choices=AVAILABLE_MODELS,
                         value=DEFAULT_MODEL,
-                        info="Select the model to use for generation. Only use SDXL and Pony. Illustrious can be loaded but isn't well supported."
+                        info="Select the model to use for generation. Only SDXL and Pony, Illustrious can be loaded but isn't well supported."
                     )
                     def toggle_custom_padding_dropdown(value):
                         return gr.update(visible=(value == "Custom"))

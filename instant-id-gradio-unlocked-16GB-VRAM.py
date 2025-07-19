@@ -304,7 +304,12 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
 
     def load_model_and_update_pipe(model_name):
         nonlocal pipe
-        
+
+        if pipe is not None:
+            del pipe
+            torch.cuda.empty_cache()
+            gc.collect()
+
         initialize_controlnet()
         
         if model_name.endswith(".ckpt") or model_name.endswith(".safetensors"):
@@ -344,6 +349,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
             )
 
         pipe.load_ip_adapter_instantid(face_adapter)
+        pipe._current_model = model_name
 
         return pipe
 
