@@ -323,7 +323,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
     def resize_img(
         input_image,
         max_side=4096,
-        min_side=768,
+        min_side=640,
         size=None,
         pad_to_max_side=False,
         mode=PIL.Image.LANCZOS,
@@ -985,7 +985,7 @@ Scheduler: {scheduler}"""
                     )
                     custom_resize_width = gr.Slider(
                         label="Custom Width",
-                        minimum=768,
+                        minimum=640,
                         maximum=4096,
                         step=64,
                         value=960,
@@ -994,7 +994,7 @@ Scheduler: {scheduler}"""
                     )
                     custom_resize_height = gr.Slider(
                         label="Custom Height",
-                        minimum=768,
+                        minimum=640,
                         maximum=4096,
                         step=64,
                         value=1280,
@@ -1011,7 +1011,7 @@ Scheduler: {scheduler}"""
                     )
                 resize_max_side_slider = gr.Slider(
                     label="Max image size for resizing (output resolution)",
-                    minimum=768,
+                    minimum=640,
                     maximum=4096,
                     step=64,
                     value=1280,
