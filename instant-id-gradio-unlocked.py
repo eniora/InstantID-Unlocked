@@ -52,6 +52,8 @@ def save_images(images, output_dir="output", generation_info=None, prefix=DEFAUL
         paths.append(path)
     return paths
 
+cached_controlnet_models = {}
+
 import diffusers
 from diffusers.utils import load_image
 from diffusers.models import ControlNetModel
@@ -250,6 +252,13 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
     pipe._current_model = pretrained_model_name_or_path
 
     file_prefix = DEFAULT_FILE_PREFIX
+
+    def load_and_cache_controlnet_model(controlnet_type):
+        if controlnet_type not in cached_controlnet_models:
+            print(f"Loading ControlNet model: {controlnet_type}")
+            model = ControlNetModel.from_pretrained(controlnet_model_paths[controlnet_type], torch_dtype=dtype).to(device)
+            cached_controlnet_models[controlnet_type] = model
+        return cached_controlnet_models[controlnet_type]
 
     def toggle_lora_ui(enable_lora_checkbox):
         visibility = gr.update(visible=enable_lora_checkbox)
@@ -658,21 +667,32 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
             control_mask = None
 
         if len(controlnet_selection) > 0:
+            global cached_controlnet_models
+            for k in list(cached_controlnet_models.keys()):
+                if k not in controlnet_selection:
+                    del cached_controlnet_models[k]
+                    torch.cuda.empty_cache()
+                    gc.collect()
             controlnet_scales = {
                 "pose": pose_strength,
                 "canny": canny_strength,
                 "depth": depth_strength,
             }
-            controlnet_models = []
+            controlnet_models_to_use = []
             controlnet_images = []
             for s in controlnet_selection:
-                model = ControlNetModel.from_pretrained(controlnet_model_paths[s], torch_dtype=dtype).to(device)
-                controlnet_models.append(model)
+                model = load_and_cache_controlnet_model(s) 
+                controlnet_models_to_use.append(model)
                 controlnet_images.append(controlnet_map_fn[s](img_controlnet).resize((width, height)))
-            pipe.controlnet = MultiControlNetModel([controlnet_identitynet] + controlnet_models)
+            pipe.controlnet = MultiControlNetModel([controlnet_identitynet] + controlnet_models_to_use)
             control_scales = [float(identitynet_strength_ratio)] + [controlnet_scales[s] for s in controlnet_selection]
             control_images = [face_kps] + controlnet_images
         else:
+            if cached_controlnet_models:
+                for key in list(cached_controlnet_models.keys()):
+                    del cached_controlnet_models[key]
+                    torch.cuda.empty_cache()
+                    gc.collect()
             pipe.controlnet = controlnet_identitynet
             control_scales = float(identitynet_strength_ratio)
             control_images = face_kps
