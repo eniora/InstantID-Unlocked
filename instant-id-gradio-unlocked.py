@@ -1126,7 +1126,7 @@ Scheduler: {scheduler}"""
                         label="Model",
                         choices=AVAILABLE_MODELS,
                         value=DEFAULT_MODEL,
-                        info="Select the model to use for generation. For some models, setting the guidance scale to '3.5' is generally better."
+                        info="Select the model to use for generation. Only SDXL and Pony, Illustrious can be loaded but isn't well supported."
                     )
                     def toggle_custom_padding_dropdown(value):
                         return gr.update(visible=(value == "Custom"))
