@@ -1145,8 +1145,8 @@ Scheduler: {scheduler}"""
                             value="640x640 (default)",
                             info="Higher values can detect smaller faces better if the face in the input/reference image is too small/distant. Change the value only if you get 'No face detected', it can help a lot in some face input photos."
                         )
-
             with gr.Column(scale=1):
+                generate_alt = gr.Button("Generate (Right Side Extra Button)", variant="primary")
                 gallery = gr.Gallery(label="Generated Images")
                 with gr.Accordion("PNG Metadata Reader", open=True):
                     with gr.Row():
@@ -1171,7 +1171,6 @@ Scheduler: {scheduler}"""
                         inputs=metadata_input,
                         outputs=[metadata_input, metadata_output]
                     )
-
                 with gr.Column():
                     enable_lora = gr.Checkbox(
                         label="Enable LoRA(s) from your Models\Loras folder",
@@ -1186,7 +1185,7 @@ Scheduler: {scheduler}"""
                         inputs=enable_lora,
                         outputs=lora_info
                     )
-                    
+
                     with gr.Row(visible=False) as lora_row_1:
                         lora_selection = gr.Dropdown(
                             label="Select LoRA 1",
@@ -1405,66 +1404,61 @@ Scheduler: {scheduler}"""
                 inputs=negative_prompt_preset,
                 outputs=negative_prompt,
             )
-
-            generate.click(
-                fn=randomize_seed_fn,
-                inputs=[seed, randomize_seed],
-                outputs=seed,
-                queue=False,
-                api_name=False,
-            ).then(
-                fn=generate_image,
-                inputs=[
-                    resize_max_side_slider,
-                    face_file,
-                    pose_file,
-                    prompt,
-                    negative_prompt,
-                    style,
-                    num_steps,
-                    identitynet_strength_ratio,
-                    adapter_strength_ratio,
-                    pose_strength,
-                    canny_strength,
-                    depth_strength,
-                    controlnet_selection,
-                    guidance_scale,
-                    seed,
-                    scheduler,
-                    enable_lora,
-                    disable_lora_1,
-                    lora_scale,
-                    lora_selection,
-                    disable_lora_2,
-                    lora_scale_2,
-                    lora_selection_2,
-                    disable_lora_3,
-                    lora_scale_3,
-                    lora_selection_3,
-                    disable_lora_4,
-                    lora_scale_4,
-                    lora_selection_4,
-                    disable_lora_5,
-                    lora_scale_5,
-                    lora_selection_5,
-                    disable_lora_6,
-                    lora_scale_6,
-                    lora_selection_6,
-                    enhance_face_region,
-                    enhance_strength,
-                    custom_enhance_padding,
-                    num_outputs,
-                    model_name,
-                    det_size_name,
-                    file_prefix,
-                    enable_vae_tiling,
-                    resize_mode_dropdown,
-                    pad_to_max_checkbox,
-                    enable_custom_resize,
-                    custom_resize_width,
-                    custom_resize_height,
-                ],
-                outputs=[gallery],
+            shared_inputs = [
+                resize_max_side_slider,
+                face_file,
+                pose_file,
+                prompt,
+                negative_prompt,
+                style,
+                num_steps,
+                identitynet_strength_ratio,
+                adapter_strength_ratio,
+                pose_strength,
+                canny_strength,
+                depth_strength,
+                controlnet_selection,
+                guidance_scale,
+                seed,
+                scheduler,
+                enable_lora,
+                disable_lora_1,
+                lora_scale,
+                lora_selection,
+                disable_lora_2,
+                lora_scale_2,
+                lora_selection_2,
+                disable_lora_3,
+                lora_scale_3,
+                lora_selection_3,
+                disable_lora_4,
+                lora_scale_4,
+                lora_selection_4,
+                disable_lora_5,
+                lora_scale_5,
+                lora_selection_5,
+                disable_lora_6,
+                lora_scale_6,
+                lora_selection_6,
+                enhance_face_region,
+                enhance_strength,
+                custom_enhance_padding,
+                num_outputs,
+                model_name,
+                det_size_name,
+                file_prefix,
+                enable_vae_tiling,
+                resize_mode_dropdown,
+                pad_to_max_checkbox,
+                enable_custom_resize,
+                custom_resize_width,
+                custom_resize_height,
+            ]
+            generate.click(fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False).then(
+                fn=generate_image, inputs=shared_inputs, outputs=[gallery]
+            )
+            generate_alt.click(fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False).then(
+                fn=generate_image, inputs=shared_inputs, outputs=[gallery]
             )
 
             enable_lora.input(
