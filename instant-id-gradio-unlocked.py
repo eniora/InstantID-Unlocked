@@ -1190,8 +1190,8 @@ Scheduler: {scheduler}"""
                             info="Higher values can detect smaller faces better if the face in the input/reference image is too small/distant. Change the value only if you get 'No face detected', it can help a lot in some face input photos."
                         )
             with gr.Column(scale=1):
-                generate_alt = gr.Button("Generate (Right Side Extra Button)", variant="primary")
                 gallery = gr.Gallery(label="Generated Images")
+                generate_alt = gr.Button("Generate (Extra Right Side Button)", variant="secondary")
                 with gr.Accordion("PNG Metadata Reader", open=True):
                     with gr.Row():
                         metadata_input = gr.Image(
