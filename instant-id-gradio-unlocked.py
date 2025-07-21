@@ -1158,12 +1158,22 @@ Scheduler: {scheduler}"""
                             visible=False,
                             interactive=True
                         )
-                    model_name = gr.Dropdown(
-                        label="Model",
-                        choices=AVAILABLE_MODELS,
-                        value=DEFAULT_MODEL,
-                        info="Select the model to use for generation. Only use SDXL and Pony. Illustrious can be loaded but isn't well supported."
-                    )
+                    with gr.Row():
+                        model_name = gr.Dropdown(
+                            label="Model",
+                            choices=AVAILABLE_MODELS,
+                            value=DEFAULT_MODEL,
+                            scale=5,
+                            info="Select the model to use for generation. Only use SDXL and Pony. Illustrious can be loaded but isn't well supported."
+                        )
+                        refresh_models = gr.Button("🔄", scale=1, elem_classes="toolbutton")
+                        def refresh_model_list():
+                            return gr.update(choices=get_available_models())
+
+                        refresh_models.click(
+                            fn=refresh_model_list,
+                            outputs=model_name
+                        )
                     def toggle_custom_padding_dropdown(value):
                         return gr.update(visible=(value == "Custom"))
 
