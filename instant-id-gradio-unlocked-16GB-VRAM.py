@@ -421,7 +421,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
         progress=gr.Progress(),
     ):
         file_prefix = file_prefix.strip().translate(FILENAME_SAFE_TRANS)
-        file_prefix = f"InstantID_{file_prefix}_" if file_prefix else "InstantID_"
+        file_prefix = f"{DEFAULT_FILE_PREFIX}{file_prefix}_" if file_prefix else DEFAULT_FILE_PREFIX
         nonlocal pipe
         import time
         overall_start_time = time.time()
