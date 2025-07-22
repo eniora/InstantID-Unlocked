@@ -728,7 +728,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
                     pct = int((step_tracker["total"] / est_total) * 100)
                     progress(
                         ((i / num_outputs) + (step_tracker["total"] / est_total) / num_outputs),
-                        desc=f"Generating image {i + 1} of {num_outputs} (Step {min(step_tracker['total'] // 2 + 1, num_steps)}/{num_steps})"
+                        desc=f"Generating image {i + 1} of {num_outputs} (Step {min(step_tracker['total'] // 2, num_steps)}/{num_steps})"
                     )
                     return callback_kwargs
             else:
