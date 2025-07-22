@@ -1564,9 +1564,27 @@ Scheduler: {scheduler}"""
                     for line in metadata_text.split('\n'):
                         line = line.strip()
                         if line.startswith("Prompt:"):
-                            settings["prompt"] = line.replace("Prompt:", "").strip()
+                            prompt_lines = [line.replace("Prompt:", "").strip()]
+                            continue_idx = metadata_text.split('\n').index(line) + 1
+                            lines = metadata_text.split('\n')
+                            while continue_idx < len(lines):
+                                next_line = lines[continue_idx].strip()
+                                if next_line.startswith("Negative Prompt:"):
+                                    break
+                                prompt_lines.append(next_line)
+                                continue_idx += 1
+                            settings["prompt"] = "\n".join(prompt_lines)
                         elif line.startswith("Negative Prompt:"):
-                            settings["negative_prompt"] = line.replace("Negative Prompt:", "").strip()
+                            negative_lines = [line.replace("Negative Prompt:", "").strip()]
+                            continue_idx = metadata_text.split('\n').index(line) + 1
+                            lines = metadata_text.split('\n')
+                            while continue_idx < len(lines):
+                                next_line = lines[continue_idx].strip()
+                                if next_line.startswith("Input Face Image:"):
+                                    break
+                                negative_lines.append(next_line)
+                                continue_idx += 1
+                            settings["negative_prompt"] = "\n".join(negative_lines)
                         elif line.startswith("Seed:"):
                             settings["seed"] = int(line.replace("Seed:", "").strip())
                         elif line.startswith("Steps:"):
