@@ -1517,12 +1517,12 @@ Scheduler: {scheduler}"""
                     "custom_resize_height": 1280
                 }
                 if metadata_text:
-                    for line in metadata_text.split('\n'):
+                    lines = [line.strip() for line in metadata_text.split('\n')]
+                    for line in lines:
                         line = line.strip()
                         if line.startswith("Prompt:"):
                             prompt_lines = [line.replace("Prompt:", "").strip()]
-                            continue_idx = metadata_text.split('\n').index(line) + 1
-                            lines = metadata_text.split('\n')
+                            continue_idx = lines.index(line) + 1
                             while continue_idx < len(lines):
                                 next_line = lines[continue_idx].strip()
                                 if next_line.startswith("Negative Prompt:"):
@@ -1532,8 +1532,7 @@ Scheduler: {scheduler}"""
                             settings["prompt"] = "\n".join(prompt_lines)
                         elif line.startswith("Negative Prompt:"):
                             negative_lines = [line.replace("Negative Prompt:", "").strip()]
-                            continue_idx = metadata_text.split('\n').index(line) + 1
-                            lines = metadata_text.split('\n')
+                            continue_idx = lines.index(line) + 1
                             while continue_idx < len(lines):
                                 next_line = lines[continue_idx].strip()
                                 if next_line.startswith("Input Face Image:"):
