@@ -1579,7 +1579,7 @@ Scheduler: {scheduler}"""
                             continue_idx = idx + 1
                             while continue_idx < len(lines):
                                 next_line = lines[continue_idx]
-                                if next_line.strip().startswith("Input Face Image:"):
+                                if next_line.strip().startswith(("Input Face Image:", "Detection size:")):
                                     break
                                 negative_lines.append(next_line)
                                 continue_idx += 1
