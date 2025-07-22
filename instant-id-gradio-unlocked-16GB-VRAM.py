@@ -1517,25 +1517,25 @@ Scheduler: {scheduler}"""
                     "custom_resize_height": 1280
                 }
                 if metadata_text:
-                    lines = [line.strip() for line in metadata_text.split('\n')]
-                    for line in lines:
-                        line = line.strip()
-                        if line.startswith("Prompt:"):
-                            prompt_lines = [line.replace("Prompt:", "").strip()]
-                            continue_idx = lines.index(line) + 1
+                    lines = metadata_text.split('\n')
+                    for idx, line in enumerate(lines):
+                        stripped_line = line.strip()
+                        if stripped_line.startswith("Prompt:"):
+                            prompt_lines = [line[len("Prompt:"):].lstrip()]
+                            continue_idx = idx + 1
                             while continue_idx < len(lines):
-                                next_line = lines[continue_idx].strip()
-                                if next_line.startswith("Negative Prompt:"):
+                                next_line = lines[continue_idx]
+                                if next_line.strip().startswith("Negative Prompt:"):
                                     break
                                 prompt_lines.append(next_line)
                                 continue_idx += 1
                             settings["prompt"] = "\n".join(prompt_lines)
-                        elif line.startswith("Negative Prompt:"):
-                            negative_lines = [line.replace("Negative Prompt:", "").strip()]
-                            continue_idx = lines.index(line) + 1
+                        elif stripped_line.startswith("Negative Prompt:"):
+                            negative_lines = [line[len("Negative Prompt:"):].lstrip()]
+                            continue_idx = idx + 1
                             while continue_idx < len(lines):
-                                next_line = lines[continue_idx].strip()
-                                if next_line.startswith("Input Face Image:"):
+                                next_line = lines[continue_idx]
+                                if next_line.strip().startswith("Input Face Image:"):
                                     break
                                 negative_lines.append(next_line)
                                 continue_idx += 1
