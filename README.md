@@ -12,7 +12,7 @@ I originally started modifying InstantID for my own usage and to improve my expe
 - PNG metadata writer in the autosaved images and a gradio box to read info from them and apply the metadata fields to all boxes.
 - Dropdown menu for the ability to change the Det Size for face detection in input/reference photos.
 - Negative Prompt Profiles dropdown.
-- New default RealVisXL_V4.0 model, which is much better than the default YamerMIX. You can still download the base model of your choice by changing the huggingface model path inside instant-id-gradio-unlocked.py file and replacing all "SG161222/RealVisXL_V4.0" fields and it will be downloaded automatically in the "models" folder on root. /John6666/albedobase-xl-v31large-sdxl/, ProtoVision XL 6.6, misri/juggernautXL_juggXIByRundiffusion and John6666/cyberrealistic-xl-v58-sdxl are very good models for styles and general use as well.
+- New default RealVisXL_V5.0 model, which is much better than the default YamerMIX. You can still download the base model of your choice by changing the huggingface model path inside instant-id-gradio-unlocked.py file and replacing all "eniora/RealVisXL_V5.0" fields and it will be downloaded automatically in the "models" folder on root. /John6666/albedobase-xl-v31large-sdxl/, ProtoVision XL 6.6, misri/juggernautXL_juggXIByRundiffusion and John6666/cyberrealistic-xl-v58-sdxl are very good models for styles and general use as well.
 - Ability to choose how many images to be generated after clicking on "generate", each with random seed.
 - Improved VRAM usage compared to the original repo.
 - Added many more styles in the style template.
