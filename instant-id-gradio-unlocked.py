@@ -115,7 +115,7 @@ def get_available_models():
     return model_folders
 
 AVAILABLE_MODELS = get_available_models()
-DEFAULT_MODEL = "SG161222/RealVisXL_V4.0"
+DEFAULT_MODEL = "eniora/RealVisXL_V5.0"
 
 DET_SIZE_OPTIONS = {
     "160x160 (for very lowres portrait photos)": (160, 160),
@@ -215,12 +215,12 @@ def update_det_size(det_size_name):
     
     return f"Detection size set to {current_det_size}"
 
-def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
+def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
     if pretrained_model_name_or_path.endswith(
         ".ckpt"
     ) or pretrained_model_name_or_path.endswith(".safetensors"):
         scheduler_kwargs = hf_hub_download(
-            repo_id="SG161222/RealVisXL_V4.0",
+            repo_id="eniora/RealVisXL_V5.0",
             subfolder="scheduler",
             filename="scheduler_config.json",
         )
@@ -374,7 +374,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
 
         if model_name.endswith(".ckpt") or model_name.endswith(".safetensors"):
             scheduler_kwargs = hf_hub_download(
-                repo_id="SG161222/RealVisXL_V4.0",
+                repo_id="eniora/RealVisXL_V5.0",
                 subfolder="scheduler",
                 filename="scheduler_config.json",
             )
