@@ -843,7 +843,7 @@ Scheduler: {scheduler}"""
         return images
 
     title = r"""
-    <h1 align="center">InstantID: Unlocked. Zero-shot Identity-Preserving Generation</h1>
+    <h1 align="center">InstantID Unlocked v2.1.0</h1>
     """
 
     description = r"""
