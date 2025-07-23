@@ -602,10 +602,7 @@ def main(pretrained_model_name_or_path="SG161222/RealVisXL_V4.0"):
         face_image = load_image(face_image_path)
         custom_size = None
         if enable_custom_resize:
-            try:
-                custom_size = (int(custom_resize_width), int(custom_resize_height))
-            except:
-                raise gr.Error("Custom resize values must be numeric and within bounds.")
+            custom_size = (int(custom_resize_width), int(custom_resize_height))
         resize_mode_enum = getattr(PIL.Image, resize_mode)
         face_image = resize_img(face_image, size=custom_size, max_side=resize_max_side, mode=resize_mode_enum, pad_to_max_side=pad_to_max_side)
         face_image_cv2 = convert_from_image_to_cv2(face_image)
