@@ -77,6 +77,7 @@ def load_embeddings_from_prompt(pipe_obj, prompt_text, embeddings_dir="./models/
 
     tokens_in_prompt = []
     for part in prompt_text.replace(',', ' ').split():
+        original_part = part
         part = part.lstrip('(<').rstrip('>)')
         
         if not part:
@@ -94,9 +95,9 @@ def load_embeddings_from_prompt(pipe_obj, prompt_text, embeddings_dir="./models/
             except ValueError:
                 weight = 1.0
 
-        tokens_in_prompt.append((name.strip(), weight))
+        tokens_in_prompt.append((name.strip(), weight, original_part))
 
-    for ti_token, ti_weight in tokens_in_prompt:
+    for ti_token, ti_weight, original_part in tokens_in_prompt:
         if not ti_token:
             continue
 
@@ -112,6 +113,9 @@ def load_embeddings_from_prompt(pipe_obj, prompt_text, embeddings_dir="./models/
                 break
 
         if not found_path:
+            if original_part.startswith('<') and original_part.endswith('>'):
+                print(f"Embedding '{ti_token}' not found in embeddings directory")
+                gr.Warning(f"Embedding '{ti_token}' not found in embeddings directory")
             continue
 
         try:
