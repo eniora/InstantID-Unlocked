@@ -71,7 +71,6 @@ def get_available_embeddings():
 
 def load_embeddings_from_prompt(pipe_obj, prompt_text, embeddings_dir="./models/embeddings"):
     global loaded_textual_inversions_cache
-    loaded_tis = set()
 
     if not os.path.exists(embeddings_dir):
         return
