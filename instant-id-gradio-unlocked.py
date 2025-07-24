@@ -1058,7 +1058,7 @@ Scheduler: {scheduler}"""
                             add_to_prompt_btn = gr.Button("Add to Prompt", variant="secondary")
                         gr.Markdown("""Select an embedding to add to your negative prompt/prompt. Only SDXL, pony and illustrious embeddings are supported.
 
-                        Specified weight is only applied once per session. To apply a new weight for the same embedding, restart the server or change the base model.""")
+                        ⚠️ Specified weight is only applied once per session. To apply a new weight for the same embedding, restart the server or change the base model.""")
                         def add_embedding_to_prompt(embedding, weight, current_prompt):
                             if not embedding:
                                 return current_prompt
