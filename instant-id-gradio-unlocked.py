@@ -1022,7 +1022,7 @@ Scheduler: {scheduler}"""
                     placeholder="When a Style template is selected, this becomes empty because styles have their own neg prompts. You can still add to it",
                     value=NEGATIVE_PROMPT_PRESETS["Default Negative Profile"]
                 )
-                with gr.Accordion("Style template and other settings including custom resolution", open=False) as style_settings_accordion:
+                with gr.Accordion("Style template and other settings including custom resolution and embeddings", open=False) as style_settings_accordion:
                     style = gr.Dropdown(
                         label="Style template",
                         choices=STYLE_NAMES,
