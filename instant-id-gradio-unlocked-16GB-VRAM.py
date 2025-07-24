@@ -1012,11 +1012,13 @@ Scheduler: {scheduler}"""
                         def add_embedding_to_prompt(embedding, weight, current_prompt):
                             if not embedding:
                                 return current_prompt
-                            return f"{current_prompt} <{embedding}:{weight}>" if current_prompt else f"<{embedding}:{weight}>"
+                            embedding_str = f"<{embedding}>" if weight == 1.0 else f"<{embedding}:{weight}>"
+                            return f"{current_prompt} {embedding_str}" if current_prompt else embedding_str
                         def add_embedding_to_negative(embedding, weight, current_negative):
                             if not embedding:
                                 return current_negative
-                            return f"{current_negative} <{embedding}:{weight}>" if current_negative else f"<{embedding}:{weight}>"
+                            embedding_str = f"<{embedding}>" if weight == 1.0 else f"<{embedding}:{weight}>"
+                            return f"{current_negative} {embedding_str}" if current_negative else embedding_str
                         add_to_prompt_btn.click(
                             fn=add_embedding_to_prompt,
                             inputs=[available_embeddings, embedding_weight, prompt],
