@@ -75,27 +75,43 @@ def load_embeddings_from_prompt(pipe_obj, prompt_text, embeddings_dir="./models/
 
     if not os.path.exists(embeddings_dir):
         return
+
     tokens_in_prompt = []
     for part in prompt_text.replace(',', ' ').split():
-        part = part.strip("()")
+        part = part.lstrip('(<').rstrip('>)')
+        
+        if not part:
+            continue
 
-        if part.startswith('<') and part.endswith('>'):
-            part = part[1:-1]
+        name = part
+        weight = 1.0
 
         if ':' in part:
-            part = part.split(':')[0]
+            name, weight_str = part.split(':', 1)
+            try:
+                weight = float(weight_str)
 
-        if part:
-            tokens_in_prompt.append(part)
-    for ti_token in tokens_in_prompt:
-        if ti_token in loaded_textual_inversions_cache:
+                weight = max(0.1, min(3.0, weight))
+            except ValueError:
+                weight = 1.0
+
+        tokens_in_prompt.append((name.strip(), weight))
+
+    for ti_token, ti_weight in tokens_in_prompt:
+        if not ti_token:
             continue
+
+        cache_key = ti_token.lower()
+        if cache_key in loaded_textual_inversions_cache:
+            continue
+
         found_path = None
         for ext in ['.safetensors', '.pt']:
             current_path = os.path.join(embeddings_dir, f"{ti_token}{ext}")
             if os.path.exists(current_path):
                 found_path = current_path
                 break
+
         if not found_path:
             continue
 
@@ -108,27 +124,27 @@ def load_embeddings_from_prompt(pipe_obj, prompt_text, embeddings_dir="./models/
                         embedding[key] = f.get_tensor(key)
             else:
                 embedding = torch.load(found_path, map_location="cpu")
-            
+
             if 'clip_l' in embedding:
                 pipe_obj.load_textual_inversion(
-                    embedding['clip_l'],
+                    embedding['clip_l'] * ti_weight,
                     token=ti_token,
                     text_encoder=pipe_obj.text_encoder,
                     tokenizer=pipe_obj.tokenizer,
                 )
-                print(f"Successfully loaded '{ti_token}' for CLIP L from {found_path}")
             if 'clip_g' in embedding:
                 pipe_obj.load_textual_inversion(
-                    embedding['clip_g'],
+                    embedding['clip_g'] * ti_weight,
                     token=ti_token,
                     text_encoder=pipe_obj.text_encoder_2,
                     tokenizer=pipe_obj.tokenizer_2,
                 )
-                print(f"Successfully loaded '{ti_token}' for CLIP G from {found_path}")
-            
-            loaded_textual_inversions_cache.add(ti_token)
+
+            print(f"Loaded '{ti_token}' with weight {ti_weight:.2f}")
+            loaded_textual_inversions_cache.add(cache_key)
+
         except Exception as e:
-            print(f"Error loading textual inversion '{ti_token}' from {found_path}: {e}")
+            print(f"Error loading '{ti_token}': {str(e)}")
 
 import diffusers
 from diffusers.utils import load_image
@@ -1022,37 +1038,27 @@ Scheduler: {scheduler}"""
                     placeholder="When a Style template is selected, this becomes empty because styles have their own neg prompts. You can still add to it",
                     value=NEGATIVE_PROMPT_PRESETS["Default Negative Profile"]
                 )
-                with gr.Accordion("Style template and other settings including custom resolution and embeddings", open=False) as style_settings_accordion:
-                    style = gr.Dropdown(
-                        label="Style template",
-                        choices=STYLE_NAMES,
-                        value=DEFAULT_STYLE_NAME,
-                    )
-                    negative_prompt_preset = gr.Dropdown(
-                        label="Negative Prompt Profile",
-                        choices=list(NEGATIVE_PROMPT_PRESETS.keys()),
-                        value="Default Negative Profile",
-                        info="Select a Negative Prompt Profile, default one is fine but you may want to select a different one depending on your prompt style"
-                    )
-                    with gr.Accordion("Embeddings list (Textual Inversions)", open=False):
+                with gr.Accordion("⚙️ Embeddings, style template and other settings including custom resolution", open=False) as style_settings_accordion:
+                    with gr.Accordion("📖 Embeddings list (Textual Inversions)", open=False):
                         with gr.Row():
                             available_embeddings = gr.Dropdown(
                                 label="Available Embeddings",
                                 choices=get_available_embeddings(),
-                                value=None,
-                                scale=2.0
+                                value=None
                             )
                             embedding_weight = gr.Slider(
                                 label="Weight",
                                 minimum=0.1,
-                                maximum=2.0,
+                                maximum=3.0,
                                 step=0.1,
-                                value=1.0,
-                                scale=2.0
+                                value=1.0
                             )
+                        with gr.Row():
                             add_to_negative_btn = gr.Button("Add to Negative", variant="secondary")
                             add_to_prompt_btn = gr.Button("Add to Prompt", variant="secondary")
-                        gr.Markdown("Select an embedding to add to your negative prompt/prompt. Only SDXL, pony and illustrious embeddings are supported.")
+                        gr.Markdown("""Select an embedding to add to your negative prompt/prompt. Only SDXL, pony and illustrious embeddings are supported.
+
+                        Specified weight is only applied once per session. To apply a new weight for the same embedding, restart the server or change the base model.""")
                         def add_embedding_to_prompt(embedding, weight, current_prompt):
                             if not embedding:
                                 return current_prompt
@@ -1074,13 +1080,24 @@ Scheduler: {scheduler}"""
                             outputs=negative_prompt
                         )
                         with gr.Row():
-                            refresh_embeddings = gr.Button("🔄 Refresh List", variant="secondary")
+                            refresh_embeddings = gr.Button("🔄 Refresh Embeddings List", variant="secondary")
                         def refresh_embedding_list():
                             return gr.update(choices=get_available_embeddings())
                         refresh_embeddings.click(
                             fn=refresh_embedding_list,
                             outputs=available_embeddings
                         )
+                    style = gr.Dropdown(
+                        label="Style template",
+                        choices=STYLE_NAMES,
+                        value=DEFAULT_STYLE_NAME,
+                    )
+                    negative_prompt_preset = gr.Dropdown(
+                        label="Negative Prompt Profile",
+                        choices=list(NEGATIVE_PROMPT_PRESETS.keys()),
+                        value="Default Negative Profile",
+                        info="Select a Negative Prompt Profile, default one is fine but you may want to select a different one depending on your prompt style"
+                    )
                     with gr.Row():
                         file_prefix = gr.Textbox(
                             label="Saved file name prefix. Leave empty to use the default 'InstantID_'",
@@ -1314,7 +1331,7 @@ Scheduler: {scheduler}"""
                         )
             with gr.Column(scale=1):
                 gallery = gr.Gallery(label="Generated Images")
-                generate_alt = gr.Button("Generate (Extra Right Side Button)", variant="secondary")
+                generate_alt = gr.Button("Generate (Extra Right Side Button)", variant="primary")
                 with gr.Accordion("PNG Metadata Reader", open=True):
                     with gr.Row():
                         metadata_input = gr.Image(
