@@ -55,100 +55,6 @@ def save_images(images, output_dir="output", generation_info=None, prefix=DEFAUL
 
 cached_controlnet_models = {}
 
-loaded_textual_inversions_cache = set()
-
-def get_available_embeddings():
-    embeddings_dir = "./models/embeddings"
-    if not os.path.exists(embeddings_dir):
-        return []
-
-    embedding_files = []
-    for file in os.listdir(embeddings_dir):
-        if file.endswith(('.safetensors', '.pt')):
-            embedding_name = os.path.splitext(file)[0]
-            embedding_files.append(embedding_name)
-    return embedding_files
-
-def load_embeddings_from_prompt(pipe_obj, prompt_text, embeddings_dir="./models/embeddings"):
-    global loaded_textual_inversions_cache
-
-    if not os.path.exists(embeddings_dir):
-        return
-
-    tokens_in_prompt = []
-    for part in prompt_text.replace(',', ' ').split():
-        original_part = part
-        part = part.lstrip('(<').rstrip('>)')
-        
-        if not part:
-            continue
-
-        name = part
-        weight = 1.0
-
-        if ':' in part:
-            name, weight_str = part.split(':', 1)
-            try:
-                weight = float(weight_str)
-
-                weight = max(0.1, min(3.0, weight))
-            except ValueError:
-                weight = 1.0
-
-        tokens_in_prompt.append((name.strip(), weight, original_part))
-
-    for ti_token, ti_weight, original_part in tokens_in_prompt:
-        if not ti_token:
-            continue
-
-        cache_key = ti_token.lower()
-        if cache_key in loaded_textual_inversions_cache:
-            continue
-
-        found_path = None
-        for ext in ['.safetensors', '.pt']:
-            current_path = os.path.join(embeddings_dir, f"{ti_token}{ext}")
-            if os.path.exists(current_path):
-                found_path = current_path
-                break
-
-        if not found_path:
-            if original_part.startswith('<') and original_part.endswith('>'):
-                print(f"Embedding '{ti_token}' not found in embeddings directory")
-                gr.Warning(f"Embedding '{ti_token}' not found in embeddings directory")
-            continue
-
-        try:
-            embedding = {}
-            if found_path.endswith('.safetensors'):
-                from safetensors import safe_open
-                with safe_open(found_path, framework="pt", device="cpu") as f:
-                    for key in f.keys():
-                        embedding[key] = f.get_tensor(key)
-            else:
-                embedding = torch.load(found_path, map_location="cpu")
-
-            if 'clip_l' in embedding:
-                pipe_obj.load_textual_inversion(
-                    embedding['clip_l'] * ti_weight,
-                    token=ti_token,
-                    text_encoder=pipe_obj.text_encoder,
-                    tokenizer=pipe_obj.tokenizer,
-                )
-            if 'clip_g' in embedding:
-                pipe_obj.load_textual_inversion(
-                    embedding['clip_g'] * ti_weight,
-                    token=ti_token,
-                    text_encoder=pipe_obj.text_encoder_2,
-                    tokenizer=pipe_obj.tokenizer_2,
-                )
-
-            print(f"Loaded '{ti_token}' with weight {ti_weight:.2f}")
-            loaded_textual_inversions_cache.add(cache_key)
-
-        except Exception as e:
-            print(f"Error loading '{ti_token}': {str(e)}")
-
 import diffusers
 from diffusers.utils import load_image
 from diffusers.models import ControlNetModel
@@ -460,7 +366,6 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
 
     def load_model_and_update_pipe(model_name):
         nonlocal pipe
-        global loaded_textual_inversions_cache
 
         if pipe is not None:
             del pipe
@@ -506,7 +411,6 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         pipe.load_ip_adapter_instantid(face_adapter)
         pipe._current_model = model_name
 
-        loaded_textual_inversions_cache.clear()
         return pipe
 
     def generate_image(
@@ -694,8 +598,6 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             prompt = "high quality"
 
         prompt, negative_prompt = apply_style(style_name, prompt, negative_prompt)
-        load_embeddings_from_prompt(pipe, prompt)
-        load_embeddings_from_prompt(pipe, negative_prompt)
 
         face_image = load_image(face_image_path)
         custom_size = None
@@ -1041,55 +943,7 @@ Scheduler: {scheduler}"""
                     placeholder="When a Style template is selected, this becomes empty because styles have their own neg prompts. You can still add to it",
                     value=NEGATIVE_PROMPT_PRESETS["Default Negative Profile"]
                 )
-                with gr.Accordion("⚙️ Embeddings, style template and other settings including custom resolution", open=False) as style_settings_accordion:
-                    with gr.Accordion("📖 Embeddings list (Textual Inversions)", open=False):
-                        with gr.Row():
-                            available_embeddings = gr.Dropdown(
-                                label="Available Embeddings",
-                                choices=get_available_embeddings(),
-                                value=None
-                            )
-                            embedding_weight = gr.Slider(
-                                label="Weight",
-                                minimum=0.1,
-                                maximum=3.0,
-                                step=0.1,
-                                value=1.0
-                            )
-                        with gr.Row():
-                            add_to_negative_btn = gr.Button("Add to Negative", variant="secondary")
-                            add_to_prompt_btn = gr.Button("Add to Prompt", variant="secondary")
-                        gr.Markdown("""Select an embedding to add to your negative prompt/prompt. Only SDXL, pony and illustrious embeddings are supported.
-
-                        ⚠️ Specified weight is only applied once per session. To apply a new weight for the same embedding, restart the server or change the base model.""")
-                        def add_embedding_to_prompt(embedding, weight, current_prompt):
-                            if not embedding:
-                                return current_prompt
-                            embedding_str = f"<{embedding}>" if weight == 1.0 else f"<{embedding}:{weight}>"
-                            return f"{current_prompt} {embedding_str}" if current_prompt else embedding_str
-                        def add_embedding_to_negative(embedding, weight, current_negative):
-                            if not embedding:
-                                return current_negative
-                            embedding_str = f"<{embedding}>" if weight == 1.0 else f"<{embedding}:{weight}>"
-                            return f"{current_negative} {embedding_str}" if current_negative else embedding_str
-                        add_to_prompt_btn.click(
-                            fn=add_embedding_to_prompt,
-                            inputs=[available_embeddings, embedding_weight, prompt],
-                            outputs=prompt
-                        )
-                        add_to_negative_btn.click(
-                            fn=add_embedding_to_negative,
-                            inputs=[available_embeddings, embedding_weight, negative_prompt],
-                            outputs=negative_prompt
-                        )
-                        with gr.Row():
-                            refresh_embeddings = gr.Button("🔄 Refresh Embeddings List", variant="secondary")
-                        def refresh_embedding_list():
-                            return gr.update(choices=get_available_embeddings())
-                        refresh_embeddings.click(
-                            fn=refresh_embedding_list,
-                            outputs=available_embeddings
-                        )
+                with gr.Accordion("⚙️ Style template and other settings including custom resolution", open=False) as style_settings_accordion:
                     style = gr.Dropdown(
                         label="Style template",
                         choices=STYLE_NAMES,
