@@ -269,7 +269,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
 
     def toggle_lora_ui(enable_lora_checkbox):
         visibility = gr.update(visible=enable_lora_checkbox)
-        return [visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility]
+        return [visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility]
 
     def randomize_seed_fn(seed: int, randomize_seed: bool) -> int:
         if randomize_seed:
@@ -887,7 +887,7 @@ Scheduler: {scheduler}"""
         return images
 
     title = r"""
-    <h1 align="center">InstantID Unlocked v2.3.0</h1>
+    <h1 align="center">InstantID Unlocked v2.4.0</h1>
     """
 
     description = r"""
@@ -1404,8 +1404,8 @@ Scheduler: {scheduler}"""
                         queue=False
                     )
                     with gr.Row():
-                        refresh_loras = gr.Button("Refresh LoRAs Lists 🔄", scale=2, elem_classes="toolbutton")
-                        clear_loras = gr.Button("Clear all LoRA selections ♻️", scale=1, elem_classes="toolbutton")
+                        refresh_loras = gr.Button("Refresh LoRAs Lists 🔄", scale=2, elem_classes="toolbutton", visible=False)
+                        clear_loras = gr.Button("Clear all LoRA selections ♻️", scale=1, elem_classes="toolbutton", visible=False)
                     
                     def refresh_lora_list():
                         loras = [""] + get_available_loras()
@@ -1505,7 +1505,7 @@ Scheduler: {scheduler}"""
             enable_lora.input(
                 fn=toggle_lora_ui,
                 inputs=[enable_lora],
-                outputs=[lora_row_1, lora_selection, lora_scale, lora_row_2, lora_selection_2, lora_scale_2, lora_row_3, lora_selection_3, lora_scale_3, lora_row_4, lora_selection_4, lora_scale_4, lora_row_5, lora_selection_5, lora_scale_5, lora_row_6, lora_selection_6, lora_scale_6],
+                outputs=[lora_row_1, lora_selection, lora_scale, lora_row_2, lora_selection_2, lora_scale_2, lora_row_3, lora_selection_3, lora_scale_3, lora_row_4, lora_selection_4, lora_scale_4, lora_row_5, lora_selection_5, lora_scale_5, lora_row_6, lora_selection_6, lora_scale_6, refresh_loras, clear_loras],
                 queue=False,
             )
 
@@ -1809,7 +1809,7 @@ Scheduler: {scheduler}"""
             ).then(
                 fn=toggle_lora_ui,
                 inputs=[enable_lora],
-                outputs=[lora_row_1, lora_selection, lora_scale, lora_row_2, lora_selection_2, lora_scale_2, lora_row_3, lora_selection_3, lora_scale_3, lora_row_4, lora_selection_4, lora_scale_4, lora_row_5, lora_selection_5, lora_scale_5, lora_row_6, lora_selection_6, lora_scale_6]
+                outputs=[lora_row_1, lora_selection, lora_scale, lora_row_2, lora_selection_2, lora_scale_2, lora_row_3, lora_selection_3, lora_scale_3, lora_row_4, lora_selection_4, lora_scale_4, lora_row_5, lora_selection_5, lora_scale_5, lora_row_6, lora_selection_6, lora_scale_6, refresh_loras, clear_loras]
             )
 
         gr.Markdown(article)
