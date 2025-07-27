@@ -269,7 +269,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
 
     def toggle_lora_ui(enable_lora_checkbox):
         visibility = gr.update(visible=enable_lora_checkbox)
-        return [visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility, visibility]
+        return [visibility] * 20
 
     def randomize_seed_fn(seed: int, randomize_seed: bool) -> int:
         if randomize_seed:
