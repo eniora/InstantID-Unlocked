@@ -329,7 +329,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
     def resize_img(
         input_image,
         max_side=4096,
-        min_side=640,
+        min_side=512,
         size=None,
         pad_to_max_side=False,
         mode=PIL.Image.LANCZOS,
@@ -988,7 +988,7 @@ Scheduler: {scheduler}"""
                     )
                     custom_resize_width = gr.Slider(
                         label="Custom Width",
-                        minimum=640,
+                        minimum=512,
                         maximum=4096,
                         step=64,
                         value=960,
@@ -997,7 +997,7 @@ Scheduler: {scheduler}"""
                     )
                     custom_resize_height = gr.Slider(
                         label="Custom Height",
-                        minimum=640,
+                        minimum=512,
                         maximum=4096,
                         step=64,
                         value=1280,
@@ -1014,7 +1014,7 @@ Scheduler: {scheduler}"""
                     )
                 resize_max_side_slider = gr.Slider(
                     label="Max image size for resizing (output resolution)",
-                    minimum=640,
+                    minimum=512,
                     maximum=4096,
                     step=64,
                     value=1280,
@@ -1185,6 +1185,7 @@ Scheduler: {scheduler}"""
                             value="640x640 (default)",
                             info="Higher values can detect smaller faces better if the face in the input/reference image is too small/distant. Change the value only if you get 'No face detected', it can help a lot in some face input photos."
                         )
+                    generate_alt_2 = gr.Button("Generate (Extra Bottom Button)", variant="primary")
             with gr.Column(scale=1):
                 gallery = gr.Gallery(label="Generated Images")
                 generate_alt = gr.Button("Generate (Extra Right Side Button)", variant="primary")
@@ -1498,6 +1499,9 @@ Scheduler: {scheduler}"""
                 fn=generate_image, inputs=shared_inputs, outputs=[gallery]
             )
             generate_alt.click(fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False).then(
+                fn=generate_image, inputs=shared_inputs, outputs=[gallery]
+            )
+            generate_alt_2.click(fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False).then(
                 fn=generate_image, inputs=shared_inputs, outputs=[gallery]
             )
 
