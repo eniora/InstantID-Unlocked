@@ -567,23 +567,22 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
 
             use_karras = "Karras" in scheduler
             use_sde = "SDE" in scheduler
+            scheduler_split = scheduler.split("-")[0]
+            scheduler_class = getattr(diffusers, scheduler_split)
     
-            if "DPMSolver" in scheduler.split("-")[0]:
-                scheduler_class = getattr(diffusers, scheduler.split("-")[0])
+            if "DPMSolver" in scheduler_split:
                 pipe.scheduler = scheduler_class.from_config(
                     scheduler_config,
                     use_karras_sigmas=use_karras,
                     algorithm_type="sde-dpmsolver++" if use_sde else "dpmsolver++"
                 )
+            elif scheduler_split in ["KDPM2AncestralDiscreteScheduler", "KDPM2DiscreteScheduler"]:
+                pipe.scheduler = scheduler_class.from_config(
+                    scheduler_config,
+                    use_karras_sigmas=use_karras
+                )
             else:
-                scheduler_class = getattr(diffusers, scheduler.split("-")[0])
-                if scheduler.split("-")[0] in ["KDPM2AncestralDiscreteScheduler", "KDPM2DiscreteScheduler"] and use_karras:
-                    pipe.scheduler = scheduler_class.from_config(
-                        scheduler_config,
-                        use_karras_sigmas=use_karras
-                    )
-                else:
-                    pipe.scheduler = scheduler_class.from_config(scheduler_config)
+                pipe.scheduler = scheduler_class.from_config(scheduler_config)
 
         if face_image_path is None:
             if enable_lora:
