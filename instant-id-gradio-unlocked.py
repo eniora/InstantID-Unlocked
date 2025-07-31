@@ -448,6 +448,12 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         disable_lora_6,
         lora_scale_6,
         lora_selection_6,
+        disable_lora_7,
+        lora_scale_7,
+        lora_selection_7,
+        disable_lora_8,
+        lora_scale_8,
+        lora_selection_8,
         enhance_face_region,
         enhance_strength,
         custom_enhance_padding,
@@ -537,6 +543,24 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 else:
                     print(f"LoRA 6 not found at {lora_path_6}, skipping load.")
                     gr.Warning(f"LoRA 6 not found at {lora_path_6}. Skipping LoRA 6.")
+
+            if lora_selection_7 and not disable_lora_7:
+                lora_path_7 = os.path.join("./models/Loras", lora_selection_7)
+                if os.path.exists(lora_path_7):
+                    loras_to_load.append({"name": lora_selection_7, "scale": lora_scale_7})
+                    print(f"LoRA 7 selected: {lora_selection_7} with scale {lora_scale_7}")
+                else:
+                    print(f"LoRA 7 not found at {lora_path_7}, skipping load.")
+                    gr.Warning(f"LoRA 7 not found at {lora_path_7}. Skipping LoRA 7.")
+
+            if lora_selection_8 and not disable_lora_8:
+                lora_path_8 = os.path.join("./models/Loras", lora_selection_8)
+                if os.path.exists(lora_path_8):
+                    loras_to_load.append({"name": lora_selection_8, "scale": lora_scale_8})
+                    print(f"LoRA 8 selected: {lora_selection_8} with scale {lora_scale_8}")
+                else:
+                    print(f"LoRA 8 not found at {lora_path_8}, skipping load.")
+                    gr.Warning(f"LoRA 8 not found at {lora_path_8}. Skipping LoRA 8.")
 
             if loras_to_load:
                 for i, lora_item in enumerate(loras_to_load):
@@ -803,6 +827,22 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                     else:
                         lora_details.append(f"LoRA 6: {lora_selection_6} (Not found)")
 
+                if lora_selection_7:
+                    if not disable_lora_7 and os.path.exists(os.path.join('./models/Loras', lora_selection_7)):
+                        lora_details.append(f"LoRA 7: {lora_selection_7} (Scale: {lora_scale_7})")
+                    elif disable_lora_7:
+                        lora_details.append("LoRA 7: Manually disabled")
+                    else:
+                        lora_details.append(f"LoRA 7: {lora_selection_7} (Not found)")
+
+                if lora_selection_8:
+                    if not disable_lora_8 and os.path.exists(os.path.join('./models/Loras', lora_selection_8)):
+                        lora_details.append(f"LoRA 8: {lora_selection_8} (Scale: {lora_scale_8})")
+                    elif disable_lora_8:
+                        lora_details.append("LoRA 8: Manually disabled")
+                    else:
+                        lora_details.append(f"LoRA 8: {lora_selection_8} (Not found)")
+
                 lora_info_str = "; ".join(lora_details)
             print(f"LoRA(s): {lora_info_str}")
 
@@ -865,6 +905,8 @@ LoRA 5 selection: {'None' if disable_lora_5 or not (enable_lora and lora_selecti
 LoRA 5 scale: {'Disabled' if disable_lora_5 or not (enable_lora and lora_selection_5 and os.path.exists(os.path.join('./models/Loras', lora_selection_5))) else lora_scale_5}
 LoRA 6 selection: {'None' if disable_lora_6 or not (enable_lora and lora_selection_6 and os.path.exists(os.path.join('./models/Loras', lora_selection_6))) else lora_selection_6}
 LoRA 6 scale: {'Disabled' if disable_lora_6 or not (enable_lora and lora_selection_6 and os.path.exists(os.path.join('./models/Loras', lora_selection_6))) else lora_scale_6}
+LoRA 8 selection: {'None' if disable_lora_8 or not (enable_lora and lora_selection_8 and os.path.exists(os.path.join('./models/Loras', lora_selection_8))) else lora_selection_8}
+LoRA 8 scale: {'Disabled' if disable_lora_8 or not (enable_lora and lora_selection_8 and os.path.exists(os.path.join('./models/Loras', lora_selection_8))) else lora_scale_8}
 Scheduler: {scheduler}"""
 
             png_info = PIL.PngImagePlugin.PngInfo()
@@ -1217,7 +1259,7 @@ Scheduler: {scheduler}"""
                         value=False,
                     )
                     lora_info = gr.Markdown(
-                        "Up to six LoRAs can be loaded. Only SDXL and Pony LoRAs supported. When loading three or more loras, it's not good to go above ~0.5 strength on each. The 'Disable Lora' checkbox is only needed if you have a Lora selected.",
+                        "Up to eight LoRAs can be loaded. Only SDXL and Pony LoRAs supported. The 'Disable Lora' checkbox is only needed if you have a Lora selected.",
                         visible=False
                     )
                     enable_lora.change(
@@ -1225,6 +1267,9 @@ Scheduler: {scheduler}"""
                         inputs=enable_lora,
                         outputs=lora_info
                     )
+                    with gr.Row():
+                        refresh_loras = gr.Button("🔄 Refresh LoRAs Lists"", scale=3, elem_classes="toolbutton", visible=False)
+                        clear_loras = gr.Button("♻️ Clear LoRA selections", scale=1, elem_classes="toolbutton", visible=False)
 
                     with gr.Row(visible=False) as lora_row_1:
                         lora_selection = gr.Dropdown(
@@ -1365,6 +1410,52 @@ Scheduler: {scheduler}"""
                             value=False,
                             scale=1
                         )
+                    with gr.Row(visible=False) as lora_row_7:
+                        lora_selection_7 = gr.Dropdown(
+                            label="Select LoRA 7",
+                            choices=[""] + get_available_loras(),
+                            value=None,
+                            allow_custom_value=True,
+                            info="Select a seventh LoRA.",
+                            scale=3
+                        )
+                        lora_scale_7 = gr.Slider(
+                            label="LoRA 7 Scale",
+                            minimum=0.0,
+                            maximum=2.0,
+                            step=0.05,
+                            value=0.5,
+                            info="Strength of the seventh LoRA effect.",
+                            scale=3
+                        )
+                        disable_lora_7 = gr.Checkbox(
+                            label="Disable LoRA 7",
+                            value=False,
+                            scale=1
+                        )
+                    with gr.Row(visible=False) as lora_row_8:
+                        lora_selection_8 = gr.Dropdown(
+                            label="Select LoRA 8",
+                            choices=[""] + get_available_loras(),
+                            value=None,
+                            allow_custom_value=True,
+                            info="Select an eighth LoRA.",
+                            scale=3
+                        )
+                        lora_scale_8 = gr.Slider(
+                            label="LoRA 8 Scale",
+                            minimum=0.0,
+                            maximum=2.0,
+                            step=0.05,
+                            value=0.5,
+                            info="Strength of the eighth LoRA effect.",
+                            scale=3
+                        )
+                        disable_lora_8 = gr.Checkbox(
+                            label="Disable LoRA 8",
+                            value=False,
+                            scale=1
+                        )
 
                     disable_lora_1.change(
                         fn=lambda x: [gr.update(interactive=not x), gr.update(interactive=not x)],
@@ -1402,17 +1493,26 @@ Scheduler: {scheduler}"""
                         outputs=[lora_selection_6, lora_scale_6],
                         queue=False
                     )
-                    with gr.Row():
-                        refresh_loras = gr.Button("Refresh LoRAs Lists 🔄", scale=2, elem_classes="toolbutton", visible=False)
-                        clear_loras = gr.Button("Clear all LoRA selections ♻️", scale=1, elem_classes="toolbutton", visible=False)
-                    
+                    disable_lora_7.change(
+                        fn=lambda x: [gr.update(interactive=not x), gr.update(interactive=not x)],
+                        inputs=disable_lora_7,
+                        outputs=[lora_selection_7, lora_scale_7],
+                        queue=False
+                    )
+                    disable_lora_8.change(
+                        fn=lambda x: [gr.update(interactive=not x), gr.update(interactive=not x)],
+                        inputs=disable_lora_8,
+                        outputs=[lora_selection_8, lora_scale_8],
+                        queue=False
+                    )
+
                     def refresh_lora_list():
                         loras = [""] + get_available_loras()
-                        return gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras)
+                        return gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras)
                     
                     refresh_loras.click(
                         fn=refresh_lora_list,
-                        outputs=[lora_selection, lora_selection_2, lora_selection_3, lora_selection_4, lora_selection_5, lora_selection_6]
+                        outputs=[lora_selection, lora_selection_2, lora_selection_3, lora_selection_4, lora_selection_5, lora_selection_6, lora_selection_7, lora_selection_8]
                     )
 
                     def clear_lora_list():
@@ -1423,6 +1523,10 @@ Scheduler: {scheduler}"""
                             gr.update(value=None),
                             gr.update(value=None),
                             gr.update(value=None),
+                            gr.update(value=None),
+                            gr.update(value=None),
+                            gr.update(value=False),
+                            gr.update(value=False),
                             gr.update(value=False),
                             gr.update(value=False),
                             gr.update(value=False),
@@ -1434,8 +1538,8 @@ Scheduler: {scheduler}"""
                     clear_loras.click(
                         fn=clear_lora_list,
                         outputs=[
-                            lora_selection, lora_selection_2, lora_selection_3, lora_selection_4, lora_selection_5, lora_selection_6,
-                            disable_lora_1, disable_lora_2, disable_lora_3, disable_lora_4, disable_lora_5, disable_lora_6
+                            lora_selection, lora_selection_2, lora_selection_3, lora_selection_4, lora_selection_5, lora_selection_6, lora_selection_7, lora_selection_8,
+                            disable_lora_1, disable_lora_2, disable_lora_3, disable_lora_4, disable_lora_5, disable_lora_6, disable_lora_7, disable_lora_8
                         ]
                     )
 
@@ -1480,6 +1584,12 @@ Scheduler: {scheduler}"""
                 disable_lora_6,
                 lora_scale_6,
                 lora_selection_6,
+                disable_lora_7,
+                lora_scale_7,
+                lora_selection_7,
+                disable_lora_8,
+                lora_scale_8,
+                lora_selection_8,
                 enhance_face_region,
                 enhance_strength,
                 custom_enhance_padding,
@@ -1511,6 +1621,8 @@ Scheduler: {scheduler}"""
                 lora_row_4, lora_selection_4, lora_scale_4,
                 lora_row_5, lora_selection_5, lora_scale_5,
                 lora_row_6, lora_selection_6, lora_scale_6,
+                lora_row_7, lora_selection_7, lora_scale_7,
+                lora_row_8, lora_selection_8, lora_scale_8,
                 refresh_loras, clear_loras
             ]
 
@@ -1549,6 +1661,10 @@ Scheduler: {scheduler}"""
                     "lora_selection_5": None,
                     "lora_scale_6": 0.5,
                     "lora_selection_6": None,
+                    "lora_scale_7": 0.5,
+                    "lora_selection_7": None,
+                    "lora_scale_8": 0.5,
+                    "lora_selection_8": None,
                     "enhance_face_region": True,
                     "enhance_strength": "Balanced",
                     "custom_enhance_padding": 0.15,
@@ -1563,6 +1679,8 @@ Scheduler: {scheduler}"""
                     "disable_lora_4": False,
                     "disable_lora_5": False,
                     "disable_lora_6": False,
+                    "disable_lora_7": False,
+                    "disable_lora_8": False,
                     "resize_mode": "LANCZOS",
                     "pad_to_max_side": False,
                     "enable_custom_resize": False,
@@ -1643,6 +1761,20 @@ Scheduler: {scheduler}"""
                             lora_scale_6_str = line.replace("LoRA 6 scale:", "").strip()
                             if lora_scale_6_str != "Disabled":
                                 settings["lora_scale_6"] = float(lora_scale_6_str)
+                        elif line.startswith("LoRA 7 selection:"):
+                            lora_selection_7 = line.replace("LoRA 7 selection:", "").strip()
+                            settings["lora_selection_7"] = lora_selection_7 if lora_selection_7 != "None" else None
+                        elif line.startswith("LoRA 7 scale:"):
+                            lora_scale_7_str = line.replace("LoRA 7 scale:", "").strip()
+                            if lora_scale_7_str != "Disabled":
+                                settings["lora_scale_7"] = float(lora_scale_7_str)
+                        elif line.startswith("LoRA 8 selection:"):
+                            lora_selection_8 = line.replace("LoRA 8 selection:", "").strip()
+                            settings["lora_selection_8"] = lora_selection_8 if lora_selection_8 != "None" else None
+                        elif line.startswith("LoRA 8 scale:"):
+                            lora_scale_8_str = line.replace("LoRA 8 scale:", "").strip()
+                            if lora_scale_8_str != "Disabled":
+                                settings["lora_scale_8"] = float(lora_scale_8_str)
                         elif line.startswith("Enhance non-face region:"):
                             settings["enhance_face_region"] = "true" in line.lower()
                         elif line.startswith("Enhance region profile:"):
@@ -1747,6 +1879,10 @@ Scheduler: {scheduler}"""
                     settings["lora_selection_5"],
                     settings["lora_scale_6"],
                     settings["lora_selection_6"],
+                    settings["lora_scale_7"],
+                    settings["lora_selection_7"],
+                    settings["lora_scale_8"],
+                    settings["lora_selection_8"],
                     settings["randomize_seed"],
                     settings["controlnet_selection"],
                     settings["model_name"],
@@ -1758,6 +1894,8 @@ Scheduler: {scheduler}"""
                     settings["disable_lora_4"],
                     settings["disable_lora_5"],
                     settings["disable_lora_6"],
+                    settings["disable_lora_7"],
+                    settings["disable_lora_8"],
                     settings["resize_mode"],
                     settings["pad_to_max_side"],
                     settings["enable_custom_resize"],
@@ -1799,6 +1937,10 @@ Scheduler: {scheduler}"""
                     lora_selection_5,
                     lora_scale_6,
                     lora_selection_6,
+                    lora_scale_7,
+                    lora_selection_7,
+                    lora_scale_8,
+                    lora_selection_8,
                     randomize_seed,
                     controlnet_selection,
                     model_name,
@@ -1810,6 +1952,8 @@ Scheduler: {scheduler}"""
                     disable_lora_4,
                     disable_lora_5,
                     disable_lora_6,
+                    disable_lora_7,
+                    disable_lora_8,
                     resize_mode_dropdown,
                     pad_to_max_checkbox,
                     enable_custom_resize,
