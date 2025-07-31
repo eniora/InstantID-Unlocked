@@ -1,8 +1,9 @@
 <div align="center">
 <h1>InstantID: Unlocked. Zero-shot Identity-Preserving Generation</h1>
 
-Before lecturing me, I think it's worth mentioning that I am not too good with python and the code is full of workarounds/hacks + I used a lot of help from AI chatbots, but at least it works really well and everything is working as I intended with no issues at all. :D
+I think it's worth mentioning that I am not too good with python and the code is full of workarounds/hacks + I used a lot of help from AI chatbots, but at least it works really well and everything is working as I intended with no issues at all. :D
 I originally started modifying InstantID for my own usage and to improve my experience and learn a bit more about python, then decided to release it as a fork. Many thanks to the InstantX team for this awesome project!
+The code barely follows any DRY principles as it started as a personal modification project to imporve my experience and I slowly fixed/patched stuff over time. So now doing "DRY" on it would require a lot of time and possible break things.
 
 ## This fork adds the following:
 - Autosave of each generated image in the "output" folder, with an "Open Output Folder" button in the gradio GUI.
