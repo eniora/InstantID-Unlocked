@@ -1163,7 +1163,9 @@ Scheduler: {scheduler}"""
                         )
                         refresh_models = gr.Button("🔄", scale=1, elem_classes="toolbutton")
                         def refresh_model_list():
-                            return gr.update(choices=get_available_models())
+                            global AVAILABLE_MODELS
+                            AVAILABLE_MODELS = get_available_models()
+                            return gr.update(choices=AVAILABLE_MODELS)
 
                         refresh_models.click(
                             fn=refresh_model_list,
