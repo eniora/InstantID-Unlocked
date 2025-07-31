@@ -905,6 +905,8 @@ LoRA 5 selection: {'None' if disable_lora_5 or not (enable_lora and lora_selecti
 LoRA 5 scale: {'Disabled' if disable_lora_5 or not (enable_lora and lora_selection_5 and os.path.exists(os.path.join('./models/Loras', lora_selection_5))) else lora_scale_5}
 LoRA 6 selection: {'None' if disable_lora_6 or not (enable_lora and lora_selection_6 and os.path.exists(os.path.join('./models/Loras', lora_selection_6))) else lora_selection_6}
 LoRA 6 scale: {'Disabled' if disable_lora_6 or not (enable_lora and lora_selection_6 and os.path.exists(os.path.join('./models/Loras', lora_selection_6))) else lora_scale_6}
+LoRA 7 selection: {'None' if disable_lora_7 or not (enable_lora and lora_selection_7 and os.path.exists(os.path.join('./models/Loras', lora_selection_7))) else lora_selection_7}
+LoRA 7 scale: {'Disabled' if disable_lora_7 or not (enable_lora and lora_selection_7 and os.path.exists(os.path.join('./models/Loras', lora_selection_7))) else lora_scale_7}
 LoRA 8 selection: {'None' if disable_lora_8 or not (enable_lora and lora_selection_8 and os.path.exists(os.path.join('./models/Loras', lora_selection_8))) else lora_selection_8}
 LoRA 8 scale: {'Disabled' if disable_lora_8 or not (enable_lora and lora_selection_8 and os.path.exists(os.path.join('./models/Loras', lora_selection_8))) else lora_scale_8}
 Scheduler: {scheduler}"""
@@ -1268,7 +1270,7 @@ Scheduler: {scheduler}"""
                         outputs=lora_info
                     )
                     with gr.Row():
-                        refresh_loras = gr.Button("🔄 Refresh LoRAs Lists"", scale=3, elem_classes="toolbutton", visible=False)
+                        refresh_loras = gr.Button("🔄 Refresh LoRAs Lists", scale=3, elem_classes="toolbutton", visible=False)
                         clear_loras = gr.Button("♻️ Clear LoRA selections", scale=1, elem_classes="toolbutton", visible=False)
 
                     with gr.Row(visible=False) as lora_row_1:
