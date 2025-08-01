@@ -1138,7 +1138,7 @@ Scheduler: {scheduler}"""
                     )
                     guidance_scale = gr.Slider(
                         label="Guidance scale",
-                        minimum=0.1,
+                        minimum=1.0,
                         maximum=20.0,
                         step=0.1,
                         value=4,
@@ -1989,5 +1989,6 @@ Scheduler: {scheduler}"""
                 )
 
     demo.launch(inbrowser=os.environ.get("IN_BROWSER", "1") == "1")
+
 
 main()
