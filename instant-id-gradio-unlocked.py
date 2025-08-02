@@ -616,7 +616,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 f"Cannot find any input face image! Please upload the face image"
             )
 
-        if not prompt:
+        if not prompt and style_name == "(No style)":
             prompt = "high quality"
 
         prompt, negative_prompt = apply_style(style_name, prompt, negative_prompt)
@@ -1988,5 +1988,6 @@ Scheduler: {scheduler}"""
                 )
 
     demo.launch(inbrowser=os.environ.get("IN_BROWSER", "1") == "1")
+
 
 main()
