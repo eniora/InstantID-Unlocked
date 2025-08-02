@@ -774,6 +774,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             print(f"ControlNet selection: {controlnet_selection} | Strengths - Pose: {pose_strength}, Canny: {canny_strength}, Depth: {depth_strength}")
             print(f"IdentityNet strength: {identitynet_strength_ratio}")
             print(f"Adapter strength: {adapter_strength_ratio}")
+            print(f"Style used: {style_name}")
 
             lora_info_str = "Disabled"
             if enable_lora:
@@ -892,6 +893,7 @@ Adapter strength: {adapter_strength_ratio}
 Pose strength: {pose_strength}
 Canny strength: {canny_strength}
 Depth strength: {depth_strength}
+Style used (for reference only): {style_name}
 LoRA Enabled: {enable_lora}
 LoRA 1 selection: {'None' if disable_lora_1 or not (enable_lora and lora_selection and os.path.exists(os.path.join('./models/Loras', lora_selection))) else lora_selection}
 LoRA 1 scale: {'Disabled' if disable_lora_1 or not (enable_lora and lora_selection and os.path.exists(os.path.join('./models/Loras', lora_selection))) else lora_scale}
@@ -1806,9 +1808,6 @@ Scheduler: {scheduler}"""
                             settings["canny_strength"] = float(line.replace("Canny strength:", "").strip())
                         elif line.startswith("Depth strength:"):
                             settings["depth_strength"] = float(line.replace("Depth strength:", "").strip())
-                        elif line.startswith("Style:"):
-                            style_name = line.replace("Style:", "").strip()
-                            settings["style"] = style_name if style_name in STYLE_NAMES else DEFAULT_STYLE_NAME
                         elif line.startswith("ControlNet selection:"):
                             cn_selection = line.replace("ControlNet selection:", "").strip()
                             if cn_selection.startswith("["):
