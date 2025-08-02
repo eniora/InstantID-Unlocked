@@ -1,4 +1,3 @@
-<div align="center">
 <h1>InstantID: Unlocked. Zero-shot Identity-Preserving Generation</h1>
 
 I think it's worth mentioning that I am not too good with python and the code is full of workarounds/hacks + I used a lot of help from AI chatbots, but at least it works really well and everything is working as I intended with no issues at all. :D
@@ -16,7 +15,7 @@ The code barely follows any DRY principles as it started as a personal modificat
 - New default RealVisXL_V5.0 model, which is much better than the default YamerMIX. You can still download the base model of your choice by changing the huggingface model path inside instant-id-gradio-unlocked.py file and replacing all "eniora/RealVisXL_V5.0" fields and it will be downloaded automatically in the "models" folder on root. /John6666/albedobase-xl-v31large-sdxl/, ProtoVision XL 6.6, misri/juggernautXL_juggXIByRundiffusion and John6666/cyberrealistic-xl-v58-sdxl are very good models for styles and general use as well.
 - Ability to choose how many images to be generated after clicking on "generate", each with random seed.
 - Improved VRAM usage compared to the original repo.
-- Added many more styles in the style template.
+- Added many more styles in the style template. Including 278 styles from fooocus (source: https://github.com/lllyasviel/Fooocus/discussions/2082)
 - Enhance Non-Face Region Custom Padding Amount.
 - VAE tiling option.
 - Multiple schedulers to choose from.
@@ -48,8 +47,6 @@ Huaxia Li<sup>2</sup> · Xu Tang<sup>2</sup> · Yao Hu<sup>2</sup>
 <a href='https://huggingface.co/spaces/InstantX/InstantID'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-blue'></a>
 [![ModelScope](https://img.shields.io/badge/ModelScope-Studios-blue)](https://modelscope.cn/studios/instantx/InstantID/summary)
 [![Open in OpenXLab](https://cdn-static.openxlab.org.cn/app-center/openxlab_app.svg)](https://openxlab.org.cn/apps/detail/InstantX/InstantID)
-
-</div>
 
 InstantID is a new state-of-the-art tuning-free method to achieve ID-Preserving generation with only single image, supporting various downstream tasks.
 
@@ -313,3 +310,4 @@ If you find InstantID useful for your research and applications, please cite us 
 ```
 
 For any question, please feel free to contact us via haofanwang.ai@gmail.com or wangqixun.ai@gmail.com.
+
