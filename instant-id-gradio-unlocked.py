@@ -1989,5 +1989,4 @@ Scheduler: {scheduler}"""
 
     demo.launch(inbrowser=os.environ.get("IN_BROWSER", "1") == "1")
 
-
 main()
