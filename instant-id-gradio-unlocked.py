@@ -1016,7 +1016,7 @@ Scheduler: {scheduler}"""
                         value="Default Negative Profile",
                         info="Select a Negative Prompt Profile, default one is fine but you may want to select a different one depending on your prompt style"
                     )
-                    generate_alt_3 = gr.Button("Generate (Extra Settings Button)", variant="primary")
+                    generate_alt_3 = gr.Button("Generate (Extra Settings Section Button)", variant="primary")
                     with gr.Row():
                         file_prefix = gr.Textbox(
                             label="Saved file name prefix. Leave empty to use the default 'InstantID_'",
@@ -2009,5 +2009,6 @@ Scheduler: {scheduler}"""
                 )
 
     demo.launch(inbrowser=os.environ.get("IN_BROWSER", "1") == "1")
+
 
 main()
