@@ -15,7 +15,7 @@ The code barely follows any DRY principles as it started as a personal modificat
 - New default RealVisXL_V5.0 model, which is much better than the default YamerMIX. You can still download the base model of your choice by changing the huggingface model path inside instant-id-gradio-unlocked.py file and replacing all "eniora/RealVisXL_V5.0" fields and it will be downloaded automatically in the "models" folder on root. /John6666/albedobase-xl-v31large-sdxl/, ProtoVision XL 6.6, misri/juggernautXL_juggXIByRundiffusion and John6666/cyberrealistic-xl-v58-sdxl are very good models for styles and general use as well.
 - Ability to choose how many images to be generated after clicking on "generate", each with random seed.
 - Improved VRAM usage compared to the original repo.
-- Added many more styles in the style template. Including 278 styles from fooocus and many from StyleSelectorXL (sources: https://github.com/lllyasviel/Fooocus/discussions/2082 and https://github.com/ahgsql/StyleSelectorXL)
+- Added many more styles in the style template. Including many from "fooocus" and "StyleSelectorXL" (sources: https://github.com/lllyasviel/Fooocus/discussions/2082 and https://github.com/ahgsql/StyleSelectorXL)
 - Enhance Non-Face Region Custom Padding Amount.
 - VAE tiling option.
 - Multiple schedulers to choose from.
@@ -310,5 +310,6 @@ If you find InstantID useful for your research and applications, please cite us 
 ```
 
 For any question, please feel free to contact us via haofanwang.ai@gmail.com or wangqixun.ai@gmail.com.
+
 
 
