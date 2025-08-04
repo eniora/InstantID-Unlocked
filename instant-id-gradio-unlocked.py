@@ -111,7 +111,7 @@ DEFAULT_NEGATIVE_PROFILE = NEGATIVE_PROMPT_PRESETS["Default Negative Profile"]
 
 def on_style_change(style_name):
     if style_name == "(No style)":
-        return gr.update(value=DEFAULT_NEGATIVE_PROFILE)
+        return gr.update()
     else:
         return gr.update(value="")
 
@@ -1010,12 +1010,18 @@ Scheduler: {scheduler}"""
                             outputs=[prompt, negative_prompt, style],
                             queue=False
                         )
-                    negative_prompt_preset = gr.Dropdown(
-                        label="Negative Prompt Profile",
-                        choices=list(NEGATIVE_PROMPT_PRESETS.keys()),
-                        value="Default Negative Profile",
-                        info="Select a Negative Prompt Profile, default one is fine but you may want to select a different one depending on your prompt style"
-                    )
+                    with gr.Group():
+                        negative_prompt_preset = gr.Dropdown(
+                            label="Negative Prompt Profile",
+                            choices=list(NEGATIVE_PROMPT_PRESETS.keys()),
+                            value="Default Negative Profile",
+                            info="Select a Negative Prompt Profile"
+                        )
+                        apply_negative_profile_btn = gr.Button(
+                            "Apply selected negative prompt profile", 
+                            size="sm",
+                            min_width=200
+                        )
                     generate_alt_3 = gr.Button("Generate (Extra Settings Section Button)", variant="primary")
                     with gr.Row():
                         file_prefix = gr.Textbox(
@@ -1569,6 +1575,14 @@ Scheduler: {scheduler}"""
 
             negative_prompt_preset.change(
                 fn=lambda x: NEGATIVE_PROMPT_PRESETS[x],
+                inputs=negative_prompt_preset,
+                outputs=negative_prompt,
+            )
+            def apply_selected_profile(selected_profile):
+                return NEGATIVE_PROMPT_PRESETS[selected_profile]
+
+            apply_negative_profile_btn.click(
+                fn=apply_selected_profile,
                 inputs=negative_prompt_preset,
                 outputs=negative_prompt,
             )
