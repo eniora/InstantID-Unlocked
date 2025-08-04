@@ -625,11 +625,6 @@ style_list = [
         "negative_prompt": "ugly, deformed, noisy, blurry, low contrast"
     },
     {
-        "name": "Photographic 2",
-        "prompt": "cinematic photo of {prompt}, 35mm photograph, film, bokeh, professional, 4k, highly detailed",
-        "negative_prompt": "drawing, painting, crayon, sketch, graphite, impressionist, noisy, blurry, soft, deformed, ugly"
-    },
-    {
         "name": "Pixel Art",
         "prompt": "pixel-art of {prompt}, low-res, blocky, pixel art style, 8-bit graphics",
         "negative_prompt": "sloppy, messy, blurry, noisy, highly detailed, ultra textured, photo, realistic"
@@ -1693,11 +1688,6 @@ style_list = [
         "name": "Photo Alien",
         "prompt": "alien-themed {prompt}. extraterrestrial, cosmic, otherworldly, mysterious, sci-fi, highly detailed",
         "negative_prompt": "earthly, mundane, common, realistic, simple"
-    },
-    {
-        "name": "Photo Film Noir",
-        "prompt": "film noir style {prompt}. monochrome, high contrast, dramatic shadows, 1940s style, mysterious, cinematic",
-        "negative_prompt": "ugly, deformed, noisy, blurry, low contrast, realism, photorealistic, vibrant, colorful"
     },
     {
         "name": "Photo Glamour",
