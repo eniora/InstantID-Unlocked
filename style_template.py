@@ -90,11 +90,6 @@ style_list = [
         "negative_prompt": "noisy, sloppy, messy, grainy, highly detailed, ultra textured, photo",
     },
 	{
-		"name": "base",
-		"prompt": "{prompt}",
-		"negative_prompt": ""
-	},
-	{
 		"name": "3D Model",
 		"prompt": "professional 3d model of {prompt}, octane render, highly detailed, volumetric, dramatic lighting",
 		"negative_prompt": "ugly, deformed, noisy, low poly, blurry, painting"
