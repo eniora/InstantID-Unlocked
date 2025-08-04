@@ -952,18 +952,19 @@ Scheduler: {scheduler}"""
                     value=NEGATIVE_PROMPT_PRESETS["Default Negative Profile"]
                 )
                 with gr.Accordion("⚙️ Style templates and other settings including custom resolution", open=False) as style_settings_accordion:
-                    style = gr.Dropdown(
-                        label="Style templates",
-                        choices=STYLE_NAMES,
-                        value=DEFAULT_STYLE_NAME,
-                    )
-                    feeling_lucky_btn = gr.Button("🎰 Feeling lucky? Insert a random prompt from the style templates", variant="secondary")
-                    feeling_lucky_btn.click(
-                        fn=lambda: get_random_style_prompt(),
-                        inputs=[],
-                        outputs=[prompt, negative_prompt, style],
-                        queue=False
-                    )
+                    with gr.Group():
+                        style = gr.Dropdown(
+                            label="Style templates",
+                            choices=STYLE_NAMES,
+                            value=DEFAULT_STYLE_NAME,
+                        )
+                        feeling_lucky_btn = gr.Button("🎰 Feeling lucky? Insert a random prompt from the style templates", variant="secondary")
+                        feeling_lucky_btn.click(
+                            fn=lambda: get_random_style_prompt(),
+                            inputs=[],
+                            outputs=[prompt, negative_prompt, style],
+                            queue=False
+                        )
                     negative_prompt_preset = gr.Dropdown(
                         label="Negative Prompt Profile",
                         choices=list(NEGATIVE_PROMPT_PRESETS.keys()),
