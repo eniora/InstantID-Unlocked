@@ -55,29 +55,14 @@ style_list = [
         "negative_prompt": "lowres, bad anatomy, bad hands, text, bad eyes, bad arms, bad legs, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, blurry, grayscale, noisy, sloppy, messy, grainy, highly detailed, ultra textured, photo",
     },
     {
-        "name": "Watercolor",
-        "prompt": "watercolor painting, {prompt}. vibrant, beautiful, painterly, detailed, textural, artistic",
-        "negative_prompt": "(lowres, low quality, worst quality:1.2), (text:1.2), watermark, anime, photorealistic, 35mm film, deformed, glitch, low contrast, noisy",
-    },
-    {
-        "name": "Fantasy art",
-        "prompt": "ethereal fantasy concept art of  {prompt}. magnificent, celestial, ethereal, painterly, epic, majestic, magical, fantasy art, cover art, dreamy",
-        "negative_prompt": "photographic, realistic, realism, 35mm film, dslr, cropped, frame, text, deformed, glitch, noise, noisy, off-center, deformed, cross-eyed, closed eyes, bad anatomy, ugly, disfigured, sloppy, duplicate, mutated, black and white",
-    },
-    {
         "name": "Neonpunk",
         "prompt": "neonpunk style {prompt}. cyberpunk, vaporwave, neon, vibes, vibrant, stunningly beautiful, crisp, detailed, sleek, ultramodern, magenta highlights, dark purple shadows, high contrast, cinematic, ultra detailed, intricate, professional",
         "negative_prompt": "painting, drawing, illustration, glitch, deformed, mutated, cross-eyed, ugly, disfigured",
     },
     {
-        "name": "Comic book",
+        "name": "Comic Book",
         "prompt": "comic {prompt}. graphic illustration, comic art, graphic novel art, vibrant, highly detailed",
         "negative_prompt": "photograph, deformed, glitch, noisy, realistic, stock photo",
-    },
-    {
-        "name": "3D Model",
-        "prompt": "professional 3d model of {prompt}, octane render, highly detailed, volumetric, dramatic lighting",
-        "negative_prompt": "ugly, deformed, noisy, low poly, blurry, painting"
     },
     {
         "name": "Abstract",
@@ -108,11 +93,6 @@ style_list = [
         "name": "Alien",
         "prompt": "Alien-themed {prompt}, Extraterrestrial, cosmic, otherworldly, mysterious, sci-fi, highly detailed",
         "negative_prompt": "earthly, mundane, common, realistic, simple"
-    },
-    {
-        "name": "Analog Film",
-        "prompt": "analog film photo of {prompt}, faded film, desaturated, 35mm photo, grainy, vignette, vintage, Kodachrome, Lomography, stained, highly detailed, found footage",
-        "negative_prompt": "painting, drawing, illustration, glitch, deformed, mutated, cross-eyed, ugly, disfigured"
     },
     {
         "name": "Anime",
@@ -215,7 +195,7 @@ style_list = [
         "negative_prompt": "monochromatic, ugly, deformed, noisy, blurry, low contrast, photo, photograph, realistic, low res"
     },
     {
-        "name": "Comic Book",
+        "name": "Comic Book 2",
         "prompt": "comic book art of {prompt}, comic art, graphic novel illustration",
         "negative_prompt": "photograph, deformed, glitch, noisy, realistic, stock photo"
     },
@@ -585,11 +565,6 @@ style_list = [
         "negative_prompt": "bright, sunny, daytime, low contrast, black and white, sketch, watercolor"
     },
     {
-        "name": "Neon Punk",
-        "prompt": "neonpunk style, {prompt}, cyberpunk, vaporwave, neon, vibes, vibrant, stunningly beautiful, crisp, detailed, sleek, ultramodern, magenta highlights, dark purple shadows, high contrast, cinematic, ultra detailed, intricate, professional",
-        "negative_prompt": "painting, drawing, illustration, glitch, deformed, mutated, cross-eyed, ugly, disfigured"
-    },
-    {
         "name": "Origami",
         "prompt": "origami style, {prompt}, paper art, pleated paper, folded, origami art, pleats, cut and fold, centered composition",
         "negative_prompt": "noisy, sloppy, messy, grainy, highly detailed, ultra textured, photo"
@@ -623,11 +598,6 @@ style_list = [
         "name": "Pencil Sketch",
         "prompt": "Pencil Sketch Drawing of {prompt}, black and white drawing, pencil sketch, graphite drawing",
         "negative_prompt": "ugly, deformed, noisy, blurry, low contrast"
-    },
-    {
-        "name": "Pixel Art",
-        "prompt": "pixel-art of {prompt}, low-res, blocky, pixel art style, 8-bit graphics",
-        "negative_prompt": "sloppy, messy, blurry, noisy, highly detailed, ultra textured, photo, realistic"
     },
     {
         "name": "Pointillism",
@@ -688,11 +658,6 @@ style_list = [
         "name": "Retro Futurism",
         "prompt": "retro-futuristism, {prompt}, vintage sci-fi, 1950s and 1960s style, atomic age, vibrant, highly detailed, retro futurism",
         "negative_prompt": "contemporary, realistic, rustic, primitive"
-    },
-    {
-        "name": "Retro game",
-        "prompt": "retro game art of {prompt}, 16-bit, vibrant colors, pixelated, nostalgic, charming, fun",
-        "negative_prompt": "realistic, photorealistic, 35mm film, deformed, glitch, low contrast, noisy"
     },
     {
         "name": "Rococo",
@@ -815,11 +780,6 @@ style_list = [
         "negative_prompt": "ugly, deformed, noisy, blurry, low contrast"
     },
     {
-        "name": "Watercolor 1",
-        "prompt": "Watercolor painting of {prompt}, Vibrant, beautiful, painterly, detailed, textural, artistic",
-        "negative_prompt": "anime, photorealistic, 35mm film, deformed, glitch, low contrast, noisy"
-    },
-    {
         "name": "Watercolor 2",
         "prompt": "Watercolor style painting, {prompt}, visible paper texture, colorwash, watercolor art",
         "negative_prompt": "ugly, deformed, noisy, blurry, low contrast, photo, realistic"
@@ -838,11 +798,6 @@ style_list = [
         "name": "Zentangle",
         "prompt": "Zentangle, {prompt}, Intricate, abstract, monochrome, patterns, meditative, highly detailed",
         "negative_prompt": "colorful, representative, simplistic, large fields of color"
-    },
-    {
-        "name": "ads-advertising",
-        "prompt": "advertising poster style, {prompt}, Professional, modern, product-focused, commercial, eye-catching, highly detailed",
-        "negative_prompt": "noisy, blurry, amateurish, sloppy, unattractive"
     },
     {
         "name": "ads-automotive",
@@ -1085,92 +1040,22 @@ style_list = [
         "negative_prompt": "deformed, bad anatomy, disfigured, poorly drawn face, mutated, extra limb, ugly, poorly drawn hands, missing limb, floating limbs, disconnected limbs, disconnected head, malformed hands, long neck, mutated hands and fingers, bad hands, missing fingers, cropped, worst quality, low quality, mutation, poorly drawn, huge calf, bad hands, fused hand, missing hand, disappearing arms, disappearing thigh, disappearing calf, disappearing legs, missing fingers, fused fingers, abnormal eye proportion, Abnormal hands, abnormal legs, abnormal feet, abnormal fingers, drawing, painting, crayon, sketch, graphite, impressionist, noisy, blurry, soft, deformed, ugly, anime, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch"
     },
     {
-        "name": "Fooocus Cinematic",
-        "prompt": "cinematic still {prompt}. emotional, harmonious, vignette, highly detailed, high budget, bokeh, cinemascope, moody, epic, gorgeous, film grain, grainy",
-        "negative_prompt": "anime, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured"
-    },
-    {
-        "name": "SAI 3D Model",
+        "name": "3D Model",
         "prompt": "professional 3d model {prompt}. octane render, highly detailed, volumetric, dramatic lighting",
         "negative_prompt": "ugly, deformed, noisy, low poly, blurry, painting"
     },
     {
-        "name": "SAI Analog Film",
+        "name": "Analog Film",
         "prompt": "analog film photo {prompt}. faded film, desaturated, 35mm photo, grainy, vignette, vintage, Kodachrome, Lomography, stained, highly detailed, found footage",
         "negative_prompt": "painting, drawing, illustration, glitch, deformed, mutated, cross-eyed, ugly, disfigured"
     },
     {
-        "name": "SAI Anime",
-        "prompt": "anime artwork {prompt}. anime style, key visual, vibrant, studio anime, highly detailed",
-        "negative_prompt": "photo, deformed, black and white, realism, disfigured, low contrast"
-    },
-    {
-        "name": "SAI Cinematic",
-        "prompt": "cinematic film still {prompt}. shallow depth of field, vignette, highly detailed, high budget, bokeh, cinemascope, moody, epic, gorgeous, film grain, grainy",
-        "negative_prompt": "anime, cartoon, graphic, text, painting, crayon, graphite, abstract, glitch, deformed, mutated, ugly, disfigured"
-    },
-    {
-        "name": "SAI Comic Book",
-        "prompt": "comic {prompt}. graphic illustration, comic art, graphic novel art, vibrant, highly detailed",
-        "negative_prompt": "photograph, deformed, glitch, noisy, realistic, stock photo"
-    },
-    {
-        "name": "SAI Craft Clay",
-        "prompt": "play-doh style {prompt}. sculpture, clay art, centered composition, Claymation",
-        "negative_prompt": "sloppy, messy, grainy, highly detailed, ultra textured, photo"
-    },
-    {
-        "name": "SAI Digital Art",
-        "prompt": "concept art {prompt}. digital artwork, illustrative, painterly, matte painting, highly detailed",
-        "negative_prompt": "photo, photorealistic, realism, ugly"
-    },
-    {
-        "name": "SAI Enhance",
-        "prompt": "breathtaking {prompt}. award-winning, professional, highly detailed",
-        "negative_prompt": "ugly, deformed, noisy, blurry, distorted, grainy"
-    },
-    {
-        "name": "SAI Fantasy Art",
-        "prompt": "ethereal fantasy concept art of {prompt}. magnificent, celestial, ethereal, painterly, epic, majestic, magical, fantasy art, cover art, dreamy",
-        "negative_prompt": "photographic, realistic, realism, 35mm film, dslr, cropped, frame, text, deformed, glitch, noise, noisy, off-center, deformed, cross-eyed, closed eyes, bad anatomy, ugly, disfigured, sloppy, duplicate, mutated, black and white"
-    },
-    {
-        "name": "SAI Isometric",
-        "prompt": "isometric style {prompt}. vibrant, beautiful, crisp, detailed, ultra detailed, intricate",
-        "negative_prompt": "deformed, mutated, ugly, disfigured, blur, blurry, noise, noisy, realistic, photographic"
-    },
-    {
-        "name": "SAI Line Art",
-        "prompt": "line art drawing {prompt}. professional, sleek, modern, minimalist, graphic, line art, vector graphics",
-        "negative_prompt": "anime, photorealistic, 35mm film, deformed, glitch, blurry, noisy, off-center, deformed, cross-eyed, closed eyes, bad anatomy, ugly, disfigured, mutated, realism, realistic, impressionism, expressionism, oil, acrylic"
-    },
-    {
-        "name": "SAI Lowpoly",
-        "prompt": "low-poly style {prompt}. low-poly game art, polygon mesh, jagged, blocky, wireframe edges, centered composition",
-        "negative_prompt": "noisy, sloppy, messy, grainy, highly detailed, ultra textured, photo"
-    },
-    {
-        "name": "SAI Neonpunk",
-        "prompt": "neonpunk style {prompt}. cyberpunk, vaporwave, neon, vibes, vibrant, stunningly beautiful, crisp, detailed, sleek, ultramodern, magenta highlights, dark purple shadows, high contrast, cinematic, ultra detailed, intricate, professional",
-        "negative_prompt": "painting, drawing, illustration, glitch, deformed, mutated, cross-eyed, ugly, disfigured"
-    },
-    {
-        "name": "SAI Origami",
-        "prompt": "origami style {prompt}. paper art, pleated paper, folded, origami art, pleats, cut and fold, centered composition",
-        "negative_prompt": "noisy, sloppy, messy, grainy, highly detailed, ultra textured, photo"
-    },
-    {
-        "name": "SAI Photographic",
-        "prompt": "cinematic photo {prompt}. 35mm photograph, film, bokeh, professional, 4k, highly detailed",
-        "negative_prompt": "drawing, painting, crayon, sketch, graphite, impressionist, noisy, blurry, soft, deformed, ugly"
-    },
-    {
-        "name": "SAI Pixel Art",
+        "name": "Pixel Art",
         "prompt": "pixel-art {prompt}. low-res, blocky, pixel art style, 8-bit graphics",
         "negative_prompt": "sloppy, messy, blurry, noisy, highly detailed, ultra textured, photo, realistic"
     },
     {
-        "name": "SAI Texture",
+        "name": "Texture 2",
         "prompt": "texture {prompt} top down close-up",
         "negative_prompt": "ugly, deformed, noisy, blurry"
     },
@@ -1283,11 +1168,6 @@ style_list = [
         "name": "MRE Comic",
         "prompt": "breathtaking illustration from adult comic book presenting {prompt}. fabulous artwork. best quality, high resolution",
         "negative_prompt": "deformed, ugly, low quality, low resolution"
-    },
-    {
-        "name": "Ads Advertising",
-        "prompt": "advertising poster style {prompt}. Professional, modern, product-focused, commercial, eye-catching, highly detailed",
-        "negative_prompt": "noisy, blurry, amateurish, sloppy, unattractive"
     },
     {
         "name": "Ads Automotive",
@@ -1508,11 +1388,6 @@ style_list = [
         "name": "Game Retro Arcade",
         "prompt": "retro arcade style {prompt}. 8-bit, pixelated, vibrant, classic video game, old school gaming, reminiscent of 80s and 90s arcade games",
         "negative_prompt": "modern, ultra-high resolution, photorealistic, 3D"
-    },
-    {
-        "name": "Game Retro Game",
-        "prompt": "retro game art {prompt}. 16-bit, vibrant colors, pixelated, nostalgic, charming, fun",
-        "negative_prompt": "realistic, photorealistic, 35mm film, deformed, glitch, low contrast, noisy"
     },
     {
         "name": "Game Rpg Fantasy Game",
