@@ -77,6 +77,15 @@ dtype = torch.float16 if str(device).__contains__("cuda") else torch.float32
 STYLE_NAMES = list(styles.keys())
 DEFAULT_STYLE_NAME = "(No style)"
 
+def get_random_style_prompt():
+    available_styles = [s for s in STYLE_NAMES if s != DEFAULT_STYLE_NAME]
+    if not available_styles:
+        return "", DEFAULT_NEGATIVE_PROFILE, DEFAULT_STYLE_NAME
+    selected_style = random.choice(available_styles)
+    style_prompt, style_neg_prompt = styles[selected_style]
+    random_prompt = style_prompt.replace("{prompt}", "").strip()
+    return random_prompt, style_neg_prompt, DEFAULT_STYLE_NAME
+
 NEGATIVE_PROMPT_PRESETS = {
     "Default Negative Profile": "(lowres, low quality, worst quality:1.2), (text:1.2), watermark, (frame:1.2), deformed, ugly, blurry, deformed cat, deformed photo",
     "Aggressive Negative Profile (InstantID default)": "(lowres, low quality, worst quality:1.2), (text:1.2), watermark, (frame:1.2), deformed, ugly, deformed eyes, blur, out of focus, blurry, deformed cat, deformed, photo, anthropomorphic cat, monochrome, photo, pet collar, gun, weapon, blue, 3d, drones, drone, buildings in background, green",
@@ -998,6 +1007,13 @@ Scheduler: {scheduler}"""
                         choices=list(NEGATIVE_PROMPT_PRESETS.keys()),
                         value="Default Negative Profile",
                         info="Select a Negative Prompt Profile, default one is fine but you may want to select a different one depending on your prompt style"
+                    )
+                    feeling_lucky_btn = gr.Button("🎰 Feeling lucky? Insert a random prompt from the styles template", variant="secondary")
+                    feeling_lucky_btn.click(
+                        fn=lambda: get_random_style_prompt(),
+                        inputs=[],
+                        outputs=[prompt, negative_prompt, style],
+                        queue=False
                     )
                     with gr.Row():
                         file_prefix = gr.Textbox(
