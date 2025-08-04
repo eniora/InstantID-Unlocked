@@ -22,6 +22,7 @@ warnings.filterwarnings("ignore", message=".*rcond.*will change to the default.*
 warnings.filterwarnings("ignore", message=".*MultiControlNetModel.*is deprecated.*")
 warnings.filterwarnings("ignore", message=".*`resume_download` is deprecated.*")
 warnings.filterwarnings("ignore", message=".*Should have .*<=t1 but got .*")
+warnings.filterwarnings("ignore", message="unable to parse version details from package URL.")
 
 os.environ["NO_ALBUMENTATIONS_UPDATE"] = "1"
 # os.environ["TRANSFORMERS_OFFLINE"] = "1"
@@ -2004,5 +2005,6 @@ Scheduler: {scheduler}"""
                 )
 
     demo.launch(inbrowser=os.environ.get("IN_BROWSER", "1") == "1")
+
 
 main()
