@@ -784,7 +784,6 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             print(f"ControlNet selection: {controlnet_selection} | Strengths - Pose: {pose_strength}, Canny: {canny_strength}, Depth: {depth_strength}")
             print(f"IdentityNet strength: {identitynet_strength_ratio}")
             print(f"Adapter strength: {adapter_strength_ratio}")
-            print(f"Style used: {style_name}")
 
             lora_info_str = "Disabled"
             if enable_lora:
@@ -903,7 +902,6 @@ Adapter strength: {adapter_strength_ratio}
 Pose strength: {pose_strength}
 Canny strength: {canny_strength}
 Depth strength: {depth_strength}
-Style used (for reference only): {style_name}
 LoRA Enabled: {enable_lora}
 LoRA 1 selection: {'None' if disable_lora_1 or not (enable_lora and lora_selection and os.path.exists(os.path.join('./models/Loras', lora_selection))) else lora_selection}
 LoRA 1 scale: {'Disabled' if disable_lora_1 or not (enable_lora and lora_selection and os.path.exists(os.path.join('./models/Loras', lora_selection))) else lora_scale}
@@ -997,9 +995,9 @@ Scheduler: {scheduler}"""
                     placeholder="When a Style template is selected, this becomes empty because styles have their own neg prompts. You can still add to it",
                     value=NEGATIVE_PROMPT_PRESETS["Default Negative Profile"]
                 )
-                with gr.Accordion("⚙️ Style template and other settings including custom resolution", open=False) as style_settings_accordion:
+                with gr.Accordion("⚙️ Style templates and other settings including custom resolution", open=False) as style_settings_accordion:
                     style = gr.Dropdown(
-                        label="Style template",
+                        label="Style templates",
                         choices=STYLE_NAMES,
                         value=DEFAULT_STYLE_NAME,
                     )
@@ -1009,7 +1007,7 @@ Scheduler: {scheduler}"""
                         value="Default Negative Profile",
                         info="Select a Negative Prompt Profile, default one is fine but you may want to select a different one depending on your prompt style"
                     )
-                    feeling_lucky_btn = gr.Button("🎰 Feeling lucky? Insert a random prompt from the styles template", variant="secondary")
+                    feeling_lucky_btn = gr.Button("🎰 Feeling lucky? Insert a random prompt from the style templates", variant="secondary")
                     feeling_lucky_btn.click(
                         fn=lambda: get_random_style_prompt(),
                         inputs=[],
@@ -1291,8 +1289,8 @@ Scheduler: {scheduler}"""
                         outputs=lora_info
                     )
                     with gr.Row():
-                        refresh_loras = gr.Button("🔄 Refresh LoRAs Lists", scale=3, elem_classes="toolbutton", visible=False)
-                        clear_loras = gr.Button("♻️ Clear LoRA selections", scale=1, elem_classes="toolbutton", visible=False)
+                        refresh_loras = gr.Button("🔄 Refresh LoRAs Lists", scale=2, elem_classes="toolbutton", visible=False)
+                        clear_loras = gr.Button("♻️ Clear all LoRA selections", scale=1, elem_classes="toolbutton", visible=False)
 
                     with gr.Row(visible=False) as lora_row_1:
                         lora_selection = gr.Dropdown(
