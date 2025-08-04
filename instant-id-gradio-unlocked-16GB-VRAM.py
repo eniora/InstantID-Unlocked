@@ -895,7 +895,7 @@ Scheduler: {scheduler}"""
         return images
 
     title = r"""
-    <h1 align="center">InstantID Unlocked v2.4.0</h1>
+    <h1 align="center">InstantID Unlocked v2.5.0</h1>
     """
 
     description = r"""
@@ -957,18 +957,18 @@ Scheduler: {scheduler}"""
                         choices=STYLE_NAMES,
                         value=DEFAULT_STYLE_NAME,
                     )
-                    negative_prompt_preset = gr.Dropdown(
-                        label="Negative Prompt Profile",
-                        choices=list(NEGATIVE_PROMPT_PRESETS.keys()),
-                        value="Default Negative Profile",
-                        info="Select a Negative Prompt Profile, default one is fine but you may want to select a different one depending on your prompt style"
-                    )
                     feeling_lucky_btn = gr.Button("🎰 Feeling lucky? Insert a random prompt from the style templates", variant="secondary")
                     feeling_lucky_btn.click(
                         fn=lambda: get_random_style_prompt(),
                         inputs=[],
                         outputs=[prompt, negative_prompt, style],
                         queue=False
+                    )
+                    negative_prompt_preset = gr.Dropdown(
+                        label="Negative Prompt Profile",
+                        choices=list(NEGATIVE_PROMPT_PRESETS.keys()),
+                        value="Default Negative Profile",
+                        info="Select a Negative Prompt Profile, default one is fine but you may want to select a different one depending on your prompt style"
                     )
                     with gr.Row():
                         file_prefix = gr.Textbox(
