@@ -1534,11 +1534,11 @@ Scheduler: {scheduler}"""
                 inputs=negative_prompt_preset,
                 outputs=negative_prompt,
             )
-            def apply_selected_profile(selected_profile):
-                return NEGATIVE_PROMPT_PRESETS[selected_profile]
+            def apply_selected_negative_profile(selected_negative_profile):
+                return NEGATIVE_PROMPT_PRESETS[selected_negative_profile]
 
             apply_negative_profile_btn.click(
-                fn=apply_selected_profile,
+                fn=apply_selected_negative_profile,
                 inputs=negative_prompt_preset,
                 outputs=negative_prompt,
             )
