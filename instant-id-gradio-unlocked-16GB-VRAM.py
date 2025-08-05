@@ -594,8 +594,8 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 f"Cannot find any input face image! Please upload the face image"
             )
 
-        if not prompt and style_name == "(No style)":
-            prompt = "high quality"
+        if not prompt:
+            prompt = "a person"
 
         prompt, negative_prompt = apply_style(style_name, prompt, negative_prompt)
 
