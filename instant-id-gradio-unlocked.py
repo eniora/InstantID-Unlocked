@@ -87,6 +87,16 @@ def get_random_style_prompt():
     random_prompt = style_prompt.replace("{prompt}", "").strip()
     return random_prompt, style_neg_prompt, DEFAULT_STYLE_NAME
 
+def apply_selected_style(style_name):
+    if style_name == "(No style)":
+        return gr.update(), gr.update(), gr.update()
+    style_prompt, style_neg_prompt = styles[style_name]
+    return (
+        style_prompt.replace("{prompt}", "").strip(),
+        style_neg_prompt,
+        "(No style)"
+    )
+
 NEGATIVE_PROMPT_PRESETS = {
     "Default Negative Profile": "(lowres, low quality, worst quality:1.2), (text:1.2), watermark, (frame:1.2), deformed, ugly, blurry, deformed cat, deformed photo",
     "Aggressive Negative Profile (InstantID default)": "(lowres, low quality, worst quality:1.2), (text:1.2), watermark, (frame:1.2), deformed, ugly, deformed eyes, blur, out of focus, blurry, deformed cat, deformed, photo, anthropomorphic cat, monochrome, photo, pet collar, gun, weapon, blue, 3d, drones, drone, buildings in background, green",
@@ -112,9 +122,9 @@ DEFAULT_NEGATIVE_PROFILE = NEGATIVE_PROMPT_PRESETS["Default Negative Profile"]
 
 def on_style_change(style_name):
     if style_name == "(No style)":
-        return gr.update()
+        return gr.update(), gr.update()
     else:
-        return gr.update(value="")
+        return gr.update(value=""), gr.update(value="")
 
 def get_available_models():
     models_dir = "models"
@@ -994,7 +1004,7 @@ Scheduler: {scheduler}"""
                 )
                 negative_prompt = gr.Textbox(
                     label="Negative Prompt",
-                    placeholder="When a Style template is selected, this becomes empty because styles have their own neg prompts. You can still add to it",
+                    placeholder="You can select a negative prompt profile from the settings tab below.",
                     value=NEGATIVE_PROMPT_PRESETS["Default Negative Profile"]
                 )
                 with gr.Accordion("⚙️ Style templates and other settings including custom resolution", open=False) as style_settings_accordion:
@@ -1003,14 +1013,26 @@ Scheduler: {scheduler}"""
                             label="Style templates",
                             choices=STYLE_NAMES,
                             value=DEFAULT_STYLE_NAME,
+                            info="Selecting a style empties the prompt and negative prompt fields because styles have their own. It's good to add to the prompt field."
                         )
-                        feeling_lucky_btn = gr.Button("🎰 Feeling lucky? Insert a random prompt from the style templates", size="md", variant="secondary")
-                        feeling_lucky_btn.click(
-                            fn=lambda: get_random_style_prompt(),
-                            inputs=[],
+                        apply_selected_style_btn = gr.Button(
+                            "⇄ Insert selected style text into prompt & negative prompt fields. '(No style)' will be selected after clicking this.",
+                            size="sm",
+                            variant="secondary"
+                        )
+                        apply_selected_style_btn.click(
+                            fn=apply_selected_style,
+                            inputs=style,
                             outputs=[prompt, negative_prompt, style],
                             queue=False
                         )
+                    feeling_lucky_btn = gr.Button("🎰 Insert a random style from the style templates into prompt & negative prompt fields.", size="md", variant="secondary")
+                    feeling_lucky_btn.click(
+                        fn=lambda: get_random_style_prompt(),
+                        inputs=[],
+                        outputs=[prompt, negative_prompt, style],
+                        queue=False
+                    )
                     with gr.Group():
                         negative_prompt_preset = gr.Dropdown(
                             label="Negative Prompt Profile",
@@ -1154,7 +1176,11 @@ Scheduler: {scheduler}"""
                         value=0.40,
                     )
                 with gr.Accordion(open=True, label="Advanced Options"):
-                    style.change(fn=on_style_change, inputs=style, outputs=negative_prompt)
+                    style.change(
+                        fn=on_style_change,
+                        inputs=style,
+                        outputs=[prompt, negative_prompt]
+                    )
                     num_steps = gr.Slider(
                         label="Number of sample steps",
                         minimum=1,
