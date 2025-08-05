@@ -28,6 +28,8 @@ os.environ["NO_ALBUMENTATIONS_UPDATE"] = "1"
 # os.environ["TRANSFORMERS_OFFLINE"] = "1"
 os.environ["HF_HUB_CACHE"] = "models"
 os.environ["HF_HUB_CACHE_OFFLINE"] = "true"
+os.environ["GRADIO_ANALYTICS_ENABLED"] = "False"
+os.environ["GRADIO_DISABLE_TELEMETRY"] = "1"
 
 def open_output_folder():
     path = os.path.abspath("output")
