@@ -85,6 +85,7 @@ def get_random_style_prompt():
     if not available_styles:
         return "", DEFAULT_NEGATIVE_PROFILE, DEFAULT_STYLE_NAME
     selected_style = random.choice(available_styles)
+    print(f"Inserted random style: {selected_style}")
     style_prompt, style_neg_prompt = styles[selected_style]
     random_prompt = style_prompt.replace("{prompt}", "person").strip()
     return random_prompt, style_neg_prompt, DEFAULT_STYLE_NAME
@@ -92,6 +93,7 @@ def get_random_style_prompt():
 def apply_selected_style(style_name):
     if style_name == "(No style)":
         return gr.update(), gr.update(), gr.update()
+    print(f"Inserted selected style: {style_name}")
     style_prompt, style_neg_prompt = styles[style_name]
     return (
         style_prompt.replace("{prompt}", "person").strip(),
