@@ -86,7 +86,7 @@ def get_random_style_prompt():
         return "", DEFAULT_NEGATIVE_PROFILE, DEFAULT_STYLE_NAME
     selected_style = random.choice(available_styles)
     style_prompt, style_neg_prompt = styles[selected_style]
-    random_prompt = style_prompt.replace("{prompt}", "").strip()
+    random_prompt = style_prompt.replace("{prompt}", "person").strip()
     return random_prompt, style_neg_prompt, DEFAULT_STYLE_NAME
 
 def apply_selected_style(style_name):
@@ -94,7 +94,7 @@ def apply_selected_style(style_name):
         return gr.update(), gr.update(), gr.update()
     style_prompt, style_neg_prompt = styles[style_name]
     return (
-        style_prompt.replace("{prompt}", "").strip(),
+        style_prompt.replace("{prompt}", "person").strip(),
         style_neg_prompt,
         "(No style)"
     )
@@ -597,7 +597,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             )
 
         if not prompt:
-            prompt = "a person"
+            prompt = "person"
 
         prompt, negative_prompt = apply_style(style_name, prompt, negative_prompt)
 
