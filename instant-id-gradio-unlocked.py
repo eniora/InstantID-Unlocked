@@ -951,7 +951,7 @@ Scheduler: {scheduler}"""
         return images
 
     title = r"""
-    <h1 align="center">InstantID Unlocked v2.5.0</h1>
+    <h1 align="center">InstantID Unlocked v2.6.0</h1>
     """
 
     description = r"""
@@ -981,7 +981,7 @@ Scheduler: {scheduler}"""
     css = """
     .gradio-container {width: 85% !important}
     """
-    with gr.Blocks(css=css) as demo:
+    with gr.Blocks(css=css) as gui:
         gr.Markdown(title)
         gr.Markdown(description)
 
@@ -2048,6 +2048,6 @@ Scheduler: {scheduler}"""
                     queue=False,
                 )
 
-    demo.launch(inbrowser=os.environ.get("IN_BROWSER", "1") == "1")
+    gui.launch(inbrowser=os.environ.get("IN_BROWSER", "1") == "1")
 
 main()
