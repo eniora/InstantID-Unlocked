@@ -985,7 +985,7 @@ Scheduler: {scheduler}"""
                         )
                     feeling_lucky_btn = gr.Button("🎰 Insert a random style from the style templates into prompt & negative prompt fields.", size="md", variant="secondary")
                     prompt_replacement = gr.Radio(
-                        label="Replace '{prompt}' in Style templates with this value (if the prompt field is empty or a style inserted):",
+                        label="Replace '{prompt}' in Style templates with this (and if the prompt field is empty or a style inserted):",
                         choices=["person", "girl", "woman", "boy", "man", "Empty (none)"],
                         value="person"
                     )
