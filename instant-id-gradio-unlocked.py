@@ -80,23 +80,25 @@ dtype = torch.float16 if str(device).__contains__("cuda") else torch.float32
 STYLE_NAMES = list(styles.keys())
 DEFAULT_STYLE_NAME = "(No style)"
 
-def get_random_style_prompt():
+def get_random_style_prompt(prompt_substitute="person"):
     available_styles = [s for s in STYLE_NAMES if s != DEFAULT_STYLE_NAME]
     if not available_styles:
         return "", DEFAULT_NEGATIVE_PROFILE, DEFAULT_STYLE_NAME
     selected_style = random.choice(available_styles)
     print(f"Inserted random style: {selected_style}")
     style_prompt, style_neg_prompt = styles[selected_style]
-    random_prompt = style_prompt.replace("{prompt}", "person").strip()
+    replacement = " " if prompt_substitute == "Empty (none)" else prompt_substitute
+    random_prompt = style_prompt.replace("{prompt}", replacement).strip()
     return random_prompt, style_neg_prompt, DEFAULT_STYLE_NAME
 
-def apply_selected_style(style_name):
+def apply_selected_style(style_name, prompt_substitute="person"):
     if style_name == "(No style)":
         return gr.update(), gr.update(), gr.update()
     print(f"Inserted selected style: {style_name}")
     style_prompt, style_neg_prompt = styles[style_name]
+    replacement = " " if prompt_substitute == "Empty (none)" else prompt_substitute
     return (
-        style_prompt.replace("{prompt}", "person").strip(),
+        style_prompt.replace("{prompt}", replacement).strip(),
         style_neg_prompt,
         "(No style)"
     )
@@ -445,6 +447,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         prompt,
         negative_prompt,
         style_name,
+        prompt_replacement_value,
         num_steps,
         identitynet_strength_ratio,
         adapter_strength_ratio,
@@ -643,7 +646,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             )
 
         if not prompt:
-            prompt = "person"
+            prompt = " " if prompt_replacement_value == "Empty (none)" else prompt_replacement_value
 
         prompt, negative_prompt = apply_style(style_name, prompt, negative_prompt)
 
@@ -955,7 +958,7 @@ Scheduler: {scheduler}"""
         return images
 
     title = r"""
-    <h1 align="center">InstantID Unlocked v2.6.0</h1>
+    <h1 align="center">InstantID Unlocked v2.7.0</h1>
     """
 
     description = r"""
@@ -1024,16 +1027,21 @@ Scheduler: {scheduler}"""
                             size="sm",
                             variant="secondary"
                         )
-                        apply_selected_style_btn.click(
-                            fn=apply_selected_style,
-                            inputs=style,
-                            outputs=[prompt, negative_prompt, style],
-                            queue=False
-                        )
                     feeling_lucky_btn = gr.Button("🎰 Insert a random style from the style templates into prompt & negative prompt fields.", size="md", variant="secondary")
+                    prompt_replacement = gr.Radio(
+                        label="Replace '{prompt}' in Style templates with this value (if the prompt field is empty or a style inserted):",
+                        choices=["person", "girl", "woman", "boy", "man", "Empty (none)"],
+                        value="person"
+                    )
+                    apply_selected_style_btn.click(
+                        fn=apply_selected_style,
+                        inputs=[style, prompt_replacement],
+                        outputs=[prompt, negative_prompt, style],
+                        queue=False
+                    )
                     feeling_lucky_btn.click(
-                        fn=lambda: get_random_style_prompt(),
-                        inputs=[],
+                        fn=get_random_style_prompt,
+                        inputs=[prompt_replacement],
                         outputs=[prompt, negative_prompt, style],
                         queue=False
                     )
@@ -1623,6 +1631,7 @@ Scheduler: {scheduler}"""
                 prompt,
                 negative_prompt,
                 style,
+                prompt_replacement,
                 num_steps,
                 identitynet_strength_ratio,
                 adapter_strength_ratio,
@@ -1763,7 +1772,10 @@ Scheduler: {scheduler}"""
                     for idx, line in enumerate(lines):
                         stripped_line = line.strip()
                         if stripped_line.startswith("Prompt:"):
-                            prompt_lines = [line[len("Prompt:"):].lstrip()]
+                            prompt_value = line[len("Prompt:"):]
+                            if prompt_value.startswith(" "):
+                                prompt_value = prompt_value[1:]
+                            prompt_lines = [prompt_value]
                             continue_idx = idx + 1
                             while continue_idx < len(lines):
                                 next_line = lines[continue_idx]
