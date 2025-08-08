@@ -13,6 +13,7 @@ import gc
 import warnings
 import subprocess
 import PIL.PngImagePlugin
+import time
 
 warnings.filterwarnings("ignore", message=".*timm.models.layers.*")
 warnings.filterwarnings("ignore", message=".*timm.models.registry.*")
@@ -499,9 +500,8 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         progress=gr.Progress(),
     ):
         file_prefix = file_prefix.strip().translate(FILENAME_SAFE_TRANS)
-        file_prefix = f"{DEFAULT_FILE_PREFIX}{file_prefix}_" if file_prefix else DEFAULT_FILE_PREFIX
+        file_prefix = DEFAULT_FILE_PREFIX if not file_prefix else (f"{file_prefix}_" if not file_prefix.endswith('_') else file_prefix)
         nonlocal pipe
-        import time
         overall_start_time = time.time()
         
         update_det_size(det_size_name)
@@ -1059,9 +1059,9 @@ Scheduler: {scheduler}"""
                     generate_alt_3 = gr.Button("Generate (Extra Settings Section Button)", variant="primary")
                     with gr.Row():
                         file_prefix = gr.Textbox(
-                            label="Saved file name prefix. Leave empty to use the default 'InstantID_'",
-                            value="",
-                            placeholder="Optional, append a name to be added after 'InstantID_' in the saved images",
+                            label="Saved file name prefix.",
+                            value=DEFAULT_FILE_PREFIX,
+                            placeholder="Enter your custom prefix (e.g., 'myprefix' becomes myprefix_0.png) etc."
                         )
                     with gr.Row():
                         enable_vae_tiling = gr.Checkbox(
