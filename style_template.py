@@ -822,7 +822,7 @@ style_list = [
     {
         "name": "img2img 3d to photorealisim",
         "prompt": "RAW photo, (high detailed skin:1.2), 8k uhd, dslr, soft lighting, high quality, film grain, Fujifilm XT3",
-        "negative_prompt": "(deformed iris, deformed pupils, semi-realistic, cgi, 3d, render, sketch, cartoon, drawing, anime:1.4), text, close up, cropped, out of frame, worst quality, low quality, jpeg artifacts, ugly, duplicate, morbid, mutilated, extra fingers, mutated hands, poorly drawn hands, poorly drawn face, mutation, deformed, blurry, dehydrated, bad anatomy, bad proportions, extra limbs, cloned face, disfigured, gross proportions, malformed limbs, missing arms, missing legs, extra arms, extra legs, fused fingers, too many fingers, long neck"
+        "negative_prompt": "(deformed iris, deformed pupils, semi-realistic, cgi, 3d, render, sketch, cartoon, drawing, anime:1.2), text, close up, cropped, out of frame, worst quality, low quality, jpeg artifacts, ugly, duplicate, morbid, mutilated, extra fingers, mutated hands, poorly drawn hands, poorly drawn face, mutation, deformed, blurry, dehydrated, bad anatomy, bad proportions, extra limbs, cloned face, disfigured, gross proportions, malformed limbs, missing arms, missing legs, extra arms, extra legs, fused fingers, too many fingers, long neck"
     },
     {
         "name": "Magnetic Ink",
@@ -2813,6 +2813,1601 @@ style_list = [
         "name": "Digital Noise Glitch",
         "prompt": "digital noise glitch overlaid on {prompt}, pixel distortions, static interference, cyber chaos aesthetic",
         "negative_prompt": "clean render, highres, low noise",
+    },
+    {
+        "name": "Watercolor",
+        "prompt": "Watercolor style illustration, delicate washes, soft edges, paper texture, hand-painted brushwork, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Gouache",
+        "prompt": "Gouache style illustration, delicate washes, soft edges, paper texture, hand-painted brushwork, opaque layered color, matte finish, painterly strokes, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Oil Painting",
+        "prompt": "Oil Painting style illustration, visible brushstrokes, painterly texture, layered impasto, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Acrylic Painting",
+        "prompt": "Acrylic Painting style illustration, visible brushstrokes, painterly texture, layered impasto, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Ink Wash (Sumi-e)",
+        "prompt": "Ink Wash (Sumi-e) style illustration, delicate washes, soft edges, paper texture, hand-painted brushwork, high-contrast ink lines, crisp silhouettes, strong graphic linework, clean strokes, confident linework, expressive marks, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Pen and Ink",
+        "prompt": "Pen and Ink style illustration, high-contrast ink lines, crisp silhouettes, strong graphic linework, clean strokes, confident linework, expressive marks, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Charcoal Drawing",
+        "prompt": "Charcoal Drawing style illustration, sketchy linework, hatching, paper grain, rough texture, hand-drawn feel, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Graphite Sketch",
+        "prompt": "Graphite Sketch style illustration, sketchy linework, hatching, paper grain, rough texture, hand-drawn feel, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Pencil Sketch 2",
+        "prompt": "Pencil Sketch style illustration, sketchy linework, hatching, paper grain, rough texture, hand-drawn feel, clean strokes, confident linework, expressive marks, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Colored Pencil",
+        "prompt": "Colored Pencil style illustration, sketchy linework, hatching, paper grain, rough texture, hand-drawn feel, clean strokes, confident linework, expressive marks, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Pastel Portrait",
+        "prompt": "Pastel Portrait style illustration, delicate washes, soft edges, paper texture, hand-painted brushwork, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Chalk Illustration",
+        "prompt": "Chalk Illustration style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Marker Illustration",
+        "prompt": "Marker Illustration style illustration, clean strokes, confident linework, expressive marks, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Crayon Illustration",
+        "prompt": "Crayon Illustration style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Tempera Painting",
+        "prompt": "Tempera Painting style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Fresco Style",
+        "prompt": "Fresco Style style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Encaustic Texture",
+        "prompt": "Encaustic Texture style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Spray Paint Street Art",
+        "prompt": "Spray Paint Street Art style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Graffiti Stencil",
+        "prompt": "Graffiti Stencil style illustration, torn paper textures, layered collage, photocopy distress, tactile cutouts, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Collage Mixed Media",
+        "prompt": "Collage Mixed Media style illustration, torn paper textures, layered collage, photocopy distress, tactile cutouts, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Paper Cutout",
+        "prompt": "Paper Cutout style illustration, torn paper textures, layered collage, photocopy distress, tactile cutouts, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Photomontage Collage",
+        "prompt": "Photomontage Collage style illustration, torn paper textures, layered collage, photocopy distress, tactile cutouts, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Mosaic Tile",
+        "prompt": "Mosaic Tile style illustration, tessellated forms, stitched textures, woven threads, tactile surface, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Stained Glass",
+        "prompt": "Stained Glass style illustration, tessellated forms, stitched textures, woven threads, tactile surface, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Tapestry Weave",
+        "prompt": "Tapestry Weave style illustration, tessellated forms, stitched textures, woven threads, tactile surface, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Embroidery Textile",
+        "prompt": "Embroidery Textile style illustration, tessellated forms, stitched textures, woven threads, tactile surface, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Woodcut Print",
+        "prompt": "Woodcut Print style illustration, high-contrast ink lines, crisp silhouettes, strong graphic linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Linocut Print",
+        "prompt": "Linocut Print style illustration, high-contrast ink lines, crisp silhouettes, strong graphic linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Etching Engraving",
+        "prompt": "Etching Engraving style illustration, high-contrast ink lines, crisp silhouettes, strong graphic linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Lithograph Poster",
+        "prompt": "Lithograph Poster style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Screenprint Silkscreen",
+        "prompt": "Screenprint Silkscreen style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Halftone Pop Art",
+        "prompt": "Halftone Pop Art style illustration, inked panels, halftone texture, dynamic poses, bold outlines, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Comic Book Ink",
+        "prompt": "Comic Book Ink style illustration, high-contrast ink lines, crisp silhouettes, strong graphic linework, clean strokes, confident linework, expressive marks, inked panels, halftone texture, dynamic poses, bold outlines, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Retro Comic Halftone",
+        "prompt": "Retro Comic Halftone style illustration, inked panels, halftone texture, dynamic poses, bold outlines, neon gradients, retro color palette, glitch artifacts, nostalgic vibes, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Vintage Poster Art Deco",
+        "prompt": "Vintage Poster Art Deco style illustration, ornamental motifs, geometric patterns, decorative borders, stylized forms, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Pop Art High Contrast",
+        "prompt": "Pop Art High Contrast style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Manga Style",
+        "prompt": "Manga Style style illustration, inked panels, halftone texture, dynamic poses, bold outlines, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Anime Cel",
+        "prompt": "Anime Cel style illustration, inked panels, halftone texture, dynamic poses, bold outlines, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Chibi Cartoon",
+        "prompt": "Chibi Cartoon style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Cartoon Caricature",
+        "prompt": "Cartoon Caricature style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Children's Book Illustration",
+        "prompt": "Children's Book Illustration style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Storybook Watercolor",
+        "prompt": "Storybook Watercolor style illustration, delicate washes, soft edges, paper texture, hand-painted brushwork, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Fantasy Illustration",
+        "prompt": "Fantasy Illustration style illustration, dreamlike juxtapositions, uncanny elements, imaginative composition, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Concept Art Sketch",
+        "prompt": "Concept Art Sketch style illustration, sketchy linework, hatching, paper grain, rough texture, hand-drawn feel, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Matte Painting Stylized",
+        "prompt": "Matte Painting Stylized style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Digital Painting Brushwork",
+        "prompt": "Digital Painting Brushwork style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Pixel Art 16-bit",
+        "prompt": "Pixel Art 16-bit style illustration, pixel-perfect shapes, limited palette, retro videogame look, crisp pixels, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Pixel Art 8-bit",
+        "prompt": "Pixel Art 8-bit style illustration, pixel-perfect shapes, limited palette, retro videogame look, crisp pixels, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Low-Poly Stylized",
+        "prompt": "Low-Poly Stylized style illustration, pixel-perfect shapes, limited palette, retro videogame look, crisp pixels, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Vector Flat Design",
+        "prompt": "Vector Flat Design style illustration, clean vector shapes, flat color areas, crisp edges, minimalist composition, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Minimalist Vector",
+        "prompt": "Minimalist Vector style illustration, clean vector shapes, flat color areas, crisp edges, minimalist composition, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Isometric Illustration",
+        "prompt": "Isometric Illustration style illustration, clean vector shapes, flat color areas, crisp edges, minimalist composition, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Technical Blueprint",
+        "prompt": "Technical Blueprint style illustration, clean vector shapes, flat color areas, crisp edges, minimalist composition, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Line Art Minimal",
+        "prompt": "Line Art Minimal style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Single Line Drawing",
+        "prompt": "Single Line Drawing style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Contour Linework",
+        "prompt": "Contour Linework style illustration, high-contrast ink lines, crisp silhouettes, strong graphic linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Crosshatch Engraving",
+        "prompt": "Crosshatch Engraving style illustration, high-contrast ink lines, crisp silhouettes, strong graphic linework, sketchy linework, hatching, paper grain, rough texture, hand-drawn feel, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Stippling Pointillism",
+        "prompt": "Stippling Pointillism style illustration, sketchy linework, hatching, paper grain, rough texture, hand-drawn feel, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Pointillism 2",
+        "prompt": "Pointillism style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Neo-Impressionist",
+        "prompt": "Neo-Impressionist style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Impressionist Brushwork",
+        "prompt": "Impressionist Brushwork style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Post-Impressionist",
+        "prompt": "Post-Impressionist style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Expressionist Painting",
+        "prompt": "Expressionist Painting style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Fauvist Palette",
+        "prompt": "Fauvist Palette style illustration, visible brushstrokes, painterly texture, layered impasto, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Cubist Geometry",
+        "prompt": "Cubist Geometry style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Surrealist Dreamscape",
+        "prompt": "Surrealist Dreamscape style illustration, dreamlike juxtapositions, uncanny elements, imaginative composition, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Dada Collage",
+        "prompt": "Dada Collage style illustration, torn paper textures, layered collage, photocopy distress, tactile cutouts, dreamlike juxtapositions, uncanny elements, imaginative composition, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Abstract Expressionism",
+        "prompt": "Abstract Expressionism style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Geometric Abstraction",
+        "prompt": "Geometric Abstraction style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Color Field Painting 2",
+        "prompt": "Color Field Painting style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Minimalist Graphic",
+        "prompt": "Minimalist Graphic style illustration, clean vector shapes, flat color areas, crisp edges, minimalist composition, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Maximalist Decorative",
+        "prompt": "Maximalist Decorative style illustration, ornamental motifs, geometric patterns, decorative borders, stylized forms, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Art Nouveau Ornament",
+        "prompt": "Art Nouveau Ornament style illustration, ornamental motifs, geometric patterns, decorative borders, stylized forms, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Art Deco Geometry",
+        "prompt": "Art Deco Geometry style illustration, ornamental motifs, geometric patterns, decorative borders, stylized forms, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Bauhaus Modernist",
+        "prompt": "Bauhaus Modernist style illustration, ornamental motifs, geometric patterns, decorative borders, stylized forms, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Constructivist Poster",
+        "prompt": "Constructivist Poster style illustration, ornamental motifs, geometric patterns, decorative borders, stylized forms, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Brutalist Graphic",
+        "prompt": "Brutalist Graphic style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Futurist Motion",
+        "prompt": "Futurist Motion style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Retro Futurism 2",
+        "prompt": "Retro Futurism style illustration, neon gradients, retro color palette, glitch artifacts, nostalgic vibes, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Vaporwave Pastel",
+        "prompt": "Vaporwave Pastel style illustration, delicate washes, soft edges, paper texture, hand-painted brushwork, neon gradients, retro color palette, glitch artifacts, nostalgic vibes, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Synthwave Neon",
+        "prompt": "Synthwave Neon style illustration, neon gradients, retro color palette, glitch artifacts, nostalgic vibes, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Cyberpunk Neon",
+        "prompt": "Cyberpunk Neon style illustration, neon gradients, retro color palette, glitch artifacts, nostalgic vibes, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Neon Noir",
+        "prompt": "Neon Noir style illustration, inked panels, halftone texture, dynamic poses, bold outlines, neon gradients, retro color palette, glitch artifacts, nostalgic vibes, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Glitch Art",
+        "prompt": "Glitch Art style illustration, neon gradients, retro color palette, glitch artifacts, nostalgic vibes, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Datamosh Effect",
+        "prompt": "Datamosh Effect style illustration, neon gradients, retro color palette, glitch artifacts, nostalgic vibes, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "VHS Retro",
+        "prompt": "VHS Retro style illustration, neon gradients, retro color palette, glitch artifacts, nostalgic vibes, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "CRT TV Scanlines",
+        "prompt": "CRT TV Scanlines style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Film Grain Collage",
+        "prompt": "Film Grain Collage style illustration, torn paper textures, layered collage, photocopy distress, tactile cutouts, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Double Exposure Collage",
+        "prompt": "Double Exposure Collage style illustration, torn paper textures, layered collage, photocopy distress, tactile cutouts, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Silhouette Illustration",
+        "prompt": "Silhouette Illustration style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Shadow Puppetry",
+        "prompt": "Shadow Puppetry style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Chalkboard Sketch",
+        "prompt": "Chalkboard Sketch style illustration, sketchy linework, hatching, paper grain, rough texture, hand-drawn feel, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Paper Quilling",
+        "prompt": "Paper Quilling style illustration, tessellated forms, stitched textures, woven threads, tactile surface, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Origami Paper Art",
+        "prompt": "Origami Paper Art style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Paper Collage Cutout",
+        "prompt": "Paper Collage Cutout style illustration, torn paper textures, layered collage, photocopy distress, tactile cutouts, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Cutout Animation Style",
+        "prompt": "Cutout Animation Style style illustration, torn paper textures, layered collage, photocopy distress, tactile cutouts, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Stop Motion Claymation",
+        "prompt": "Stop Motion Claymation style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Puppet Illustration",
+        "prompt": "Puppet Illustration style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Textile Collage",
+        "prompt": "Textile Collage style illustration, torn paper textures, layered collage, photocopy distress, tactile cutouts, tessellated forms, stitched textures, woven threads, tactile surface, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Mixed Media Gouache",
+        "prompt": "Mixed Media Gouache style illustration, delicate washes, soft edges, paper texture, hand-painted brushwork, opaque layered color, matte finish, painterly strokes, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Foil Stamping Gold Leaf",
+        "prompt": "Foil Stamping Gold Leaf style illustration, visible brushstrokes, painterly texture, layered impasto, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Embossed Illustration",
+        "prompt": "Embossed Illustration style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Engraved Linework",
+        "prompt": "Engraved Linework style illustration, high-contrast ink lines, crisp silhouettes, strong graphic linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Foil Ink Illustration",
+        "prompt": "Foil Ink Illustration style illustration, visible brushstrokes, painterly texture, layered impasto, high-contrast ink lines, crisp silhouettes, strong graphic linework, clean strokes, confident linework, expressive marks, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Woodburning Pyrography",
+        "prompt": "Woodburning Pyrography style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Scratchboard Etching",
+        "prompt": "Scratchboard Etching style illustration, high-contrast ink lines, crisp silhouettes, strong graphic linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Sumi-e Minimal Ink",
+        "prompt": "Sumi-e Minimal Ink style illustration, high-contrast ink lines, crisp silhouettes, strong graphic linework, clean strokes, confident linework, expressive marks, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Chinese Brush Painting",
+        "prompt": "Chinese Brush Painting style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Ukiyo-e Woodblock",
+        "prompt": "Ukiyo-e Woodblock style illustration, high-contrast ink lines, crisp silhouettes, strong graphic linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Japanese Ink Cartoon",
+        "prompt": "Japanese Ink Cartoon style illustration, high-contrast ink lines, crisp silhouettes, strong graphic linework, clean strokes, confident linework, expressive marks, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Persian Miniature",
+        "prompt": "Persian Miniature style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Mughal Miniature",
+        "prompt": "Mughal Miniature style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Byzantine Icon",
+        "prompt": "Byzantine Icon style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Medieval Illuminated Manuscript",
+        "prompt": "Medieval Illuminated Manuscript style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Gothic Manuscript",
+        "prompt": "Gothic Manuscript style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Baroque Ornamentation",
+        "prompt": "Baroque Ornamentation style illustration, ornamental motifs, geometric patterns, decorative borders, stylized forms, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Rococo Decorative",
+        "prompt": "Rococo Decorative style illustration, ornamental motifs, geometric patterns, decorative borders, stylized forms, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Romantic Painterly",
+        "prompt": "Romantic Painterly style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Symbolist Mystic",
+        "prompt": "Symbolist Mystic style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Surreal Collage",
+        "prompt": "Surreal Collage style illustration, torn paper textures, layered collage, photocopy distress, tactile cutouts, dreamlike juxtapositions, uncanny elements, imaginative composition, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Fantasy Map Illustration",
+        "prompt": "Fantasy Map Illustration style illustration, dreamlike juxtapositions, uncanny elements, imaginative composition, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Architectural Illustration",
+        "prompt": "Architectural Illustration style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Botanical Illustration",
+        "prompt": "Botanical Illustration style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Scientific Illustration",
+        "prompt": "Scientific Illustration style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Anatomical Drawing",
+        "prompt": "Anatomical Drawing style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Fashion Illustration",
+        "prompt": "Fashion Illustration style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Editorial Sketch",
+        "prompt": "Editorial Sketch style illustration, sketchy linework, hatching, paper grain, rough texture, hand-drawn feel, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Infographic Flat",
+        "prompt": "Infographic Flat style illustration, clean vector shapes, flat color areas, crisp edges, minimalist composition, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Children's Puzzle Illustration",
+        "prompt": "Children's Puzzle Illustration style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Zine Collage Punk",
+        "prompt": "Zine Collage Punk style illustration, torn paper textures, layered collage, photocopy distress, tactile cutouts, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "DIY Xerox Punk",
+        "prompt": "DIY Xerox Punk style illustration, torn paper textures, layered collage, photocopy distress, tactile cutouts, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Grunge Poster",
+        "prompt": "Grunge Poster style illustration, torn paper textures, layered collage, photocopy distress, tactile cutouts, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Retro 80s Graphic",
+        "prompt": "Retro 80s Graphic style illustration, neon gradients, retro color palette, glitch artifacts, nostalgic vibes, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Retro 90s Y2K",
+        "prompt": "Retro 90s Y2K style illustration, neon gradients, retro color palette, glitch artifacts, nostalgic vibes, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Neon Gradient Illustration",
+        "prompt": "Neon Gradient Illustration style illustration, neon gradients, retro color palette, glitch artifacts, nostalgic vibes, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Liquid Ink Bloom",
+        "prompt": "Liquid Ink Bloom style illustration, high-contrast ink lines, crisp silhouettes, strong graphic linework, clean strokes, confident linework, expressive marks, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Watercolor Bleed",
+        "prompt": "Watercolor Bleed style illustration, delicate washes, soft edges, paper texture, hand-painted brushwork, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Wet-on-wet Painterly",
+        "prompt": "Wet-on-wet Painterly style illustration, delicate washes, soft edges, paper texture, hand-painted brushwork, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Drybrush Texture",
+        "prompt": "Drybrush Texture style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Palette Knife Impasto",
+        "prompt": "Palette Knife Impasto style illustration, visible brushstrokes, painterly texture, layered impasto, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Thick Brush Strokes",
+        "prompt": "Thick Brush Strokes style illustration, visible brushstrokes, painterly texture, layered impasto, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Sgraffito Scratch Texture",
+        "prompt": "Sgraffito Scratch Texture style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Monochrome Ink",
+        "prompt": "Monochrome Ink style illustration, high-contrast ink lines, crisp silhouettes, strong graphic linework, clean strokes, confident linework, expressive marks, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Two-tone Silkscreen",
+        "prompt": "Two-tone Silkscreen style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Monochrome Woodcut",
+        "prompt": "Monochrome Woodcut style illustration, high-contrast ink lines, crisp silhouettes, strong graphic linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "High Contrast Silhouette",
+        "prompt": "High Contrast Silhouette style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Decorative Border Illustration",
+        "prompt": "Decorative Border Illustration style illustration, ornamental motifs, geometric patterns, decorative borders, stylized forms, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Ornamental Filigree",
+        "prompt": "Ornamental Filigree style illustration, ornamental motifs, geometric patterns, decorative borders, stylized forms, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Stencil Poster Art",
+        "prompt": "Stencil Poster Art style illustration, torn paper textures, layered collage, photocopy distress, tactile cutouts, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Cut Paper Shadow",
+        "prompt": "Cut Paper Shadow style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Collage Photomontage",
+        "prompt": "Collage Photomontage style illustration, torn paper textures, layered collage, photocopy distress, tactile cutouts, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Photocopy Distressed",
+        "prompt": "Photocopy Distressed style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Negative Space Illustration",
+        "prompt": "Negative Space Illustration style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Silkscreen Punk Poster",
+        "prompt": "Silkscreen Punk Poster style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Retro Travel Poster",
+        "prompt": "Retro Travel Poster style illustration, neon gradients, retro color palette, glitch artifacts, nostalgic vibes, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Vintage Book Illustration",
+        "prompt": "Vintage Book Illustration style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Illustrated Map",
+        "prompt": "Illustrated Map style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Tattoo Flash Sheet",
+        "prompt": "Tattoo Flash Sheet style illustration, clean strokes, confident linework, expressive marks, bold outlines, flash sheet layout, limited palette, graphic motifs, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Traditional Tattoo Neo-Traditional",
+        "prompt": "Traditional Tattoo Neo-Traditional style illustration, clean strokes, confident linework, expressive marks, bold outlines, flash sheet layout, limited palette, graphic motifs, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Dotwork Tattoo",
+        "prompt": "Dotwork Tattoo style illustration, clean strokes, confident linework, expressive marks, bold outlines, flash sheet layout, limited palette, graphic motifs, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Linework Tattoo",
+        "prompt": "Linework Tattoo style illustration, high-contrast ink lines, crisp silhouettes, strong graphic linework, clean strokes, confident linework, expressive marks, bold outlines, flash sheet layout, limited palette, graphic motifs, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Neo-Geo Pattern",
+        "prompt": "Neo-Geo Pattern style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Op Art Optical",
+        "prompt": "Op Art Optical style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Kinetic Typography Illustration",
+        "prompt": "Kinetic Typography Illustration style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Infused Calligraphy",
+        "prompt": "Infused Calligraphy style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Hand-lettered Script",
+        "prompt": "Hand-lettered Script style illustration, clean strokes, confident linework, expressive marks, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Calligraphic Ink",
+        "prompt": "Calligraphic Ink style illustration, high-contrast ink lines, crisp silhouettes, strong graphic linework, clean strokes, confident linework, expressive marks, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Typographic Poster",
+        "prompt": "Typographic Poster style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Retro Engraving Illustration",
+        "prompt": "Retro Engraving Illustration style illustration, high-contrast ink lines, crisp silhouettes, strong graphic linework, neon gradients, retro color palette, glitch artifacts, nostalgic vibes, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Etching Map",
+        "prompt": "Etching Map style illustration, high-contrast ink lines, crisp silhouettes, strong graphic linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Copperplate Engraving",
+        "prompt": "Copperplate Engraving style illustration, high-contrast ink lines, crisp silhouettes, strong graphic linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Mezzotint Texture",
+        "prompt": "Mezzotint Texture style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Aquatint Wash",
+        "prompt": "Aquatint Wash style illustration, delicate washes, soft edges, paper texture, hand-painted brushwork, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Sumi-e Minimalist",
+        "prompt": "Sumi-e Minimalist style illustration, high-contrast ink lines, crisp silhouettes, strong graphic linework, clean vector shapes, flat color areas, crisp edges, minimalist composition, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Minimal Papercut",
+        "prompt": "Minimal Papercut style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Stylized Silhouette",
+        "prompt": "Stylized Silhouette style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Cartoon Vector Sticker",
+        "prompt": "Cartoon Vector Sticker style illustration, clean vector shapes, flat color areas, crisp edges, minimalist composition, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Kawaii Pastel Illustration",
+        "prompt": "Kawaii Pastel Illustration style illustration, delicate washes, soft edges, paper texture, hand-painted brushwork, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Pastel Goth",
+        "prompt": "Pastel Goth style illustration, delicate washes, soft edges, paper texture, hand-painted brushwork, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Moody Gouache",
+        "prompt": "Moody Gouache style illustration, delicate washes, soft edges, paper texture, hand-painted brushwork, opaque layered color, matte finish, painterly strokes, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Dreamy Pastel Wash",
+        "prompt": "Dreamy Pastel Wash style illustration, delicate washes, soft edges, paper texture, hand-painted brushwork, dreamlike juxtapositions, uncanny elements, imaginative composition, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Cinematic Matte Pastel",
+        "prompt": "Cinematic Matte Pastel style illustration, delicate washes, soft edges, paper texture, hand-painted brushwork, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Chalk Pastel Smudge",
+        "prompt": "Chalk Pastel Smudge style illustration, delicate washes, soft edges, paper texture, hand-painted brushwork, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Soft Pencil Portrait",
+        "prompt": "Soft Pencil Portrait style illustration, sketchy linework, hatching, paper grain, rough texture, hand-drawn feel, clean strokes, confident linework, expressive marks, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Crosshatch Portrait",
+        "prompt": "Crosshatch Portrait style illustration, sketchy linework, hatching, paper grain, rough texture, hand-drawn feel, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Retro Linework Portrait",
+        "prompt": "Retro Linework Portrait style illustration, high-contrast ink lines, crisp silhouettes, strong graphic linework, neon gradients, retro color palette, glitch artifacts, nostalgic vibes, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Stylized Character Sheet",
+        "prompt": "Stylized Character Sheet style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "RPG Character Portrait",
+        "prompt": "RPG Character Portrait style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Illustrated Story Panel",
+        "prompt": "Illustrated Story Panel style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Graphic Novel Noir",
+        "prompt": "Graphic Novel Noir style illustration, inked panels, halftone texture, dynamic poses, bold outlines, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Noir Ink Drama",
+        "prompt": "Noir Ink Drama style illustration, high-contrast ink lines, crisp silhouettes, strong graphic linework, clean strokes, confident linework, expressive marks, inked panels, halftone texture, dynamic poses, bold outlines, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Neo-Noir Graphic",
+        "prompt": "Neo-Noir Graphic style illustration, inked panels, halftone texture, dynamic poses, bold outlines, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Cel Shaded 3D Cartoon",
+        "prompt": "Cel Shaded 3D Cartoon style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Toon Shading Sketch",
+        "prompt": "Toon Shading Sketch style illustration, sketchy linework, hatching, paper grain, rough texture, hand-drawn feel, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Paper Toy Design",
+        "prompt": "Paper Toy Design style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Folded Paper Diorama",
+        "prompt": "Folded Paper Diorama style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Pop Surrealism",
+        "prompt": "Pop Surrealism style illustration, dreamlike juxtapositions, uncanny elements, imaginative composition, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Lowbrow Art",
+        "prompt": "Lowbrow Art style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+        "name": "Outsider Art Folk",
+        "prompt": "Outsider Art Folk style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
+        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
+    },
+    {
+      "name": "Patchwork Gouache Smear",
+      "prompt": "gouache smear, dreamlike lighting, patchwork reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Mythic Metallic Emboss",
+      "prompt": "metallic emboss, cinematic depth of field, mythic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Baroque Felt Applique",
+      "prompt": "felt applique, subtle film grain, baroque reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Prismatic Felt Applique",
+      "prompt": "felt applique, soft watercolor bleeds, prismatic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Isometric Ancient Tapestry",
+      "prompt": "ancient tapestry, strong silhouettes, isometric reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Synthwave Vector Linocut",
+      "prompt": "vector linocut, handmade craft feel, synthwave reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Psychedelic Paper Origami",
+      "prompt": "paper origami, dreamlike lighting, psychedelic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Toy Photomicrography",
+      "prompt": "photomicrography, prismatic refractions, toy reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, worst quality:1.3), watermark, unnatural skin, overexposed, blur, motion artefacts"
+    },
+    {
+      "name": "Psychedelic Folk Embroidery",
+      "prompt": "folk embroidery, rusted metallic surfaces, psychedelic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Neon Seed Bead Mosaic",
+      "prompt": "seed-bead mosaic, muted pastel palette, neon reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Bio-mech Ancient Tapestry",
+      "prompt": "ancient tapestry, tilt-shift miniature illusion, bio-mech reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Mythic Charcoal Sketch",
+      "prompt": "charcoal sketch, handmade craft feel, mythic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Noir Sumi E Ink Wash",
+      "prompt": "sumi-e ink wash, soft watercolor bleeds, noir reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Origami Sumi E Ink Wash",
+      "prompt": "sumi-e ink wash, paper-texture details, origami reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "LowPoly Surreal Collage",
+      "prompt": "surreal collage, cracked porcelain finish, lowpoly reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Vaporwave Sugar Glass Diorama",
+      "prompt": "sugar-glass diorama, detailed embroidery stitches, vaporwave reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Voxel Gouache Smear",
+      "prompt": "gouache smear, vector sharpness, voxel reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Kaleidoscopic Stipple Engraving",
+      "prompt": "stipple engraving, ornate filigree, kaleidoscopic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Patchwork Magic Realism Painting",
+      "prompt": "magic realism painting, cross-hatched shading, patchwork reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Diorama Photomicrography",
+      "prompt": "photomicrography, high contrast shadows, diorama reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, worst quality:1.3), watermark, unnatural skin, overexposed, blur, motion artefacts"
+    },
+    {
+      "name": "Vaporwave Retro Comic Cover",
+      "prompt": "retro comic cover, cinematic depth of field, vaporwave reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Surreal Vector Linocut",
+      "prompt": "vector linocut, cinematic depth of field, surreal reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Bioluminescent Steampunk Machinery",
+      "prompt": "steampunk machinery, rusted metallic surfaces, bioluminescent reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Linocut Drip Paint Action",
+      "prompt": "drip-paint action, cross-hatched shading, linocut reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Brutalist Cyberpunk Cityscape",
+      "prompt": "cyberpunk cityscape, paper-texture details, brutalist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Retro-futurist Retro Comic Cover",
+      "prompt": "retro comic cover, rusted metallic surfaces, retro-futurist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Bio-mech Lacquered Miniature",
+      "prompt": "lacquered miniature, high contrast shadows, bio-mech reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Vector Drip Paint Action",
+      "prompt": "drip-paint action, muted pastel palette, vector reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Voxel Sugar Glass Diorama",
+      "prompt": "sugar-glass diorama, double exposure overlay, voxel reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Brutalist Architectural Blueprint",
+      "prompt": "architectural blueprint, vector sharpness, brutalist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Mythic Drip Paint Action",
+      "prompt": "drip-paint action, cinematic depth of field, mythic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Prismatic Kaleidoscope Fractal",
+      "prompt": "kaleidoscope fractal, ultra-detailed textures, prismatic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Psychedelic Low Poly Diorama",
+      "prompt": "low-poly diorama, surreal scale shifts, psychedelic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Embroidery Iridescent Foil",
+      "prompt": "iridescent foil, high contrast shadows, embroidery reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Retro-futurist Typographic Poster",
+      "prompt": "typographic poster, surreal scale shifts, retro-futurist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Retro-futurist Psychedelic Poster",
+      "prompt": "psychedelic poster, foil stamping effects, retro-futurist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Embroidery Psychedelic Poster",
+      "prompt": "psychedelic poster, detailed embroidery stitches, embroidery reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Minimalist Neon Signage",
+      "prompt": "neon signage, floating geometry, minimalist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Dreamcore Felt Applique",
+      "prompt": "felt applique, cracked porcelain finish, dreamcore reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Papercraft Miniature Diorama",
+      "prompt": "miniature diorama, floating geometry, papercraft reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Comic Anatomical Illustration",
+      "prompt": "anatomical illustration, soft watercolor bleeds, comic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Eldritch Gouache Smear",
+      "prompt": "gouache smear, fractured reflections, eldritch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Patchwork Pen And Ink Stipple",
+      "prompt": "pen-and-ink stipple, ink wash gradients, patchwork reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Vector Isometric Illustration",
+      "prompt": "isometric illustration, vector sharpness, vector reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Origami Surreal Collage",
+      "prompt": "surreal collage, detailed embroidery stitches, origami reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Pixel Neon Signage",
+      "prompt": "neon signage, intricate patterns, pixel reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Prismatic Sugar Glass Diorama",
+      "prompt": "sugar-glass diorama, dramatic backlight, prismatic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Prismatic Marquetry Inlay",
+      "prompt": "marquetry inlay, rusted metallic surfaces, prismatic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Anamorphic Datamosh Glitch",
+      "prompt": "datamosh glitch, dramatic backlight, anamorphic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Surreal Ancient Tapestry",
+      "prompt": "ancient tapestry, muted pastel palette, surreal reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Linocut Stained Glass",
+      "prompt": "stained glass, cracked porcelain finish, linocut reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Comic Seed Bead Mosaic",
+      "prompt": "seed-bead mosaic, neon gradient palette, comic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Comic Sumi E Ink Wash",
+      "prompt": "sumi-e ink wash, ancient symbol motifs, comic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Patchwork Paper Origami",
+      "prompt": "paper origami, limited color scheme, patchwork reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Minimalist Cyberpunk Cityscape",
+      "prompt": "cyberpunk cityscape, muted pastel palette, minimalist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Voxel Lego Mosaic",
+      "prompt": "lego mosaic, intricate patterns, voxel reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, worst quality,), watermark, text, oversmoothing, muddy colors"
+    },
+    {
+      "name": "Vector Kaleidoscope Fractal",
+      "prompt": "kaleidoscope fractal, foil stamping effects, vector reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Synthwave Gouache Smear",
+      "prompt": "gouache smear, cross-hatched shading, synthwave reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Magical Metallic Emboss",
+      "prompt": "metallic emboss, ultra-detailed textures, magical reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Dreamcore Typographic Poster",
+      "prompt": "typographic poster, soft watercolor bleeds, dreamcore reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Kaleidoscopic Sugar Glass Diorama",
+      "prompt": "sugar-glass diorama, foil stamping effects, kaleidoscopic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Glitch Seed Bead Mosaic",
+      "prompt": "seed-bead mosaic, floating geometry, glitch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Baroque Retro Comic Cover",
+      "prompt": "retro comic cover, woodgrain imperfections, baroque reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Toy Pen And Ink Stipple",
+      "prompt": "pen-and-ink stipple, cracked porcelain finish, toy reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Pixel Surreal Collage",
+      "prompt": "surreal collage, ink wash gradients, pixel reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Retro-futurist Marquetry Inlay",
+      "prompt": "marquetry inlay, limited color scheme, retro-futurist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Magical Bio Mech Anatomy",
+      "prompt": "bio-mech anatomy, cross-hatched shading, magical reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Woodcut Lego Mosaic",
+      "prompt": "lego mosaic, stippling texture, woodcut reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, worst quality,), watermark, text, oversmoothing, muddy colors"
+    },
+    {
+      "name": "Gothic Metallic Emboss",
+      "prompt": "metallic emboss, cinematic depth of field, gothic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Glitch Datamosh Glitch",
+      "prompt": "datamosh glitch, dreamlike lighting, glitch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Isometric Stipple Engraving",
+      "prompt": "stipple engraving, cinematic depth of field, isometric reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Isometric Miniature Diorama",
+      "prompt": "miniature diorama, intricate patterns, isometric reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Glitch Collagraph Print",
+      "prompt": "collagraph print, ultra-detailed textures, glitch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Psychedelic Isometric Illustration",
+      "prompt": "isometric illustration, strong silhouettes, psychedelic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Noir Isometric Illustration",
+      "prompt": "isometric illustration, double exposure overlay, noir reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Mythic Retro Comic Cover",
+      "prompt": "retro comic cover, foil stamping effects, mythic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Diorama Typographic Poster",
+      "prompt": "typographic poster, woodgrain imperfections, diorama reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Dreamcore Technical Cutaway",
+      "prompt": "technical cutaway, prismatic refractions, dreamcore reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Dieselpunk Sumi E Ink Wash",
+      "prompt": "sumi-e ink wash, subtle film grain, dieselpunk reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Holographic Ancient Tapestry",
+      "prompt": "ancient tapestry, paper-texture details, holographic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Stained-Glass Cosmic Horror Tableau",
+      "prompt": "cosmic horror tableau, detailed embroidery stitches, stained-glass reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Eldritch Lacquered Miniature",
+      "prompt": "lacquered miniature, subtle film grain, eldritch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Eldritch Bio Mech Anatomy",
+      "prompt": "bio-mech anatomy, tilt-shift miniature illusion, eldritch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Bioluminescent Metallic Emboss",
+      "prompt": "metallic emboss, limited color scheme, bioluminescent reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Dieselpunk Marquetry Inlay",
+      "prompt": "marquetry inlay, stippling texture, dieselpunk reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Baroque Ancient Tapestry",
+      "prompt": "ancient tapestry, neon gradient palette, baroque reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Mythic Architectural Blueprint",
+      "prompt": "architectural blueprint, double exposure overlay, mythic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Glitch Folk Embroidery",
+      "prompt": "folk embroidery, subtle film grain, glitch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Eldritch Psychedelic Poster",
+      "prompt": "psychedelic poster, intricate patterns, eldritch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Kaleidoscopic Seed Bead Mosaic",
+      "prompt": "seed-bead mosaic, double exposure overlay, kaleidoscopic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Brutalist Cosmic Horror Tableau",
+      "prompt": "cosmic horror tableau, foil stamping effects, brutalist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Etching Toy Photography",
+      "prompt": "toy-photography, glowing bioluminescence, etching reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, worst quality:1.3), watermark, unnatural skin, overexposed, blur, motion artefacts"
+    },
+    {
+      "name": "Eldritch Pen And Ink Stipple",
+      "prompt": "pen-and-ink stipple, vector sharpness, eldritch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Neon Steampunk Machinery",
+      "prompt": "steampunk machinery, cracked porcelain finish, neon reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Linocut Lenticular Poster",
+      "prompt": "lenticular poster, ink wash gradients, linocut reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Bio-mech Sugar Glass Diorama",
+      "prompt": "sugar-glass diorama, foil stamping effects, bio-mech reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Minimalist Photomicrography",
+      "prompt": "photomicrography, ornate filigree, minimalist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, worst quality:1.3), watermark, unnatural skin, overexposed, blur, motion artefacts"
+    },
+    {
+      "name": "Retro-futurist 8 Bit Pixel Art",
+      "prompt": "8-bit pixel art, ultra-detailed textures, retro-futurist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, worst quality,), watermark, text, oversmoothing, muddy colors"
+    },
+    {
+      "name": "Cinematic 8 Bit Pixel Art",
+      "prompt": "8-bit pixel art, ultra-detailed textures, cinematic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, worst quality,), watermark, text, oversmoothing, muddy colors"
+    },
+    {
+      "name": "Isometric Technical Cutaway",
+      "prompt": "technical cutaway, muted pastel palette, isometric reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Eldritch Paper Origami",
+      "prompt": "paper origami, soft watercolor bleeds, eldritch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Steampunk Isometric Illustration",
+      "prompt": "isometric illustration, high contrast shadows, steampunk reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Prismatic Metallic Emboss",
+      "prompt": "metallic emboss, glowing bioluminescence, prismatic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Gothic Typographic Poster",
+      "prompt": "typographic poster, double exposure overlay, gothic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Isometric Surreal Collage",
+      "prompt": "surreal collage, strong silhouettes, isometric reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Collage Vector Linocut",
+      "prompt": "vector linocut, prismatic refractions, collage reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Holographic Film Noir Frame",
+      "prompt": "film noir frame, surreal scale shifts, holographic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Folkloric Toy Photography",
+      "prompt": "toy-photography, surreal scale shifts, folkloric reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, worst quality:1.3), watermark, unnatural skin, overexposed, blur, motion artefacts"
+    },
+    {
+      "name": "Dreamcore Neon Signage",
+      "prompt": "neon signage, glowing bioluminescence, dreamcore reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Linocut Kaleidoscope Fractal",
+      "prompt": "kaleidoscope fractal, high contrast shadows, linocut reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Neon Architectural Blueprint",
+      "prompt": "architectural blueprint, subtle film grain, neon reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Glitch Marquetry Inlay",
+      "prompt": "marquetry inlay, handmade craft feel, glitch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Comic Neon Signage",
+      "prompt": "neon signage, floating geometry, comic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "LowPoly Isometric Illustration",
+      "prompt": "isometric illustration, double exposure overlay, lowpoly reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Papercraft Lenticular Poster",
+      "prompt": "lenticular poster, muted pastel palette, papercraft reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Woodcut Marquetry Inlay",
+      "prompt": "marquetry inlay, ancient symbol motifs, woodcut reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Collage Psychedelic Poster",
+      "prompt": "psychedelic poster, intricate patterns, collage reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Holographic Stipple Engraving",
+      "prompt": "stipple engraving, ancient symbol motifs, holographic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Holographic Sumi E Ink Wash",
+      "prompt": "sumi-e ink wash, floating geometry, holographic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+      "name": "Folkloric Gouache Smear",
+      "prompt": "gouache smear, subtle film grain, folkloric reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     }
 ]
 
