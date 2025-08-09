@@ -3800,604 +3800,604 @@ style_list = [
         "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
     },
     {
-      "name": "Patchwork Gouache Smear",
-      "prompt": "gouache smear, dreamlike lighting, patchwork reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Patchwork Gouache Smear",
+        "prompt": "gouache smear, dreamlike lighting, patchwork reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Mythic Metallic Emboss",
-      "prompt": "metallic emboss, cinematic depth of field, mythic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Mythic Metallic Emboss",
+        "prompt": "metallic emboss, cinematic depth of field, mythic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Baroque Felt Applique",
-      "prompt": "felt applique, subtle film grain, baroque reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Baroque Felt Applique",
+        "prompt": "felt applique, subtle film grain, baroque reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Prismatic Felt Applique",
-      "prompt": "felt applique, soft watercolor bleeds, prismatic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Prismatic Felt Applique",
+        "prompt": "felt applique, soft watercolor bleeds, prismatic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Isometric Ancient Tapestry",
-      "prompt": "ancient tapestry, strong silhouettes, isometric reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Isometric Ancient Tapestry",
+        "prompt": "ancient tapestry, strong silhouettes, isometric reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Synthwave Vector Linocut",
-      "prompt": "vector linocut, handmade craft feel, synthwave reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Synthwave Vector Linocut",
+        "prompt": "vector linocut, handmade craft feel, synthwave reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Psychedelic Paper Origami",
-      "prompt": "paper origami, dreamlike lighting, psychedelic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Psychedelic Paper Origami",
+        "prompt": "paper origami, dreamlike lighting, psychedelic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Toy Photomicrography",
-      "prompt": "photomicrography, prismatic refractions, toy reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, worst quality:1.3), watermark, unnatural skin, overexposed, blur, motion artefacts"
+        "name": "Toy Photomicrography",
+        "prompt": "photomicrography, prismatic refractions, toy reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, worst quality:1.3), watermark, unnatural skin, overexposed, blur, motion artefacts"
     },
     {
-      "name": "Psychedelic Folk Embroidery",
-      "prompt": "folk embroidery, rusted metallic surfaces, psychedelic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Psychedelic Folk Embroidery",
+        "prompt": "folk embroidery, rusted metallic surfaces, psychedelic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Neon Seed Bead Mosaic",
-      "prompt": "seed-bead mosaic, muted pastel palette, neon reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Neon Seed Bead Mosaic",
+        "prompt": "seed-bead mosaic, muted pastel palette, neon reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Bio-mech Ancient Tapestry",
-      "prompt": "ancient tapestry, tilt-shift miniature illusion, bio-mech reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Bio-mech Ancient Tapestry",
+        "prompt": "ancient tapestry, tilt-shift miniature illusion, bio-mech reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Mythic Charcoal Sketch",
-      "prompt": "charcoal sketch, handmade craft feel, mythic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Mythic Charcoal Sketch",
+        "prompt": "charcoal sketch, handmade craft feel, mythic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Noir Sumi E Ink Wash",
-      "prompt": "sumi-e ink wash, soft watercolor bleeds, noir reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Noir Sumi E Ink Wash",
+        "prompt": "sumi-e ink wash, soft watercolor bleeds, noir reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Origami Sumi E Ink Wash",
-      "prompt": "sumi-e ink wash, paper-texture details, origami reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Origami Sumi E Ink Wash",
+        "prompt": "sumi-e ink wash, paper-texture details, origami reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "LowPoly Surreal Collage",
-      "prompt": "surreal collage, cracked porcelain finish, lowpoly reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "LowPoly Surreal Collage",
+        "prompt": "surreal collage, cracked porcelain finish, lowpoly reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Vaporwave Sugar Glass Diorama",
-      "prompt": "sugar-glass diorama, detailed embroidery stitches, vaporwave reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Vaporwave Sugar Glass Diorama",
+        "prompt": "sugar-glass diorama, detailed embroidery stitches, vaporwave reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Voxel Gouache Smear",
-      "prompt": "gouache smear, vector sharpness, voxel reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Voxel Gouache Smear",
+        "prompt": "gouache smear, vector sharpness, voxel reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Kaleidoscopic Stipple Engraving",
-      "prompt": "stipple engraving, ornate filigree, kaleidoscopic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Kaleidoscopic Stipple Engraving",
+        "prompt": "stipple engraving, ornate filigree, kaleidoscopic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Patchwork Magic Realism Painting",
-      "prompt": "magic realism painting, cross-hatched shading, patchwork reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Patchwork Magic Realism Painting",
+        "prompt": "magic realism painting, cross-hatched shading, patchwork reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Diorama Photomicrography",
-      "prompt": "photomicrography, high contrast shadows, diorama reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, worst quality:1.3), watermark, unnatural skin, overexposed, blur, motion artefacts"
+        "name": "Diorama Photomicrography",
+        "prompt": "photomicrography, high contrast shadows, diorama reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, worst quality:1.3), watermark, unnatural skin, overexposed, blur, motion artefacts"
     },
     {
-      "name": "Vaporwave Retro Comic Cover",
-      "prompt": "retro comic cover, cinematic depth of field, vaporwave reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Vaporwave Retro Comic Cover",
+        "prompt": "retro comic cover, cinematic depth of field, vaporwave reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Surreal Vector Linocut",
-      "prompt": "vector linocut, cinematic depth of field, surreal reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Surreal Vector Linocut",
+        "prompt": "vector linocut, cinematic depth of field, surreal reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Bioluminescent Steampunk Machinery",
-      "prompt": "steampunk machinery, rusted metallic surfaces, bioluminescent reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Bioluminescent Steampunk Machinery",
+        "prompt": "steampunk machinery, rusted metallic surfaces, bioluminescent reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Linocut Drip Paint Action",
-      "prompt": "drip-paint action, cross-hatched shading, linocut reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Linocut Drip Paint Action",
+        "prompt": "drip-paint action, cross-hatched shading, linocut reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Brutalist Cyberpunk Cityscape",
-      "prompt": "cyberpunk cityscape, paper-texture details, brutalist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Brutalist Cyberpunk Cityscape",
+        "prompt": "cyberpunk cityscape, paper-texture details, brutalist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Retro-futurist Retro Comic Cover",
-      "prompt": "retro comic cover, rusted metallic surfaces, retro-futurist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Retro-futurist Retro Comic Cover",
+        "prompt": "retro comic cover, rusted metallic surfaces, retro-futurist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Bio-mech Lacquered Miniature",
-      "prompt": "lacquered miniature, high contrast shadows, bio-mech reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Bio-mech Lacquered Miniature",
+        "prompt": "lacquered miniature, high contrast shadows, bio-mech reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Vector Drip Paint Action",
-      "prompt": "drip-paint action, muted pastel palette, vector reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Vector Drip Paint Action",
+        "prompt": "drip-paint action, muted pastel palette, vector reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Voxel Sugar Glass Diorama",
-      "prompt": "sugar-glass diorama, double exposure overlay, voxel reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Voxel Sugar Glass Diorama",
+        "prompt": "sugar-glass diorama, double exposure overlay, voxel reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Brutalist Architectural Blueprint",
-      "prompt": "architectural blueprint, vector sharpness, brutalist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Brutalist Architectural Blueprint",
+        "prompt": "architectural blueprint, vector sharpness, brutalist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Mythic Drip Paint Action",
-      "prompt": "drip-paint action, cinematic depth of field, mythic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Mythic Drip Paint Action",
+        "prompt": "drip-paint action, cinematic depth of field, mythic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Prismatic Kaleidoscope Fractal",
-      "prompt": "kaleidoscope fractal, ultra-detailed textures, prismatic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Prismatic Kaleidoscope Fractal",
+        "prompt": "kaleidoscope fractal, ultra-detailed textures, prismatic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Psychedelic Low Poly Diorama",
-      "prompt": "low-poly diorama, surreal scale shifts, psychedelic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Psychedelic Low Poly Diorama",
+        "prompt": "low-poly diorama, surreal scale shifts, psychedelic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Embroidery Iridescent Foil",
-      "prompt": "iridescent foil, high contrast shadows, embroidery reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Embroidery Iridescent Foil",
+        "prompt": "iridescent foil, high contrast shadows, embroidery reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Retro-futurist Typographic Poster",
-      "prompt": "typographic poster, surreal scale shifts, retro-futurist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Retro-futurist Typographic Poster",
+        "prompt": "typographic poster, surreal scale shifts, retro-futurist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Retro-futurist Psychedelic Poster",
-      "prompt": "psychedelic poster, foil stamping effects, retro-futurist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Retro-futurist Psychedelic Poster",
+        "prompt": "psychedelic poster, foil stamping effects, retro-futurist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed" 
     },
     {
-      "name": "Embroidery Psychedelic Poster",
-      "prompt": "psychedelic poster, detailed embroidery stitches, embroidery reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Embroidery Psychedelic Poster",
+        "prompt": "psychedelic poster, detailed embroidery stitches, embroidery reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Minimalist Neon Signage",
-      "prompt": "neon signage, floating geometry, minimalist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Minimalist Neon Signage",
+        "prompt": "neon signage, floating geometry, minimalist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Dreamcore Felt Applique",
-      "prompt": "felt applique, cracked porcelain finish, dreamcore reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Dreamcore Felt Applique",
+        "prompt": "felt applique, cracked porcelain finish, dreamcore reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Papercraft Miniature Diorama",
-      "prompt": "miniature diorama, floating geometry, papercraft reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Papercraft Miniature Diorama",
+        "prompt": "miniature diorama, floating geometry, papercraft reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Comic Anatomical Illustration",
-      "prompt": "anatomical illustration, soft watercolor bleeds, comic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Comic Anatomical Illustration",
+        "prompt": "anatomical illustration, soft watercolor bleeds, comic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Eldritch Gouache Smear",
-      "prompt": "gouache smear, fractured reflections, eldritch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Eldritch Gouache Smear",
+        "prompt": "gouache smear, fractured reflections, eldritch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Patchwork Pen And Ink Stipple",
-      "prompt": "pen-and-ink stipple, ink wash gradients, patchwork reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Patchwork Pen And Ink Stipple",
+        "prompt": "pen-and-ink stipple, ink wash gradients, patchwork reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Vector Isometric Illustration",
-      "prompt": "isometric illustration, vector sharpness, vector reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Vector Isometric Illustration",
+        "prompt": "isometric illustration, vector sharpness, vector reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Origami Surreal Collage",
-      "prompt": "surreal collage, detailed embroidery stitches, origami reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Origami Surreal Collage",
+        "prompt": "surreal collage, detailed embroidery stitches, origami reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Pixel Neon Signage",
-      "prompt": "neon signage, intricate patterns, pixel reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Pixel Neon Signage",
+        "prompt": "neon signage, intricate patterns, pixel reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Prismatic Sugar Glass Diorama",
-      "prompt": "sugar-glass diorama, dramatic backlight, prismatic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Prismatic Sugar Glass Diorama",
+        "prompt": "sugar-glass diorama, dramatic backlight, prismatic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Prismatic Marquetry Inlay",
-      "prompt": "marquetry inlay, rusted metallic surfaces, prismatic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Prismatic Marquetry Inlay",
+        "prompt": "marquetry inlay, rusted metallic surfaces, prismatic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Anamorphic Datamosh Glitch",
-      "prompt": "datamosh glitch, dramatic backlight, anamorphic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Anamorphic Datamosh Glitch",
+        "prompt": "datamosh glitch, dramatic backlight, anamorphic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Surreal Ancient Tapestry",
-      "prompt": "ancient tapestry, muted pastel palette, surreal reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Surreal Ancient Tapestry",
+        "prompt": "ancient tapestry, muted pastel palette, surreal reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Linocut Stained Glass",
-      "prompt": "stained glass, cracked porcelain finish, linocut reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Linocut Stained Glass",
+        "prompt": "stained glass, cracked porcelain finish, linocut reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Comic Seed Bead Mosaic",
-      "prompt": "seed-bead mosaic, neon gradient palette, comic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Comic Seed Bead Mosaic",
+        "prompt": "seed-bead mosaic, neon gradient palette, comic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Comic Sumi E Ink Wash",
-      "prompt": "sumi-e ink wash, ancient symbol motifs, comic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Comic Sumi E Ink Wash",
+        "prompt": "sumi-e ink wash, ancient symbol motifs, comic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Patchwork Paper Origami",
-      "prompt": "paper origami, limited color scheme, patchwork reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Patchwork Paper Origami",
+        "prompt": "paper origami, limited color scheme, patchwork reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Minimalist Cyberpunk Cityscape",
-      "prompt": "cyberpunk cityscape, muted pastel palette, minimalist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Minimalist Cyberpunk Cityscape",
+        "prompt": "cyberpunk cityscape, muted pastel palette, minimalist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Voxel Lego Mosaic",
-      "prompt": "lego mosaic, intricate patterns, voxel reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, worst quality,), watermark, text, oversmoothing, muddy colors"
+        "name": "Voxel Lego Mosaic",
+        "prompt": "lego mosaic, intricate patterns, voxel reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, worst quality,), watermark, text, oversmoothing, muddy colors"
     },
     {
-      "name": "Vector Kaleidoscope Fractal",
-      "prompt": "kaleidoscope fractal, foil stamping effects, vector reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Vector Kaleidoscope Fractal",
+        "prompt": "kaleidoscope fractal, foil stamping effects, vector reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Synthwave Gouache Smear",
-      "prompt": "gouache smear, cross-hatched shading, synthwave reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Synthwave Gouache Smear",
+        "prompt": "gouache smear, cross-hatched shading, synthwave reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Magical Metallic Emboss",
-      "prompt": "metallic emboss, ultra-detailed textures, magical reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Magical Metallic Emboss",
+        "prompt": "metallic emboss, ultra-detailed textures, magical reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Dreamcore Typographic Poster",
-      "prompt": "typographic poster, soft watercolor bleeds, dreamcore reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Dreamcore Typographic Poster",
+        "prompt": "typographic poster, soft watercolor bleeds, dreamcore reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Kaleidoscopic Sugar Glass Diorama",
-      "prompt": "sugar-glass diorama, foil stamping effects, kaleidoscopic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Kaleidoscopic Sugar Glass Diorama",
+        "prompt": "sugar-glass diorama, foil stamping effects, kaleidoscopic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Glitch Seed Bead Mosaic",
-      "prompt": "seed-bead mosaic, floating geometry, glitch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Glitch Seed Bead Mosaic",
+        "prompt": "seed-bead mosaic, floating geometry, glitch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Baroque Retro Comic Cover",
-      "prompt": "retro comic cover, woodgrain imperfections, baroque reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Baroque Retro Comic Cover",
+        "prompt": "retro comic cover, woodgrain imperfections, baroque reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Toy Pen And Ink Stipple",
-      "prompt": "pen-and-ink stipple, cracked porcelain finish, toy reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Toy Pen And Ink Stipple",
+        "prompt": "pen-and-ink stipple, cracked porcelain finish, toy reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Pixel Surreal Collage",
-      "prompt": "surreal collage, ink wash gradients, pixel reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Pixel Surreal Collage",
+        "prompt": "surreal collage, ink wash gradients, pixel reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Retro-futurist Marquetry Inlay",
-      "prompt": "marquetry inlay, limited color scheme, retro-futurist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Retro-futurist Marquetry Inlay",
+        "prompt": "marquetry inlay, limited color scheme, retro-futurist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Magical Bio Mech Anatomy",
-      "prompt": "bio-mech anatomy, cross-hatched shading, magical reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Magical Bio Mech Anatomy",
+        "prompt": "bio-mech anatomy, cross-hatched shading, magical reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Woodcut Lego Mosaic",
-      "prompt": "lego mosaic, stippling texture, woodcut reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, worst quality,), watermark, text, oversmoothing, muddy colors"
+        "name": "Woodcut Lego Mosaic",
+        "prompt": "lego mosaic, stippling texture, woodcut reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, worst quality,), watermark, text, oversmoothing, muddy colors"
     },
     {
-      "name": "Gothic Metallic Emboss",
-      "prompt": "metallic emboss, cinematic depth of field, gothic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Gothic Metallic Emboss",
+        "prompt": "metallic emboss, cinematic depth of field, gothic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Glitch Datamosh Glitch",
-      "prompt": "datamosh glitch, dreamlike lighting, glitch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Glitch Datamosh Glitch",
+        "prompt": "datamosh glitch, dreamlike lighting, glitch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Isometric Stipple Engraving",
-      "prompt": "stipple engraving, cinematic depth of field, isometric reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Isometric Stipple Engraving",
+        "prompt": "stipple engraving, cinematic depth of field, isometric reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Isometric Miniature Diorama",
-      "prompt": "miniature diorama, intricate patterns, isometric reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Isometric Miniature Diorama",
+        "prompt": "miniature diorama, intricate patterns, isometric reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Glitch Collagraph Print",
-      "prompt": "collagraph print, ultra-detailed textures, glitch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Glitch Collagraph Print",
+        "prompt": "collagraph print, ultra-detailed textures, glitch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Psychedelic Isometric Illustration",
-      "prompt": "isometric illustration, strong silhouettes, psychedelic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Psychedelic Isometric Illustration",
+        "prompt": "isometric illustration, strong silhouettes, psychedelic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Noir Isometric Illustration",
-      "prompt": "isometric illustration, double exposure overlay, noir reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Noir Isometric Illustration",
+        "prompt": "isometric illustration, double exposure overlay, noir reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Mythic Retro Comic Cover",
-      "prompt": "retro comic cover, foil stamping effects, mythic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Mythic Retro Comic Cover",
+        "prompt": "retro comic cover, foil stamping effects, mythic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Diorama Typographic Poster",
-      "prompt": "typographic poster, woodgrain imperfections, diorama reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Diorama Typographic Poster",
+        "prompt": "typographic poster, woodgrain imperfections, diorama reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Dreamcore Technical Cutaway",
-      "prompt": "technical cutaway, prismatic refractions, dreamcore reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Dreamcore Technical Cutaway",
+        "prompt": "technical cutaway, prismatic refractions, dreamcore reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Dieselpunk Sumi E Ink Wash",
-      "prompt": "sumi-e ink wash, subtle film grain, dieselpunk reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Dieselpunk Sumi E Ink Wash",
+        "prompt": "sumi-e ink wash, subtle film grain, dieselpunk reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Holographic Ancient Tapestry",
-      "prompt": "ancient tapestry, paper-texture details, holographic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Holographic Ancient Tapestry",
+        "prompt": "ancient tapestry, paper-texture details, holographic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Stained-Glass Cosmic Horror Tableau",
-      "prompt": "cosmic horror tableau, detailed embroidery stitches, stained-glass reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Stained-Glass Cosmic Horror Tableau",
+        "prompt": "cosmic horror tableau, detailed embroidery stitches, stained-glass reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Eldritch Lacquered Miniature",
-      "prompt": "lacquered miniature, subtle film grain, eldritch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Eldritch Lacquered Miniature",
+        "prompt": "lacquered miniature, subtle film grain, eldritch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Eldritch Bio Mech Anatomy",
-      "prompt": "bio-mech anatomy, tilt-shift miniature illusion, eldritch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Eldritch Bio Mech Anatomy",
+        "prompt": "bio-mech anatomy, tilt-shift miniature illusion, eldritch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Bioluminescent Metallic Emboss",
-      "prompt": "metallic emboss, limited color scheme, bioluminescent reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Bioluminescent Metallic Emboss",
+        "prompt": "metallic emboss, limited color scheme, bioluminescent reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Dieselpunk Marquetry Inlay",
-      "prompt": "marquetry inlay, stippling texture, dieselpunk reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Dieselpunk Marquetry Inlay",
+        "prompt": "marquetry inlay, stippling texture, dieselpunk reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Baroque Ancient Tapestry",
-      "prompt": "ancient tapestry, neon gradient palette, baroque reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Baroque Ancient Tapestry",
+        "prompt": "ancient tapestry, neon gradient palette, baroque reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Mythic Architectural Blueprint",
-      "prompt": "architectural blueprint, double exposure overlay, mythic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Mythic Architectural Blueprint",
+        "prompt": "architectural blueprint, double exposure overlay, mythic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Glitch Folk Embroidery",
-      "prompt": "folk embroidery, subtle film grain, glitch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Glitch Folk Embroidery",
+        "prompt": "folk embroidery, subtle film grain, glitch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Eldritch Psychedelic Poster",
-      "prompt": "psychedelic poster, intricate patterns, eldritch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Eldritch Psychedelic Poster",
+        "prompt": "psychedelic poster, intricate patterns, eldritch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Kaleidoscopic Seed Bead Mosaic",
-      "prompt": "seed-bead mosaic, double exposure overlay, kaleidoscopic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Kaleidoscopic Seed Bead Mosaic",
+        "prompt": "seed-bead mosaic, double exposure overlay, kaleidoscopic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Brutalist Cosmic Horror Tableau",
-      "prompt": "cosmic horror tableau, foil stamping effects, brutalist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Brutalist Cosmic Horror Tableau",
+        "prompt": "cosmic horror tableau, foil stamping effects, brutalist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Etching Toy Photography",
-      "prompt": "toy-photography, glowing bioluminescence, etching reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, worst quality:1.3), watermark, unnatural skin, overexposed, blur, motion artefacts"
+        "name": "Etching Toy Photography",
+        "prompt": "toy-photography, glowing bioluminescence, etching reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, worst quality:1.3), watermark, unnatural skin, overexposed, blur, motion artefacts"
     },
     {
-      "name": "Eldritch Pen And Ink Stipple",
-      "prompt": "pen-and-ink stipple, vector sharpness, eldritch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Eldritch Pen And Ink Stipple",
+        "prompt": "pen-and-ink stipple, vector sharpness, eldritch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Neon Steampunk Machinery",
-      "prompt": "steampunk machinery, cracked porcelain finish, neon reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Neon Steampunk Machinery",
+        "prompt": "steampunk machinery, cracked porcelain finish, neon reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Linocut Lenticular Poster",
-      "prompt": "lenticular poster, ink wash gradients, linocut reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Linocut Lenticular Poster",
+        "prompt": "lenticular poster, ink wash gradients, linocut reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Bio-mech Sugar Glass Diorama",
-      "prompt": "sugar-glass diorama, foil stamping effects, bio-mech reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Bio-mech Sugar Glass Diorama",
+        "prompt": "sugar-glass diorama, foil stamping effects, bio-mech reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Minimalist Photomicrography",
-      "prompt": "photomicrography, ornate filigree, minimalist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, worst quality:1.3), watermark, unnatural skin, overexposed, blur, motion artefacts"
+        "name": "Minimalist Photomicrography",
+        "prompt": "photomicrography, ornate filigree, minimalist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, worst quality:1.3), watermark, unnatural skin, overexposed, blur, motion artefacts"
     },
     {
-      "name": "Retro-futurist 8 Bit Pixel Art",
-      "prompt": "8-bit pixel art, ultra-detailed textures, retro-futurist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, worst quality,), watermark, text, oversmoothing, muddy colors"
+        "name": "Retro-futurist 8 Bit Pixel Art",
+        "prompt": "8-bit pixel art, ultra-detailed textures, retro-futurist reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, worst quality,), watermark, text, oversmoothing, muddy colors"
     },
     {
-      "name": "Cinematic 8 Bit Pixel Art",
-      "prompt": "8-bit pixel art, ultra-detailed textures, cinematic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, worst quality,), watermark, text, oversmoothing, muddy colors"
+        "name": "Cinematic 8 Bit Pixel Art",
+        "prompt": "8-bit pixel art, ultra-detailed textures, cinematic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, worst quality,), watermark, text, oversmoothing, muddy colors"
     },
     {
-      "name": "Isometric Technical Cutaway",
-      "prompt": "technical cutaway, muted pastel palette, isometric reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Isometric Technical Cutaway",
+        "prompt": "technical cutaway, muted pastel palette, isometric reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Eldritch Paper Origami",
-      "prompt": "paper origami, soft watercolor bleeds, eldritch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Eldritch Paper Origami",
+        "prompt": "paper origami, soft watercolor bleeds, eldritch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Steampunk Isometric Illustration",
-      "prompt": "isometric illustration, high contrast shadows, steampunk reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Steampunk Isometric Illustration",
+        "prompt": "isometric illustration, high contrast shadows, steampunk reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Prismatic Metallic Emboss",
-      "prompt": "metallic emboss, glowing bioluminescence, prismatic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Prismatic Metallic Emboss",
+        "prompt": "metallic emboss, glowing bioluminescence, prismatic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Gothic Typographic Poster",
-      "prompt": "typographic poster, double exposure overlay, gothic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Gothic Typographic Poster",
+        "prompt": "typographic poster, double exposure overlay, gothic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Isometric Surreal Collage",
-      "prompt": "surreal collage, strong silhouettes, isometric reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Isometric Surreal Collage",
+        "prompt": "surreal collage, strong silhouettes, isometric reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Collage Vector Linocut",
-      "prompt": "vector linocut, prismatic refractions, collage reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Collage Vector Linocut",
+        "prompt": "vector linocut, prismatic refractions, collage reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Holographic Film Noir Frame",
-      "prompt": "film noir frame, surreal scale shifts, holographic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Holographic Film Noir Frame",
+        "prompt": "film noir frame, surreal scale shifts, holographic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Folkloric Toy Photography",
-      "prompt": "toy-photography, surreal scale shifts, folkloric reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, worst quality:1.3), watermark, unnatural skin, overexposed, blur, motion artefacts"
+        "name": "Folkloric Toy Photography",
+        "prompt": "toy-photography, surreal scale shifts, folkloric reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, worst quality:1.3), watermark, unnatural skin, overexposed, blur, motion artefacts"
     },
     {
-      "name": "Dreamcore Neon Signage",
-      "prompt": "neon signage, glowing bioluminescence, dreamcore reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Dreamcore Neon Signage",
+        "prompt": "neon signage, glowing bioluminescence, dreamcore reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Linocut Kaleidoscope Fractal",
-      "prompt": "kaleidoscope fractal, high contrast shadows, linocut reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Linocut Kaleidoscope Fractal",
+        "prompt": "kaleidoscope fractal, high contrast shadows, linocut reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Neon Architectural Blueprint",
-      "prompt": "architectural blueprint, subtle film grain, neon reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Neon Architectural Blueprint",
+        "prompt": "architectural blueprint, subtle film grain, neon reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Glitch Marquetry Inlay",
-      "prompt": "marquetry inlay, handmade craft feel, glitch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Glitch Marquetry Inlay",
+        "prompt": "marquetry inlay, handmade craft feel, glitch reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Comic Neon Signage",
-      "prompt": "neon signage, floating geometry, comic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Comic Neon Signage",
+        "prompt": "neon signage, floating geometry, comic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "LowPoly Isometric Illustration",
-      "prompt": "isometric illustration, double exposure overlay, lowpoly reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "LowPoly Isometric Illustration",
+        "prompt": "isometric illustration, double exposure overlay, lowpoly reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Papercraft Lenticular Poster",
-      "prompt": "lenticular poster, muted pastel palette, papercraft reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Papercraft Lenticular Poster",
+        "prompt": "lenticular poster, muted pastel palette, papercraft reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Woodcut Marquetry Inlay",
-      "prompt": "marquetry inlay, ancient symbol motifs, woodcut reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Woodcut Marquetry Inlay",
+        "prompt": "marquetry inlay, ancient symbol motifs, woodcut reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Collage Psychedelic Poster",
-      "prompt": "psychedelic poster, intricate patterns, collage reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Collage Psychedelic Poster",
+        "prompt": "psychedelic poster, intricate patterns, collage reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Holographic Stipple Engraving",
-      "prompt": "stipple engraving, ancient symbol motifs, holographic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Holographic Stipple Engraving",
+        "prompt": "stipple engraving, ancient symbol motifs, holographic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Holographic Sumi E Ink Wash",
-      "prompt": "sumi-e ink wash, floating geometry, holographic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Holographic Sumi E Ink Wash",
+        "prompt": "sumi-e ink wash, floating geometry, holographic reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
-      "name": "Folkloric Gouache Smear",
-      "prompt": "gouache smear, subtle film grain, folkloric reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
-      "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+        "name": "Folkloric Gouache Smear",
+        "prompt": "gouache smear, subtle film grain, folkloric reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
+        "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
     },
     {
         "name": "Surreal Dreamscape",
@@ -4411,7 +4411,7 @@ style_list = [
     },
     {
         "name": "Psychedelic 60s Poster",
- "prompt": "psychedelic 1960s concert poster, swirling ornaments, bold type-like shapes, highly saturated gradients, {prompt}, trippy patterns",
+        "prompt": "psychedelic 1960s concert poster, swirling ornaments, bold type-like shapes, highly saturated gradients, {prompt}, trippy patterns",
         "negative_prompt": "muted colors, photorealistic, lowres, watermark, text",
     },
     {
@@ -4966,7 +4966,7 @@ style_list = [
     },
     {
         "name": "Cinematic Title Card",
- "prompt": "cinematic title card composition, dramatic typography and negative space, {prompt}, poster-grade mood",
+        "prompt": "cinematic title card composition, dramatic typography and negative space, {prompt}, poster-grade mood",
         "negative_prompt": "photo, busy background, watermark, text artifacts",
     },
     {
@@ -5001,7 +5001,7 @@ style_list = [
     },
     {
         "name": "Puppet Shadow Theater",
- "prompt": "puppet shadow theater staging, layered silhouettes and lantern light, {prompt}, folk-story ambience",
+        "prompt": "puppet shadow theater staging, layered silhouettes and lantern light, {prompt}, folk-story ambience",
         "negative_prompt": "photo realism, modern lighting, blur, watermark",
     },
     {
@@ -5018,6 +5018,11 @@ style_list = [
         "name": "Kinetic Typography Diagram",
         "prompt": "kinetic typography frame, expressive letter motion implied in a single image, {prompt}, dynamic typographic layout",
         "negative_prompt": "static uninteresting text, photorealistic, blur, watermark",
+    },
+    {
+        "name": "Typography 2",
+        "prompt": "typography_art, english text, black background, photograph of a Fashion model {prompt}, highly detailed and intricate, golden ratio, vibrant colors, hyper maximalist, futuristic, city background, luxury, elite, cinematic, fashion, depth of field, colorful, glow, trending on artstation, ultra high definition",
+        "negative_prompt": "Blurry, ugly, tiling, poorly drawn hands, poorly drawn feet, poorly drawn face, out of frame, extra limbs, disfigured, deformed, body out of frame, bad anatomy, watermark, signature, cut off, Low quality"
     }
 ]
 
