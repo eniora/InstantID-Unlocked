@@ -131,6 +131,7 @@ def on_style_change(style_name):
     if style_name == "(No style)":
         return gr.update(), gr.update()
     else:
+        print(f"Manual style selection: {style_name}")
         return gr.update(value=""), gr.update(value="")
 
 def get_available_models():
