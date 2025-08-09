@@ -3035,11 +3035,6 @@ style_list = [
         "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
     },
     {
-        "name": "Pixel Art 16-bit",
-        "prompt": "Pixel Art 16-bit style illustration, pixel-perfect shapes, limited palette, retro videogame look, crisp pixels, {prompt}, detailed linework, strong composition",
-        "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
-    },
-    {
         "name": "Pixel Art 8-bit",
         "prompt": "Pixel Art 8-bit style illustration, pixel-perfect shapes, limited palette, retro videogame look, crisp pixels, {prompt}, detailed linework, strong composition",
         "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
