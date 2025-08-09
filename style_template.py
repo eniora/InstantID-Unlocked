@@ -1615,11 +1615,6 @@ style_list = [
         "negative_prompt": "ugly, deformed, noisy, blurry, low contrast, vibrant, colorful, bright"
     },
     {
-        "name": "Dmt Art Style",
-        "prompt": "DMT Art Style, {prompt}, bright colors, surreal visuals, swirling patterns, DMT art style",
-        "negative_prompt": "ugly, deformed, noisy, blurry, low contrast"
-    },
-    {
         "name": "Doodle Art",
         "prompt": "Doodle Art Style, {prompt}, drawing, freeform, swirling patterns, doodle art style",
         "negative_prompt": "ugly, deformed, noisy, blurry, low contrast"
@@ -1638,11 +1633,6 @@ style_list = [
         "name": "Fauvism",
         "prompt": "Fauvism Art, {prompt}, painterly, bold colors, textured brushwork, fauvism art",
         "negative_prompt": "ugly, deformed, noisy, blurry, low contrast"
-    },
-    {
-        "name": "Flat 2d Art",
-        "prompt": "Flat 2D Art, {prompt}, simple flat color, 2-dimensional, Flat 2D Art Style",
-        "negative_prompt": "ugly, deformed, noisy, blurry, low contrast, 3D, photo, realistic"
     },
     {
         "name": "Fortnite Art Style",
@@ -2360,7 +2350,7 @@ style_list = [
         "negative_prompt": "soft gradients, lowres, watermark",
     },
     {
-        "name": "Double Exposure",
+        "name": "Double Exposure 2",
         "prompt": "double exposure portrait of {prompt}, layered landscapes and portrait silhouette, dreamy composite, cinematic",
         "negative_prompt": "single flat layer, lowres, watermark",
     },
@@ -2930,7 +2920,7 @@ style_list = [
         "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
     },
     {
-        "name": "Stained Glass",
+        "name": "Stained Glass 2",
         "prompt": "Stained Glass style illustration, tessellated forms, stitched textures, woven threads, tactile surface, {prompt}, detailed linework, strong composition",
         "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
     },
@@ -3115,7 +3105,7 @@ style_list = [
         "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
     },
     {
-        "name": "Impressionist Brushwork",
+        "name": "Impressionist Brushwork 2",
         "prompt": "Impressionist Brushwork style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
         "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
     },
@@ -3150,7 +3140,7 @@ style_list = [
         "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
     },
     {
-        "name": "Abstract Expressionism",
+        "name": "Abstract Expressionism 2",
         "prompt": "Abstract Expressionism style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
         "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
     },
@@ -3225,7 +3215,7 @@ style_list = [
         "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
     },
     {
-        "name": "Neon Noir",
+        "name": "Neon Noir 2",
         "prompt": "Neon Noir style illustration, inked panels, halftone texture, dynamic poses, bold outlines, neon gradients, retro color palette, glitch artifacts, nostalgic vibes, {prompt}, detailed linework, strong composition",
         "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
     },
@@ -3275,7 +3265,7 @@ style_list = [
         "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
     },
     {
-        "name": "Paper Quilling",
+        "name": "Paper Quilling 2",
         "prompt": "Paper Quilling style illustration, tessellated forms, stitched textures, woven threads, tactile surface, {prompt}, detailed linework, strong composition",
         "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
     },
@@ -3795,7 +3785,7 @@ style_list = [
         "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
     },
     {
-        "name": "Pop Surrealism",
+        "name": "Pop Surrealism 2",
         "prompt": "Pop Surrealism style illustration, dreamlike juxtapositions, uncanny elements, imaginative composition, {prompt}, detailed linework, strong composition",
         "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
     },
@@ -4408,6 +4398,626 @@ style_list = [
       "name": "Folkloric Gouache Smear",
       "prompt": "gouache smear, subtle film grain, folkloric reinterpretation of {prompt}, intricate composition, strong mood, cinematic framing, ultra-detailed, high resolution",
       "negative_prompt": "(lowres, low quality), watermark, text, signature, frame, blurry, deformed"
+    },
+    {
+        "name": "Surreal Dreamscape",
+        "prompt": "surreal dreamscape, floating architecture, impossible perspective, {prompt}, painterly, otherworldly details, symbolic imagery",
+        "negative_prompt": "photorealistic, lowres, text, watermark, deformed, ugly, blurry",
+    },
+    {
+        "name": "Cubist Collage",
+        "prompt": "cubist collage treatment, fragmented planes, geometric abstraction, layered faces and objects, {prompt}, analytical cubism feel",
+        "negative_prompt": "photo, photorealistic, soft focus, blurred, text, watermark",
+    },
+    {
+        "name": "Psychedelic 60s Poster",
+ "prompt": "psychedelic 1960s concert poster, swirling ornaments, bold type-like shapes, highly saturated gradients, {prompt}, trippy patterns",
+        "negative_prompt": "muted colors, photorealistic, lowres, watermark, text",
+    },
+    {
+        "name": "Vaporwave 2",
+        "prompt": "vaporwave aesthetic, retro-futuristic, pastel neon gradients, Greek statue busts, VHS grain, {prompt}, dreamy nostalgia",
+        "negative_prompt": "realistic, high detail photo, watermark, tilted horizon, ugly",
+    },
+    {
+        "name": "Synthwave / Retrowave",
+        "prompt": "synthwave retro 80s, neon grid, sun with chromatic glow, cinematic silhouette, {prompt}, high contrast neon",
+        "negative_prompt": "photorealistic, muddy, lowres, text, watermark",
+    },
+    {
+        "name": "Ukiyo-e Woodblock 2",
+        "prompt": "ukiyo-e woodblock print style, flat areas of color, strong outlines, textured paper grain, {prompt}, traditional Japanese composition",
+        "negative_prompt": "3d, photorealistic, modern lens effects, blurry, watermark",
+    },
+    {
+        "name": "Gouache Illustration 2",
+        "prompt": "gouache painting, opaque layered brushstrokes, soft edges, tactile paper texture, {prompt}, illustrative composition",
+        "negative_prompt": "photo, realistic, muddy, noisy, watermark",
+    },
+    {
+        "name": "Papercut Collage 2",
+        "prompt": "papercut collage, crisp paper edges, layered cut shapes, drop shadows, handcrafted look, {prompt}, simplified color blocks",
+        "negative_prompt": "photorealistic, grainy, blurred, watermark, text",
+    },
+    {
+        "name": "Caricature Cartoon",
+        "prompt": "exaggerated caricature, playful proportions, bold linework, expressive features, {prompt}, high personality",
+        "negative_prompt": "realistic anatomy, photo, lowres, watermark, text",
+    },
+    {
+        "name": "Low-Poly 3D",
+        "prompt": "low-poly 3d style, faceted geometry, flat shading, stylized polygonal forms, {prompt}, clean silhouette",
+        "negative_prompt": "photorealistic, high poly, detailed textures, noise, watermark",
+    },
+    {
+        "name": "Pixel Art (16-bit)",
+        "prompt": "pixel art 16-bit, limited palette, crisp pixels, isometric vibes optional, {prompt}, retro game sprite composition",
+        "negative_prompt": "smooth gradients, photorealistic, blur, watermark",
+    },
+    {
+        "name": "Isometric Game Art",
+        "prompt": "isometric game art, tiny world, tile detail, charming miniatures, {prompt}, handcrafted game-sprite feel",
+        "negative_prompt": "photo, 3d photorealistic, lowres, watermark",
+    },
+    {
+        "name": "Flat Vector Art",
+        "prompt": "flat vector illustration, simple shapes, bold negative space, clean edges, {prompt}, poster-ready composition",
+        "negative_prompt": "photorealistic, texture, grain, blur, watermark",
+    },
+    {
+        "name": "Papercraft Diorama",
+        "prompt": "miniature papercraft diorama, layered depth, soft studio light, handcrafted paper textures, {prompt}, whimsical scale",
+        "negative_prompt": "photo, photorealistic, noisy, watermark",
+    },
+    {
+        "name": "Stained Glass 3",
+        "prompt": "stained glass window style, leaded outlines, jewel-tone panes, luminous backlight, {prompt}, ornamental motifs",
+        "negative_prompt": "photo, realistic faces, blur, watermark, text",
+    },
+    {
+        "name": "Linocut / Woodcut",
+        "prompt": "linocut print, high contrast relief carving marks, limited palette, bold contours, {prompt}, craft printmaking aesthetic",
+        "negative_prompt": "photo, soft gradients, blur, watermark",
+    },
+    {
+        "name": "Pointillism 2",
+        "prompt": "pointillist stippling technique, tiny dots build color and light, {prompt}, painterly optical mixing",
+        "negative_prompt": "photorealistic, blur, lowres, watermark",
+    },
+    {
+        "name": "Op Art (Optical)",
+        "prompt": "op-art optical patterning, moiré illusions, high-contrast geometric repeats, {prompt}, dizzying visual rhythm",
+        "negative_prompt": "photo, soft edges, blur, watermark",
+    },
+    {
+        "name": "Collage & Mixed Media",
+        "prompt": "mixed media collage, torn paper, ink scribbles, photographed textures, {prompt}, layered eclectic composition",
+        "negative_prompt": "clean photorealistic, lowres, watermark, text",
+    },
+    {
+        "name": "Silkscreen / Pop Art",
+        "prompt": "silkscreen pop-art halftone, bold shapes, limited high-contrast palette, {prompt}, graphic poster quality",
+        "negative_prompt": "photo, realistic lighting, blur, watermark",
+    },
+    {
+        "name": "Children's Book Whimsy",
+        "prompt": "children's book illustration, soft playful characters, rounded shapes, gentle palette, {prompt}, storybook charm",
+        "negative_prompt": "gory, realistic violence, photorealistic, watermark",
+    },
+    {
+        "name": "Sticker / Emblem",
+        "prompt": "sticker art, bold outline, simplified silhouette, badge composition, {prompt}, high readability at small sizes",
+        "negative_prompt": "photo, noisy texture, blur, watermark",
+    },
+    {
+        "name": "Cloth Embroidery Texture",
+        "prompt": "embroidered textile look, stitched threads, fabric texture, tactile highlights and shadows, {prompt}, handcrafted embroidery style",
+        "negative_prompt": "photo, realistic skin detail, blur, watermark",
+    },
+    {
+        "name": "Hand-Drawn Comic Ink",
+        "prompt": "inktober-style hand inked comic panel, expressive hatching and line weight, dynamic composition, {prompt}, sequential art energy",
+        "negative_prompt": "photo, soft brush paint, blur, watermark",
+    },
+    {
+        "name": "Retro Paper Poster",
+        "prompt": "vintage paper poster, slightly faded inks, halftone aging, retro typography vibes, {prompt}, collectible poster look",
+        "negative_prompt": "photo, modern glossy finish, watermark, text",
+    },
+    {
+        "name": "Bauhaus Geometric",
+        "prompt": "bauhaus inspired geometric composition, primary colors, functional simplicity, {prompt}, modernist graphic balance",
+        "negative_prompt": "photo, ornate details, blur, watermark",
+    },
+    {
+        "name": "Art Nouveau Flow",
+        "prompt": "art nouveau ornamental flow, sinuous lines, floral motif framing, elegant figure composition, {prompt}, decorative organic forms",
+        "negative_prompt": "photorealistic, harsh lighting, blur, watermark",
+    },
+    {
+        "name": "Constructivist Poster 2",
+        "prompt": "constructivist propaganda poster style, angular shapes, strong diagonals, typographic blocks, {prompt}, bold limited palette",
+        "negative_prompt": "photo, soft edges, blur, watermark",
+    },
+    {
+        "name": "Art Deco Glam",
+        "prompt": "art deco ornamentation, geometric luxury, metallic accents, sleek silhouettes, {prompt}, 1920s glamour",
+        "negative_prompt": "grunge, messy texture, photorealistic, blur, watermark",
+    },
+    {
+        "name": "Steampunk Illustration",
+        "prompt": "steampunk mechanical Victorian, brass gears, steam pipes, whimsical contraptions, {prompt}, intricate hand-drawn detail",
+        "negative_prompt": "modern tech, photorealistic, blur, watermark",
+    },
+    {
+        "name": "Dieselpunk Noir",
+        "prompt": "dieselpunk gritty 1930s-40s, industrial silhouettes, smoky atmospherics, {prompt}, noir mood",
+        "negative_prompt": "bright pop, photorealistic, watermark",
+    },
+    {
+        "name": "Film Noir Graphic",
+        "prompt": "film noir graphic, high-contrast chiaroscuro, dramatic silhouettes and smoke, {prompt}, cinematic 1940s vibe",
+        "negative_prompt": "colorful, pastel, photorealistic, watermark",
+    },
+    {
+        "name": "Kaleidoscope Symmetry",
+        "prompt": "kaleidoscopic symmetry, mirrored fractal motifs, intricate repeating ornament, {prompt}, hypnotic pattern",
+        "negative_prompt": "photo, asymmetry, blur, watermark",
+    },
+    {
+        "name": "Collage Photo-Illustration",
+        "prompt": "photo-illustration collage blend, cut-and-paste photos with painted overlays, {prompt}, surreal editorial look",
+        "negative_prompt": "plain photo, raw jpeg artifacts, watermark, text",
+    },
+    {
+        "name": "Claymation / Stop-Motion",
+        "prompt": "stop-motion claymation style, tactile sculpted forms, visible fingerprints and seams, {prompt}, handcrafted animation look",
+        "negative_prompt": "3d render, photorealistic, blur, watermark",
+    },
+    {
+        "name": "Miniature Model (Toy-like)",
+        "prompt": "toy model diorama aesthetic, painted miniature feel, shallow depth of field optional, {prompt}, playful scale",
+        "negative_prompt": "real human faces, photorealistic, blur, watermark",
+    },
+    {
+        "name": "Vector Flat UI",
+        "prompt": "flat UI illustration, clean iconography, simplified forms, negative space, {prompt}, scalable vector look",
+        "negative_prompt": "photo, texture, grime, blur, watermark",
+    },
+    {
+        "name": "Zine / Xerox Punk",
+        "prompt": "zine xerox punk aesthetic, high-contrast photocopy textures, hand-cut letters, collage grit, {prompt}, DIY raw energy",
+        "negative_prompt": "polished, glossy, photorealistic, watermark",
+    },
+    {
+        "name": "Stencil Graffiti",
+        "prompt": "street-art stencil, spray paint edge, urban rough wall texture, bold silhouette, {prompt}, rebellious poster quality",
+        "negative_prompt": "pristine studio photo, polished finish, watermark",
+    },
+    {
+        "name": "Tattoo Flash Art",
+        "prompt": "traditional tattoo flash sheet, bold outlines, limited palette, iconographic motifs, {prompt}, vintage flash layout",
+        "negative_prompt": "photo, soft gradients, blur, watermark",
+    },
+    {
+        "name": "Handmade Ceramic Glaze",
+        "prompt": "hand-thrown ceramic texture, reactive glaze speckles, kiln-fired color shifts, {prompt}, tactile potters' finish",
+        "negative_prompt": "flat digital, photorealistic metal, watermark",
+    },
+    {
+        "name": "Fresco Mural",
+        "prompt": "fresco mural texture, subtle plaster cracks, mineral pigments, classical composition, {prompt}, aged wall painting",
+        "negative_prompt": "clean studio photo, glossy sheen, watermark",
+    },
+    {
+        "name": "Charcoal Sketch",
+        "prompt": "loose charcoal sketching, rich blacks and smudged greys, energetic marks, {prompt}, expressive figure drawing",
+        "negative_prompt": "photo, color, blur, watermark",
+    },
+    {
+        "name": "Ink Wash (Sumi-e) 2",
+        "prompt": "sumi-e ink wash minimalism, wet brush gradients, bold calligraphic strokes, {prompt}, contemplative negative space",
+        "negative_prompt": "photo, heavy texture, color, watermark",
+    },
+    {
+        "name": "Watercolor Bleed 2",
+        "prompt": "watercolor wet-into-wet bleed, translucent layers, paper granulation, {prompt}, delicate painterly wash",
+        "negative_prompt": "sharp photographic detail, heavy noise, watermark",
+    },
+    {
+        "name": "Sgraffito Scratch",
+        "prompt": "sgraffito scratch technique, incised lines over color layers, tactile scrape marks, {prompt}, folk-art feel",
+        "negative_prompt": "photo, glossy finish, blur, watermark",
+    },
+    {
+        "name": "Mosaic Tile 2",
+        "prompt": "tile mosaic assembly, tessellated colored pieces, grout lines visible, {prompt}, Byzantine decorative geometry",
+        "negative_prompt": "photo, smooth gradients, blur, watermark",
+    },
+    {
+        "name": "Neon Sign Typography",
+        "prompt": "neon sign lettering, bent glass glow, subtle smoke, urban night storefront, {prompt}, retro signage vibe",
+        "negative_prompt": "daylight photo, realistic person, blur, watermark",
+    },
+    {
+        "name": "Kinetic Sculpture Diagram",
+        "prompt": "kinetic sculpture blueprint style, mechanical diagrams, annotated moving parts, {prompt}, conceptual engineering art",
+        "negative_prompt": "photorealistic render, soft painterly, blur, watermark",
+    },
+    {
+        "name": "Cut-paper Silhouette",
+        "prompt": "cut-paper silhouette portrait, single-color backdrop, delicate profile detail, {prompt}, shadow-play composition",
+        "negative_prompt": "photo, color photo, blur, watermark",
+    },
+    {
+        "name": "Stencil Pattern Repeat",
+        "prompt": "seamless stencil repeat pattern, crisp edges, decorative motif, {prompt}, textile surface-ready",
+        "negative_prompt": "photorealistic lighting, blur, watermark",
+    },
+    {
+        "name": "Fossil / Etching",
+        "prompt": "fine-line etching or fossil relief, minute engraved detail, monochrome tonal range, {prompt}, archival print feel",
+        "negative_prompt": "photo, color, blur, watermark",
+    },
+    {
+        "name": "Retro Comic Halftone 2",
+        "prompt": "retro comic halftone dots, bold captions, dynamic paneling, {prompt}, vintage pulp energy",
+        "negative_prompt": "smooth gradients, photorealistic, blur, watermark",
+    },
+    {
+        "name": "Monochrome Silkscreen",
+        "prompt": "single-color silkscreen print, strong graphic contrast, texture of ink edges, {prompt}, pop graphic statement",
+        "negative_prompt": "photo, multicolor realism, blur, watermark",
+    },
+    {
+        "name": "Sticker Sheet Collage",
+        "prompt": "sticker sheet layout, different small icons and patches, playful variety, {prompt}, high-contrast outlines",
+        "negative_prompt": "photo, low-contrast, blur, watermark",
+    },
+    {
+        "name": "Doodle Sketchbook",
+        "prompt": "loose doodle sketchbook page, playful icons, margin notes, {prompt}, spontaneous hand-drawn charm",
+        "negative_prompt": "photorealistic, precise rendering, blur, watermark",
+    },
+    {
+        "name": "Retro Futurism Illustration",
+        "prompt": "retro-futurism, chrome curves, optimistic space-age design, {prompt}, vintage sci-fi poster",
+        "negative_prompt": "gritty realism, modern meme elements, blur, watermark",
+    },
+    {
+        "name": "Kawaii Chibi",
+        "prompt": "kawaii chibi character design, oversized head, tiny body, huge eyes, {prompt}, sugary pastel palette",
+        "negative_prompt": "realistic proportions, mature themes, gore, watermark",
+    },
+    {
+        "name": "Manga Screentone",
+        "prompt": "classic manga screentone texture, dynamic action lines, stylized anatomy, {prompt}, black-and-white graphic storytelling",
+        "negative_prompt": "photo, color gradients, blur, watermark",
+    },
+    {
+        "name": "Anime Cell Shading",
+        "prompt": "anime cell-shaded style, crisp rim lighting, clean lineart, cinematic posing, {prompt}, bold color flats",
+        "negative_prompt": "photorealistic, dirty texture, blur, watermark",
+    },
+    {
+        "name": "Storyboard / Concept Sketch",
+        "prompt": "tight storyboard thumbnail, clear silhouette language, composition focus, {prompt}, narrative beat",
+        "negative_prompt": "photo, detailed texture, blur, watermark",
+    },
+    {
+        "name": "Character Model Sheet",
+        "prompt": "character model sheet layout, turnaround poses, expression sets, accessory callouts, {prompt}, clean orthographic views",
+        "negative_prompt": "photorealistic finish, blur, watermark",
+    },
+    {
+        "name": "Toyetic Vinyl Figure",
+        "prompt": "designer vinyl toy concept, simplified forms, glossy plastic finish, collectible figure silhouette, {prompt}, playful proportions",
+        "negative_prompt": "real human, gore, photorealistic, blur, watermark",
+    },
+    {
+        "name": "Stencil Pop Portrait",
+        "prompt": "pop-art stencil portrait, two-tone contrast, iconized face, {prompt}, street-friendly aesthetics",
+        "negative_prompt": "detailed photo texture, blur, watermark",
+    },
+    {
+        "name": "Sticker Minimal Logo",
+        "prompt": "minimal logo / sticker concept, bold glyph, negative-space cleverness, {prompt}, scalable vector-friendly",
+        "negative_prompt": "photo, complex shading, blur, watermark",
+    },
+    {
+        "name": "Mandala Ornamental",
+        "prompt": "intricate mandala radial symmetry, layered decorative flourishes, meditative patterning, {prompt}, ornamental balance",
+        "negative_prompt": "photo, messy composition, blur, watermark",
+    },
+    {
+        "name": "Anamorphic Illusion",
+        "prompt": "anamorphic optical illusion perspective, distorted plane that reads from one viewpoint, {prompt}, playful trompe-l'oeil",
+        "negative_prompt": "flat photo, blur, watermark",
+    },
+    {
+        "name": "Retro Anime 90s",
+        "prompt": "90s anime aesthetic, soft cell-shading, lens flares, cinematic framing, {prompt}, nostalgia-driven composition",
+        "negative_prompt": "hyperrealism, modern photorealistic skin, watermark",
+    },
+    {
+        "name": "Moebius / Ligne Claire Inspired",
+        "prompt": "ligne claire clean line comic with intricate worldbuilding, airy linework, flat color fields, {prompt}, clear narrative detail",
+        "negative_prompt": "photo, painterly texture, blur, watermark",
+    },
+    {
+        "name": "Fantasy Map Illustration 2",
+        "prompt": "ornamental fantasy map, labeled cartography elements, textured parchment, {prompt}, illustrated legend and compass",
+        "negative_prompt": "photo, modern map satellite, blur, watermark",
+    },
+    {
+        "name": "Alchemical Diagram",
+        "prompt": "alchemical diagram aesthetic, symbolic glyphs, distressed vellum texture, {prompt}, occult schematic vibe",
+        "negative_prompt": "photo, modern icons, blur, watermark",
+    },
+    {
+        "name": "Blueprint / Tech Schematic",
+        "prompt": "engineer's blueprint linework, annotated measurements, exploded views, {prompt}, schematic clarity",
+        "negative_prompt": "photo, painterly, blur, watermark",
+    },
+    {
+        "name": "Pulp Magazine Cover",
+        "prompt": "pulp magazine cover styling, dramatic captioning, exaggerated action scene, {prompt}, retro pulp color palette",
+        "negative_prompt": "clean modern photo, blur, watermark",
+    },
+    {
+        "name": "Hand-painted Mural",
+        "prompt": "hand-painted mural brushwork, scale-aware composition, visible brush marks, {prompt}, public art presence",
+        "negative_prompt": "photo, studio finish, blur, watermark",
+    },
+    {
+        "name": "Graffiti Wildstyle",
+        "prompt": "graffiti wildstyle lettering, complex interlocking forms, dynamic motion, urban wall texture, {prompt}, spray-can energy",
+        "negative_prompt": "clean font, photorealistic people, blur, watermark",
+    },
+    {
+        "name": "Neon Cyber Delic",
+        "prompt": "cyberpunk neon delic, saturated glows, reflective wet streets, stylized signage, {prompt}, futuristic noir atmosphere",
+        "negative_prompt": "clear daylight photo, realistic faces, blur, watermark",
+    },
+    {
+        "name": "Fractal Algorithmic",
+        "prompt": "fractal algorithmic patterning, recursive geometry, mathematically generated ornament, {prompt}, infinite detail feel",
+        "negative_prompt": "photo, lowres, blur, watermark",
+    },
+    {
+        "name": "Generative Glitch",
+        "prompt": "datamosh / generative glitch artifacts, color channel shifts, displaced geometry, {prompt}, digital decay aesthetic",
+        "negative_prompt": "clean photo, perfect alignment, watermark",
+    },
+    {
+        "name": "Solarized Poster",
+        "prompt": "solarized high-contrast poster palette, inverted-like tones, bold silhouette, {prompt}, graphic punch",
+        "negative_prompt": "photo, realistic skin tone, blur, watermark",
+    },
+    {
+        "name": "Anachronistic Retro-Fab",
+        "prompt": "anachronistic retro-fab collage, mixing eras and materials, whimsical juxtaposition, {prompt}, playful historical remix",
+        "negative_prompt": "strict historical accuracy, modern realism, blur, watermark",
+    },
+    {
+        "name": "Mechanical Blueprint Illustration",
+        "prompt": "ornate mechanical illustration with engraved linework and brass textures implied, {prompt}, Victorian technical artistry",
+        "negative_prompt": "photo, modern CAD realism, blur, watermark",
+    },
+    {
+        "name": "Surrealist Automatism",
+        "prompt": "automatic surrealist marks and juxtapositions, chance collage elements, dream associations, {prompt}, uncanny combinations",
+        "negative_prompt": "photo, literal interpretations, blur, watermark",
+    },
+    {
+        "name": "Biomorphic Organic",
+        "prompt": "biomorphic organic forms, flesh-like textures blended with plant motifs, {prompt}, uncanny organic abstraction",
+        "negative_prompt": "photo, straight realism, gore, watermark",
+    },
+    {
+        "name": "Puppet / Marionette",
+        "prompt": "puppet marionette aesthetic, jointed limbs, visible control rods, stage-like setting, {prompt}, theatrical handcrafted look",
+        "negative_prompt": "real human faces, photorealistic skin, gore, blur, watermark",
+    },
+    {
+        "name": "Silhouette Shadow Play",
+        "prompt": "silhouette shadow-play composition, backlit forms, strong contrast, storytelling silhouettes, {prompt}, theatrical simplicity",
+        "negative_prompt": "high detail texture, photorealistic, blur, watermark",
+    },
+    {
+        "name": "Retro Toy Illustration",
+        "prompt": "mid-century toy illustration, flattened perspective, cheerful colors, {prompt}, nostalgic children's merchandise art",
+        "negative_prompt": "modern photorealism, gore, blur, watermark",
+    },
+    {
+        "name": "Baroque Ornament",
+        "prompt": "baroque ornamental flourish, rich curvilinear forms, sculptural drama, {prompt}, decorative opulence",
+        "negative_prompt": "flat modernist, photorealistic portrait, blur, watermark",
+    },
+    {
+        "name": "Expressionist Brushwork",
+        "prompt": "expressionist painterly brushwork, emotive color clashes, gestural strokes, {prompt}, raw painterly energy",
+        "negative_prompt": "photo, neat rendering, blur, watermark",
+    },
+    {
+        "name": "Pulp Noir Illustration",
+        "prompt": "pulp noir illustration, gritty shadows, rhythmic linework, cigarette smoke ambience, {prompt}, moody narrative tension",
+        "negative_prompt": "bright cheerful, photorealistic, blur, watermark",
+    },
+    {
+        "name": "Ink & Wash Portrait",
+        "prompt": "ink line with tonal wash portrait, confident contour and diluted shading, {prompt}, artistic immediacy",
+        "negative_prompt": "photo, heavy digital retouch, blur, watermark",
+    },
+    {
+        "name": "Vintage Children's Illustration",
+        "prompt": "vintage children's book illustration, soft halftones and quaint scenery, {prompt}, storybook nostalgia",
+        "negative_prompt": "photorealistic, modern typography, blur, watermark",
+    },
+    {
+        "name": "Retro Sci-Fi Comic",
+        "prompt": "retro sci-fi comic art, bold panels, quirky machinery, {prompt}, pulp rocket-age enthusiasm",
+        "negative_prompt": "realism, photographic detail, blur, watermark",
+    },
+    {
+        "name": "Sticker Minimalist Mascot",
+        "prompt": "minimal mascot sticker design, iconic silhouette, friendly pose, {prompt}, brandable charm",
+        "negative_prompt": "photo, complex texture, blur, watermark",
+    },
+    {
+        "name": "Hand-lettered Calligraphy",
+        "prompt": "ornate hand-lettered calligraphy treatment, flourishes and ligatures, expressive pen strokes, {prompt}, typographic craftsmanship",
+        "negative_prompt": "plain typed text, photorealistic scene, blur, watermark",
+    },
+    {
+        "name": "Silhouette Cutout Animation",
+        "prompt": "silhouette cutout animation style, layered shadow planes, simple moving shapes, {prompt}, folkloric vibe",
+        "negative_prompt": "photo, color detail, blur, watermark",
+    },
+    {
+        "name": "Embossed Relief",
+        "prompt": "embossed relief look, raised edges and soft highlights, tactile letterpress impression, {prompt}, subtle depth",
+        "negative_prompt": "flat glossy digital, blur, watermark",
+    },
+    {
+        "name": "Moodboard Collage",
+        "prompt": "editorial moodboard collage, varied textures and typographic snippets, {prompt}, concept exploration",
+        "negative_prompt": "single photo, overly realistic, blur, watermark",
+    },
+    {
+        "name": "Geode / Crystal Texture",
+        "prompt": "geode crystal cross-section aesthetic, shimmering faceted forms, embedded minerals, {prompt}, ornamental geology",
+        "negative_prompt": "plain flat color, blur, watermark",
+    },
+    {
+        "name": "Stitched Felt Toy",
+        "prompt": "stitched felt plush toy design, visible seams and felt nap, handmade charm, {prompt}, soft toy concept",
+        "negative_prompt": "realistic human, gore, photorealistic skin, blur, watermark",
+    },
+    {
+        "name": "Futuristic Iconography",
+        "prompt": "futuristic icon set, simplified glyphs with subtle gradients and glow, {prompt}, UI/UX friendly",
+        "negative_prompt": "photo, noisy texture, blur, watermark",
+    },
+    {
+        "name": "Collaged Typography",
+        "prompt": "typographic collage with torn letters, mixed typefaces, layered textures, {prompt}, rebellious editorial",
+        "negative_prompt": "clean corporate logo, photorealistic, blur, watermark",
+    },
+    {
+        "name": "Chiaroscuro Silhouette Painting",
+        "prompt": "strong chiaroscuro silhouette painting, single light source drama, sculptural forms in shadow, {prompt}, theatrical intensity",
+        "negative_prompt": "flat even lighting, pastel, photorealistic, watermark",
+    },
+    {
+        "name": "Toy Stop-Motion Set",
+        "prompt": "stop-motion toy set photography aesthetic, jointed figures, handcrafted props, visible armatures, {prompt}, tactile miniature world",
+        "negative_prompt": "highly realistic human photo, gore, blur, watermark",
+    },
+    {
+        "name": "Folk Art Naive",
+        "prompt": "folk-art naive painting, flattened perspective, charming imperfections, {prompt}, hand-made cultural motifs",
+        "negative_prompt": "photorealistic, modern shading, blur, watermark",
+    },
+    {
+        "name": "Holographic Gradient",
+        "prompt": "iridescent holographic gradient surfaces, shimmering pearlescent shifts, {prompt}, futuristic decorative sheen",
+        "negative_prompt": "flat matte finish, photo, blur, watermark",
+    },
+    {
+        "name": "Stencil Pattern Poster",
+        "prompt": "bold stencil repeat poster, negative-space glyphs, strong composition, {prompt}, street-poster energy",
+        "negative_prompt": "photorealistic, fine detail, blur, watermark",
+    },
+    {
+        "name": "Silk Screen Urban Poster",
+        "prompt": "silk-screen urban poster, limited palette, intentional printing imperfections, {prompt}, gritty graphic style",
+        "negative_prompt": "high resolution photo, blur, watermark",
+    },
+    {
+        "name": "Papercraft Origami Motif",
+        "prompt": "origami-inspired folded paper motif, crisp crease lines, sculptural simplicity, {prompt}, geometric elegance",
+        "negative_prompt": "photo, realistic skin texture, blur, watermark",
+    },
+    {
+        "name": "Retro Catalog Illustration",
+        "prompt": "mid-century catalog illustration, product-focused composition, simplified rendering, {prompt}, nostalgic advertising style",
+        "negative_prompt": "modern photorealistic product shot, blur, watermark",
+    },
+    {
+        "name": "Minimal Geometric Icon",
+        "prompt": "minimal geometric icon design, reduced to essentials, clear silhouette, {prompt}, adaptable across sizes",
+        "negative_prompt": "photo, texture, blur, watermark",
+    },
+    {
+        "name": "Hand-stitched Needlepoint",
+        "prompt": "needlepoint embroided texture simulation, grid-based stitching, {prompt}, cozy craft aesthetic",
+        "negative_prompt": "photo, smooth vector, blur, watermark",
+    },
+    {
+        "name": "Surreal Toybox",
+        "prompt": "surreal toybox diorama, impossible connections between toys, whimsical absurdity, {prompt}, playful uncanny",
+        "negative_prompt": "real gore, photorealistic adult themes, blur, watermark",
+    },
+    {
+        "name": "M.C. Escher-style Tessellation",
+        "prompt": "interlocking tessellation pattern that morphs between figures, impossible interplays, {prompt}, visual puzzle",
+        "negative_prompt": "plain photo, blur, watermark",
+    },
+    {
+        "name": "Cinematic Title Card",
+ "prompt": "cinematic title card composition, dramatic typography and negative space, {prompt}, poster-grade mood",
+        "negative_prompt": "photo, busy background, watermark, text artifacts",
+    },
+    {
+        "name": "Tactile Felt Collage",
+        "prompt": "felt and textile collage panels, visible fiber nap, soft overlaps, {prompt}, cozy handmade texture",
+        "negative_prompt": "photo, glossy finish, blur, watermark",
+    },
+    {
+        "name": "Retro Educational Diagram",
+        "prompt": "vintage educational diagram styling, labeled cross-sections and friendly icons, {prompt}, analog schoolbook clarity",
+        "negative_prompt": "modern UI, photorealistic, blur, watermark",
+    },
+    {
+        "name": "Geometric Lowbrow",
+        "prompt": "lowbrow pop-geometric hybrid, playful irreverence, simplified anatomy, {prompt}, bright contrasting shapes",
+        "negative_prompt": "photorealistic, serious documentary tone, blur, watermark",
+    },
+    {
+        "name": "Animated GIF-Like Loop",
+        "prompt": "loopable GIF-friendly frame composition, clear repeated motion, flat colors, {prompt}, concise visual gag",
+        "negative_prompt": "single static photo realism, blur, watermark",
+    },
+    {
+        "name": "Faux-Vintage Halftone",
+        "prompt": "faux-vintage halftone overlay, printed-on-paper feel, slightly misregistered color plates, {prompt}, retro printed charm",
+        "negative_prompt": "clean digital photo, high gloss, watermark",
+    },
+    {
+        "name": "Mosaic Pixel Collage",
+        "prompt": "pixel mosaic collage, varied tile sizes and palettes, expressive low-res feel, {prompt}, handcrafted digital mosaic",
+        "negative_prompt": "smooth gradients, photorealistic, blur, watermark",
+    },
+    {
+        "name": "Puppet Shadow Theater",
+ "prompt": "puppet shadow theater staging, layered silhouettes and lantern light, {prompt}, folk-story ambience",
+        "negative_prompt": "photo realism, modern lighting, blur, watermark",
+    },
+    {
+        "name": "Cutout Paper Puppet",
+        "prompt": "paper puppet character design, articulated limbs and tabs, bold graphic colors, {prompt}, craft-friendly layout",
+        "negative_prompt": "photorealism, gore, blur, watermark",
+    },
+    {
+        "name": "Handcrafted Textile Print",
+        "prompt": "screenprinted textile repeat, slight registration shifts, organic hand-printed feel, {prompt}, wearable pattern",
+        "negative_prompt": "digital flat vector, photorealistic texture, blur, watermark",
+    },
+    {
+        "name": "Kinetic Typography Diagram",
+        "prompt": "kinetic typography frame, expressive letter motion implied in a single image, {prompt}, dynamic typographic layout",
+        "negative_prompt": "static uninteresting text, photorealistic, blur, watermark",
     }
 ]
 
