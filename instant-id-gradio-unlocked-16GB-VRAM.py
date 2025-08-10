@@ -915,7 +915,7 @@ Scheduler: {scheduler}"""
         return images
 
     title = r"""
-    <h1 align="center">InstantID Unlocked v2.7.0</h1>
+    <h1 align="center">InstantID Unlocked v3.0.1</h1>
     """
 
     description = r"""
@@ -989,6 +989,12 @@ Scheduler: {scheduler}"""
                         label="Replace '{prompt}' in Style templates with this (and if the prompt field is empty or a style inserted):",
                         choices=["person", "girl", "woman", "boy", "man", "Empty (none)"],
                         value="person"
+                    )
+                    prompt_replacement.change(
+                        fn=lambda _: None,
+                        inputs=prompt_replacement,
+                        outputs=[],
+                        queue=False
                     )
                     apply_selected_style_btn.click(
                         fn=apply_selected_style,
