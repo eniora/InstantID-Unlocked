@@ -1057,6 +1057,19 @@ Scheduler: {scheduler}"""
                             size="sm",
                             min_width=200
                         )
+                        negative_prompt_preset.change(
+                            fn=lambda x: NEGATIVE_PROMPT_PRESETS[x],
+                            inputs=negative_prompt_preset,
+                            outputs=negative_prompt,
+                        )
+                        def apply_selected_negative_profile(selected_negative_profile):
+                            return NEGATIVE_PROMPT_PRESETS[selected_negative_profile]
+
+                        apply_negative_profile_btn.click(
+                            fn=apply_selected_negative_profile,
+                            inputs=negative_prompt_preset,
+                            outputs=negative_prompt,
+                        )
                     generate_alt_3 = gr.Button("Generate (Extra Settings Section Button)", variant="primary")
                     with gr.Row():
                         file_prefix = gr.Textbox(
@@ -1612,19 +1625,6 @@ Scheduler: {scheduler}"""
                         ]
                     )
 
-            negative_prompt_preset.change(
-                fn=lambda x: NEGATIVE_PROMPT_PRESETS[x],
-                inputs=negative_prompt_preset,
-                outputs=negative_prompt,
-            )
-            def apply_selected_negative_profile(selected_negative_profile):
-                return NEGATIVE_PROMPT_PRESETS[selected_negative_profile]
-
-            apply_negative_profile_btn.click(
-                fn=apply_selected_negative_profile,
-                inputs=negative_prompt_preset,
-                outputs=negative_prompt,
-            )
             shared_inputs = [
                 resize_max_side_slider,
                 face_file,
