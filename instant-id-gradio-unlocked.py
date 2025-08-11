@@ -959,25 +959,22 @@ Scheduler: {scheduler}"""
         return images
 
     article = r"""
-    ```bibtex
-    1. Upload an image with a face. For images with multiple faces, only the largest face will be detected. Ensure the face is not too small and is clearly visible without significant obstructions or blurring.
-    2. (Optional) You can upload another image as a reference for the face pose. If you don't, the first detected face image will be used to extract facial landmarks. If you use a cropped face at step 1, it is recommended to upload it to define a new face pose.
-    3. (Optional) You can select multiple ControlNet models to control the generation process. The default is to use the IdentityNet only. The ControlNet models include pose skeleton, canny, and depth. You can adjust the strength of each ControlNet model to control the generation process.
-    4. Enter a text prompt, as done in normal text-to-image models.
-    5. Click the Generate button to begin customization.
-    6. In some cases, minimizing the browser/Gradio window while an image is being generated can help speed up the generation process. You can track the progress in the CMD/Terminal window.
-    7. Select a model to use for generation from the upper left corner dropdown. Only use SDXL and Pony. Illustrious can be loaded but isn't well supported.
-    8. You can select a scheduler from the upper right corner dropdown. DPMSolver, KDPM2 and Euler are usually the best.
+    - Upload an image with a face. For images with multiple faces, only the largest face will be detected. Ensure the face is not too small and is clearly visible without significant obstructions or blurring.
+    - (Optional) You can upload another image as a reference for the face pose. If you don't, the first detected face image will be used to extract facial landmarks. If you use a cropped face at step 1, it is recommended to upload it to define a new face pose.
+    - (Optional) You can select multiple ControlNet models to control the generation process. The default is to use the IdentityNet only. The ControlNet models include pose skeleton, canny, and depth. You can adjust the strength of each ControlNet model to control the generation process.
+    - Enter a text prompt, as done in normal text-to-image models.
+    - Click the Generate button to begin customization.
+    - In some cases, minimizing the browser/Gradio window while an image is being generated can help speed up the generation process. You can track the progress in the CMD/Terminal window.
+    - Select a model to use for generation from the upper left corner dropdown. Only use SDXL and Pony. Illustrious can be loaded but isn't well supported.
+    - You can select a scheduler from the upper right corner dropdown. DPMSolver, KDPM2 and Euler are usually the best.
     
     Other usage tips of InstantID:
-    1. If you're not satisfied with the similarity, try increasing the weight of "IdentityNet Strength" and "Adapter Strength."    
-    2. If you feel that the saturation is too high, first decrease the Adapter strength. If it remains too high, then decrease the IdentityNet strength.
-    3. If you find that text control is not as expected, decrease Adapter strength.
-    4. If you find that the style or generated images are not good enough, try another base model.
-    5. If you're having trouble detecting faces, try changing the "Face Detection Size" setting or try another input face photo.
-    ```
+    - If you're not satisfied with the similarity, try increasing the weight of "IdentityNet Strength" and "Adapter Strength."    
+    - If you feel that the saturation is too high, first decrease the Adapter strength. If it remains too high, then decrease the IdentityNet strength.
+    - If you find that text control is not as expected, decrease Adapter strength.
+    - If you find that the style or generated images are not good enough, try another base model.
+    - If you're having trouble detecting faces, try changing the "Face Detection Size" setting or try another input face photo.
     """
-
     css = """
     .gradio-container {width: 85% !important}
     """
