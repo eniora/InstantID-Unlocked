@@ -914,10 +914,6 @@ Scheduler: {scheduler}"""
         print(f"Total generation time: {overall_elapsed_time:.2f} seconds\n")
         return images
 
-    title = r"""
-    <h1 align="center">InstantID Unlocked v3.0.1</h1>
-    """
-
     description = r"""
     """
 
@@ -931,6 +927,7 @@ Scheduler: {scheduler}"""
     4. Enter a text prompt, as done in normal text-to-image models.
     5. Click the Generate button to begin customization.
     6. In some cases, minimizing the browser/Gradio window while an image is being generated can help speed up the generation process. You can track the progress in the CMD/Terminal window.
+    7. Select the model to use for generation from the upper right side dropdown. Only use SDXL and Pony. Illustrious can be loaded but isn't well supported.
     
     Other usage tips of InstantID:
     1. If you're not satisfied with the similarity, try increasing the weight of "IdentityNet Strength" and "Adapter Strength."    
@@ -946,7 +943,25 @@ Scheduler: {scheduler}"""
     .gradio-container {width: 85% !important}
     """
     with gr.Blocks(css=css) as gui:
-        gr.Markdown(title)
+        with gr.Row():
+            gr.Markdown("# InstantID Unlocked v3.1.0", elem_id="title")
+            with gr.Row():
+                model_name = gr.Dropdown(
+                    choices=AVAILABLE_MODELS,
+                    value=DEFAULT_MODEL,
+                    show_label=False,
+                    scale=5
+                )
+                refresh_models = gr.Button("🔄", scale=1, elem_classes="toolbutton")
+                def refresh_model_list():
+                    global AVAILABLE_MODELS
+                    AVAILABLE_MODELS = get_available_models()
+                    return gr.update(choices=AVAILABLE_MODELS)
+
+                refresh_models.click(
+                    fn=refresh_model_list,
+                    outputs=model_name
+                )
         gr.Markdown(description)
 
         with gr.Row():
@@ -1239,32 +1254,14 @@ Scheduler: {scheduler}"""
                             visible=False,
                             interactive=True
                         )
-                    with gr.Row():
-                        model_name = gr.Dropdown(
-                            label="Model",
-                            choices=AVAILABLE_MODELS,
-                            value=DEFAULT_MODEL,
-                            scale=5,
-                            info="Select the model to use for generation. Only use SDXL and Pony. Illustrious can be loaded but isn't well supported."
-                        )
-                        refresh_models = gr.Button("🔄", scale=1, elem_classes="toolbutton")
-                        def refresh_model_list():
-                            global AVAILABLE_MODELS
-                            AVAILABLE_MODELS = get_available_models()
-                            return gr.update(choices=AVAILABLE_MODELS)
+                        def toggle_custom_padding_dropdown(value):
+                            return gr.update(visible=(value == "Custom"))
 
-                        refresh_models.click(
-                            fn=refresh_model_list,
-                            outputs=model_name
+                        enhance_strength.change(
+                            fn=toggle_custom_padding_dropdown,
+                            inputs=enhance_strength,
+                            outputs=custom_enhance_padding
                         )
-                    def toggle_custom_padding_dropdown(value):
-                        return gr.update(visible=(value == "Custom"))
-
-                    enhance_strength.change(
-                        fn=toggle_custom_padding_dropdown,
-                        inputs=enhance_strength,
-                        outputs=custom_enhance_padding
-                    )
                     with gr.Row():
                         det_size_name = gr.Dropdown(
                             label="Face Detection Size",
@@ -2019,7 +2016,7 @@ Scheduler: {scheduler}"""
             with gr.Column():
                 restart_btn = gr.Button("Restart Server", variant="stop", scale=1)
                 restart_browser_checkbox = gr.Checkbox(
-                    label="Automatically open a new InstantID browser window after the Restart Server button is clicked",
+                    label="Automatically open a new InstantID browser tab after the Restart Server button is clicked",
                     value=False
                 )
                 restart_btn.click(
