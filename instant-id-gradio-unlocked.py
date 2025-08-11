@@ -1028,6 +1028,11 @@ Scheduler: {scheduler}"""
                             size="sm",
                             variant="secondary"
                         )
+                        style.change(
+                            fn=on_style_change,
+                            inputs=style,
+                            outputs=[prompt, negative_prompt]
+                        )
                     feeling_lucky_btn = gr.Button("🎰 Insert a random style from the style templates into prompt & negative prompt fields.", size="md", variant="secondary")
                     prompt_replacement = gr.Radio(
                         label="Replace '{prompt}' in Style templates with this (and if the prompt field is empty or a style inserted):",
@@ -1155,32 +1160,34 @@ Scheduler: {scheduler}"""
                     inputs=enable_precise_resize,
                     outputs=[resize_max_side_slider, custom_resize_width, custom_resize_height]
                 )
-                generate = gr.Button("Generate", variant="primary")
-                num_outputs = gr.Slider(
-                    label="Number of images to generate",
-                    minimum=1, maximum=100, step=1, value=1,
-                )
-                open_folder_btn = gr.Button("Open Output Folder")
-                open_folder_btn.click(
-                    fn=open_output_folder,
-                    inputs=[],
-                    outputs=[],
-                    queue=False,
-                )
+                with gr.Row():
+                    generate = gr.Button("Generate", scale=6, variant="primary")
+                    open_folder_btn = gr.Button("Open Output Folder", scale=2)
+                    open_folder_btn.click(
+                        fn=open_output_folder,
+                        inputs=[],
+                        outputs=[],
+                        queue=False,
+                    )
                 identitynet_strength_ratio = gr.Slider(
-                    label="IdentityNet strength (for fidelity)",
+                    label="IdentityNet strength (weight of face fidelity retention from the input photo)",
                     minimum=0,
                     maximum=1.5,
                     step=0.05,
                     value=0.7,
                 )
                 adapter_strength_ratio = gr.Slider(
-                    label="Image adapter strength (for detail)",
+                    label="Image adapter strength (weight of detail retention from the input photo)",
                     minimum=0,
                     maximum=1.5,
                     step=0.05,
                     value=0.65,
                 )
+                with gr.Row():
+                    num_outputs = gr.Slider(
+                        label="Number of images to generate",
+                        minimum=1, maximum=100, step=1, value=1,
+                    )
                 with gr.Accordion("Controlnet", open=False) as controlnet_accordion:
                     controlnet_selection = gr.CheckboxGroup(
                         ["pose", "canny", "depth"], label="Controlnet", value=[],
@@ -1208,11 +1215,6 @@ Scheduler: {scheduler}"""
                         value=0.40,
                     )
                 with gr.Accordion(open=True, label="Advanced Options"):
-                    style.change(
-                        fn=on_style_change,
-                        inputs=style,
-                        outputs=[prompt, negative_prompt]
-                    )
                     num_steps = gr.Slider(
                         label="Number of sample steps",
                         minimum=1,
