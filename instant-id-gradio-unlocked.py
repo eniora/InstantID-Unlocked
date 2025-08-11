@@ -959,8 +959,6 @@ Scheduler: {scheduler}"""
         return images
 
     article = r"""
-    ---
-    📝 **Tips**
     ```bibtex
     1. Upload an image with a face. For images with multiple faces, only the largest face will be detected. Ensure the face is not too small and is clearly visible without significant obstructions or blurring.
     2. (Optional) You can upload another image as a reference for the face pose. If you don't, the first detected face image will be used to extract facial landmarks. If you use a cropped face at step 1, it is recommended to upload it to define a new face pose.
@@ -968,7 +966,8 @@ Scheduler: {scheduler}"""
     4. Enter a text prompt, as done in normal text-to-image models.
     5. Click the Generate button to begin customization.
     6. In some cases, minimizing the browser/Gradio window while an image is being generated can help speed up the generation process. You can track the progress in the CMD/Terminal window.
-    7. Select the model to use for generation from the upper right side dropdown. Only use SDXL and Pony. Illustrious can be loaded but isn't well supported.
+    7. Select a model to use for generation from the upper left corner dropdown. Only use SDXL and Pony. Illustrious can be loaded but isn't well supported.
+    8. You can select a scheduler from the upper right corner dropdown. DPMSolver, KDPM2 and Euler are usually the best.
     
     Other usage tips of InstantID:
     1. If you're not satisfied with the similarity, try increasing the weight of "IdentityNet Strength" and "Adapter Strength."    
@@ -977,7 +976,6 @@ Scheduler: {scheduler}"""
     4. If you find that the style or generated images are not good enough, try another base model.
     5. If you're having trouble detecting faces, try changing the "Face Detection Size" setting or try another input face photo.
     ```
-    <b>InstantID: Unlocked v3.2.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>
     """
 
     css = """
@@ -2056,15 +2054,17 @@ Scheduler: {scheduler}"""
                 outputs=LORA_OUTPUTS
             )
 
-        gr.Markdown(article)
+        with gr.Accordion("📝 Click to show usage tips", open=False):
+            gr.Markdown(article)
+        gr.Markdown("<b>InstantID: Unlocked v3.2.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
-                restart_btn = gr.Button("Restart Server", variant="stop", scale=1)
                 restart_browser_checkbox = gr.Checkbox(
                     label="Automatically open a new InstantID browser tab after the Restart Server button is clicked",
                     value=False
                 )
+                restart_btn = gr.Button("Restart Server", variant="stop", scale=1)
                 restart_btn.click(
                     fn=lambda open_browser: restart_server(open_browser),
                     inputs=restart_browser_checkbox,
