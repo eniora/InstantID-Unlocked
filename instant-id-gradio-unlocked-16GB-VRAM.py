@@ -950,9 +950,10 @@ Scheduler: {scheduler}"""
                     choices=AVAILABLE_MODELS,
                     value=DEFAULT_MODEL,
                     show_label=False,
+                    container=False,
                     scale=5
                 )
-                refresh_models = gr.Button("🔄", scale=1, elem_classes="toolbutton")
+                refresh_models = gr.Button("🔄", scale=0, min_width=40, elem_classes="toolbutton")
                 def refresh_model_list():
                     global AVAILABLE_MODELS
                     AVAILABLE_MODELS = get_available_models()
@@ -1132,13 +1133,23 @@ Scheduler: {scheduler}"""
                     outputs=[resize_max_side_slider, custom_resize_width, custom_resize_height]
                 )
                 with gr.Row():
-                    generate = gr.Button("Generate", scale=6, variant="primary")
-                    open_folder_btn = gr.Button("Open Output Folder", scale=2)
+                    generate = gr.Button("Generate", scale=8, variant="primary")
+                    num_outputs = gr.Number(
+                        value=1,
+                        step=1,
+                        minimum=1,
+                        maximum=1000,
+                        scale=0,
+                        min_width=70,
+                        container=False,
+                        show_label=False
+                    )
+                    open_folder_btn = gr.Button("📁", min_width=60, scale=0)
                     open_folder_btn.click(
                         fn=open_output_folder,
                         inputs=[],
                         outputs=[],
-                        queue=False,
+                        queue=False
                     )
                 identitynet_strength_ratio = gr.Slider(
                     label="IdentityNet strength (weight of face fidelity retention from the input photo)",
@@ -1154,11 +1165,6 @@ Scheduler: {scheduler}"""
                     step=0.05,
                     value=0.65,
                 )
-                with gr.Row():
-                    num_outputs = gr.Slider(
-                        label="Number of images to generate",
-                        minimum=1, maximum=100, step=1, value=1,
-                    )
                 with gr.Accordion("Controlnet", open=False) as controlnet_accordion:
                     controlnet_selection = gr.CheckboxGroup(
                         ["pose", "canny", "depth"], label="Controlnet", value=[],
