@@ -996,7 +996,34 @@ Scheduler: {scheduler}"""
                     )
                     refresh_models = gr.Button("🔄", scale=0, min_width=40, elem_classes="toolbutton")
             with gr.Column(scale=1):
-                pass
+                schedulers = [
+                    "DPMSolverMultistepScheduler",
+                    "DPMSolverMultistepScheduler-SDE",
+                    "DPMSolverMultistepScheduler-Karras",
+                    "DPMSolverMultistepScheduler-Karras-SDE",
+                    "EulerDiscreteScheduler",
+                    "DPMSolverSDEScheduler-Karras",
+                    "DPMSolverSDEScheduler",
+                    "KDPM2DiscreteScheduler",
+                    "KDPM2DiscreteScheduler-Karras",
+                    "KDPM2AncestralDiscreteScheduler-Karras",
+                    "DPMSolverSinglestepScheduler",
+                    "DPMSolverSinglestepScheduler-Karras",
+                    "DPMSolverSinglestepScheduler-Karras-SDE",
+                    "EulerAncestralDiscreteScheduler",
+                    "DDIMScheduler",
+                    "DDPMScheduler",
+                    "HeunDiscreteScheduler",
+                    "LMSDiscreteScheduler",
+                    "UniPCMultistepScheduler",
+                    "LCMScheduler",
+                    ]
+                with gr.Row():
+                    scheduler = gr.Dropdown(
+                        choices=schedulers,
+                        value="DPMSolverMultistepScheduler",
+                        container=False
+                    )
             def refresh_model_list():
                 global AVAILABLE_MODELS
                 AVAILABLE_MODELS = get_available_models()
@@ -1256,35 +1283,6 @@ Scheduler: {scheduler}"""
                         value=42,
                     )
                     randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
-                    schedulers = [
-                        "DPMSolverMultistepScheduler",
-                        "DPMSolverMultistepScheduler-SDE",
-                        "DPMSolverMultistepScheduler-Karras",
-                        "DPMSolverMultistepScheduler-Karras-SDE",
-                        "EulerDiscreteScheduler",
-                        "DPMSolverSDEScheduler-Karras",
-                        "DPMSolverSDEScheduler",
-                        "KDPM2DiscreteScheduler",
-                        "KDPM2DiscreteScheduler-Karras",
-                        "KDPM2AncestralDiscreteScheduler-Karras",
-                        "DPMSolverSinglestepScheduler",
-                        "DPMSolverSinglestepScheduler-Karras",
-                        "DPMSolverSinglestepScheduler-Karras-SDE",
-                        "EulerAncestralDiscreteScheduler",
-                        "DDIMScheduler",
-                        "DDPMScheduler",
-                        "HeunDiscreteScheduler",
-                        "LMSDiscreteScheduler",
-                        "UniPCMultistepScheduler",
-                        "LCMScheduler",
-                        ]
-                    with gr.Row():
-                        scheduler = gr.Dropdown(
-                            label="Schedulers",
-                            choices=schedulers,
-                            value="DPMSolverMultistepScheduler",
-                            info="DPMSolver, KDPM2 and Euler are usually the best."
-                        )
                     with gr.Row():
                         enhance_face_region = gr.Checkbox(label="Enhance non-face region", value=True)
                         enhance_strength = gr.Dropdown(
