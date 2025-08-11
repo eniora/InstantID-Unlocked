@@ -1192,7 +1192,7 @@ Scheduler: {scheduler}"""
                 )
                 with gr.Accordion("Controlnet", open=False) as controlnet_accordion:
                     controlnet_selection = gr.CheckboxGroup(
-                        ["pose", "canny", "depth"], label="Controlnet", value=[],
+                        ["pose", "canny", "depth"], value=[], show_label=False,
                         info="Use pose for skeleton inference, canny for edge detection, and depth for depth map estimation. You can try all three to control the generation process"
                     )
                     pose_strength = gr.Slider(
