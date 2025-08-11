@@ -958,9 +958,6 @@ Scheduler: {scheduler}"""
         print(f"Total generation time: {overall_elapsed_time:.2f} seconds\n")
         return images
 
-    description = r"""
-    """
-
     article = r"""
     ---
     📝 **Tips**
@@ -980,7 +977,7 @@ Scheduler: {scheduler}"""
     4. If you find that the style or generated images are not good enough, try another base model.
     5. If you're having trouble detecting faces, try changing the "Face Detection Size" setting or try another input face photo.
     ```
-    <b>Github fork page</b> for <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>InstantID: Unlocked</b></a>.<br>
+    <b>InstantID: Unlocked v3.2.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>
     """
 
     css = """
@@ -988,26 +985,27 @@ Scheduler: {scheduler}"""
     """
     with gr.Blocks(css=css) as gui:
         with gr.Row():
-            gr.Markdown("# InstantID Unlocked v3.1.0", elem_id="title")
-            with gr.Row():
-                model_name = gr.Dropdown(
-                    choices=AVAILABLE_MODELS,
-                    value=DEFAULT_MODEL,
-                    show_label=False,
-                    container=False,
-                    scale=5
-                )
-                refresh_models = gr.Button("🔄", scale=0, min_width=40, elem_classes="toolbutton")
-                def refresh_model_list():
-                    global AVAILABLE_MODELS
-                    AVAILABLE_MODELS = get_available_models()
-                    return gr.update(choices=AVAILABLE_MODELS)
+            with gr.Column(scale=1):
+                with gr.Row():
+                    model_name = gr.Dropdown(
+                        choices=AVAILABLE_MODELS,
+                        value=DEFAULT_MODEL,
+                        show_label=False,
+                        container=False,
+                        scale=5
+                    )
+                    refresh_models = gr.Button("🔄", scale=0, min_width=40, elem_classes="toolbutton")
+            with gr.Column(scale=1):
+                pass
+            def refresh_model_list():
+                global AVAILABLE_MODELS
+                AVAILABLE_MODELS = get_available_models()
+                return gr.update(choices=AVAILABLE_MODELS)
 
-                refresh_models.click(
-                    fn=refresh_model_list,
-                    outputs=model_name
-                )
-        gr.Markdown(description)
+            refresh_models.click(
+                fn=refresh_model_list,
+                outputs=model_name
+            )
 
         with gr.Row():
             with gr.Column():
