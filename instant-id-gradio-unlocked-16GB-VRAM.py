@@ -1078,7 +1078,15 @@ Scheduler: {scheduler}"""
                             inputs=negative_prompt_preset,
                             outputs=negative_prompt,
                         )
-                    generate_alt_3 = gr.Button("Generate (Extra Settings Section Button)", variant="primary")
+                    with gr.Row():
+                        generate_alt_3 = gr.Button("Generate (Extra Settings Section Button)", variant="primary")
+                        open_folder_btn = gr.Button("📁", min_width=60, scale=0)
+                        open_folder_btn.click(
+                            fn=open_output_folder,
+                            inputs=[],
+                            outputs=[],
+                            queue=False
+                        )
                     with gr.Row():
                         file_prefix = gr.Textbox(
                             label="Saved file name prefix.",
@@ -1271,10 +1279,26 @@ Scheduler: {scheduler}"""
                             value="640x640 (default)",
                             info="Higher values can detect smaller faces better if the face in the input/reference image is too small/distant. Change the value only if you get 'No face detected', it can help a lot in some face input photos."
                         )
-                    generate_alt_2 = gr.Button("Generate (Extra Bottom Button)", variant="primary")
+                    with gr.Row():
+                        generate_alt_2 = gr.Button("Generate (Extra Bottom Button)", variant="primary")
+                        open_folder_btn = gr.Button("📁", min_width=60, scale=0)
+                        open_folder_btn.click(
+                            fn=open_output_folder,
+                            inputs=[],
+                            outputs=[],
+                            queue=False
+                        )
             with gr.Column(scale=1):
                 gallery = gr.Gallery(label="Generated Images")
-                generate_alt = gr.Button("Generate (Extra Right Side Button)", variant="primary")
+                with gr.Row():
+                    generate_alt = gr.Button("Generate (Extra Right Side Button)", variant="primary")
+                    open_folder_btn = gr.Button("📁", min_width=60, scale=0)
+                    open_folder_btn.click(
+                        fn=open_output_folder,
+                        inputs=[],
+                        outputs=[],
+                        queue=False
+                    )
                 with gr.Accordion("PNG Metadata Reader", open=True):
                     with gr.Row():
                         metadata_input = gr.Image(
