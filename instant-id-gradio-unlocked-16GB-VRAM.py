@@ -34,7 +34,12 @@ os.environ["GRADIO_DISABLE_TELEMETRY"] = "1"
 
 def open_output_folder():
     path = os.path.abspath("output")
-    os.system(f'start "" "{path}"')
+    if sys.platform == "win32":
+        os.system(f'start "" "{path}"')
+    elif sys.platform == "darwin":
+        subprocess.Popen(["open", path])
+    else:
+        subprocess.Popen(["xdg-open", path])
 
 import PIL
 from PIL import Image
@@ -2019,7 +2024,8 @@ Scheduler: {scheduler}"""
                 )
                 restart_btn = gr.Button("Restart Server", variant="stop", scale=1)
                 restart_btn.click(
-                    fn=lambda open_browser: restart_server(open_browser),
+                    js="(open_browser) => { if (confirm('Are you sure you want to restart the server?')) return open_browser; else return null; }",
+                    fn=lambda open_browser: restart_server(open_browser) if open_browser is not None else None,
                     inputs=restart_browser_checkbox,
                     outputs=None,
                     queue=False,
