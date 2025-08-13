@@ -25,11 +25,11 @@ I tried the most popular forgeui and comfyui implementations including the popul
 
 ## How to use and run:
 Git clone this fork (Git clone https://github.com/eniora/InstantID-Unlocked/) then:
-- To avoid conflicts, It's recommended to create a python venv by doing in terminal/CMD window: "python -m venv venv" then activate the venv with "venv\Scripts\activate"
+- To avoid conflicts, it's recommended to create a python venv by doing in terminal/CMD window: "python -m venv venv" then activate the venv with "venv\Scripts\activate"
 - With the venv activated, install the requirements.txt file with "pip install -r requirements.txt" and then install torch and cuda with "pip install torch==2.7.1+cu128 torchvision==0.22.1+cu128 --index-url https://download.pytorch.org/whl/cu128"
 - For downloading the face encoder models and instructions see the original repo description below.
 
-- Run only using "instant-id-gradio-unlocked.py" from the root folder. The file "instant-id-gradio-unlocked-16GB-VRAM.py" is just a file I modified from "instant-id-gradio-unlocked.py" and it's a bit faster at image generation on 16GB+ VRAM nvidia cards.
+- Run only using instant-id-gradio-unlocked.py by using "python instant-id-gradio-unlocked.py". The file "instant-id-gradio-unlocked-16GB-VRAM.py" is just a file I modified from "instant-id-gradio-unlocked.py" and it's a bit faster at image generation on 16GB+ VRAM nvidia cards.
 - Tested only on Windows and Python 3.10.6, you may need to do extra steps to run the gradio interface successfully on MacOS/Linux.
 
 [**Qixun Wang**](https://github.com/wangqixun)<sup>12</sup> · [**Xu Bai**](https://huggingface.co/baymin0220)<sup>12</sup> · [**Haofan Wang**](https://haofanwang.github.io/)<sup>12*</sup> · [**Zekui Qin**](https://github.com/ZekuiQin)<sup>12</sup> · [**Anthony Chen**](https://antonioo-c.github.io/)<sup>123</sup>
@@ -311,6 +311,7 @@ If you find InstantID useful for your research and applications, please cite us 
 ```
 
 For any question, please feel free to contact us via haofanwang.ai@gmail.com or wangqixun.ai@gmail.com.
+
 
 
 
