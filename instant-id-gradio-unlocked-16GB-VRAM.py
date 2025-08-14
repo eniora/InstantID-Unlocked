@@ -350,7 +350,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         style_name: str, positive: str, negative: str = ""
     ) -> Tuple[str, str]:
         p, n = styles.get(style_name, styles[DEFAULT_STYLE_NAME])
-        return p.replace("{prompt}", positive), n + " " + negative
+        return p.replace("{prompt}", positive), n + negative
 
     def load_model_and_update_pipe(model_name):
         nonlocal pipe
@@ -1196,7 +1196,7 @@ Scheduler: {scheduler}"""
                     minimum=0,
                     maximum=1.5,
                     step=0.05,
-                    value=0.65,
+                    value=0.6,
                 )
                 with gr.Accordion("Controlnet", open=False) as controlnet_accordion:
                     controlnet_selection = gr.CheckboxGroup(
@@ -1230,7 +1230,7 @@ Scheduler: {scheduler}"""
                         minimum=1,
                         maximum=100,
                         step=1,
-                        value=25,
+                        value=24,
                     )
                     guidance_scale = gr.Slider(
                         label="Guidance scale",
@@ -1253,7 +1253,7 @@ Scheduler: {scheduler}"""
                             label="Enhance Non-Face Region Amount",
                             choices=["Default", "Balanced", "High", "Custom"],
                             value="Balanced",
-                            info="Controls how much area around the face is enhanced. More = bigger mask. Default is best if you for example want to change the hair style from the input image."
+                            info="Larger values retain more from the input image around the face (e.g., hairstyle). 'Balanced' is good but you can use 'Default' for more control."
                         )
                         custom_enhance_padding = gr.Slider(
                             label="Custom enhancement padding (%)",
@@ -1708,10 +1708,10 @@ Scheduler: {scheduler}"""
                     "negative_prompt": DEFAULT_NEGATIVE_PROFILE,
                     "resize_max_side": 1280,
                     "seed": 42,
-                    "num_steps": 25,
+                    "num_steps": 24,
                     "guidance_scale": 4.0,
                     "identitynet_strength_ratio": 0.7,
-                    "adapter_strength_ratio": 0.65,
+                    "adapter_strength_ratio": 0.6,
                     "pose_strength": 0.40,
                     "canny_strength": 0.40,
                     "depth_strength": 0.40,
@@ -1773,7 +1773,10 @@ Scheduler: {scheduler}"""
                                 continue_idx += 1
                             settings["prompt"] = "\n".join(prompt_lines)
                         elif stripped_line.startswith("Negative Prompt:"):
-                            negative_lines = [line[len("Negative Prompt:"):].lstrip()]
+                            negative_prompt_value = line[len("Negative Prompt:"):]
+                            if negative_prompt_value.startswith(" "):
+                                negative_prompt_value = negative_prompt_value[1:]
+                            negative_lines = [negative_prompt_value]
                             continue_idx = idx + 1
                             while continue_idx < len(lines):
                                 next_line = lines[continue_idx]
