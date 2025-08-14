@@ -719,15 +719,104 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
 
         generator = torch.Generator(device=device).manual_seed(seed)
 
-        print("Start inference...")
+        print("Starting image generation...")
         print(f"Prompt: {prompt}\nNegative Prompt: {negative_prompt}")
         print(f"Detection size: {current_det_size}")
+        print(f"Input face image: {os.path.basename(face_image_path) if face_image_path else 'None'}")
+        print(f"Reference pose image: {os.path.basename(pose_image_path) if pose_image_path else 'None'}")
+        print(f"Steps: {num_steps}")
+        print(f"Enhance non-face region: {'True' if enhance_face_region else 'False'} ({enhance_strength}{f' | Padding: {custom_enhance_padding:.2f}' if enhance_strength == 'Custom' else ''})")
+        print(f"Guidance scale: {guidance_scale}")
+        print(f"Model: {model_name}")
+        print(f"Resize mode: {resize_mode}")
+        print(f"Pad to max side: {pad_to_max_side}")
+        print(f"Use custom resize: {enable_custom_resize}")
+        if enable_custom_resize:
+            print(f"Custom resize size: {custom_resize_width}x{custom_resize_height}")
+        print(f"ControlNet selection: {controlnet_selection} | Strengths - Pose: {pose_strength}, Canny: {canny_strength}, Depth: {depth_strength}")
+        print(f"IdentityNet strength: {identitynet_strength_ratio}")
+        print(f"Adapter strength: {adapter_strength_ratio}")
+
+        lora_info_str = "Disabled"
+        if enable_lora:
+            lora_details = []
+            
+            if lora_selection:
+                if not disable_lora_1 and os.path.exists(os.path.join('./models/Loras', lora_selection)):
+                    lora_details.append(f"LoRA 1: {lora_selection} (Scale: {lora_scale})")
+                elif disable_lora_1:
+                    lora_details.append("LoRA 1: Manually disabled")
+                else:
+                    lora_details.append(f"LoRA 1: {lora_selection} (Not found)")
+
+            if lora_selection_2:
+                if not disable_lora_2 and os.path.exists(os.path.join('./models/Loras', lora_selection_2)):
+                    lora_details.append(f"LoRA 2: {lora_selection_2} (Scale: {lora_scale_2})")
+                elif disable_lora_2:
+                    lora_details.append("LoRA 2: Manually disabled")
+                else:
+                    lora_details.append(f"LoRA 2: {lora_selection_2} (Not found)")
+
+            if lora_selection_3:
+                if not disable_lora_3 and os.path.exists(os.path.join('./models/Loras', lora_selection_3)):
+                    lora_details.append(f"LoRA 3: {lora_selection_3} (Scale: {lora_scale_3})")
+                elif disable_lora_3:
+                    lora_details.append("LoRA 3: Manually disabled")
+                else:
+                    lora_details.append(f"LoRA 3: {lora_selection_3} (Not found)")
+
+            if lora_selection_4:
+                if not disable_lora_4 and os.path.exists(os.path.join('./models/Loras', lora_selection_4)):
+                    lora_details.append(f"LoRA 4: {lora_selection_4} (Scale: {lora_scale_4})")
+                elif disable_lora_4:
+                    lora_details.append("LoRA 4: Manually disabled")
+                else:
+                    lora_details.append(f"LoRA 4: {lora_selection_4} (Not found)")
+
+            if lora_selection_5:
+                if not disable_lora_5 and os.path.exists(os.path.join('./models/Loras', lora_selection_5)):
+                    lora_details.append(f"LoRA 5: {lora_selection_5} (Scale: {lora_scale_5})")
+                elif disable_lora_5:
+                    lora_details.append("LoRA 5: Manually disabled")
+                else:
+                    lora_details.append(f"LoRA 5: {lora_selection_5} (Not found)")
+
+            if lora_selection_6:
+                if not disable_lora_6 and os.path.exists(os.path.join('./models/Loras', lora_selection_6)):
+                    lora_details.append(f"LoRA 6: {lora_selection_6} (Scale: {lora_scale_6})")
+                elif disable_lora_6:
+                    lora_details.append("LoRA 6: Manually disabled")
+                else:
+                    lora_details.append(f"LoRA 6: {lora_selection_6} (Not found)")
+
+            if lora_selection_7:
+                if not disable_lora_7 and os.path.exists(os.path.join('./models/Loras', lora_selection_7)):
+                    lora_details.append(f"LoRA 7: {lora_selection_7} (Scale: {lora_scale_7})")
+                elif disable_lora_7:
+                    lora_details.append("LoRA 7: Manually disabled")
+                else:
+                    lora_details.append(f"LoRA 7: {lora_selection_7} (Not found)")
+
+            if lora_selection_8:
+                if not disable_lora_8 and os.path.exists(os.path.join('./models/Loras', lora_selection_8)):
+                    lora_details.append(f"LoRA 8: {lora_selection_8} (Scale: {lora_scale_8})")
+                elif disable_lora_8:
+                    lora_details.append("LoRA 8: Manually disabled")
+                else:
+                    lora_details.append(f"LoRA 8: {lora_selection_8} (Not found)")
+
+            lora_info_str = "; ".join(lora_details)
+        print(f"LoRA(s): {lora_info_str}")
+
+        print(f"Scheduler: {scheduler}")
+        print(f"Max resize side: {resize_max_side}")
+        print(f"Image size: {width}x{height}\n")
 
         pipe.set_ip_adapter_scale(adapter_strength_ratio)
         images = []
         generation_infos = []
         for i in range(num_outputs):
-            print(f"Generating image {i + 1} of {num_outputs}...")
+            print(f"Generating image {i + 1} of {num_outputs}...\n")
 
             step_tracker = {"last": -1, "total": 0}
             is_slow_scheduler = any(x in scheduler for x in ["DPMSolverSDE", "KDPM2", "Heun"])
@@ -753,96 +842,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                     callback_kwargs
                 )[1]
 
-            print(f"Input face image: {os.path.basename(face_image_path) if face_image_path else 'None'}")
-            print(f"Reference pose image: {os.path.basename(pose_image_path) if pose_image_path else 'None'}")
-            print(f"Steps: {num_steps}")
-            print(f"Enhance non-face region: {'True' if enhance_face_region else 'False'} ({enhance_strength}{f' | Padding: {custom_enhance_padding:.2f}' if enhance_strength == 'Custom' else ''})")
-            print(f"Guidance scale: {guidance_scale}")
-            print(f"Seed: {seed + i}")
-            print(f"Model: {model_name}")
-            print(f"Resize mode: {resize_mode}")
-            print(f"Pad to max side: {pad_to_max_side}")
-            print(f"Use custom resize: {enable_custom_resize}")
-            if enable_custom_resize:
-                print(f"Custom resize size: {custom_resize_width}x{custom_resize_height}")
-            print(f"ControlNet selection: {controlnet_selection} | Strengths - Pose: {pose_strength}, Canny: {canny_strength}, Depth: {depth_strength}")
-            print(f"IdentityNet strength: {identitynet_strength_ratio}")
-            print(f"Adapter strength: {adapter_strength_ratio}")
-
-            lora_info_str = "Disabled"
-            if enable_lora:
-                lora_details = []
-                
-                if lora_selection:
-                    if not disable_lora_1 and os.path.exists(os.path.join('./models/Loras', lora_selection)):
-                        lora_details.append(f"LoRA 1: {lora_selection} (Scale: {lora_scale})")
-                    elif disable_lora_1:
-                        lora_details.append("LoRA 1: Manually disabled")
-                    else:
-                        lora_details.append(f"LoRA 1: {lora_selection} (Not found)")
-
-                if lora_selection_2:
-                    if not disable_lora_2 and os.path.exists(os.path.join('./models/Loras', lora_selection_2)):
-                        lora_details.append(f"LoRA 2: {lora_selection_2} (Scale: {lora_scale_2})")
-                    elif disable_lora_2:
-                        lora_details.append("LoRA 2: Manually disabled")
-                    else:
-                        lora_details.append(f"LoRA 2: {lora_selection_2} (Not found)")
-
-                if lora_selection_3:
-                    if not disable_lora_3 and os.path.exists(os.path.join('./models/Loras', lora_selection_3)):
-                        lora_details.append(f"LoRA 3: {lora_selection_3} (Scale: {lora_scale_3})")
-                    elif disable_lora_3:
-                        lora_details.append("LoRA 3: Manually disabled")
-                    else:
-                        lora_details.append(f"LoRA 3: {lora_selection_3} (Not found)")
-
-                if lora_selection_4:
-                    if not disable_lora_4 and os.path.exists(os.path.join('./models/Loras', lora_selection_4)):
-                        lora_details.append(f"LoRA 4: {lora_selection_4} (Scale: {lora_scale_4})")
-                    elif disable_lora_4:
-                        lora_details.append("LoRA 4: Manually disabled")
-                    else:
-                        lora_details.append(f"LoRA 4: {lora_selection_4} (Not found)")
-
-                if lora_selection_5:
-                    if not disable_lora_5 and os.path.exists(os.path.join('./models/Loras', lora_selection_5)):
-                        lora_details.append(f"LoRA 5: {lora_selection_5} (Scale: {lora_scale_5})")
-                    elif disable_lora_5:
-                        lora_details.append("LoRA 5: Manually disabled")
-                    else:
-                        lora_details.append(f"LoRA 5: {lora_selection_5} (Not found)")
-
-                if lora_selection_6:
-                    if not disable_lora_6 and os.path.exists(os.path.join('./models/Loras', lora_selection_6)):
-                        lora_details.append(f"LoRA 6: {lora_selection_6} (Scale: {lora_scale_6})")
-                    elif disable_lora_6:
-                        lora_details.append("LoRA 6: Manually disabled")
-                    else:
-                        lora_details.append(f"LoRA 6: {lora_selection_6} (Not found)")
-
-                if lora_selection_7:
-                    if not disable_lora_7 and os.path.exists(os.path.join('./models/Loras', lora_selection_7)):
-                        lora_details.append(f"LoRA 7: {lora_selection_7} (Scale: {lora_scale_7})")
-                    elif disable_lora_7:
-                        lora_details.append("LoRA 7: Manually disabled")
-                    else:
-                        lora_details.append(f"LoRA 7: {lora_selection_7} (Not found)")
-
-                if lora_selection_8:
-                    if not disable_lora_8 and os.path.exists(os.path.join('./models/Loras', lora_selection_8)):
-                        lora_details.append(f"LoRA 8: {lora_selection_8} (Scale: {lora_scale_8})")
-                    elif disable_lora_8:
-                        lora_details.append("LoRA 8: Manually disabled")
-                    else:
-                        lora_details.append(f"LoRA 8: {lora_selection_8} (Not found)")
-
-                lora_info_str = "; ".join(lora_details)
-            print(f"LoRA(s): {lora_info_str}")
-
-            print(f"Scheduler: {scheduler}")
-            print(f"Max resize side: {resize_max_side}")
-            print(f"Image size: {width}x{height}\n")
+            print(f"Seed: {seed + i}\n")
 
             generator = torch.Generator(device=device).manual_seed(seed + i)
             result = pipe(
