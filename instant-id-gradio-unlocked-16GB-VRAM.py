@@ -350,7 +350,10 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         style_name: str, positive: str, negative: str = ""
     ) -> Tuple[str, str]:
         p, n = styles.get(style_name, styles[DEFAULT_STYLE_NAME])
-        return p.replace("{prompt}", positive), n + negative
+        if style_name != DEFAULT_STYLE_NAME and negative:
+            return p.replace("{prompt}", positive), n + ", " + negative
+        else:
+            return p.replace("{prompt}", positive), n + negative
 
     def load_model_and_update_pipe(model_name):
         nonlocal pipe
