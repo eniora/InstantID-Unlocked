@@ -266,7 +266,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             weight_dtype=dtype,
         )
 
-        scheduler = diffusers.EulerDiscreteScheduler.from_config(scheduler_kwargs)
+        scheduler = diffusers.DPMSolverMultistepScheduler.from_config(scheduler_kwargs)
         pipe = StableDiffusionXLInstantIDPipeline(
             vae=vae,
             text_encoder=text_encoders[0],
@@ -286,7 +286,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             feature_extractor=None,
         ).to(device)
 
-        pipe.scheduler = diffusers.EulerDiscreteScheduler.from_config(
+        pipe.scheduler = diffusers.DPMSolverMultistepScheduler.from_config(
             pipe.scheduler.config
         )
 
@@ -1357,8 +1357,8 @@ Scheduler: {scheduler}"""
                         metadata_output = gr.Textbox(
                             label="Generation Metadata",
                             interactive=False,
-                            lines=25,
-                            max_lines=25
+                            lines=22,
+                            max_lines=22
                         )
 
                     with gr.Row():
