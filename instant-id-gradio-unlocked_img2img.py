@@ -145,7 +145,7 @@ def get_available_models():
     return model_folders
 
 AVAILABLE_MODELS = get_available_models()
-DEFAULT_MODEL = "eniora/RealVisXL_V5.0"
+DEFAULT_MODEL = "eniora/juggernaut_XL_ragnarok"
 
 DET_SIZE_OPTIONS = {
     "160x160 (for very lowres portrait photos)": (160, 160),
@@ -224,7 +224,7 @@ def restart_server(open_browser):
 
     os._exit(0)
 
-def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
+def main(pretrained_model_name_or_path="eniora/juggernaut_XL_ragnarok"):
     pipe = None
 
     file_prefix = DEFAULT_FILE_PREFIX
@@ -340,7 +340,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         
         if model_name.endswith(".ckpt") or model_name.endswith(".safetensors"):
             scheduler_kwargs = hf_hub_download(
-                repo_id="eniora/RealVisXL_V5.0",
+                repo_id="eniora/juggernaut_XL_ragnarok",
                 subfolder="scheduler",
                 filename="scheduler_config.json",
             )
@@ -914,12 +914,13 @@ Scheduler: {scheduler}"""
                         minimum=0.1,
                         maximum=1.0,
                         step=0.05,
-                        value=0.8,
+                        value=0.9,
                     )
                 prompt = gr.Textbox(
                     label="Prompt",
-                    placeholder="Be creative. (e.g. A person wearing a leather jacket in a cyberpunk city, neon lights",
-                    value="",
+                    info="Describe clothing, setting, or style. An example prompt is inserted below.",
+                    placeholder="Be creative! Or choose a style from the 'Style templates'",
+                    value="a person wearing a leather jacket in a cyberpunk city, neon lights",
                 )
                 negative_prompt = gr.Textbox(
                     label="Negative Prompt",
@@ -1561,13 +1562,13 @@ Scheduler: {scheduler}"""
             def extract_all_settings(metadata_text):
                 accordion_update = gr.update(open=False)
                 settings = {
-                    "prompt": "",
+                    "prompt": "a person wearing a leather jacket in a cyberpunk city, neon lights",
                     "negative_prompt": DEFAULT_NEGATIVE_PROFILE,
                     "resize_max_side": 1280,
                     "seed": 42,
                     "num_steps": 26,
                     "guidance_scale": 4.0,
-                    "strength": 0.8,
+                    "strength": 0.9,
                     "identitynet_strength_ratio": 0.7,
                     "adapter_strength_ratio": 0.6,
                     "scheduler": "DPMSolverMultistepScheduler",
