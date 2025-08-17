@@ -939,7 +939,7 @@ Scheduler: {scheduler}"""
 
     article = r"""
     - Upload an image with a face. For images with multiple faces, only the largest face will be detected. Ensure the face is not too small and is clearly visible without significant obstructions or blurring.
-    - You can upload another image as a reference for the face pose but it's not recommended for this img2img mode.
+    - You can upload another image as a reference for the face pose but it's usually not recommended for this img2img mode.
     - (Optional) You can select multiple ControlNet models to control the generation process. The default is to use the IdentityNet and img2img only. The ControlNet models include pose skeleton, canny, and depth. You can adjust the strength of each ControlNet model to control the generation process.
     - Enter a text prompt, as done in normal text-to-image models.
     - Click the Generate button to begin customization.
@@ -1015,7 +1015,7 @@ Scheduler: {scheduler}"""
                         label="Upload a photo containing a face", type="filepath"
                     )
                     pose_file = gr.Image(
-                        label="Upload a reference pose image (not recommended)",
+                        label="Upload a reference pose image (usually not needed for img2img)",
                         type="filepath"
                     )
                 with gr.Row():
@@ -1233,21 +1233,21 @@ Scheduler: {scheduler}"""
                         minimum=0,
                         maximum=1.5,
                         step=0.05,
-                        value=0.40,
+                        value=0.30,
                     )
                     canny_strength = gr.Slider(
                         label="Canny strength",
                         minimum=0,
                         maximum=1.5,
                         step=0.05,
-                        value=0.40,
+                        value=0.30,
                     )
                     depth_strength = gr.Slider(
                         label="Depth strength",
                         minimum=0,
                         maximum=1.5,
                         step=0.05,
-                        value=0.40,
+                        value=0.30,
                     )
                 with gr.Accordion(open=True, label="Advanced Options"):
                     num_steps = gr.Slider(
@@ -1711,9 +1711,9 @@ Scheduler: {scheduler}"""
                     "strength": 0.9,
                     "identitynet_strength_ratio": 0.7,
                     "adapter_strength_ratio": 0.6,
-                    "pose_strength": 0.40,
-                    "canny_strength": 0.40,
-                    "depth_strength": 0.40,
+                    "pose_strength": 0.30,
+                    "canny_strength": 0.30,
+                    "depth_strength": 0.30,
                     "scheduler": "DPMSolverMultistepScheduler",
                     "enable_lora": False,
                     "lora_scale": 1.0,
