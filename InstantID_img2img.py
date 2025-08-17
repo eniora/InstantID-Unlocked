@@ -1057,7 +1057,7 @@ Scheduler: {scheduler}"""
                         enable_vae_tiling = gr.Checkbox(
                             label="Enable VAE Tiling (saves VRAM for large images at the last generation step)",
                             value=False,
-                            info="Processes images in tiles to reduce VRAM usage during the final VAE decoding step without any quality loss. Best to enable only if you have 16GB VRAM or more."
+                            info="Processes images in tiles to reduce VRAM usage during the final VAE decoding step without any quality loss. Best to enable only if you have 20GB VRAM or more."
                         )
                     with gr.Row():
                         resize_mode_dropdown = gr.Dropdown(
