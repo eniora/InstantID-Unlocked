@@ -20,6 +20,7 @@ warnings.filterwarnings("ignore", message=".*timm.models.registry.*")
 warnings.filterwarnings("ignore", message=".*Overwriting tiny_vit_.* in registry.*")
 warnings.filterwarnings("ignore", message=".*peft_config.*multiple adapters.*")
 warnings.filterwarnings("ignore", message=".*rcond.*will change to the default.*")
+warnings.filterwarnings("ignore", message=".*MultiControlNetModel.*is deprecated.*")
 warnings.filterwarnings("ignore", message=".*`resume_download` is deprecated.*")
 warnings.filterwarnings("ignore", message=".*Should have .*<=t1 but got .*")
 warnings.filterwarnings("ignore", message="unable to parse version details from package URL.")
@@ -61,17 +62,21 @@ def save_images(images, output_dir="output-img2img", generation_info=None, prefi
         paths.append(path)
     return paths
 
+cached_controlnet_models = {}
+
 import diffusers
 from diffusers.utils import load_image
 from diffusers.models import ControlNetModel
+from diffusers.pipelines.controlnet.multicontrolnet import MultiControlNetModel
 
 from huggingface_hub import hf_hub_download
 
 from insightface.app import FaceAnalysis
 
-from sstyle_template_img2img import styles
+from style_template_img2img import styles
 from pipeline_stable_diffusion_xl_instantid_img2img import StableDiffusionXLInstantIDImg2ImgPipeline
 from model_util import load_models_xl, get_torch_device, torch_gc
+from controlnet_util import openpose, get_depth_map, get_canny_image
 
 import gradio as gr
 
@@ -186,6 +191,21 @@ controlnet_identitynet = ControlNetModel.from_pretrained(
     controlnet_path, torch_dtype=dtype
 )
 
+controlnet_pose_model = "thibaud/controlnet-openpose-sdxl-1.0"
+controlnet_canny_model = "diffusers/controlnet-canny-sdxl-1.0"
+controlnet_depth_model = "diffusers/controlnet-depth-sdxl-1.0-small"
+
+controlnet_model_paths = {
+    "pose": controlnet_pose_model,
+    "canny": controlnet_canny_model,
+    "depth": controlnet_depth_model,
+}
+controlnet_map_fn = {
+    "pose": openpose,
+    "canny": get_canny_image,
+    "depth": get_depth_map,
+}
+
 def get_available_loras():
     loras_dir = "./models/Loras"
     if not os.path.exists(loras_dir):
@@ -274,6 +294,13 @@ def main(pretrained_model_name_or_path="eniora/juggernaut_XL_ragnarok"):
     pipe._current_model = pretrained_model_name_or_path
 
     file_prefix = DEFAULT_FILE_PREFIX
+
+    def load_and_cache_controlnet_model(controlnet_type):
+        if controlnet_type not in cached_controlnet_models:
+            print(f"Loading ControlNet model: {controlnet_type}")
+            model = ControlNetModel.from_pretrained(controlnet_model_paths[controlnet_type], torch_dtype=dtype).to(device)
+            cached_controlnet_models[controlnet_type] = model
+        return cached_controlnet_models[controlnet_type]
 
     def toggle_lora_ui(enable_lora_checkbox):
         return [gr.update(visible=enable_lora_checkbox)] * len(LORA_OUTPUTS)
@@ -434,6 +461,10 @@ def main(pretrained_model_name_or_path="eniora/juggernaut_XL_ragnarok"):
         num_steps,
         identitynet_strength_ratio,
         adapter_strength_ratio,
+        pose_strength,
+        canny_strength,
+        depth_strength,
+        controlnet_selection,
         guidance_scale,
         seed,
         scheduler,
@@ -591,7 +622,8 @@ def main(pretrained_model_name_or_path="eniora/juggernaut_XL_ragnarok"):
         with torch.no_grad():
             scheduler_config = dict(pipe.scheduler.config.items())
 
-            torch.cuda.empty_cache()
+            if not controlnet_selection:
+                torch.cuda.empty_cache()
 
             use_karras = "Karras" in scheduler
             use_sde = "SDE" in scheduler
@@ -669,9 +701,36 @@ def main(pretrained_model_name_or_path="eniora/juggernaut_XL_ragnarok"):
 
             width, height = face_kps.size
 
-        pipe.controlnet = controlnet_identitynet
-        control_scales = float(identitynet_strength_ratio)
-        control_images = face_kps
+        if len(controlnet_selection) > 0:
+            global cached_controlnet_models
+            for k in list(cached_controlnet_models.keys()):
+                if k not in controlnet_selection:
+                    del cached_controlnet_models[k]
+                    torch.cuda.empty_cache()
+                    gc.collect()
+            controlnet_scales = {
+                "pose": pose_strength,
+                "canny": canny_strength,
+                "depth": depth_strength,
+            }
+            controlnet_models_to_use = []
+            controlnet_images = []
+            for s in controlnet_selection:
+                model = load_and_cache_controlnet_model(s) 
+                controlnet_models_to_use.append(model)
+                controlnet_images.append(controlnet_map_fn[s](img_controlnet).resize((width, height)))
+            pipe.controlnet = MultiControlNetModel([controlnet_identitynet] + controlnet_models_to_use)
+            control_scales = [float(identitynet_strength_ratio)] + [controlnet_scales[s] for s in controlnet_selection]
+            control_images = [face_kps] + controlnet_images
+        else:
+            if cached_controlnet_models:
+                for key in list(cached_controlnet_models.keys()):
+                    del cached_controlnet_models[key]
+                    torch.cuda.empty_cache()
+                    gc.collect()
+            pipe.controlnet = controlnet_identitynet
+            control_scales = float(identitynet_strength_ratio)
+            control_images = face_kps
 
         generator = torch.Generator(device=device).manual_seed(seed)
 
@@ -688,6 +747,7 @@ def main(pretrained_model_name_or_path="eniora/juggernaut_XL_ragnarok"):
         print(f"Use custom resize: {enable_custom_resize}")
         if enable_custom_resize:
             print(f"Custom resize size: {custom_resize_width}x{custom_resize_height}")
+        print(f"ControlNet selection: {controlnet_selection} | Strengths - Pose: {pose_strength}, Canny: {canny_strength}, Depth: {depth_strength}")
         print(f"img2img strength: {strength}")
         print(f"IdentityNet strength: {identitynet_strength_ratio}")
         print(f"Adapter strength: {adapter_strength_ratio}")
@@ -828,6 +888,7 @@ Steps: {num_steps}
 Guidance scale: {guidance_scale}
 Seed: {seed + i}
 Model: {model_name}
+ControlNet selection: {controlnet_selection}
 Max resize side: {resize_max_side}
 Image size: {width}x{height}
 Resize mode: {resize_mode}
@@ -837,6 +898,9 @@ Custom resize size: {custom_resize_width}x{custom_resize_height}
 img2img Strength: {strength}
 IdentityNet strength: {identitynet_strength_ratio}
 Adapter strength: {adapter_strength_ratio}
+Pose strength: {pose_strength}
+Canny strength: {canny_strength}
+Depth strength: {depth_strength}
 LoRA Enabled: {enable_lora}
 LoRA 1 selection: {'None' if disable_lora_1 or not (enable_lora and lora_selection and os.path.exists(os.path.join('./models/Loras', lora_selection))) else lora_selection}
 LoRA 1 scale: {'Disabled' if disable_lora_1 or not (enable_lora and lora_selection and os.path.exists(os.path.join('./models/Loras', lora_selection))) else lora_scale}
@@ -876,6 +940,7 @@ Scheduler: {scheduler}"""
     article = r"""
     - Upload an image with a face. For images with multiple faces, only the largest face will be detected. Ensure the face is not too small and is clearly visible without significant obstructions or blurring.
     - You can upload another image as a reference for the face pose but it's not recommended for this img2img mode.
+    - (Optional) You can select multiple ControlNet models to control the generation process. The default is to use the IdentityNet and img2img only. The ControlNet models include pose skeleton, canny, and depth. You can adjust the strength of each ControlNet model to control the generation process.
     - Enter a text prompt, as done in normal text-to-image models.
     - Click the Generate button to begin customization.
     - In some cases, minimizing the browser/Gradio window while an image is being generated can help speed up the generation process. You can track the progress in the CMD/Terminal window.
@@ -1158,6 +1223,32 @@ Scheduler: {scheduler}"""
                     step=0.05,
                     value=0.6,
                 )
+                with gr.Accordion("Controlnet", open=False) as controlnet_accordion:
+                    controlnet_selection = gr.CheckboxGroup(
+                        ["pose", "canny", "depth"], value=[], show_label=False,
+                        info="Use pose for skeleton inference, canny for edge detection, and depth for depth map estimation. You can try all three to control the generation process"
+                    )
+                    pose_strength = gr.Slider(
+                        label="Pose strength",
+                        minimum=0,
+                        maximum=1.5,
+                        step=0.05,
+                        value=0.40,
+                    )
+                    canny_strength = gr.Slider(
+                        label="Canny strength",
+                        minimum=0,
+                        maximum=1.5,
+                        step=0.05,
+                        value=0.40,
+                    )
+                    depth_strength = gr.Slider(
+                        label="Depth strength",
+                        minimum=0,
+                        maximum=1.5,
+                        step=0.05,
+                        value=0.40,
+                    )
                 with gr.Accordion(open=True, label="Advanced Options"):
                     num_steps = gr.Slider(
                         label="Number of sample steps (Actual used value during generation depends on img2img strength)",
@@ -1532,6 +1623,10 @@ Scheduler: {scheduler}"""
                 num_steps,
                 identitynet_strength_ratio,
                 adapter_strength_ratio,
+                pose_strength,
+                canny_strength,
+                depth_strength,
+                controlnet_selection,
                 guidance_scale,
                 seed,
                 scheduler,
@@ -1616,6 +1711,9 @@ Scheduler: {scheduler}"""
                     "strength": 0.9,
                     "identitynet_strength_ratio": 0.7,
                     "adapter_strength_ratio": 0.6,
+                    "pose_strength": 0.40,
+                    "canny_strength": 0.40,
+                    "depth_strength": 0.40,
                     "scheduler": "DPMSolverMultistepScheduler",
                     "enable_lora": False,
                     "lora_scale": 1.0,
@@ -1636,6 +1734,7 @@ Scheduler: {scheduler}"""
                     "lora_selection_8": None,
                     "style": DEFAULT_STYLE_NAME,
                     "randomize_seed": True,
+                    "controlnet_selection": [],
                     "model_name": DEFAULT_MODEL,
                     "det_size_name": "640x640 (default)",
                     "disable_lora_1": False,
@@ -1760,6 +1859,25 @@ Scheduler: {scheduler}"""
                                 settings["scheduler"] = scheduler_name
                         elif line.startswith("Adapter strength:"):
                             settings["adapter_strength_ratio"] = float(line.replace("Adapter strength:", "").strip())
+                        elif line.startswith("Pose strength:"):
+                            settings["pose_strength"] = float(line.replace("Pose strength:", "").strip())
+                        elif line.startswith("Canny strength:"):
+                            settings["canny_strength"] = float(line.replace("Canny strength:", "").strip())
+                        elif line.startswith("Depth strength:"):
+                            settings["depth_strength"] = float(line.replace("Depth strength:", "").strip())
+                        elif line.startswith("ControlNet selection:"):
+                            cn_selection = line.replace("ControlNet selection:", "").strip()
+                            if cn_selection.startswith("["):
+                                try:
+                                    cn_list = eval(cn_selection)
+                                    if isinstance(cn_list, list):
+                                        clean_list = [x.strip("'\" ") for x in cn_list]
+                                        settings["controlnet_selection"] = clean_list
+                                        known_cn = {"pose", "canny", "depth"}
+                                        if set(clean_list) & known_cn:
+                                            accordion_update = gr.update(open=True)
+                                except:
+                                    pass
                         elif line.startswith("Model:"):
                             model_name = line.replace("Model:", "").strip()
                             if model_name in AVAILABLE_MODELS:
@@ -1800,6 +1918,9 @@ Scheduler: {scheduler}"""
                     settings["strength"],
                     settings["identitynet_strength_ratio"],
                     settings["adapter_strength_ratio"],
+                    settings["pose_strength"],
+                    settings["canny_strength"],
+                    settings["depth_strength"],
                     settings["guidance_scale"],
                     settings["seed"],
                     settings["scheduler"],
@@ -1821,6 +1942,7 @@ Scheduler: {scheduler}"""
                     settings["lora_scale_8"],
                     settings["lora_selection_8"],
                     settings["randomize_seed"],
+                    settings["controlnet_selection"],
                     settings["model_name"],
                     settings["det_size_name"],
                     settings["resize_max_side"],
@@ -1837,6 +1959,7 @@ Scheduler: {scheduler}"""
                     settings["enable_custom_resize"],
                     settings["custom_resize_width"],
                     settings["custom_resize_height"],
+                    accordion_update,
                     gr.update(open=open_settings_accordion)
                 ]
 
@@ -1851,6 +1974,9 @@ Scheduler: {scheduler}"""
                     strength,
                     identitynet_strength_ratio,
                     adapter_strength_ratio,
+                    pose_strength,
+                    canny_strength,
+                    depth_strength,
                     guidance_scale,
                     seed,
                     scheduler,
@@ -1872,6 +1998,7 @@ Scheduler: {scheduler}"""
                     lora_scale_8,
                     lora_selection_8,
                     randomize_seed,
+                    controlnet_selection,
                     model_name,
                     det_size_name,
                     resize_max_side_slider,
@@ -1888,6 +2015,7 @@ Scheduler: {scheduler}"""
                     enable_custom_resize,
                     custom_resize_width,
                     custom_resize_height,
+                    controlnet_accordion,
                     style_settings_accordion
                 ]
             ).then(
@@ -1898,7 +2026,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked (img2img) v1.2.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked (img2img) v1.3.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
