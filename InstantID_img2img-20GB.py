@@ -73,7 +73,7 @@ from huggingface_hub import hf_hub_download
 
 from insightface.app import FaceAnalysis
 
-from style_template_img2img import styles
+from style_template import styles
 from pipeline_stable_diffusion_xl_instantid_img2img import StableDiffusionXLInstantIDImg2ImgPipeline
 from model_util import load_models_xl, get_torch_device, torch_gc
 from controlnet_util import openpose, get_depth_map, get_canny_image
