@@ -32,7 +32,7 @@ os.environ["GRADIO_ANALYTICS_ENABLED"] = "False"
 os.environ["GRADIO_DISABLE_TELEMETRY"] = "1"
 
 def open_output_folder():
-    path = os.path.abspath("output")
+    path = os.path.abspath("output-img2img")
     if sys.platform == "win32":
         os.system(f'start "" "{path}"')
     elif sys.platform == "darwin":
@@ -43,10 +43,10 @@ def open_output_folder():
 import PIL
 from PIL import Image
 
-DEFAULT_FILE_PREFIX = "InstantID_"
+DEFAULT_FILE_PREFIX = "InstantID-img2img_"
 FILENAME_SAFE_TRANS = str.maketrans('', '', '\\/:*?"<>|')
 
-def save_images(images, output_dir="output", generation_info=None, prefix=DEFAULT_FILE_PREFIX):
+def save_images(images, output_dir="output-img2img", generation_info=None, prefix=DEFAULT_FILE_PREFIX):
     os.makedirs(output_dir, exist_ok=True)
 
     existing = [f for f in os.listdir(output_dir) if f.startswith(prefix) and f.endswith(".png")]
@@ -1853,7 +1853,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked (img2img) v1.1.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked (img2img) v1.2.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
