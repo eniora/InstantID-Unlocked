@@ -5340,11 +5340,6 @@ style_list = [
         "negative_prompt": "earthbound, modern, urban, technological, dark"
     },
     {
-        "name": "Neon Ronin",
-        "prompt": "{prompt} in a rainy neon alley, wearing tattered high-tech kimono, energy blade humming with power, reflections of holograms in puddles",
-        "negative_prompt": "historical, daylight, rural, medieval european"
-    },
-    {
         "name": "Watercolor Dream",
         "prompt": "{prompt} in a soft watercolor painting, delicate brushstrokes blending colors seamlessly, dreamy pastel hues with gentle edges, artistic composition",
         "negative_prompt": "sharp lines, photorealistic, high contrast, digital art"
