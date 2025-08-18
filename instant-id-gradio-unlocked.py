@@ -1051,6 +1051,7 @@ Scheduler: {scheduler}"""
     - (Optional) You can select multiple ControlNet models to control the generation process. The default is to use the IdentityNet only. The ControlNet models include pose skeleton, canny, and depth. You can adjust the strength of each ControlNet model to control the generation process.
     - Enter a text prompt, as done in normal text-to-image models.
     - Click the Generate button to begin customization.
+    - img2img mode imports the "pipeline_stable_diffusion_xl_instantid_img2img" pipeline, it's good to experiment with it and I got quite good results using it. It uses a lot of VRAM though (~20GB).
     - In some cases, minimizing the browser/Gradio window while an image is being generated can help speed up the generation process. You can track the progress in the CMD/Terminal window.
     - Select a model to use for generation from the upper left corner dropdown. Only use SDXL and Pony. Illustrious can be loaded but isn't well supported.
     - You can select a scheduler from the upper right corner dropdown. DPMSolver, KDPM2 and Euler are usually the best.
@@ -1429,7 +1430,7 @@ Scheduler: {scheduler}"""
                     )
                 with gr.Row():
                     enable_img2img = gr.Checkbox(label="Enable img2img mode", value=False, scale=1)
-                    strength = gr.Slider(label="img2img Denoising Strength", minimum=0.1, maximum=1.0, value=0.9, step=0.05, visible=False, scale=3, info="Use this for more control over e.g., location setting, clothes style, pose, etc. A lower value preserves more of the original image.")
+                    strength = gr.Slider(label="img2img Denoising Strength", minimum=0.1, maximum=1.0, value=0.9, step=0.05, visible=False, scale=3, info="Use this for more control over e.g., location setting, clothing style, pose, etc. A lower value preserves more of the original image.")
 
                 def toggle_img2img(enable):
                     return gr.update(visible=enable)
@@ -2189,7 +2190,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v3.2.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v4.0.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
