@@ -75,6 +75,7 @@ from insightface.app import FaceAnalysis
 
 from style_template import styles
 from pipeline_stable_diffusion_xl_instantid_full import StableDiffusionXLInstantIDPipeline
+from pipeline_stable_diffusion_xl_instantid_img2img import StableDiffusionXLInstantIDImg2ImgPipeline
 from model_util import load_models_xl, get_torch_device, torch_gc
 from controlnet_util import openpose, get_depth_map, get_canny_image
 
@@ -355,7 +356,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         else:
             return p.replace("{prompt}", positive), n + negative
 
-    def load_model_and_update_pipe(model_name):
+    def load_model_and_update_pipe(model_name, enable_img2img):
         nonlocal pipe
 
         if pipe is not None:
@@ -379,27 +380,47 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             )
 
             scheduler = diffusers.DPMSolverMultistepScheduler.from_config(scheduler_kwargs)
-            pipe = StableDiffusionXLInstantIDPipeline(
-                vae=vae,
-                text_encoder=text_encoders[0],
-                text_encoder_2=text_encoders[1],
-                tokenizer=tokenizers[0],
-                tokenizer_2=tokenizers[1],
-                unet=unet,
-                scheduler=scheduler,
-                controlnet=[controlnet_identitynet],
-            ).to(device)
+            if enable_img2img:
+                pipe = StableDiffusionXLInstantIDImg2ImgPipeline(
+                    vae=vae,
+                    text_encoder=text_encoders[0],
+                    text_encoder_2=text_encoders[1],
+                    tokenizer=tokenizers[0],
+                    tokenizer_2=tokenizers[1],
+                    unet=unet,
+                    scheduler=scheduler,
+                    controlnet=[controlnet_identitynet],
+                ).to(device)
+            else:
+                pipe = StableDiffusionXLInstantIDPipeline(
+                    vae=vae,
+                    text_encoder=text_encoders[0],
+                    text_encoder_2=text_encoders[1],
+                    tokenizer=tokenizers[0],
+                    tokenizer_2=tokenizers[1],
+                    unet=unet,
+                    scheduler=scheduler,
+                    controlnet=[controlnet_identitynet],
+                ).to(device)
         else:
-            pipe = StableDiffusionXLInstantIDPipeline.from_pretrained(
-                model_name,
-                controlnet=[controlnet_identitynet],
-                torch_dtype=dtype,
-                feature_extractor=None,
-            ).to(device)
+            if enable_img2img:
+                pipe = StableDiffusionXLInstantIDImg2ImgPipeline.from_pretrained(
+                    model_name,
+                    controlnet=[controlnet_identitynet],
+                    torch_dtype=dtype,
+                    feature_extractor=None,
+                ).to(device)
+            else:
+                pipe = StableDiffusionXLInstantIDPipeline.from_pretrained(
+                    model_name,
+                    controlnet=[controlnet_identitynet],
+                    torch_dtype=dtype,
+                    feature_extractor=None,
+                ).to(device)
 
-            pipe.scheduler = diffusers.DPMSolverMultistepScheduler.from_config(
-                pipe.scheduler.config
-            )
+                pipe.scheduler = diffusers.DPMSolverMultistepScheduler.from_config(
+                    pipe.scheduler.config
+                )
 
         pipe.load_ip_adapter_instantid(face_adapter)
         pipe._current_model = model_name
@@ -462,6 +483,8 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         enable_custom_resize,
         custom_resize_width,
         custom_resize_height,
+        enable_img2img,
+        strength,
         progress=gr.Progress(),
     ):
         file_prefix = file_prefix.strip().translate(FILENAME_SAFE_TRANS)
@@ -471,8 +494,14 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         
         initialize_face_analysis(det_size_name)
         
-        if pipe is None or model_name != getattr(pipe, "_current_model", None):
-            pipe = load_model_and_update_pipe(model_name)
+        is_img2img_pipe = isinstance(pipe, StableDiffusionXLInstantIDImg2ImgPipeline)
+        if (
+            pipe is None
+            or model_name != getattr(pipe, "_current_model", None)
+            or (enable_img2img and not is_img2img_pipe)
+            or (not enable_img2img and is_img2img_pipe)
+        ):
+            pipe = load_model_and_update_pipe(model_name, enable_img2img)
             pipe._current_model = model_name
 
         if enable_vae_tiling:
@@ -725,6 +754,9 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         print(f"Input face image: {os.path.basename(face_image_path) if face_image_path else 'None'}")
         print(f"Reference pose image: {os.path.basename(pose_image_path) if pose_image_path else 'None'}")
         print(f"Steps: {num_steps}")
+        print(f"img2img Mode: {'Enabled' if enable_img2img else 'Disabled'}")
+        if enable_img2img:
+            print(f"img2img Denoising Strength: {strength}")
         print(f"Enhance non-face region: {'True' if enhance_face_region else 'False'} ({enhance_strength}{f' | Padding: {custom_enhance_padding:.2f}' if enhance_strength == 'Custom' else ''})")
         print(f"Guidance scale: {guidance_scale}")
         print(f"Model: {model_name}")
@@ -818,49 +850,94 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         for i in range(num_outputs):
             print(f"Generating image {i + 1} of {num_outputs}...\n")
 
-            step_tracker = {"last": -1, "total": 0}
-            is_slow_scheduler = any(x in scheduler for x in ["DPMSolverSDE", "KDPM2", "Heun"])
-            if is_slow_scheduler:
-                def gradio_callback_lambda(pipe_obj, step, timestep, callback_kwargs):
-                    if step != step_tracker["last"]:
-                        step_tracker["last"] = step
-                        step_tracker["total"] += 1
+            if enable_img2img:
+                effective_steps = max(1, int(num_steps * strength))
+                step_tracker = {"last": -1, "total": 0}
+                is_slow_scheduler = any(x in scheduler for x in ["DPMSolverSDE", "KDPM2", "Heun"])
+                if is_slow_scheduler:
+                    def gradio_callback_lambda(pipe_obj, step, timestep, callback_kwargs):
+                        if step != step_tracker["last"]:
+                            step_tracker["last"] = step
+                            step_tracker["total"] += 1
 
-                    est_total = num_steps * 2
-                    pct = int((step_tracker["total"] / est_total) * 100)
-                    progress(
-                        ((i / num_outputs) + (step_tracker["total"] / est_total) / num_outputs),
-                        desc=f"Generating image {i + 1} of {num_outputs} (Step {min(step_tracker['total'] // 2, num_steps)}/{num_steps})"
-                    )
-                    return callback_kwargs
+                        est_total = effective_steps * 2
+                        pct = int((step_tracker["total"] / est_total) * 100)
+                        progress(
+                            ((i / num_outputs) + (step_tracker["total"] / est_total) / num_outputs),
+                            desc=f"Generating image {i + 1} of {num_outputs} (Step {min(step_tracker['total'] // 2, effective_steps)}/{effective_steps})"
+                        )
+                        return callback_kwargs
+                else:
+                    gradio_callback_lambda = lambda pipe_obj, step, timestep, callback_kwargs: (
+                        progress(
+                            ((i / num_outputs) + (((step + 1) / effective_steps) / num_outputs)),
+                            desc=f"Generating image {i + 1} of {num_outputs} (Step {step + 1}/{effective_steps})"
+                        ),
+                        callback_kwargs
+                    )[1]
             else:
-                gradio_callback_lambda = lambda pipe_obj, step, timestep, callback_kwargs: (
-                    progress(
-                        ((i / num_outputs) + (((step + 1) / num_steps) / num_outputs)),
-                        desc=f"Generating image {i + 1} of {num_outputs} (Step {step + 1}/{num_steps})"
-                    ),
-                    callback_kwargs
-                )[1]
+                step_tracker = {"last": -1, "total": 0}
+                is_slow_scheduler = any(x in scheduler for x in ["DPMSolverSDE", "KDPM2", "Heun"])
+                if is_slow_scheduler:
+                    def gradio_callback_lambda(pipe_obj, step, timestep, callback_kwargs):
+                        if step != step_tracker["last"]:
+                            step_tracker["last"] = step
+                            step_tracker["total"] += 1
+
+                        est_total = num_steps * 2
+                        pct = int((step_tracker["total"] / est_total) * 100)
+                        progress(
+                            ((i / num_outputs) + (step_tracker["total"] / est_total) / num_outputs),
+                            desc=f"Generating image {i + 1} of {num_outputs} (Step {min(step_tracker['total'] // 2, num_steps)}/{num_steps})"
+                        )
+                        return callback_kwargs
+                else:
+                    gradio_callback_lambda = lambda pipe_obj, step, timestep, callback_kwargs: (
+                        progress(
+                            ((i / num_outputs) + (((step + 1) / num_steps) / num_outputs)),
+                            desc=f"Generating image {i + 1} of {num_outputs} (Step {step + 1}/{num_steps})"
+                        ),
+                        callback_kwargs
+                    )[1]
 
             print(f"Seed: {seed + i}\n")
 
             generator = torch.Generator(device=device).manual_seed(seed + i)
-            result = pipe(
-                prompt=prompt,
-                negative_prompt=negative_prompt,
-                image_embeds=face_emb,
-                image=control_images,
-                control_mask=control_mask,
-                controlnet_conditioning_scale=control_scales,
-                num_inference_steps=num_steps,
-                guidance_scale=guidance_scale,
-                height=height,
-                width=width,
-                generator=generator,
-                callback_on_step_end=gradio_callback_lambda,
-            )
-            image = result.images[0]
-            images.append(image)
+            if enable_img2img:
+                result = pipe(
+                    prompt=prompt,
+                    negative_prompt=negative_prompt,
+                    image=face_image,
+                    control_image=control_images,
+                    strength=strength,
+                    image_embeds=face_emb,
+                    controlnet_conditioning_scale=control_scales,
+                    num_inference_steps=num_steps,
+                    guidance_scale=guidance_scale,
+                    height=height,
+                    width=width,
+                    generator=generator,
+                    callback_on_step_end=gradio_callback_lambda,
+                )
+                image = result.images[0]
+                images.append(image)
+            else:
+                result = pipe(
+                    prompt=prompt,
+                    negative_prompt=negative_prompt,
+                    image_embeds=face_emb,
+                    image=control_images,
+                    control_mask=control_mask,
+                    controlnet_conditioning_scale=control_scales,
+                    num_inference_steps=num_steps,
+                    guidance_scale=guidance_scale,
+                    height=height,
+                    width=width,
+                    generator=generator,
+                    callback_on_step_end=gradio_callback_lambda,
+                )
+                image = result.images[0]
+                images.append(image)
 
             info_text = f"""Prompt: {prompt}
 Negative Prompt: {negative_prompt}
@@ -881,6 +958,8 @@ Resize mode: {resize_mode}
 Pad to max side: {pad_to_max_side}
 Use custom resize: {enable_custom_resize}
 Custom resize size: {custom_resize_width}x{custom_resize_height}
+img2img Strength: {strength}
+img2img Mode Enabled: {enable_img2img}
 IdentityNet strength: {identitynet_strength_ratio}
 Adapter strength: {adapter_strength_ratio}
 Pose strength: {pose_strength}
@@ -1302,6 +1381,14 @@ Scheduler: {scheduler}"""
                         outputs=[],
                         queue=False
                     )
+                with gr.Row():
+                    enable_img2img = gr.Checkbox(label="Enable img2img mode", value=False, scale=1)
+                    strength = gr.Slider(label="img2img Denoising Strength", minimum=0.1, maximum=1.0, value=0.9, step=0.05, visible=False, scale=4, info="Use this for more control over e.g., location setting, clothes style etc. A lower value preserves more of the original image.")
+
+                def toggle_img2img(enable):
+                    return gr.update(visible=enable)
+
+                enable_img2img.change(toggle_img2img, inputs=enable_img2img, outputs=strength)
                 with gr.Accordion("PNG Metadata Reader", open=True):
                     with gr.Row():
                         metadata_input = gr.Image(
@@ -1671,6 +1758,8 @@ Scheduler: {scheduler}"""
                 enable_custom_resize,
                 custom_resize_width,
                 custom_resize_height,
+                enable_img2img,
+                strength,
             ]
             generate.click(fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False).then(
                 fn=generate_image, inputs=shared_inputs, outputs=[gallery]
@@ -1713,6 +1802,8 @@ Scheduler: {scheduler}"""
                     "seed": 42,
                     "num_steps": 24,
                     "guidance_scale": 4.0,
+                    "enable_img2img": False,
+                    "strength": 0.9,
                     "identitynet_strength_ratio": 0.7,
                     "adapter_strength_ratio": 0.6,
                     "pose_strength": 0.40,
@@ -1852,6 +1943,10 @@ Scheduler: {scheduler}"""
                             lora_scale_8_str = line.replace("LoRA 8 scale:", "").strip()
                             if lora_scale_8_str != "Disabled":
                                 settings["lora_scale_8"] = float(lora_scale_8_str)
+                        elif line.startswith("img2img Mode Enabled:"):
+                            settings["enable_img2img"] = "true" in line.lower()
+                        elif line.startswith("img2img Strength:"):
+                            settings["strength"] = float(line.replace("img2img Strength:", "").strip())
                         elif line.startswith("Enhance non-face region:"):
                             settings["enhance_face_region"] = "true" in line.lower()
                         elif line.startswith("Enhance region profile:"):
@@ -1929,6 +2024,8 @@ Scheduler: {scheduler}"""
                     settings["negative_prompt"],
                     settings["style"],
                     settings["num_steps"],
+                    settings["enable_img2img"],
+                    settings["strength"],
                     settings["identitynet_strength_ratio"],
                     settings["adapter_strength_ratio"],
                     settings["pose_strength"],
@@ -1987,6 +2084,8 @@ Scheduler: {scheduler}"""
                     negative_prompt,
                     style,
                     num_steps,
+                    enable_img2img,
+                    strength,
                     identitynet_strength_ratio,
                     adapter_strength_ratio,
                     pose_strength,
