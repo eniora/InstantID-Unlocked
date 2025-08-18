@@ -1374,11 +1374,12 @@ Scheduler: {scheduler}"""
                     )
                     randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
                     with gr.Row():
-                        enhance_face_region = gr.Checkbox(label="Enhance non-face region", value=True)
+                        enhance_face_region = gr.Checkbox(label="Enhance non-face region", scale=2, value=True)
                         enhance_strength = gr.Dropdown(
                             label="Enhance Non-Face Region Amount",
                             choices=["Default", "Balanced", "High", "Custom"],
                             value="Balanced",
+                            scale=3,
                             info="Larger values retain more from the input image around the face (e.g., hairstyle). 'Balanced' is good but you can use 'Default' for more control."
                         )
                         custom_enhance_padding = gr.Slider(
@@ -1388,6 +1389,7 @@ Scheduler: {scheduler}"""
                             step=0.05,
                             value=0.15,
                             visible=False,
+                            scale=3,
                             interactive=True
                         )
                         def toggle_custom_padding_dropdown(value):
@@ -1427,7 +1429,7 @@ Scheduler: {scheduler}"""
                     )
                 with gr.Row():
                     enable_img2img = gr.Checkbox(label="Enable img2img mode", value=False, scale=1)
-                    strength = gr.Slider(label="img2img Denoising Strength", minimum=0.1, maximum=1.0, value=0.9, step=0.05, visible=False, scale=4, info="Use this for more control over e.g., location setting, clothes style etc. A lower value preserves more of the original image.")
+                    strength = gr.Slider(label="img2img Denoising Strength", minimum=0.1, maximum=1.0, value=0.9, step=0.05, visible=False, scale=3, info="Use this for more control over e.g., location setting, clothes style, pose, etc. A lower value preserves more of the original image.")
 
                 def toggle_img2img(enable):
                     return gr.update(visible=enable)
