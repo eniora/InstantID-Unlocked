@@ -1351,72 +1351,71 @@ Scheduler: {scheduler}"""
                         step=0.05,
                         value=0.40,
                     )
-                with gr.Accordion(open=True, label="Advanced Options"):
-                    num_steps = gr.Slider(
-                        label="Number of sample steps",
-                        minimum=1,
-                        maximum=100,
-                        step=1,
-                        value=24,
+                num_steps = gr.Slider(
+                    label="Number of sample steps",
+                    minimum=1,
+                    maximum=100,
+                    step=1,
+                    value=24,
+                )
+                guidance_scale = gr.Slider(
+                    label="Guidance scale",
+                    minimum=1.0,
+                    maximum=20.0,
+                    step=0.1,
+                    value=4,
+                )
+                seed = gr.Slider(
+                    label="Seed",
+                    minimum=0,
+                    maximum=MAX_SEED,
+                    step=1,
+                    value=42,
+                )
+                randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
+                with gr.Row():
+                    enhance_face_region = gr.Checkbox(label="Enhance non-face region", scale=2, value=True)
+                    enhance_strength = gr.Dropdown(
+                        label="Enhance Non-Face Region Amount",
+                        choices=["Default", "Balanced", "High", "Custom"],
+                        value="Balanced",
+                        scale=3,
+                        info="Larger values retain more from the input image around the face (e.g., hairstyle). 'Balanced' is good but you can use 'Default' for more control."
                     )
-                    guidance_scale = gr.Slider(
-                        label="Guidance scale",
-                        minimum=1.0,
-                        maximum=20.0,
-                        step=0.1,
-                        value=4,
+                    custom_enhance_padding = gr.Slider(
+                        label="Custom enhancement padding (%)",
+                        minimum=0.0,
+                        maximum=0.9,
+                        step=0.05,
+                        value=0.15,
+                        visible=False,
+                        scale=3,
+                        interactive=True
                     )
-                    seed = gr.Slider(
-                        label="Seed",
-                        minimum=0,
-                        maximum=MAX_SEED,
-                        step=1,
-                        value=42,
-                    )
-                    randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
-                    with gr.Row():
-                        enhance_face_region = gr.Checkbox(label="Enhance non-face region", scale=2, value=True)
-                        enhance_strength = gr.Dropdown(
-                            label="Enhance Non-Face Region Amount",
-                            choices=["Default", "Balanced", "High", "Custom"],
-                            value="Balanced",
-                            scale=3,
-                            info="Larger values retain more from the input image around the face (e.g., hairstyle). 'Balanced' is good but you can use 'Default' for more control."
-                        )
-                        custom_enhance_padding = gr.Slider(
-                            label="Custom enhancement padding (%)",
-                            minimum=0.0,
-                            maximum=0.9,
-                            step=0.05,
-                            value=0.15,
-                            visible=False,
-                            scale=3,
-                            interactive=True
-                        )
-                        def toggle_custom_padding_dropdown(value):
-                            return gr.update(visible=(value == "Custom"))
+                    def toggle_custom_padding_dropdown(value):
+                        return gr.update(visible=(value == "Custom"))
 
-                        enhance_strength.change(
-                            fn=toggle_custom_padding_dropdown,
-                            inputs=enhance_strength,
-                            outputs=custom_enhance_padding
-                        )
-                    with gr.Row():
-                        det_size_name = gr.Dropdown(
-                            label="Face Detection Size",
-                            choices=list(DET_SIZE_OPTIONS.keys()),
-                            value="640x640 (default)",
-                            info="Higher values can detect smaller faces better if the face in the input/reference image is too small/distant. Change the value only if you get 'No face detected', it can help a lot in some face input photos."
-                        )
-                    with gr.Row():
-                        generate_alt_2 = gr.Button("Generate (Extra Bottom Button)", variant="primary")
-                        open_folder_btn = gr.Button("📁", min_width=60, scale=0)
-                        open_folder_btn.click(
-                            fn=open_output_folder,
-                            inputs=[],
-                            outputs=[],
-                            queue=False
-                        )
+                    enhance_strength.change(
+                        fn=toggle_custom_padding_dropdown,
+                        inputs=enhance_strength,
+                        outputs=custom_enhance_padding
+                    )
+                with gr.Row():
+                    det_size_name = gr.Dropdown(
+                        label="Face Detection Size",
+                        choices=list(DET_SIZE_OPTIONS.keys()),
+                        value="640x640 (default)",
+                        info="Higher values can detect smaller faces better if the face in the input/reference image is too small/distant. Change the value only if you get 'No face detected', it can help a lot in some face input photos."
+                    )
+                with gr.Row():
+                    generate_alt_2 = gr.Button("Generate (Extra Bottom Button)", variant="primary")
+                    open_folder_btn = gr.Button("📁", min_width=60, scale=0)
+                    open_folder_btn.click(
+                        fn=open_output_folder,
+                        inputs=[],
+                        outputs=[],
+                        queue=False
+                    )
             with gr.Column(scale=1):
                 gallery = gr.Gallery(label="Generated Images")
                 with gr.Row():
@@ -1429,8 +1428,8 @@ Scheduler: {scheduler}"""
                         queue=False
                     )
                 with gr.Row():
-                    enable_img2img = gr.Checkbox(label="Enable img2img mode", value=False, scale=1)
-                    strength = gr.Slider(label="img2img Denoising Strength", minimum=0.1, maximum=1.0, value=0.9, step=0.05, visible=False, scale=3, info="Use this for more control over e.g., location setting, clothing style, pose, etc. A lower value preserves more of the original image.")
+                    enable_img2img = gr.Checkbox(label="Enable img2img mode", value=False, scale=2)
+                    strength = gr.Slider(label="img2img Denoising Strength", minimum=0.1, maximum=1.0, value=0.9, step=0.05, visible=False, scale=5, info="Use this for more control over e.g., location setting, clothing style, pose, etc. A lower value preserves more of the original image.")
 
                 def toggle_img2img(enable):
                     return gr.update(visible=enable)
