@@ -1341,19 +1341,19 @@ Scheduler: {scheduler}"""
                     )
                 with gr.Row():
                     guidance_scale = gr.Slider(
-                            label="Guidance scale (CFG)",
-                            minimum=1.0,
-                            maximum=20.0,
-                            step=0.1,
-                            value=4,
-                        )
+                        label="Guidance scale (CFG)",
+                        minimum=1.0,
+                        maximum=20.0,
+                        step=0.1,
+                        value=4,
+                    )
                     num_steps = gr.Slider(
-                            label="Sampling steps",
-                            minimum=1,
-                            maximum=100,
-                            step=1,
-                            value=24,
-                        )
+                        label="Sampling steps",
+                        minimum=1,
+                        maximum=100,
+                        step=1,
+                        value=24,
+                    )
                 with gr.Row():
                     randomize_seed = gr.Checkbox(label="Randomize seed", scale=1, value=True)
                     seed = gr.Slider(
