@@ -1280,18 +1280,6 @@ Scheduler: {scheduler}"""
                     value=1280,
                     info="Controls the max_side for face/pose image resizing. Default is 1280. Up to 1920 can sometimes be good. Above 2000 is for super ultra wide/vertical images.",
                 )
-                enable_precise_resize = gr.Checkbox(
-                    label="Enable precise resolution resize bars (8 steps instead of 64)", value=False
-                )
-                def toggle_resize_step(precise):
-                    new_step = 8 if precise else 64
-                    return gr.update(step=new_step), gr.update(step=new_step), gr.update(step=new_step)
-
-                enable_precise_resize.change(
-                    fn=toggle_resize_step,
-                    inputs=enable_precise_resize,
-                    outputs=[resize_max_side_slider, custom_resize_width, custom_resize_height]
-                )
                 with gr.Row():
                     generate = gr.Button("Generate", scale=8, variant="primary")
                     num_outputs = gr.Number(
@@ -1351,28 +1339,33 @@ Scheduler: {scheduler}"""
                         step=0.05,
                         value=0.40,
                     )
-                num_steps = gr.Slider(
-                    label="Number of sample steps",
-                    minimum=1,
-                    maximum=100,
-                    step=1,
-                    value=24,
-                )
-                guidance_scale = gr.Slider(
-                    label="Guidance scale",
-                    minimum=1.0,
-                    maximum=20.0,
-                    step=0.1,
-                    value=4,
-                )
-                seed = gr.Slider(
-                    label="Seed",
-                    minimum=0,
-                    maximum=MAX_SEED,
-                    step=1,
-                    value=42,
-                )
-                randomize_seed = gr.Checkbox(label="Randomize seed", value=True)
+                with gr.Row():
+                    with gr.Column():
+                        guidance_scale = gr.Slider(
+                            label="Guidance scale",
+                            minimum=1.0,
+                            maximum=20.0,
+                            step=0.1,
+                            value=4,
+                        )
+                    with gr.Column():
+                        num_steps = gr.Slider(
+                            label="Sampling steps",
+                            minimum=1,
+                            maximum=100,
+                            step=1,
+                            value=24,
+                        )
+                with gr.Row():
+                    randomize_seed = gr.Checkbox(label="Randomize seed", scale=1, value=True)
+                    seed = gr.Slider(
+                        label="Seed value",
+                        minimum=0,
+                        maximum=MAX_SEED,
+                        step=1,
+                        scale=5,
+                        value=42,
+                    )
                 with gr.Row():
                     enhance_face_region = gr.Checkbox(label="Enhance non-face region", scale=2, value=True)
                     enhance_strength = gr.Dropdown(
@@ -1429,7 +1422,7 @@ Scheduler: {scheduler}"""
                     )
                 with gr.Row():
                     enable_img2img = gr.Checkbox(label="Enable img2img mode", value=False, scale=2)
-                    strength = gr.Slider(label="img2img Denoising Strength", minimum=0.1, maximum=1.0, value=0.9, step=0.05, visible=False, scale=5, info="Use this for more control over e.g., location setting, clothing style, pose, etc. A lower value preserves more of the original image.")
+                    strength = gr.Slider(label="img2img Denoising Strength", minimum=0.1, maximum=1.0, value=0.95, step=0.05, visible=False, scale=5, info="Use this for more control over e.g., location setting, clothing style, pose, etc. A lower value preserves more of the original image.")
 
                 def toggle_img2img(enable):
                     return gr.update(visible=enable)
@@ -1849,7 +1842,7 @@ Scheduler: {scheduler}"""
                     "num_steps": 24,
                     "guidance_scale": 4.0,
                     "enable_img2img": False,
-                    "strength": 0.9,
+                    "strength": 0.95,
                     "identitynet_strength_ratio": 0.7,
                     "adapter_strength_ratio": 0.6,
                     "pose_strength": 0.40,
