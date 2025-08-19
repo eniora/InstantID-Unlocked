@@ -1234,7 +1234,7 @@ Scheduler: {scheduler}"""
                     maximum=4096,
                     step=64,
                     value=1280,
-                    info="Controls the max_side for face/pose image resizing. Default is 1280. Up to 1920 can sometimes be good. Above 2000 is for super ultra wide/vertical images.",
+                    info="Controls the max_side for input image resizing. Up to 1920 can be good. Above 2000 is for ultra wide/vertical images.",
                 )
                 with gr.Row():
                     generate = gr.Button("Generate", scale=8, variant="primary")
@@ -2138,7 +2138,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v4.0.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v4.1.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
