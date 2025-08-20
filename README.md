@@ -29,7 +29,7 @@ Git clone this fork (Git clone https://github.com/eniora/InstantID-Unlocked/) th
 - With the venv activated, install the requirements.txt file with "pip install -r requirements.txt" and then install torch and cuda with "pip install torch==2.7.1+cu128 torchvision==0.22.1+cu128 --index-url https://download.pytorch.org/whl/cu128"
 - For downloading the face encoder models and instructions see the original repo description below.
 
-- Run only using instant-id-gradio-unlocked.py by using "python instant-id-gradio-unlocked.py". The file "instant-id-gradio-unlocked-16GB-VRAM.py" is just a file I modified from "instant-id-gradio-unlocked.py" and it's a bit faster at image generation on 16GB+ VRAM nvidia cards. To download models from the huggingfacehub, only use "instant-id-gradio-unlocked.py" then you can use the other 16GB-VRAM file.
+- Run only using instant-id-gradio-unlocked.py by using "python instant-id-gradio-unlocked.py".
 
 - Tested only on Windows and Python 3.10.6 and Nvidia GPUs, you may need to do extra steps to run the gradio interface successfully on MacOS/Linux or if you have an AMD GPU.
 
@@ -312,6 +312,7 @@ If you find InstantID useful for your research and applications, please cite us 
 ```
 
 For any question, please feel free to contact us via haofanwang.ai@gmail.com or wangqixun.ai@gmail.com.
+
 
 
 
