@@ -32,6 +32,9 @@ os.environ["HF_HUB_CACHE_OFFLINE"] = "true"
 os.environ["GRADIO_ANALYTICS_ENABLED"] = "False"
 os.environ["GRADIO_DISABLE_TELEMETRY"] = "1"
 
+vram_bytes = torch.cuda.get_device_properties(0).total_memory
+vram_gb = vram_bytes / (1024**3)
+
 def open_output_folder():
     path = os.path.abspath("output")
     if sys.platform == "win32":
@@ -290,6 +293,9 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         pipe.scheduler = diffusers.DPMSolverMultistepScheduler.from_config(
             pipe.scheduler.config
         )
+    if vram_gb >= 13:
+        pipe.load_ip_adapter_instantid(face_adapter)
+        pipe._current_model = pretrained_model_name_or_path
 
     file_prefix = DEFAULT_FILE_PREFIX
 
@@ -402,6 +408,12 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
     def load_model_and_update_pipe(model_name, enable_img2img):
         nonlocal pipe
 
+        if vram_gb >= 13:
+            if pipe is not None:
+                del pipe
+                torch.cuda.empty_cache()
+                gc.collect()
+
         if model_name.endswith(".ckpt") or model_name.endswith(".safetensors"):
             scheduler_kwargs = hf_hub_download(
                 repo_id="eniora/RealVisXL_V5.0",
@@ -459,6 +471,8 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 )
 
         pipe.load_ip_adapter_instantid(face_adapter)
+        if vram_gb >= 13:
+            pipe._current_model = model_name
 
         return pipe
 
@@ -1214,8 +1228,8 @@ Scheduler: {scheduler}"""
                     with gr.Row():
                         enable_vae_tiling = gr.Checkbox(
                             label="Enable VAE Tiling (saves VRAM for large images at the last generation step)",
-                            value=False,
-                            info="Processes images in tiles to reduce VRAM usage during the final VAE decoding step without any quality loss. Best to enable only if you have 16GB VRAM or more."
+                            value=True,
+                            info="Processes images in tiles to reduce VRAM usage during the final VAE decoding step without any quality loss."
                         )
                     with gr.Row():
                         resize_mode_dropdown = gr.Dropdown(
