@@ -31,7 +31,7 @@ Git clone this fork (Git clone https://github.com/eniora/InstantID-Unlocked/) th
 
 - Run only using instant-id-gradio-unlocked.py by using "python instant-id-gradio-unlocked.py". The file "instant-id-gradio-unlocked-16GB-VRAM.py" is just a file I modified from "instant-id-gradio-unlocked.py" and it's a bit faster at image generation on 16GB+ VRAM nvidia cards. To download models from the huggingfacehub, only use "instant-id-gradio-unlocked.py" then you can use the other 16GB-VRAM file.
 
-- Tested only on Windows and Python 3.10.6, you may need to do extra steps to run the gradio interface successfully on MacOS/Linux.
+- Tested only on Windows and Python 3.10.6 and Nvidia GPUs, you may need to do extra steps to run the gradio interface successfully on MacOS/Linux or if you have an AMD GPU.
 
 [**Qixun Wang**](https://github.com/wangqixun)<sup>12</sup> · [**Xu Bai**](https://huggingface.co/baymin0220)<sup>12</sup> · [**Haofan Wang**](https://haofanwang.github.io/)<sup>12*</sup> · [**Zekui Qin**](https://github.com/ZekuiQin)<sup>12</sup> · [**Anthony Chen**](https://antonioo-c.github.io/)<sup>123</sup>
 
@@ -312,6 +312,7 @@ If you find InstantID useful for your research and applications, please cite us 
 ```
 
 For any question, please feel free to contact us via haofanwang.ai@gmail.com or wangqixun.ai@gmail.com.
+
 
 
 
