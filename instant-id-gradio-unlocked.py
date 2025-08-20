@@ -291,9 +291,6 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             pipe.scheduler.config
         )
 
-    pipe.load_ip_adapter_instantid(face_adapter)
-    pipe._current_model = pretrained_model_name_or_path
-
     file_prefix = DEFAULT_FILE_PREFIX
 
     def load_and_cache_controlnet_model(controlnet_type):
@@ -467,7 +464,6 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 )
 
         pipe.load_ip_adapter_instantid(face_adapter)
-        pipe._current_model = model_name
 
         return pipe
 
