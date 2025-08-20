@@ -402,11 +402,6 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
     def load_model_and_update_pipe(model_name, enable_img2img):
         nonlocal pipe
 
-        if pipe is not None:
-            del pipe
-            torch.cuda.empty_cache()
-            gc.collect()
-
         if model_name.endswith(".ckpt") or model_name.endswith(".safetensors"):
             scheduler_kwargs = hf_hub_download(
                 repo_id="eniora/RealVisXL_V5.0",
