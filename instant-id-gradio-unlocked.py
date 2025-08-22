@@ -373,7 +373,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         pad_to_max_side=False,
         mode=PIL.Image.LANCZOS,
         base_pixel_number=64,
-        exact_ratio=False
+        exact_ratio=True
     ):
         w, h = input_image.size
         if exact_ratio:
@@ -1271,7 +1271,7 @@ Scheduler: {scheduler}"""
                     enable_custom_resize = gr.Checkbox(
                         label="Enable custom resolution",
                         value=False,
-                        info="If enabled, you can set a custom resolution (width x height). This overrides Max image size for resizing. Only use if you know what you're doing. Don't use along with 'Pad resized image to square' option above this one."
+                        info="If enabled, you can set a custom resolution (width x height). This overrides 'Max image size for resizing' and 'exact ratio'. Only use if you know what you're doing. Don't use along with 'Pad resized image to square' option above this one."
                     )
                     custom_resize_width = gr.Slider(
                         label="Custom Width",
