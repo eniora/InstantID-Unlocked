@@ -373,17 +373,37 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         pad_to_max_side=False,
         mode=PIL.Image.LANCZOS,
         base_pixel_number=64,
+        exact_ratio=False
     ):
         w, h = input_image.size
-        if size is not None:
-            w_resize_new, h_resize_new = size
+        if exact_ratio:
+            if size is not None:
+                w_resize_new, h_resize_new = size
+            else:
+                ratio = max_side / max(w, h)
+                w_resize = round(w * ratio)
+                h_resize = round(h * ratio)
+                
+                w_resize_new = (w_resize // base_pixel_number) * base_pixel_number
+                h_resize_new = (h_resize // base_pixel_number) * base_pixel_number
+
+                if w_resize_new > h_resize_new:
+                    aspect_ratio = h / w
+                    h_resize_new = int(round(w_resize_new * aspect_ratio / base_pixel_number) * base_pixel_number)
+                else:
+                    aspect_ratio = w / h
+                    w_resize_new = int(round(h_resize_new * aspect_ratio / base_pixel_number) * base_pixel_number)
+
         else:
-            ratio = min_side / min(h, w)
-            w, h = round(ratio * w), round(ratio * h)
-            ratio = max_side / max(h, w)
-            input_image = input_image.resize([round(ratio * w), round(ratio * h)], mode)
-            w_resize_new = (round(ratio * w) // base_pixel_number) * base_pixel_number
-            h_resize_new = (round(ratio * h) // base_pixel_number) * base_pixel_number
+            if size is not None:
+                w_resize_new, h_resize_new = size
+            else:
+                ratio = min_side / min(h, w)
+                w, h = round(ratio * w), round(ratio * h)
+                ratio = max_side / max(h, w)
+                input_image = input_image.resize([round(ratio * w), round(ratio * h)], mode)
+                w_resize_new = (round(ratio * w) // base_pixel_number) * base_pixel_number
+                h_resize_new = (round(ratio * h) // base_pixel_number) * base_pixel_number
         input_image = input_image.resize([w_resize_new, h_resize_new], mode)
 
         if pad_to_max_side:
@@ -534,6 +554,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         custom_resize_height,
         enable_img2img,
         strength,
+        exact_ratio,
         progress=gr.Progress(),
     ):
         file_prefix = file_prefix.strip().translate(FILENAME_SAFE_TRANS)
@@ -698,7 +719,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         if enable_custom_resize:
             custom_size = (int(custom_resize_width), int(custom_resize_height))
         resize_mode_enum = getattr(PIL.Image, resize_mode)
-        face_image = resize_img(face_image, size=custom_size, max_side=resize_max_side, mode=resize_mode_enum, pad_to_max_side=pad_to_max_side)
+        face_image = resize_img(face_image, size=custom_size, max_side=resize_max_side, mode=resize_mode_enum, pad_to_max_side=pad_to_max_side, exact_ratio=exact_ratio)
         face_image_cv2 = convert_from_image_to_cv2(face_image)
         height, width, _ = face_image_cv2.shape
 
@@ -718,7 +739,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         img_controlnet = face_image
         if pose_image_path is not None:
             pose_image = load_image(pose_image_path)
-            pose_image = resize_img(pose_image, size=custom_size, max_side=resize_max_side, mode=resize_mode_enum, pad_to_max_side=pad_to_max_side)
+            pose_image = resize_img(pose_image, size=custom_size, max_side=resize_max_side, mode=resize_mode_enum, pad_to_max_side=pad_to_max_side, exact_ratio=exact_ratio)
             img_controlnet = pose_image
             pose_image_cv2 = convert_from_image_to_cv2(pose_image)
 
@@ -806,6 +827,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         print(f"img2img Mode: {'Enabled' if enable_img2img else 'Disabled'}")
         if enable_img2img:
             print(f"img2img Denoising Strength: {strength}")
+        print(f"Exact aspect ratio: {'Enabled' if exact_ratio else 'Disabled'}")
         print(f"Enhance non-face region: {'True' if enhance_face_region else 'False'} ({enhance_strength}{f' | Padding: {custom_enhance_padding:.2f}' if enhance_strength == 'Custom' else ''})")
         print(f"Guidance scale: {guidance_scale}")
         print(f"Model: {model_name}")
@@ -1015,6 +1037,7 @@ Pose strength: {pose_strength}
 Canny strength: {canny_strength}
 Depth strength: {depth_strength}
 LoRA Enabled: {enable_lora}
+Exact aspect ratio: {exact_ratio}
 LoRA 1 selection: {'None' if disable_lora_1 or not (enable_lora and lora_selection and os.path.exists(os.path.join('./models/Loras', lora_selection))) else lora_selection}
 LoRA 1 scale: {'Disabled' if disable_lora_1 or not (enable_lora and lora_selection and os.path.exists(os.path.join('./models/Loras', lora_selection))) else lora_scale}
 LoRA 2 selection: {'None' if disable_lora_2 or not (enable_lora and lora_selection_2 and os.path.exists(os.path.join('./models/Loras', lora_selection_2))) else lora_selection_2}
@@ -1284,6 +1307,10 @@ Scheduler: {scheduler}"""
                     step=64,
                     value=1280,
                     info="Controls the max_side for input image resizing. Up to 1920 can be good. Above 2000 is for ultra wide/vertical images.",
+                )
+                exact_ratio = gr.Checkbox(
+                    label="Try to maintain the exact aspect ratio from the input image (or pose image if present).",
+                    value=True
                 )
                 with gr.Row():
                     generate = gr.Button("Generate", scale=8, variant="primary")
@@ -1802,6 +1829,7 @@ Scheduler: {scheduler}"""
                 custom_resize_height,
                 enable_img2img,
                 strength,
+                exact_ratio,
             ]
             generate.click(fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False).then(
                 fn=generate_image, inputs=shared_inputs, outputs=[gallery]
@@ -1852,6 +1880,7 @@ Scheduler: {scheduler}"""
                     "canny_strength": 0.40,
                     "depth_strength": 0.40,
                     "scheduler": "DPMSolverMultistepScheduler",
+                    "exact_ratio": False,
                     "enable_lora": False,
                     "lora_scale": 1.0,
                     "lora_selection": None,
@@ -1927,6 +1956,8 @@ Scheduler: {scheduler}"""
                             settings["num_steps"] = int(line.replace("Steps:", "").strip())
                         elif line.startswith("Guidance scale:"):
                             settings["guidance_scale"] = float(line.replace("Guidance scale:", "").strip())
+                        elif line.startswith("Exact aspect ratio:"):
+                            settings["exact_ratio"] = "true" in line.lower()
                         elif line.startswith("LoRA Enabled:"):
                             settings["enable_lora"] = "true" in line.lower()
                         elif line.startswith("LoRA 1 selection:"):
@@ -2114,6 +2145,7 @@ Scheduler: {scheduler}"""
                     settings["enable_custom_resize"],
                     settings["custom_resize_width"],
                     settings["custom_resize_height"],
+                    settings["exact_ratio"],
                     accordion_update,
                     gr.update(open=open_settings_accordion)
                 ]
@@ -2174,6 +2206,7 @@ Scheduler: {scheduler}"""
                     enable_custom_resize,
                     custom_resize_width,
                     custom_resize_height,
+                    exact_ratio,
                     controlnet_accordion,
                     style_settings_accordion
                 ]
@@ -2185,7 +2218,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v4.2.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v4.3.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
