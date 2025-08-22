@@ -375,6 +375,8 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         base_pixel_number=64,
         exact_ratio=True
     ):
+        if exact_ratio:
+            base_pixel_number = 32
         w, h = input_image.size
         if exact_ratio:
             if size is not None:
@@ -1277,7 +1279,7 @@ Scheduler: {scheduler}"""
                         label="Custom Width",
                         minimum=512,
                         maximum=4096,
-                        step=64,
+                        step=32,
                         value=960,
                         visible=False,
                         interactive=True
@@ -1286,7 +1288,7 @@ Scheduler: {scheduler}"""
                         label="Custom Height",
                         minimum=512,
                         maximum=4096,
-                        step=64,
+                        step=32,
                         value=1280,
                         visible=False,
                         interactive=True
@@ -1303,13 +1305,22 @@ Scheduler: {scheduler}"""
                     label="Max image size for resizing (output resolution)",
                     minimum=512,
                     maximum=4096,
-                    step=64,
+                    step=32,
                     value=1280,
                     info="Controls the max_side for input image resizing. Up to 1920 can be good. Above 2000 is for ultra wide/vertical images.",
                 )
                 exact_ratio = gr.Checkbox(
                     label="Try to maintain the exact aspect ratio from the input image (or pose image if present).",
                     value=True
+                )
+                def toggle_resize_step(exact_ratio):
+                    new_step = 32 if exact_ratio else 64
+                    return gr.update(step=new_step), gr.update(step=new_step), gr.update(step=new_step)
+
+                exact_ratio.change(
+                    fn=toggle_resize_step,
+                    inputs=exact_ratio,
+                    outputs=[resize_max_side_slider, custom_resize_width, custom_resize_height]
                 )
                 with gr.Row():
                     generate = gr.Button("Generate", scale=8, variant="primary")
@@ -2217,7 +2228,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v4.3.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v4.4.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
