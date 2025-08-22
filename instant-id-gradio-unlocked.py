@@ -826,7 +826,6 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         print(f"img2img Mode: {'Enabled' if enable_img2img else 'Disabled'}")
         if enable_img2img:
             print(f"img2img Denoising Strength: {strength}")
-        print(f"Exact aspect ratio: {'Enabled' if exact_ratio else 'Disabled'}")
         print(f"Enhance non-face region: {'True' if enhance_face_region else 'False'} ({enhance_strength}{f' | Padding: {custom_enhance_padding:.2f}' if enhance_strength == 'Custom' else ''})")
         print(f"Guidance scale: {guidance_scale}")
         print(f"Model: {model_name}")
@@ -911,6 +910,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         print(f"LoRA(s): {lora_info_str}")
 
         print(f"Scheduler: {scheduler}")
+        print(f"Exact aspect ratio: {'Enabled' if exact_ratio else 'Disabled'}")
         print(f"Max resize side: {resize_max_side}")
         print(f"Image size: {width}x{height}\n")
 
@@ -1021,6 +1021,7 @@ Model: {model_name}
 ControlNet selection: {controlnet_selection}
 Max resize side: {resize_max_side}
 Image size: {width}x{height}
+Exact aspect ratio: {exact_ratio}
 Enhance non-face region: {enhance_face_region}
 Enhance region profile: {enhance_strength}
 Enhance padding ratio: {custom_enhance_padding}
@@ -1036,7 +1037,6 @@ Pose strength: {pose_strength}
 Canny strength: {canny_strength}
 Depth strength: {depth_strength}
 LoRA Enabled: {enable_lora}
-Exact aspect ratio: {exact_ratio}
 LoRA 1 selection: {'None' if disable_lora_1 or not (enable_lora and lora_selection and os.path.exists(os.path.join('./models/Loras', lora_selection))) else lora_selection}
 LoRA 1 scale: {'Disabled' if disable_lora_1 or not (enable_lora and lora_selection and os.path.exists(os.path.join('./models/Loras', lora_selection))) else lora_scale}
 LoRA 2 selection: {'None' if disable_lora_2 or not (enable_lora and lora_selection_2 and os.path.exists(os.path.join('./models/Loras', lora_selection_2))) else lora_selection_2}
