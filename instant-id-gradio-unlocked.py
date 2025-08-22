@@ -383,7 +383,6 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 ratio = max_side / max(w, h)
                 w_resize = round(w * ratio)
                 h_resize = round(h * ratio)
-                
                 w_resize_new = (w_resize // base_pixel_number) * base_pixel_number
                 h_resize_new = (h_resize // base_pixel_number) * base_pixel_number
 
@@ -1880,7 +1879,7 @@ Scheduler: {scheduler}"""
                     "canny_strength": 0.40,
                     "depth_strength": 0.40,
                     "scheduler": "DPMSolverMultistepScheduler",
-                    "exact_ratio": False,
+                    "exact_ratio": True,
                     "enable_lora": False,
                     "lora_scale": 1.0,
                     "lora_selection": None,
