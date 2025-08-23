@@ -1307,12 +1307,12 @@ Scheduler: {scheduler}"""
                 )
                 def toggle_resize_step(exact_ratio):
                     new_step = 32 if exact_ratio else 64
-                    return gr.update(step=new_step), gr.update(step=new_step), gr.update(step=new_step)
+                    return gr.update(step=new_step)
 
                 exact_ratio.change(
                     fn=toggle_resize_step,
                     inputs=exact_ratio,
-                    outputs=[resize_max_side_slider, custom_resize_width, custom_resize_height]
+                    outputs=[resize_max_side_slider]
                 )
                 def toggle_custom_resize_controls(value):
                     return (
