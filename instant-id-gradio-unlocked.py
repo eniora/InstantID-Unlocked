@@ -1265,6 +1265,10 @@ Scheduler: {scheduler}"""
                             value="LANCZOS",
                             info="Interpolation method used when resizing input images, LANCZOS, BILINEAR and HAMMING are usually the best."
                         )
+                    exact_ratio = gr.Checkbox(
+                        label="Maintain the exact aspect ratio from the input image (or pose image if present).",
+                        value=True
+                    )
                     with gr.Row():
                         pad_to_max_checkbox = gr.Checkbox(
                             label="Pad resized image to square",
@@ -1302,19 +1306,6 @@ Scheduler: {scheduler}"""
                     value=1280,
                     info="Controls the max_side for input image resizing. Up to 1920 can be good. Above 2000 is for ultra wide/vertical images.",
                 )
-                exact_ratio = gr.Checkbox(
-                    label="Maintain the exact aspect ratio from the input image (or pose image if present).",
-                    value=True
-                )
-                def toggle_resize_step(exact_ratio):
-                    new_step = 32 if exact_ratio else 64
-                    return gr.update(step=new_step)
-
-                exact_ratio.change(
-                    fn=toggle_resize_step,
-                    inputs=exact_ratio,
-                    outputs=[resize_max_side_slider]
-                )
                 def toggle_custom_resize_controls(value):
                     return (
                         gr.update(visible=value),
@@ -1333,6 +1324,15 @@ Scheduler: {scheduler}"""
                         pad_to_max_checkbox,
                         exact_ratio
                     ]
+                )
+                def toggle_resize_step(exact_ratio):
+                    new_step = 32 if exact_ratio else 64
+                    return gr.update(step=new_step)
+
+                exact_ratio.change(
+                    fn=toggle_resize_step,
+                    inputs=exact_ratio,
+                    outputs=[resize_max_side_slider]
                 )
                 with gr.Row():
                     generate = gr.Button("Generate", scale=8, variant="primary")
@@ -2117,7 +2117,7 @@ Scheduler: {scheduler}"""
 
                 open_settings_accordion = False
 
-                if settings["enable_custom_resize"] or settings["pad_to_max_side"]:
+                if settings["enable_custom_resize"] or settings["pad_to_max_side"] or not settings["exact_ratio"]:
                     open_settings_accordion = True
 
                 return [
