@@ -407,7 +407,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 h_resize_new = (round(ratio * h) // base_pixel_number) * base_pixel_number
         input_image = input_image.resize([w_resize_new, h_resize_new], mode)
 
-        if pad_to_max_side:
+        if pad_to_max_side and size is None:
             res = np.ones([max_side, max_side, 3], dtype=np.uint8) * 255
             offset_x = (max_side - w_resize_new) // 2
             offset_y = (max_side - h_resize_new) // 2
@@ -1273,7 +1273,7 @@ Scheduler: {scheduler}"""
                     enable_custom_resize = gr.Checkbox(
                         label="Enable custom resolution",
                         value=False,
-                        info="If enabled, you can set a custom resolution (width x height). This overrides 'Max image size for resizing' and 'exact ratio'. Only use if you know what you're doing. Don't use along with 'Pad resized image to square' option above this one."
+                        info="This overrides all other resolution & resizing options ('Max image size for resizing', 'Pad resized image to square' & 'exact ratio')."
                     )
                     custom_resize_width = gr.Slider(
                         label="Custom Width",
