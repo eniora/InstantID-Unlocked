@@ -255,47 +255,47 @@ def update_det_size(det_size_name):
     return f"Detection size set to {current_det_size}"
 
 def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
-    if pretrained_model_name_or_path.endswith(
-        ".ckpt"
-    ) or pretrained_model_name_or_path.endswith(".safetensors"):
-        scheduler_kwargs = hf_hub_download(
-            repo_id="eniora/RealVisXL_V5.0",
-            subfolder="scheduler",
-            filename="scheduler_config.json",
-        )
+    if vram_gb < 13:
+        if pretrained_model_name_or_path.endswith(
+            ".ckpt"
+        ) or pretrained_model_name_or_path.endswith(".safetensors"):
+            scheduler_kwargs = hf_hub_download(
+                repo_id="eniora/RealVisXL_V5.0",
+                subfolder="scheduler",
+                filename="scheduler_config.json",
+            )
 
-        (tokenizers, text_encoders, unet, _, vae) = load_models_xl(
-            pretrained_model_name_or_path=pretrained_model_name_or_path,
-            scheduler_name=None,
-            weight_dtype=dtype,
-        )
+            (tokenizers, text_encoders, unet, _, vae) = load_models_xl(
+                pretrained_model_name_or_path=pretrained_model_name_or_path,
+                scheduler_name=None,
+                weight_dtype=dtype,
+            )
 
-        scheduler = diffusers.DPMSolverMultistepScheduler.from_config(scheduler_kwargs)
-        pipe = StableDiffusionXLInstantIDPipeline(
-            vae=vae,
-            text_encoder=text_encoders[0],
-            text_encoder_2=text_encoders[1],
-            tokenizer=tokenizers[0],
-            tokenizer_2=tokenizers[1],
-            unet=unet,
-            scheduler=scheduler,
-            controlnet=[controlnet_identitynet],
-        ).to(device)
+            scheduler = diffusers.DPMSolverMultistepScheduler.from_config(scheduler_kwargs)
+            pipe = StableDiffusionXLInstantIDPipeline(
+                vae=vae,
+                text_encoder=text_encoders[0],
+                text_encoder_2=text_encoders[1],
+                tokenizer=tokenizers[0],
+                tokenizer_2=tokenizers[1],
+                unet=unet,
+                scheduler=scheduler,
+                controlnet=[controlnet_identitynet],
+            ).to(device)
 
-    else:
-        pipe = StableDiffusionXLInstantIDPipeline.from_pretrained(
-            pretrained_model_name_or_path,
-            controlnet=[controlnet_identitynet],
-            torch_dtype=dtype,
-            feature_extractor=None,
-        ).to(device)
+        else:
+            pipe = StableDiffusionXLInstantIDPipeline.from_pretrained(
+                pretrained_model_name_or_path,
+                controlnet=[controlnet_identitynet],
+                torch_dtype=dtype,
+                feature_extractor=None,
+            ).to(device)
 
-        pipe.scheduler = diffusers.DPMSolverMultistepScheduler.from_config(
-            pipe.scheduler.config
-        )
-    if vram_gb >= 13:
-        pipe.load_ip_adapter_instantid(face_adapter)
-        pipe._current_model = pretrained_model_name_or_path
+            pipe.scheduler = diffusers.DPMSolverMultistepScheduler.from_config(
+                pipe.scheduler.config
+            )
+    if vram_gb > 14:
+        pipe = None
 
     file_prefix = DEFAULT_FILE_PREFIX
 
@@ -429,7 +429,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
     def load_model_and_update_pipe(model_name, enable_img2img):
         nonlocal pipe
 
-        if vram_gb >= 13:
+        if vram_gb > 14:
             if pipe is not None:
                 del pipe
                 torch.cuda.empty_cache()
@@ -492,7 +492,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 )
 
         pipe.load_ip_adapter_instantid(face_adapter)
-        if vram_gb >= 13:
+        if vram_gb > 14:
             pipe._current_model = model_name
 
         return pipe
@@ -1104,6 +1104,7 @@ Scheduler: {scheduler}"""
                         value=DEFAULT_MODEL,
                         show_label=False,
                         container=False,
+                        allow_custom_value=True,
                         scale=5
                     )
                     refresh_models = gr.Button("🔄", scale=0, min_width=40, elem_classes="toolbutton")
