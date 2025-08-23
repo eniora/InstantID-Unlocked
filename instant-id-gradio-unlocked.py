@@ -1252,28 +1252,25 @@ Scheduler: {scheduler}"""
                         )
                     with gr.Row():
                         enable_vae_tiling = gr.Checkbox(
-                            label="Enable VAE Tiling (saves VRAM for large images at the last generation step)",
-                            value=True,
-                            info="Processes images in tiles to reduce VRAM usage during the final VAE decoding step without any quality loss."
+                            label="Enable VAE Tiling (splits images into tiles to reduce VRAM usage during VAE decoding)",
+                            value=True
                         )
                     with gr.Row():
                         resize_mode_dropdown = gr.Dropdown(
-                            label="Resize Interpolation Mode",
+                            label="Resize Interpolation Mode (LANCZOS, BILINEAR and HAMMING are usually the best)",
                             choices=[
                                 "LANCZOS", "BILINEAR", "HAMMING", "BICUBIC", "BOX", "NEAREST"
                             ],
-                            value="LANCZOS",
-                            info="Interpolation method used when resizing input images, LANCZOS, BILINEAR and HAMMING are usually the best."
+                            value="LANCZOS"
                         )
                     exact_ratio = gr.Checkbox(
-                        label="Maintain the exact aspect ratio from the input image (or pose image if present).",
+                        label="Maintain the exact aspect ratio from the input image (or pose image if present)",
                         value=True
                     )
                     with gr.Row():
                         pad_to_max_checkbox = gr.Checkbox(
-                            label="Pad resized image to square",
-                            value=False,
-                            info="If enabled, resized images are padded to a square shape. Usually slower and uses more VRAM due to the square shape resolution."
+                            label="Pad resized image to square. If enabled, resized images are padded to a square shape.",
+                            value=False
                         )
                     enable_custom_resize = gr.Checkbox(
                         label="Enable custom resolution",
