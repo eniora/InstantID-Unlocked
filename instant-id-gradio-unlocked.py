@@ -1293,14 +1293,6 @@ Scheduler: {scheduler}"""
                         visible=False,
                         interactive=True
                     )
-                    def toggle_custom_resize_controls(value):
-                        return gr.update(visible=value), gr.update(visible=value)
-
-                    enable_custom_resize.change(
-                        fn=toggle_custom_resize_controls,
-                        inputs=enable_custom_resize,
-                        outputs=[custom_resize_width, custom_resize_height]
-                    )
                 resize_max_side_slider = gr.Slider(
                     label="Max image size for resizing (output resolution)",
                     minimum=512,
@@ -1321,6 +1313,25 @@ Scheduler: {scheduler}"""
                     fn=toggle_resize_step,
                     inputs=exact_ratio,
                     outputs=[resize_max_side_slider, custom_resize_width, custom_resize_height]
+                )
+                def toggle_custom_resize_controls(value):
+                    return (
+                        gr.update(visible=value),
+                        gr.update(visible=value),
+                        gr.update(interactive=not value),
+                        gr.update(interactive=not value),
+                        gr.update(interactive=not value)
+                    )
+                enable_custom_resize.change(
+                    fn=toggle_custom_resize_controls,
+                    inputs=enable_custom_resize,
+                    outputs=[
+                        custom_resize_width,
+                        custom_resize_height,
+                        resize_max_side_slider,
+                        pad_to_max_checkbox,
+                        exact_ratio
+                    ]
                 )
                 with gr.Row():
                     generate = gr.Button("Generate", scale=8, variant="primary")
@@ -2228,7 +2239,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v4.4.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v4.5.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
