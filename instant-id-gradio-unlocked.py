@@ -429,7 +429,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
     def load_model_and_update_pipe(model_name, enable_img2img):
         nonlocal pipe
 
-        if vram_gb > 14:
+        if vram_gb >= 14:
             if pipe is not None:
                 del pipe
                 torch.cuda.empty_cache()
@@ -492,7 +492,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 )
 
         pipe.load_ip_adapter_instantid(face_adapter)
-        if vram_gb > 14:
+        if vram_gb >= 14:
             pipe._current_model = model_name
 
         return pipe
