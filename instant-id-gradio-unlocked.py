@@ -1302,7 +1302,7 @@ Scheduler: {scheduler}"""
                     info="Controls the max_side for input image resizing. Up to 1920 can be good. Above 2000 is for ultra wide/vertical images.",
                 )
                 exact_ratio = gr.Checkbox(
-                    label="Try to maintain the exact aspect ratio from the input image (or pose image if present).",
+                    label="Maintain the exact aspect ratio from the input image (or pose image if present).",
                     value=True
                 )
                 def toggle_resize_step(exact_ratio):
