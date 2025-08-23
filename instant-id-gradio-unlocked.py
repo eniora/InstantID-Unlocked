@@ -2084,7 +2084,13 @@ Scheduler: {scheduler}"""
                                     pass
                         elif line.startswith("Model:"):
                             model_name = line.replace("Model:", "").strip()
-                            if model_name in AVAILABLE_MODELS:
+                            if model_name not in AVAILABLE_MODELS:
+                                gr.Warning(
+                                    f"Model '{model_name}' not found in your models folder. "
+                                    f"Please download the model. Falling back to default model '{DEFAULT_MODEL}'."
+                                )
+                                settings["model_name"] = DEFAULT_MODEL
+                            else:
                                 settings["model_name"] = model_name
                         elif line.startswith("Detection size:"):
                             size = line.replace("Detection size:", "").strip()
