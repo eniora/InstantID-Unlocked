@@ -255,7 +255,10 @@ def update_det_size(det_size_name):
     return f"Detection size set to {current_det_size}"
 
 def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
-    if vram_gb < 14:
+    if vram_gb >= 15:
+        pipe = None
+
+    else:
         if pretrained_model_name_or_path.endswith(
             ".ckpt"
         ) or pretrained_model_name_or_path.endswith(".safetensors"):
@@ -294,8 +297,6 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             pipe.scheduler = diffusers.DPMSolverMultistepScheduler.from_config(
                 pipe.scheduler.config
             )
-    else:
-        pipe = None
 
     file_prefix = DEFAULT_FILE_PREFIX
 
@@ -429,7 +430,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
     def load_model_and_update_pipe(model_name, enable_img2img):
         nonlocal pipe
 
-        if vram_gb >= 14:
+        if vram_gb >= 15:
             if pipe is not None:
                 del pipe
                 torch.cuda.empty_cache()
@@ -492,7 +493,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 )
 
         pipe.load_ip_adapter_instantid(face_adapter)
-        if vram_gb >= 14:
+        if vram_gb >= 15:
             pipe._current_model = model_name
 
         return pipe
