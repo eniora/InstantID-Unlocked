@@ -24,6 +24,7 @@ warnings.filterwarnings("ignore", message=".*MultiControlNetModel.*is deprecated
 warnings.filterwarnings("ignore", message=".*`resume_download` is deprecated.*")
 warnings.filterwarnings("ignore", message=".*Should have .*<=t1 but got .*")
 warnings.filterwarnings("ignore", message="unable to parse version details from package URL.")
+warnings.filterwarnings("ignore", message=".*cache-system uses symlinks by default.*")
 
 os.environ["NO_ALBUMENTATIONS_UPDATE"] = "1"
 # os.environ["TRANSFORMERS_OFFLINE"] = "1"
@@ -429,67 +430,29 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
     def load_model_and_update_pipe(model_name, enable_img2img):
         nonlocal pipe
 
-        if vram_gb >= 15:
-            if pipe is not None:
-                del pipe
-                torch.cuda.empty_cache()
-                gc.collect()
+        if vram_gb >= 15 and pipe is not None:
+            del pipe
+            torch.cuda.empty_cache()
+            gc.collect()
 
-        if model_name.endswith(".ckpt") or model_name.endswith(".safetensors"):
-            scheduler_kwargs = hf_hub_download(
-                repo_id="eniora/RealVisXL_V5.0",
-                subfolder="scheduler",
-                filename="scheduler_config.json",
-            )
+        PipeClass = StableDiffusionXLInstantIDImg2ImgPipeline if enable_img2img else StableDiffusionXLInstantIDPipeline
 
-            (tokenizers, text_encoders, unet, _, vae) = load_models_xl(
-                pretrained_model_name_or_path=model_name,
-                scheduler_name=None,
-                weight_dtype=dtype,
-            )
-
-            scheduler = diffusers.DPMSolverMultistepScheduler.from_config(scheduler_kwargs)
-            if enable_img2img:
-                pipe = StableDiffusionXLInstantIDImg2ImgPipeline(
-                    vae=vae,
-                    text_encoder=text_encoders[0],
-                    text_encoder_2=text_encoders[1],
-                    tokenizer=tokenizers[0],
-                    tokenizer_2=tokenizers[1],
-                    unet=unet,
-                    scheduler=scheduler,
-                    controlnet=[controlnet_identitynet],
-                ).to(device)
-            else:
-                pipe = StableDiffusionXLInstantIDPipeline(
-                    vae=vae,
-                    text_encoder=text_encoders[0],
-                    text_encoder_2=text_encoders[1],
-                    tokenizer=tokenizers[0],
-                    tokenizer_2=tokenizers[1],
-                    unet=unet,
-                    scheduler=scheduler,
-                    controlnet=[controlnet_identitynet],
-                ).to(device)
+        if model_name.endswith((".ckpt", ".safetensors")):
+            sched_cfg = hf_hub_download("eniora/RealVisXL_V5.0", subfolder="scheduler", filename="scheduler_config.json")
+            toks, encs, unet, _, vae = load_models_xl(model_name, scheduler_name=None, weight_dtype=dtype)
+            pipe = PipeClass(
+                vae=vae, unet=unet,
+                text_encoder=encs[0], text_encoder_2=encs[1],
+                tokenizer=toks[0], tokenizer_2=toks[1],
+                scheduler=diffusers.DPMSolverMultistepScheduler.from_config(sched_cfg),
+                controlnet=[controlnet_identitynet],
+            ).to(device)
         else:
-            if enable_img2img:
-                pipe = StableDiffusionXLInstantIDImg2ImgPipeline.from_pretrained(
-                    model_name,
-                    controlnet=[controlnet_identitynet],
-                    torch_dtype=dtype,
-                    feature_extractor=None,
-                ).to(device)
-            else:
-                pipe = StableDiffusionXLInstantIDPipeline.from_pretrained(
-                    model_name,
-                    controlnet=[controlnet_identitynet],
-                    torch_dtype=dtype,
-                    feature_extractor=None,
-                ).to(device)
-
-                pipe.scheduler = diffusers.DPMSolverMultistepScheduler.from_config(
-                    pipe.scheduler.config
-                )
+            pipe = PipeClass.from_pretrained(
+                model_name, controlnet=[controlnet_identitynet],
+                torch_dtype=dtype, feature_extractor=None,
+            ).to(device)
+            pipe.scheduler = diffusers.DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
 
         pipe.load_ip_adapter_instantid(face_adapter)
         if vram_gb >= 15:
