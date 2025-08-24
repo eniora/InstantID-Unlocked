@@ -1273,13 +1273,12 @@ Scheduler: {scheduler}"""
                             value=False
                         )
                     enable_custom_resize = gr.Checkbox(
-                        label="Enable custom resolution",
-                        value=False,
-                        info="This overrides all other resolution & resizing options ('Max image size for resizing', 'Pad resized image to square' & 'exact ratio')."
+                        label="Enable custom resolution (disables & overrides all other resolution & resizing options)",
+                        value=False
                     )
                     custom_resize_width = gr.Slider(
                         label="Custom Width",
-                        minimum=512,
+                        minimum=256,
                         maximum=4096,
                         step=32,
                         value=960,
@@ -1288,7 +1287,7 @@ Scheduler: {scheduler}"""
                     )
                     custom_resize_height = gr.Slider(
                         label="Custom Height",
-                        minimum=512,
+                        minimum=256,
                         maximum=4096,
                         step=32,
                         value=1280,
