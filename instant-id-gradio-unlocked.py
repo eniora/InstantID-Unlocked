@@ -373,11 +373,9 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         size=None,
         pad_to_max_side=False,
         mode=PIL.Image.LANCZOS,
-        base_pixel_number=64,
+        base_pixel_number=32,
         exact_ratio=True
     ):
-        if exact_ratio:
-            base_pixel_number = 32
         w, h = input_image.size
         if exact_ratio:
             if size is not None:
@@ -397,6 +395,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                     w_resize_new = int(round(h_resize_new * aspect_ratio / base_pixel_number) * base_pixel_number)
 
         else:
+            base_pixel_number = 64
             if size is not None:
                 w_resize_new, h_resize_new = size
             else:
