@@ -435,22 +435,39 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             torch.cuda.empty_cache()
             gc.collect()
 
-        PipeClass = StableDiffusionXLInstantIDImg2ImgPipeline if enable_img2img else StableDiffusionXLInstantIDPipeline
-
+        PipeClass = (
+            StableDiffusionXLInstantIDImg2ImgPipeline
+            if enable_img2img
+            else StableDiffusionXLInstantIDPipeline
+        )
         if model_name.endswith((".ckpt", ".safetensors")):
-            sched_cfg = hf_hub_download("eniora/RealVisXL_V5.0", subfolder="scheduler", filename="scheduler_config.json")
-            toks, encs, unet, _, vae = load_models_xl(model_name, scheduler_name=None, weight_dtype=dtype)
+            scheduler_kwargs = hf_hub_download(
+                repo_id="eniora/RealVisXL_V5.0",
+                subfolder="scheduler",
+                filename="scheduler_config.json",
+            )
+            tokenizers, text_encoders, unet, _, vae = load_models_xl(
+                pretrained_model_name_or_path=model_name,
+                scheduler_name=None,
+                weight_dtype=dtype,
+            )
+            scheduler = diffusers.DPMSolverMultistepScheduler.from_config(scheduler_kwargs)
             pipe = PipeClass(
-                vae=vae, unet=unet,
-                text_encoder=encs[0], text_encoder_2=encs[1],
-                tokenizer=toks[0], tokenizer_2=toks[1],
-                scheduler=diffusers.DPMSolverMultistepScheduler.from_config(sched_cfg),
+                vae=vae,
+                text_encoder=text_encoders[0],
+                text_encoder_2=text_encoders[1],
+                tokenizer=tokenizers[0],
+                tokenizer_2=tokenizers[1],
+                unet=unet,
+                scheduler=scheduler,
                 controlnet=[controlnet_identitynet],
             ).to(device)
         else:
             pipe = PipeClass.from_pretrained(
-                model_name, controlnet=[controlnet_identitynet],
-                torch_dtype=dtype, feature_extractor=None,
+                model_name,
+                controlnet=[controlnet_identitynet],
+                torch_dtype=dtype,
+                feature_extractor=None,
             ).to(device)
             pipe.scheduler = diffusers.DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
 
@@ -2181,7 +2198,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v4.5.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v4.6.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
