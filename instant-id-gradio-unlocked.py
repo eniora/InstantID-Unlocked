@@ -928,41 +928,33 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             print(f"Seed: {seed + i}\n")
 
             generator = torch.Generator(device=device).manual_seed(seed + i)
+            common_kwargs = dict(
+                prompt=prompt,
+                negative_prompt=negative_prompt,
+                image_embeds=face_emb,
+                controlnet_conditioning_scale=control_scales,
+                num_inference_steps=num_steps,
+                guidance_scale=guidance_scale,
+                height=height,
+                width=width,
+                generator=generator,
+                callback_on_step_end=gradio_callback_lambda,
+            )
             if enable_img2img:
                 result = pipe(
-                    prompt=prompt,
-                    negative_prompt=negative_prompt,
+                    **common_kwargs,
                     image=face_image,
                     control_image=control_images,
                     strength=strength,
-                    image_embeds=face_emb,
-                    controlnet_conditioning_scale=control_scales,
-                    num_inference_steps=num_steps,
-                    guidance_scale=guidance_scale,
-                    height=height,
-                    width=width,
-                    generator=generator,
-                    callback_on_step_end=gradio_callback_lambda,
                 )
-                image = result.images[0]
-                images.append(image)
             else:
                 result = pipe(
-                    prompt=prompt,
-                    negative_prompt=negative_prompt,
-                    image_embeds=face_emb,
+                    **common_kwargs,
                     image=control_images,
                     control_mask=control_mask,
-                    controlnet_conditioning_scale=control_scales,
-                    num_inference_steps=num_steps,
-                    guidance_scale=guidance_scale,
-                    height=height,
-                    width=width,
-                    generator=generator,
-                    callback_on_step_end=gradio_callback_lambda,
                 )
-                image = result.images[0]
-                images.append(image)
+            image = result.images[0]
+            images.append(image)
 
             info_text = f"""Prompt: {prompt}
 Negative Prompt: {negative_prompt}
