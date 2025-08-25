@@ -435,11 +435,8 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             torch.cuda.empty_cache()
             gc.collect()
 
-        PipeClass = (
-            StableDiffusionXLInstantIDImg2ImgPipeline
-            if enable_img2img
-            else StableDiffusionXLInstantIDPipeline
-        )
+        PipeClass = StableDiffusionXLInstantIDImg2ImgPipeline if enable_img2img else StableDiffusionXLInstantIDPipeline
+
         if model_name.endswith((".ckpt", ".safetensors")):
             scheduler_kwargs = hf_hub_download(
                 repo_id="eniora/RealVisXL_V5.0",
