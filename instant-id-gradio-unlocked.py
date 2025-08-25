@@ -1021,21 +1021,20 @@ Scheduler: {scheduler}"""
 
     article = r"""
     - Upload an image with a face. For images with multiple faces, only the largest face will be detected. Ensure the face is not too small and is clearly visible without significant obstructions or blurring.
-    - (Optional) You can upload another image as a reference for the face pose. If you don't, the first detected face image will be used to extract facial landmarks. If you use a cropped face at step 1, it is recommended to upload it to define a new face pose.
+    - (Optional) You can upload another image as a reference for the face pose. If you don't, the first detected face image will be used to extract facial landmarks. If you used a cropped face as main photo, it is recommended to upload a reference photo to define a new face pose.
     - (Optional) You can select multiple ControlNet models to control the generation process. The default is to use the IdentityNet only. The ControlNet models include pose skeleton, canny, and depth. You can adjust the strength of each ControlNet model to control the generation process.
     - Enter a text prompt, as done in normal text-to-image models.
-    - Click the Generate button to begin customization.
+    - Click the Generate button to begin image generation.
     - img2img mode imports the "pipeline_stable_diffusion_xl_instantid_img2img" pipeline, it's good to experiment with it and I got quite good results using it. It uses a lot of VRAM though (~20GB). Enhance non-face region (control_mask) has no effect on this mode and that's by design.
-    - In some cases, minimizing the browser/Gradio window while an image is being generated can help speed up the generation process. You can track the progress in the CMD/Terminal window.
     - Select a model to use for generation from the upper left corner dropdown. Only use SDXL and Pony. Illustrious can be loaded but isn't well supported.
     - You can select a scheduler from the upper right corner dropdown. DPMSolver, KDPM2 and Euler are usually the best.
     
     Other usage tips of InstantID:
-    - If you're not satisfied with the similarity, try increasing the weight of "IdentityNet Strength" and "Adapter Strength."    
-    - If you feel that the saturation is too high, first decrease the Adapter strength. If it remains too high, then decrease the IdentityNet strength.
-    - If you find that text control is not as expected, decrease Adapter strength.
-    - If you find that the style or generated images are not good enough, try another base model.
-    - If you're having trouble detecting faces, try changing the "Face Detection Size" setting or try another input face photo.
+    - If you're not satisfied with the similarity, try increasing the weight of "IdentityNet Strength" and "Image adapter strength".
+    - If you feel that the saturation/contrast is too high, first decrease the "Image adapter strength". If it remains too high, decrease the "IdentityNet Strength".
+    - If you find that text control is not as expected, decrease "Image adapter strength".
+    - If you find that the style or generated images are not good enough, try another model.
+    - If you're having trouble detecting faces, try changing the "Face Detection Size" setting or try another input photo.
     """
     css = """
     .gradio-container {width: 85% !important}
@@ -1158,7 +1157,7 @@ Scheduler: {scheduler}"""
                     )
                     with gr.Group():
                         negative_prompt_preset = gr.Dropdown(
-                            label="Negative Prompt Profile",
+                            label="Negative Prompt Profiles",
                             choices=list(NEGATIVE_PROMPT_PRESETS.keys()),
                             value="Default Negative Profile"
                         )
@@ -2185,7 +2184,7 @@ Scheduler: {scheduler}"""
                 outputs=LORA_OUTPUTS
             )
 
-        with gr.Accordion("📝 Click to show usage tips", open=False):
+        with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
         gr.Markdown("<b>InstantID: Unlocked v4.6.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
