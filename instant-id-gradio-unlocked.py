@@ -15,16 +15,20 @@ import subprocess
 import PIL.PngImagePlugin
 import time
 
-warnings.filterwarnings("ignore", message=".*timm.models.layers.*")
-warnings.filterwarnings("ignore", message=".*timm.models.registry.*")
-warnings.filterwarnings("ignore", message=".*Overwriting tiny_vit_.* in registry.*")
-warnings.filterwarnings("ignore", message=".*peft_config.*multiple adapters.*")
-warnings.filterwarnings("ignore", message=".*rcond.*will change to the default.*")
-warnings.filterwarnings("ignore", message=".*MultiControlNetModel.*is deprecated.*")
-warnings.filterwarnings("ignore", message=".*`resume_download` is deprecated.*")
-warnings.filterwarnings("ignore", message=".*Should have .*<=t1 but got .*")
-warnings.filterwarnings("ignore", message="unable to parse version details from package URL.")
-warnings.filterwarnings("ignore", message=".*cache-system uses symlinks by default.*")
+warning_messages = [
+    ".*timm.models.layers.*",
+    ".*timm.models.registry.*",
+    ".*Overwriting tiny_vit_.* in registry.*",
+    ".*peft_config.*multiple adapters.*",
+    ".*rcond.*will change to the default.*",
+    ".*MultiControlNetModel.*is deprecated.*",
+    ".*`resume_download` is deprecated.*",
+    ".*Should have .*<=t1 but got .*",
+    "unable to parse version details from package URL.",
+    ".*cache-system uses symlinks by default.*",
+]
+for msg in warning_messages:
+    warnings.filterwarnings("ignore", message=msg)
 
 os.environ["NO_ALBUMENTATIONS_UPDATE"] = "1"
 # os.environ["TRANSFORMERS_OFFLINE"] = "1"
