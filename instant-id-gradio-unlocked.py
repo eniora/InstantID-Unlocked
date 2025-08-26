@@ -1211,13 +1211,13 @@ Scheduler: {scheduler}"""
                             ],
                             value="LANCZOS"
                         )
-                    exact_ratio = gr.Checkbox(
-                        label="Maintain the exact aspect ratio from the input image (or pose image if present)",
-                        value=True
-                    )
                     with gr.Row():
+                        exact_ratio = gr.Checkbox(
+                            label="Exact aspect ratio from the input photo.",
+                            value=True
+                        )
                         pad_to_max_checkbox = gr.Checkbox(
-                            label="Pad resized image to square. If enabled, resized images are padded to a square shape.",
+                            label="Pad resized images to square shape.",
                             value=False
                         )
                     enable_custom_resize = gr.Checkbox(
