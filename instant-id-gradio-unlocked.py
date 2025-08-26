@@ -303,8 +303,6 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 pipe.scheduler.config
             )
 
-    file_prefix = DEFAULT_FILE_PREFIX
-
     def load_and_cache_controlnet_model(controlnet_type):
         if controlnet_type not in cached_controlnet_models:
             print(f"Loading ControlNet model: {controlnet_type}")
