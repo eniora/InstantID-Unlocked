@@ -180,7 +180,6 @@ app = FaceAnalysis(
 app.prepare(ctx_id=0, det_size=current_det_size)
 
 def read_png_metadata(filepath):
-    """Read metadata from PNG file"""
     if filepath is None:
         return "No image selected"
 
@@ -227,7 +226,6 @@ def get_available_loras():
     return lora_files
 
 def restart_server(open_browser):
-    """Restart the current python process aggressively with browser toggle option."""
     python = sys.executable
     script = os.path.abspath(sys.argv[0])
     args = sys.argv[1:]
@@ -244,7 +242,6 @@ def restart_server(open_browser):
     os._exit(0)
 
 def update_det_size(det_size_name):
-    """Update the face detection size"""
     global app, current_det_size
     
     new_size = DET_SIZE_OPTIONS[det_size_name]
