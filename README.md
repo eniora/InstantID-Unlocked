@@ -27,8 +27,10 @@ I tried the most popular forgeui and comfyui implementations including the popul
 Git clone this fork (Git clone https://github.com/eniora/InstantID-Unlocked/) then:
 - To avoid conflicts, it's recommended to create a python venv by doing in terminal/CMD window: "python -m venv venv" then activate the venv with "venv\Scripts\activate"
 - With the venv activated, install the requirements.txt file with "pip install -r requirements.txt" and then install torch and cuda with "pip install torch==2.7.1+cu128 torchvision==0.22.1+cu128 --index-url https://download.pytorch.org/whl/cu128"
-- For downloading the necessary models: face encoder models, controlnet models and IPAdatper etc. I uploaded all the necesseray files here: ((my whole models and checkpoints folder except for the SDXL model)
+- For downloading the necessary models: face encoder models, controlnet models and IPAdatper etc. I uploaded all the necesseray files here:
 https://drive.google.com/file/d/1RdoGwK-6054eCnNw0ipi-j3bbgD8gj9J/view?usp=sharing
+
+This is my whole models and checkpoints folder except for the SDXL model.
 Just download the file, extract it and copy the folders into your root InstantID folder. Then you will only need SDXL model/checkpoint to start generating, it will be downloaded automatically from huggingface when you click on "Generate".
 
 - Run by using "python instant-id-gradio-unlocked.py".
@@ -316,6 +318,7 @@ If you find InstantID useful for your research and applications, please cite us 
 ```
 
 For any question, please feel free to contact us via haofanwang.ai@gmail.com or wangqixun.ai@gmail.com.
+
 
 
 
