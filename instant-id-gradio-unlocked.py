@@ -1398,7 +1398,7 @@ Scheduler: {scheduler}"""
                         queue=False
                     )
             with gr.Column(scale=1):
-                gallery = gr.Gallery(label="Generated Images")
+                gallery = gr.Gallery(label="Generated image(s) preview. Open the output folder for full view.", height=350, object_fit="contain")
                 with gr.Row():
                     generate_alt = gr.Button("Generate (Extra Right Side Button)", variant="primary")
                     open_folder_btn = gr.Button("📁", min_width=60, scale=0)
