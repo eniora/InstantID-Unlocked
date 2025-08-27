@@ -1035,10 +1035,7 @@ Scheduler: {scheduler}"""
     - If you find that the style or generated images are not good enough, try another model.
     - If you're having trouble detecting faces, try changing the "Face Detection Size" setting or try another input photo.
     """
-    css = """
-    .gradio-container {width: 85% !important}
-    """
-    with gr.Blocks(css=css) as gui:
+    with gr.Blocks() as gui:
         with gr.Row():
             with gr.Column(scale=1):
                 with gr.Row():
@@ -1092,15 +1089,15 @@ Scheduler: {scheduler}"""
 
         with gr.Row():
             with gr.Column():
-                with gr.Row(equal_height=True):
+                with gr.Row():
                     face_file = gr.Image(
-                        label="Upload a photo containing a face", type="filepath"
+                        label="Upload a photo containing a face", height=350, type="filepath"
                     )
                     pose_file = gr.Image(
                         label="Upload a reference pose image (Optional)",
+                        height=350,
                         type="filepath"
                     )
-
                 prompt = gr.Textbox(
                     label="Prompt",
                     info="Giving a simple prompt is enough to achieve good face fidelity",
@@ -1208,11 +1205,11 @@ Scheduler: {scheduler}"""
                         )
                     with gr.Row():
                         exact_ratio = gr.Checkbox(
-                            label="Exact aspect ratio from the input photo.",
+                            label="Maintain the exact aspect ratio of input photos.",
                             value=True
                         )
                         pad_to_max_checkbox = gr.Checkbox(
-                            label="Pad resized images to square shape.",
+                            label="Square padding (keeps subject proportions intact)",
                             value=False
                         )
                     enable_custom_resize = gr.Checkbox(
