@@ -9,6 +9,7 @@ The code barely follows any DRY principles as it started as a personal modificat
 - Resolution slider, up to 4096.
 - Multiple Lora loader
 - Model selector dropdown.
+- img2img mode that natively imports the already existing stable_diffusion_xl_instantid_img2img pipeline, without needing to launch two separate apps.
 - PNG metadata writer in the autosaved images and a gradio box to read info from them and apply the metadata fields to all boxes.
 - Dropdown menu for the ability to change the Det Size for face detection in input/reference photos.
 - Negative Prompt Profiles dropdown.
@@ -317,6 +318,7 @@ If you find InstantID useful for your research and applications, please cite us 
 ```
 
 For any question, please feel free to contact us via haofanwang.ai@gmail.com or wangqixun.ai@gmail.com.
+
 
 
 
