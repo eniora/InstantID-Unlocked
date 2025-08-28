@@ -39,6 +39,9 @@ Just download the file, extract it and copy the folders into your root InstantID
 
 - InstantID requires a lot of VRAM (even after my tweaks to make it faster and more VRAM efficient). Based on my testing with different GPUs, the minimum you need is 12GB, 16GB or more is strongly recommended. With 8GB it took ~15 minutes to generate a 1280x960 photo.
 
+Preview of the fork:
+<img src='Preview/InstantID-Gradio-Unlocked_Preview.png'>
+
 [**Qixun Wang**](https://github.com/wangqixun)<sup>12</sup> · [**Xu Bai**](https://huggingface.co/baymin0220)<sup>12</sup> · [**Haofan Wang**](https://haofanwang.github.io/)<sup>12*</sup> · [**Zekui Qin**](https://github.com/ZekuiQin)<sup>12</sup> · [**Anthony Chen**](https://antonioo-c.github.io/)<sup>123</sup>
 
 Huaxia Li<sup>2</sup> · Xu Tang<sup>2</sup> · Yao Hu<sup>2</sup>
@@ -318,6 +321,7 @@ If you find InstantID useful for your research and applications, please cite us 
 ```
 
 For any question, please feel free to contact us via haofanwang.ai@gmail.com or wangqixun.ai@gmail.com.
+
 
 
 
