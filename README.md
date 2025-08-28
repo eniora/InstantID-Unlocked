@@ -29,8 +29,8 @@ Git clone this fork (Git clone https://github.com/eniora/InstantID-Unlocked/) th
 - With the venv activated, install the requirements.txt file with "pip install -r requirements.txt" and then install torch and cuda with "pip install torch==2.7.1+cu128 torchvision==0.22.1+cu128 --index-url https://download.pytorch.org/whl/cu128"
 - For downloading the necessary models: face encoder models, controlnet models and IPAdatper etc. I uploaded all the necesseray files here:
 https://drive.google.com/file/d/1RdoGwK-6054eCnNw0ipi-j3bbgD8gj9J/view?usp=sharing
-This is my whole models and checkpoints folder except for the SDXL model.
-Just download the file, extract it and copy the folders into your root InstantID folder. Then you will only need SDXL model/checkpoint to start generating, it will be downloaded automatically from huggingface when you click on "Generate".
+This is my whole models and checkpoints folder except for the SDXL model(s).
+Just download the file, extract it and copy the folders into your root InstantID folder. Then you will only need an SDXL model to start generating. It will be downloaded automatically from huggingface when you start InstantID.
 
 - Run by using "python instant-id-gradio-unlocked.py".
 
@@ -317,6 +317,7 @@ If you find InstantID useful for your research and applications, please cite us 
 ```
 
 For any question, please feel free to contact us via haofanwang.ai@gmail.com or wangqixun.ai@gmail.com.
+
 
 
 
