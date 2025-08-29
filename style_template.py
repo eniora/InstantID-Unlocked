@@ -3135,7 +3135,7 @@ style_list = [
         "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
     },
     {
-        "name": "Abstract Expressionism 2",
+        "name": "Abstract Expressionism 3",
         "prompt": "Abstract Expressionism style illustration, stylized, hand-drawn, illustration-focused, expressive linework, {prompt}, detailed linework, strong composition",
         "negative_prompt": "photorealistic, 3d, render, lowres, low quality, text, watermark, blurry, deformed, mutated"
     },
@@ -4475,7 +4475,7 @@ style_list = [
         "negative_prompt": "photo, soft gradients, blur, watermark",
     },
     {
-        "name": "Pointillism 2",
+        "name": "Pointillism 3",
         "prompt": "pointillist stippling technique, tiny dots build color and light, {prompt}, painterly optical mixing",
         "negative_prompt": "photorealistic, blur, lowres, watermark",
     },
@@ -5085,7 +5085,7 @@ style_list = [
         "negative_prompt": "happy, bright, modern, technological, casual"
     },
     {
-        "name": "Retro Futurism",
+        "name": "Retro Futurism 2",
         "prompt": "{prompt} in a 1950s vision of the future, wearing sleek silver jumpsuit with bubble helmet, standing in a rounded white space station with primary color accents",
         "negative_prompt": "medieval, rustic, modern realism, grunge"
     },
@@ -5360,7 +5360,7 @@ style_list = [
         "negative_prompt": "realistic, organic shapes, muted colors, impressionist"
     },
     {
-        "name": "Surreal Dreamscape",
+        "name": "Surreal Dreamscape 2",
         "prompt": "{prompt} in a surreal Dali-esque landscape, melting clocks, impossible architecture, vivid colors with dramatic shadows",
         "negative_prompt": "realistic, normal physics, mundane, everyday scene"
     },
@@ -5385,7 +5385,7 @@ style_list = [
         "negative_prompt": "realistic, muted colors, straight lines, minimalist"
     },
     {
-        "name": "Charcoal Sketch",
+        "name": "Charcoal Sketch 2",
         "prompt": "{prompt} as an expressive charcoal drawing, rough textured paper visible, dramatic chiaroscuro with deep shadows, visible smudges and sketch lines",
         "negative_prompt": "clean lines, digital art, color, smooth rendering"
     },
@@ -5405,7 +5405,7 @@ style_list = [
         "negative_prompt": "color, soft edges, painterly, modern art style"
     },
     {
-        "name": "Children's Book Illustration",
+        "name": "Children's Book Illustration 2",
         "prompt": "{prompt} as a whimsical children's book illustration, soft watercolor textures, gentle expressions, warm inviting colors, slight cartoon exaggeration",
         "negative_prompt": "realistic, dark, horror, sharp edges, adult themes"
     },
@@ -5415,7 +5415,7 @@ style_list = [
         "negative_prompt": "photorealistic, messy brushwork, amateurish, flat lighting"
     },
     {
-        "name": "Silhouette Art",
+        "name": "Silhouette Art 2",
         "prompt": "{prompt} as a striking silhouette artwork, single color shape against contrasting background, intricate cutout details, dramatic negative space",
         "negative_prompt": "full color, realistic shading, detailed features, photorealistic"
     },
