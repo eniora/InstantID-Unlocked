@@ -1115,7 +1115,7 @@ Scheduler: {scheduler}"""
                             label="Style templates",
                             choices=STYLE_NAMES,
                             value=DEFAULT_STYLE_NAME,
-                            info="Selecting a style empties the prompt and negative prompt fields because styles have their own. It's good to add to the prompt field."
+                            info="Selecting a style empties the prompt and negative prompt fields because styles have their own. You can add to both fields."
                         )
                         apply_selected_style_btn = gr.Button(
                             "⇄ Insert selected style text into prompt & negative prompt fields. '(No style)' will be selected after clicking this.",
@@ -1151,30 +1151,32 @@ Scheduler: {scheduler}"""
                         outputs=[prompt, negative_prompt, style],
                         queue=False
                     )
-                    with gr.Group():
-                        negative_prompt_preset = gr.Dropdown(
-                            label="Negative Prompt Profiles",
-                            choices=list(NEGATIVE_PROMPT_PRESETS.keys()),
-                            value="Default Negative Profile"
-                        )
-                        apply_negative_profile_btn = gr.Button(
-                            "Apply selected negative prompt profile", 
-                            size="sm",
-                            min_width=200
-                        )
-                        negative_prompt_preset.change(
-                            fn=lambda x: NEGATIVE_PROMPT_PRESETS[x],
-                            inputs=negative_prompt_preset,
-                            outputs=negative_prompt,
-                        )
-                        def apply_selected_negative_profile(selected_negative_profile):
-                            return NEGATIVE_PROMPT_PRESETS[selected_negative_profile]
+                    with gr.Accordion("Negative Prompt Profiles", open=False):
+                        with gr.Group():
+                            negative_prompt_preset = gr.Dropdown(
+                                choices=list(NEGATIVE_PROMPT_PRESETS.keys()),
+                                value="Default Negative Profile",
+                                show_label=False,
+                                container=False
+                            )
+                            apply_negative_profile_btn = gr.Button(
+                                "Apply selected negative prompt profile", 
+                                size="sm",
+                                min_width=200
+                            )
+                            negative_prompt_preset.change(
+                                fn=lambda x: NEGATIVE_PROMPT_PRESETS[x],
+                                inputs=negative_prompt_preset,
+                                outputs=negative_prompt,
+                            )
+                            def apply_selected_negative_profile(selected_negative_profile):
+                                return NEGATIVE_PROMPT_PRESETS[selected_negative_profile]
 
-                        apply_negative_profile_btn.click(
-                            fn=apply_selected_negative_profile,
-                            inputs=negative_prompt_preset,
-                            outputs=negative_prompt,
-                        )
+                            apply_negative_profile_btn.click(
+                                fn=apply_selected_negative_profile,
+                                inputs=negative_prompt_preset,
+                                outputs=negative_prompt,
+                            )
                     with gr.Row():
                         generate_alt_3 = gr.Button("Generate (Extra Settings Section Button)", variant="primary")
                         open_folder_btn = gr.Button("📁", min_width=60, scale=0)
@@ -1213,7 +1215,7 @@ Scheduler: {scheduler}"""
                             value=False
                         )
                     enable_custom_resize = gr.Checkbox(
-                        label="Enable custom resolution (disables & overrides all other resolution & resizing options)",
+                        label="📐 Enable custom resolution (disables & overrides all other resolution & resizing options)",
                         value=False
                     )
                     custom_resize_width = gr.Slider(
@@ -2182,7 +2184,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v4.6.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v4.7.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
