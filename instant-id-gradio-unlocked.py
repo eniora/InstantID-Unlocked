@@ -1091,11 +1091,11 @@ Scheduler: {scheduler}"""
             with gr.Column():
                 with gr.Row():
                     face_file = gr.Image(
-                        label="Upload a photo containing a face", height=350, type="filepath"
+                        label="Upload a photo containing a face", height=400, type="filepath"
                     )
                     pose_file = gr.Image(
                         label="Upload a reference pose image (Optional)",
-                        height=350,
+                        height=400,
                         type="filepath"
                     )
                 prompt = gr.Textbox(
@@ -1400,7 +1400,7 @@ Scheduler: {scheduler}"""
                         queue=False
                     )
             with gr.Column(scale=1):
-                gallery = gr.Gallery(label="Generated image(s) preview. Open the output folder for full view.", height=350, object_fit="contain")
+                gallery = gr.Gallery(label="Generated image(s) preview. Open the output folder for full view.", height=400, object_fit="contain")
                 with gr.Row():
                     generate_alt = gr.Button("Generate (Extra Right Side Button)", variant="primary")
                     open_folder_btn = gr.Button("📁", min_width=60, scale=0)
