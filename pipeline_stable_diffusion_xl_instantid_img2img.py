@@ -900,7 +900,7 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
             if isinstance(attn_processor, IPAttnProcessor):
                 attn_processor.scale = scale
 
-    def _encode_prompt_image_emb(self, prompt_image_emb, device, num_images_per_prompt, dtype, do_classifier_free_guidance):
+    def _encode_prompt_image_emb(self, prompt_image_emb, device, dtype, do_classifier_free_guidance):
         if isinstance(prompt_image_emb, torch.Tensor):
             prompt_image_emb = prompt_image_emb.clone().detach()
         else:
@@ -1188,7 +1188,7 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
 
         # 3.2 Encode image prompt
         prompt_image_emb = self._encode_prompt_image_emb(
-            image_embeds, device, num_images_per_prompt, self.unet.dtype, self.do_classifier_free_guidance
+            image_embeds, device, self.unet.dtype, self.do_classifier_free_guidance
         )
         bs_embed, seq_len, _ = prompt_image_emb.shape
         prompt_image_emb = prompt_image_emb.repeat(1, num_images_per_prompt, 1)
