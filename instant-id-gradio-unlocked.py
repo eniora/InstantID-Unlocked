@@ -151,6 +151,14 @@ def on_style_change(style_name):
         print(f"Manual style selection: {style_name}")
         return gr.update(value=""), gr.update(value="")
 
+EXCLUDED_MODELS = {
+    "diffusers/controlnet-canny-sdxl-1.0",
+    "diffusers/controlnet-depth-sdxl-1.0-small",
+    "Intel/dpt-hybrid-midas",
+    "lllyasviel/Annotators",
+    "lllyasviel/ControlNet",
+    "thibaud/controlnet-openpose-sdxl-1.0"
+}
 def get_available_models():
     models_dir = "models"
     model_folders = []
@@ -158,6 +166,8 @@ def get_available_models():
         for folder in os.listdir(models_dir):
             if folder.startswith("models--"):
                 model_name = folder.replace("models--", "").replace("--", "/")
+                if model_name in EXCLUDED_MODELS:
+                    continue
                 model_folders.append(model_name)
     return model_folders
 
