@@ -1402,7 +1402,7 @@ Scheduler: {scheduler}"""
                         label="Face Detection Size",
                         choices=list(DET_SIZE_OPTIONS.keys()),
                         value="640x640 (default)",
-                        info="Higher values can detect smaller faces better if the face in the input/reference image is too small/distant. Change the value only if you get 'No face detected', it can help a lot in some face input photos."
+                        info="Change this in case you get 'No face detected'. Higher values can detect smaller faces better if the face in the input/reference image is too small/distant. Smaller values can better detect close-up portraits."
                     )
                 with gr.Row():
                     generate_alt_2 = gr.Button("Generate (Extra Bottom Button)", variant="primary")
