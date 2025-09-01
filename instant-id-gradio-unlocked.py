@@ -159,6 +159,7 @@ EXCLUDED_MODELS = {
     "lllyasviel/ControlNet",
     "thibaud/controlnet-openpose-sdxl-1.0"
 }
+EXCLUDED_MODELS_LOWER = {m.lower() for m in EXCLUDED_MODELS}
 def get_available_models():
     models_dir = "models"
     model_folders = []
@@ -166,7 +167,7 @@ def get_available_models():
         for folder in os.listdir(models_dir):
             if folder.startswith("models--"):
                 model_name = folder.replace("models--", "").replace("--", "/")
-                if model_name.lower() in {m.lower() for m in EXCLUDED_MODELS}:
+                if model_name.lower() in EXCLUDED_MODELS_LOWER:
                     continue
                 model_folders.append(model_name)
     return model_folders
