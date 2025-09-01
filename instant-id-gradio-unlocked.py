@@ -166,7 +166,7 @@ def get_available_models():
         for folder in os.listdir(models_dir):
             if folder.startswith("models--"):
                 model_name = folder.replace("models--", "").replace("--", "/")
-                if model_name in EXCLUDED_MODELS:
+                if model_name.lower() in {m.lower() for m in EXCLUDED_MODELS}:
                     continue
                 model_folders.append(model_name)
     return model_folders
@@ -2197,7 +2197,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v4.7.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v4.8.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
