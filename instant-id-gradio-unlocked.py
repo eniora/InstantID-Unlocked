@@ -2040,7 +2040,7 @@ Scheduler: {scheduler}"""
                                 settings["model_name"] = model_name
                             else:
                                 gr.Warning(
-                                    f"Model '{model_name}' used for this image can't be found in your models folder. Falling back to default model."
+                                    f"Model '{model_name}' used for this image can't be found in your models folder. Falling back to the default model."
                                 )
                         elif line.startswith("Detection size:"):
                             size = line.replace("Detection size:", "").strip()
