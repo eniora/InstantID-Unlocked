@@ -15,9 +15,8 @@ The code barely follows any DRY principles as it started as a personal modificat
 
 🎨 Models, LoRAs & Styles
 - Model selector dropdown (choose your base SDXL model easily).
-- Multiple LoRA loader → load and combine up to 8 LoRAs with different weights.
-- New default model: eniora/RealVisXL_V5.0 (better than YamerMIX).
-- Other good tested models: John6666/albedobase-xl-v31large-sdxl/, ProtoVision XL 6.6, misri/juggernautXL_juggXIByRundiffusion, John6666/cyberrealistic-xl-v58-sdxl.
+- Multiple LoRA loader. Load and combine up to 8 LoRAs with different weights.
+- New default model: eniora/RealVisXL_V5.0 (better than YamerMIX). Other good tested models: John6666/albedobase-xl-v31large-sdxl/, ProtoVision XL 6.6, misri/juggernautXL_juggXIByRundiffusion, John6666/cyberrealistic-xl-v58-sdxl.
 - Added over 1100 styles, including many from Fooocus and StyleSelectorXL.
 
 🧠 Control & Generation
@@ -30,8 +29,7 @@ The code barely follows any DRY principles as it started as a personal modificat
 - Generate multiple images in one run, each with a random seed.
 
 👤 Face Enhancement
-- Enhance Non-Face Region with adjustable padding.
-- Profiles: Balanced, High, or Custom padding amount.
+- Enhance Non-Face Region with adjustable padding with profiles: Defaultm Balanced, High, or Custom padding amount.
 
 ⚡ Performance
 - Tweaks to improve VRAM usage compared to the original repo.
@@ -92,6 +90,7 @@ Huaxia Li<sup>2</sup> · Xu Tang<sup>2</sup> · Yao Hu<sup>2</sup>
 [![Open in OpenXLab](https://cdn-static.openxlab.org.cn/app-center/openxlab_app.svg)](https://openxlab.org.cn/apps/detail/InstantX/InstantID)
 
 InstantID is a new state-of-the-art tuning-free method to achieve ID-Preserving generation with only single image, supporting various downstream tasks.
+
 
 
 
