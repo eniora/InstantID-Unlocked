@@ -39,7 +39,7 @@ Just download the file, extract it and copy the folders into your root InstantID
 
 - InstantID requires a lot of VRAM (even after my tweaks to make it faster and more VRAM efficient). Based on my testing with different GPUs, the minimum you need is 12GB, 16GB or more is strongly recommended. With 8GB it took ~15 minutes to generate a 1280x960 photo.
 
-Here's a quick preview of the fork: (This is one of hundreds ways to generate different images with this fork, for example you can add a LoRA or multiple loras with different weights, or try without img2img, or try different styles, or try different base modesl, or etc.)
+Here's a quick preview of the fork: (This is one of hundreds ways to generate different images with this fork, for example you can add a LoRA or multiple loras with different weights, or try without img2img, or try different styles, or try different models, or etc.)
 
 <img src='Preview/InstantID-Gradio-Unlocked_Preview.png'>
 
@@ -65,6 +65,7 @@ Huaxia Li<sup>2</sup> · Xu Tang<sup>2</sup> · Yao Hu<sup>2</sup>
 [![Open in OpenXLab](https://cdn-static.openxlab.org.cn/app-center/openxlab_app.svg)](https://openxlab.org.cn/apps/detail/InstantX/InstantID)
 
 InstantID is a new state-of-the-art tuning-free method to achieve ID-Preserving generation with only single image, supporting various downstream tasks.
+
 
 
 
