@@ -58,6 +58,7 @@ pip install torch==2.7.1+cu128 torchvision==0.22.1+cu128 --index-url https://dow
 
 python instant-id-unlocked.py
 
+_______________________________________________
 For downloading the necessary models: face encoder models, controlnet models and IPAdatper etc. I uploaded all the necesseray files here:
 https://drive.google.com/file/d/1RdoGwK-6054eCnNw0ipi-j3bbgD8gj9J/view?usp=sharing
 This is my whole models and checkpoints folder except for the SDXL model(s).
@@ -91,6 +92,7 @@ Huaxia Li<sup>2</sup> · Xu Tang<sup>2</sup> · Yao Hu<sup>2</sup>
 [![Open in OpenXLab](https://cdn-static.openxlab.org.cn/app-center/openxlab_app.svg)](https://openxlab.org.cn/apps/detail/InstantX/InstantID)
 
 InstantID is a new state-of-the-art tuning-free method to achieve ID-Preserving generation with only single image, supporting various downstream tasks.
+
 
 
 
