@@ -13,7 +13,7 @@ The code barely follows any DRY principles as it started as a personal modificat
 - PNG metadata writer in the autosaved images and a gradio box to read info from them and apply the metadata fields to all boxes.
 - Dropdown menu for the ability to change the Det Size for face detection in input/reference photos.
 - Negative Prompt Profiles dropdown.
-- New default RealVisXL_V5.0 model, which is much better than the default YamerMIX. You can still download the base model of your choice by changing the huggingface model path inside instant-id-gradio-unlocked.py file and replacing all "eniora/RealVisXL_V5.0" fields and it will be downloaded automatically in the "models" folder on root. /John6666/albedobase-xl-v31large-sdxl/, ProtoVision XL 6.6, misri/juggernautXL_juggXIByRundiffusion and John6666/cyberrealistic-xl-v58-sdxl are very good models for styles and general use as well.
+- New default RealVisXL_V5.0 model, which is much better than the default YamerMIX. You can still download the base model of your choice by changing the huggingface model path inside instant-id-unlocked.py file and replacing all "eniora/RealVisXL_V5.0" fields and it will be downloaded automatically in the "models" folder on root. /John6666/albedobase-xl-v31large-sdxl/, ProtoVision XL 6.6, misri/juggernautXL_juggXIByRundiffusion and John6666/cyberrealistic-xl-v58-sdxl are very good models for styles and general use as well.
 - Ability to choose how many images to be generated after clicking on "generate", each with random seed.
 - Improved VRAM usage compared to the original repo.
 - Added many more styles in the style template. Including many from "fooocus" and "StyleSelectorXL" (sources: https://github.com/lllyasviel/Fooocus/discussions/2082 and https://github.com/ahgsql/StyleSelectorXL). For a total of over 1100 styles.
@@ -33,7 +33,7 @@ https://drive.google.com/file/d/1RdoGwK-6054eCnNw0ipi-j3bbgD8gj9J/view?usp=shari
 This is my whole models and checkpoints folder except for the SDXL model(s).
 Just download the file, extract it and copy the folders into your root InstantID folder. Then you will only need an SDXL model to start generating. It will be downloaded automatically from huggingface when you start InstantID.
 
-- Run by using "python instant-id-gradio-unlocked.py".
+- Run by using "python instant-id-unlocked.py".
 
 - Tested only on Windows and Python 3.10.6 and Nvidia GPUs, you may need to do extra steps to run the gradio interface successfully on MacOS/Linux or if you have an AMD GPU.
 
@@ -65,6 +65,7 @@ Huaxia Li<sup>2</sup> · Xu Tang<sup>2</sup> · Yao Hu<sup>2</sup>
 [![Open in OpenXLab](https://cdn-static.openxlab.org.cn/app-center/openxlab_app.svg)](https://openxlab.org.cn/apps/detail/InstantX/InstantID)
 
 InstantID is a new state-of-the-art tuning-free method to achieve ID-Preserving generation with only single image, supporting various downstream tasks.
+
 
 
 
