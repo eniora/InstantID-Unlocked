@@ -43,7 +43,6 @@ And many many more improvements.
 I tried the most popular forgeui and comfyui implementations including the popular cubiq/ComfyUI_InstantID and it's really bad compared to my gradio fork of InstantID. cubiq/ComfyUI_InstantID (which was the best from the comfy implementations I tried) tends to screw up the faces and similarity sometimes no matter what options and workflows I tried, and the multi ID feature doesn't work well anyway and is overly complicated (even the author admits this). Try this and judge for yourself. I agree that comfyui instantid is faster but the quality isn't so good really. The good thing about cubiq/ComfyUI_InstantID is the stylization with "IP-Adapter plus VIT", I've been trying to make it work with this fork but I always failed, guess I am not skilled enough for this. :>
 
 ## How to use and run:
-```bash
 # Clone the repo
 git clone https://github.com/eniora/InstantID-Unlocked
 cd InstantID-Unlocked
@@ -93,6 +92,7 @@ Huaxia Li<sup>2</sup> · Xu Tang<sup>2</sup> · Yao Hu<sup>2</sup>
 [![Open in OpenXLab](https://cdn-static.openxlab.org.cn/app-center/openxlab_app.svg)](https://openxlab.org.cn/apps/detail/InstantX/InstantID)
 
 InstantID is a new state-of-the-art tuning-free method to achieve ID-Preserving generation with only single image, supporting various downstream tasks.
+
 
 
 
