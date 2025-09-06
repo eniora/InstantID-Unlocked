@@ -316,7 +316,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             )
 
     print(f"Detected GPU VRAM: {vram_gb:.2f} GB → "
-          f"VAE Tiling: {'Enabled' if default_vae_tiling else 'Disabled'} (you can enable it manually in the UI)")
+          f"VAE Tiling: {'Enabled' if default_vae_tiling else 'Disabled'} (you can change it manually in the UI)")
 
     def load_and_cache_controlnet_model(controlnet_type):
         if controlnet_type not in cached_controlnet_models:
