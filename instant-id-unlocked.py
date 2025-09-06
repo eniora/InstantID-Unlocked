@@ -42,6 +42,7 @@ os.environ["GRADIO_DISABLE_TELEMETRY"] = "1"
 
 vram_bytes = torch.cuda.get_device_properties(0).total_memory
 vram_gb = vram_bytes / (1024**3)
+default_vae_tiling = vram_gb >= 15
 
 def open_output_folder():
     path = os.path.abspath("output")
@@ -313,6 +314,9 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             pipe.scheduler = diffusers.DPMSolverMultistepScheduler.from_config(
                 pipe.scheduler.config
             )
+
+    print(f"Detected GPU VRAM: {vram_gb:.2f} GB → "
+          f"VAE Tiling: {'Enabled' if default_vae_tiling else 'Disabled'} (you can enable it manually in the UI)")
 
     def load_and_cache_controlnet_model(controlnet_type):
         if controlnet_type not in cached_controlnet_models:
@@ -1209,7 +1213,7 @@ Scheduler: {scheduler}"""
                     with gr.Row():
                         enable_vae_tiling = gr.Checkbox(
                             label="Enable VAE Tiling (splits images into tiles to reduce VRAM usage during VAE decoding)",
-                            value=(vram_gb >= 15)
+                            value=default_vae_tiling
                         )
                     with gr.Row():
                         resize_mode_dropdown = gr.Dropdown(
@@ -2196,7 +2200,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v4.8.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v5.0.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
