@@ -1209,7 +1209,7 @@ Scheduler: {scheduler}"""
                     with gr.Row():
                         enable_vae_tiling = gr.Checkbox(
                             label="Enable VAE Tiling (splits images into tiles to reduce VRAM usage during VAE decoding)",
-                            value=True
+                            value=(vram_gb >= 15)
                         )
                     with gr.Row():
                         resize_mode_dropdown = gr.Dropdown(
