@@ -578,87 +578,40 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             pipe.unload_lora_weights()
 
             loras_to_load = []
-            if lora_selection and not disable_lora_1:
-                lora_path_1 = os.path.join("./models/Loras", lora_selection)
-                if os.path.exists(lora_path_1):
-                    loras_to_load.append({"name": lora_selection, "scale": lora_scale})
-                    print(f"LoRA 1 selected: {lora_selection} with scale {lora_scale}")
-                else:
-                    print(f"LoRA 1 not found at {lora_path_1}, skipping load.")
-                    gr.Warning(f"LoRA 1 not found at {lora_path_1}. Skipping LoRA 1.")
-            
-            if lora_selection_2 and not disable_lora_2:
-                lora_path_2 = os.path.join("./models/Loras", lora_selection_2)
-                if os.path.exists(lora_path_2):
-                    loras_to_load.append({"name": lora_selection_2, "scale": lora_scale_2})
-                    print(f"LoRA 2 selected: {lora_selection_2} with scale {lora_scale_2}")
-                else:
-                    print(f"LoRA 2 not found at {lora_path_2}, skipping load.")
-                    gr.Warning(f"LoRA 2 not found at {lora_path_2}. Skipping LoRA 2.")
-
-            if lora_selection_3 and not disable_lora_3:
-                lora_path_3 = os.path.join("./models/Loras", lora_selection_3)
-                if os.path.exists(lora_path_3):
-                    loras_to_load.append({"name": lora_selection_3, "scale": lora_scale_3})
-                    print(f"LoRA 3 selected: {lora_selection_3} with scale {lora_scale_3}")
-                else:
-                    print(f"LoRA 3 not found at {lora_path_3}, skipping load.")
-                    gr.Warning(f"LoRA 3 not found at {lora_path_3}. Skipping LoRA 3.")
-
-            if lora_selection_4 and not disable_lora_4:
-                lora_path_4 = os.path.join("./models/Loras", lora_selection_4)
-                if os.path.exists(lora_path_4):
-                    loras_to_load.append({"name": lora_selection_4, "scale": lora_scale_4})
-                    print(f"LoRA 4 selected: {lora_selection_4} with scale {lora_scale_4}")
-                else:
-                    print(f"LoRA 4 not found at {lora_path_4}, skipping load.")
-                    gr.Warning(f"LoRA 4 not found at {lora_path_4}. Skipping LoRA 4.")
-
-            if lora_selection_5 and not disable_lora_5:
-                lora_path_5 = os.path.join("./models/Loras", lora_selection_5)
-                if os.path.exists(lora_path_5):
-                    loras_to_load.append({"name": lora_selection_5, "scale": lora_scale_5})
-                    print(f"LoRA 5 selected: {lora_selection_5} with scale {lora_scale_5}")
-                else:
-                    print(f"LoRA 5 not found at {lora_path_5}, skipping load.")
-                    gr.Warning(f"LoRA 5 not found at {lora_path_5}. Skipping LoRA 5.")
-
-            if lora_selection_6 and not disable_lora_6:
-                lora_path_6 = os.path.join("./models/Loras", lora_selection_6)
-                if os.path.exists(lora_path_6):
-                    loras_to_load.append({"name": lora_selection_6, "scale": lora_scale_6})
-                    print(f"LoRA 6 selected: {lora_selection_6} with scale {lora_scale_6}")
-                else:
-                    print(f"LoRA 6 not found at {lora_path_6}, skipping load.")
-                    gr.Warning(f"LoRA 6 not found at {lora_path_6}. Skipping LoRA 6.")
-
-            if lora_selection_7 and not disable_lora_7:
-                lora_path_7 = os.path.join("./models/Loras", lora_selection_7)
-                if os.path.exists(lora_path_7):
-                    loras_to_load.append({"name": lora_selection_7, "scale": lora_scale_7})
-                    print(f"LoRA 7 selected: {lora_selection_7} with scale {lora_scale_7}")
-                else:
-                    print(f"LoRA 7 not found at {lora_path_7}, skipping load.")
-                    gr.Warning(f"LoRA 7 not found at {lora_path_7}. Skipping LoRA 7.")
-
-            if lora_selection_8 and not disable_lora_8:
-                lora_path_8 = os.path.join("./models/Loras", lora_selection_8)
-                if os.path.exists(lora_path_8):
-                    loras_to_load.append({"name": lora_selection_8, "scale": lora_scale_8})
-                    print(f"LoRA 8 selected: {lora_selection_8} with scale {lora_scale_8}")
-                else:
-                    print(f"LoRA 8 not found at {lora_path_8}, skipping load.")
-                    gr.Warning(f"LoRA 8 not found at {lora_path_8}. Skipping LoRA 8.")
-
+            lora_slots = [
+                (lora_selection, disable_lora_1, lora_scale, 1),
+                (lora_selection_2, disable_lora_2, lora_scale_2, 2),
+                (lora_selection_3, disable_lora_3, lora_scale_3, 3),
+                (lora_selection_4, disable_lora_4, lora_scale_4, 4),
+                (lora_selection_5, disable_lora_5, lora_scale_5, 5),
+                (lora_selection_6, disable_lora_6, lora_scale_6, 6),
+                (lora_selection_7, disable_lora_7, lora_scale_7, 7),
+                (lora_selection_8, disable_lora_8, lora_scale_8, 8),
+            ]
+            for selection, disabled, scale, idx in lora_slots:
+                if selection and not disabled:
+                    lora_path = os.path.join("./models/Loras", selection)
+                    if os.path.exists(lora_path):
+                        loras_to_load.append({"name": selection, "scale": scale})
+                        print(f"LoRA {idx} selected: {selection} with scale {scale}")
+                    else:
+                        print(f"LoRA {idx} not found at {lora_path}, skipping load.")
+                        gr.Warning(f"LoRA {idx} not found at {lora_path}. Skipping LoRA {idx}.")
             if loras_to_load:
                 for i, lora_item in enumerate(loras_to_load):
-                    sanitized_lora_name = lora_item['name'].replace('.safetensors', '').replace('.', '_')
+                    sanitized_lora_name = (
+                        lora_item["name"].replace(".safetensors", "").replace(".", "_")
+                    )
                     adapter_name = f"lora_{i}_{sanitized_lora_name}"
-                    pipe.load_lora_weights("./models/Loras", weight_name=lora_item["name"], adapter_name=adapter_name)
-                
-                adapter_names = [f"lora_{i}_{lora_item['name'].replace('.safetensors', '').replace('.', '_')}" for i, lora_item in enumerate(loras_to_load)]
-                adapter_weights = [lora_item['scale'] for lora_item in loras_to_load]
-                
+                    pipe.load_lora_weights(
+                        "./models/Loras", weight_name=lora_item["name"], adapter_name=adapter_name
+                    )
+                adapter_names = [
+                    f"lora_{i}_{lora_item['name'].replace('.safetensors', '').replace('.', '_')}"
+                    for i, lora_item in enumerate(loras_to_load)
+                ]
+                adapter_weights = [lora_item["scale"] for lora_item in loras_to_load]
+
                 pipe.set_adapters(adapter_names, adapter_weights=adapter_weights)
                 pipe.fuse_lora()
                 print(f"Successfully loaded and fused {len(loras_to_load)} LoRAs.")
@@ -837,72 +790,28 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         lora_info_str = "Disabled"
         if enable_lora:
             lora_details = []
-            
-            if lora_selection:
-                if not disable_lora_1 and os.path.exists(os.path.join('./models/Loras', lora_selection)):
-                    lora_details.append(f"LoRA 1: {lora_selection} (Scale: {lora_scale})")
-                elif disable_lora_1:
-                    lora_details.append("LoRA 1: Manually disabled")
-                else:
-                    lora_details.append(f"LoRA 1: {lora_selection} (Not found)")
+            lora_selections = [
+                (lora_selection, disable_lora_1, lora_scale, 1),
+                (lora_selection_2, disable_lora_2, lora_scale_2, 2),
+                (lora_selection_3, disable_lora_3, lora_scale_3, 3),
+                (lora_selection_4, disable_lora_4, lora_scale_4, 4),
+                (lora_selection_5, disable_lora_5, lora_scale_5, 5),
+                (lora_selection_6, disable_lora_6, lora_scale_6, 6),
+                (lora_selection_7, disable_lora_7, lora_scale_7, 7),
+                (lora_selection_8, disable_lora_8, lora_scale_8, 8),
+            ]
+            for selection, disabled, scale, idx in lora_selections:
+                if selection:
+                    path = os.path.join("./models/Loras", selection)
+                    if not disabled and os.path.exists(path):
+                        lora_details.append(f"LoRA {idx}: {selection} (Scale: {scale})")
+                    elif disabled:
+                        lora_details.append(f"LoRA {idx}: Manually disabled")
+                    else:
+                        lora_details.append(f"LoRA {idx}: {selection} (Not found)")
+            if lora_details:
+                lora_info_str = "; ".join(lora_details)
 
-            if lora_selection_2:
-                if not disable_lora_2 and os.path.exists(os.path.join('./models/Loras', lora_selection_2)):
-                    lora_details.append(f"LoRA 2: {lora_selection_2} (Scale: {lora_scale_2})")
-                elif disable_lora_2:
-                    lora_details.append("LoRA 2: Manually disabled")
-                else:
-                    lora_details.append(f"LoRA 2: {lora_selection_2} (Not found)")
-
-            if lora_selection_3:
-                if not disable_lora_3 and os.path.exists(os.path.join('./models/Loras', lora_selection_3)):
-                    lora_details.append(f"LoRA 3: {lora_selection_3} (Scale: {lora_scale_3})")
-                elif disable_lora_3:
-                    lora_details.append("LoRA 3: Manually disabled")
-                else:
-                    lora_details.append(f"LoRA 3: {lora_selection_3} (Not found)")
-
-            if lora_selection_4:
-                if not disable_lora_4 and os.path.exists(os.path.join('./models/Loras', lora_selection_4)):
-                    lora_details.append(f"LoRA 4: {lora_selection_4} (Scale: {lora_scale_4})")
-                elif disable_lora_4:
-                    lora_details.append("LoRA 4: Manually disabled")
-                else:
-                    lora_details.append(f"LoRA 4: {lora_selection_4} (Not found)")
-
-            if lora_selection_5:
-                if not disable_lora_5 and os.path.exists(os.path.join('./models/Loras', lora_selection_5)):
-                    lora_details.append(f"LoRA 5: {lora_selection_5} (Scale: {lora_scale_5})")
-                elif disable_lora_5:
-                    lora_details.append("LoRA 5: Manually disabled")
-                else:
-                    lora_details.append(f"LoRA 5: {lora_selection_5} (Not found)")
-
-            if lora_selection_6:
-                if not disable_lora_6 and os.path.exists(os.path.join('./models/Loras', lora_selection_6)):
-                    lora_details.append(f"LoRA 6: {lora_selection_6} (Scale: {lora_scale_6})")
-                elif disable_lora_6:
-                    lora_details.append("LoRA 6: Manually disabled")
-                else:
-                    lora_details.append(f"LoRA 6: {lora_selection_6} (Not found)")
-
-            if lora_selection_7:
-                if not disable_lora_7 and os.path.exists(os.path.join('./models/Loras', lora_selection_7)):
-                    lora_details.append(f"LoRA 7: {lora_selection_7} (Scale: {lora_scale_7})")
-                elif disable_lora_7:
-                    lora_details.append("LoRA 7: Manually disabled")
-                else:
-                    lora_details.append(f"LoRA 7: {lora_selection_7} (Not found)")
-
-            if lora_selection_8:
-                if not disable_lora_8 and os.path.exists(os.path.join('./models/Loras', lora_selection_8)):
-                    lora_details.append(f"LoRA 8: {lora_selection_8} (Scale: {lora_scale_8})")
-                elif disable_lora_8:
-                    lora_details.append("LoRA 8: Manually disabled")
-                else:
-                    lora_details.append(f"LoRA 8: {lora_selection_8} (Not found)")
-
-            lora_info_str = "; ".join(lora_details)
         print(f"LoRA(s): {lora_info_str}")
 
         print(f"Scheduler: {scheduler}")
@@ -2200,7 +2109,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v5.0.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v5.1.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
