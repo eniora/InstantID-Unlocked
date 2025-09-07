@@ -24,8 +24,9 @@ warning_messages = [
     ".*MultiControlNetModel.*is deprecated.*",
     ".*`resume_download` is deprecated.*",
     ".*Should have .*<=t1 but got .*",
-    "unable to parse version details from package URL.",
+    ".*unable to parse version details from package URL.*",
     ".*cache-system uses symlinks by default.*",
+    ".*'mode' parameter is deprecated and will be removed.*",
 ]
 for msg in warning_messages:
     warnings.filterwarnings("ignore", message=msg)
@@ -89,12 +90,42 @@ from style_template import styles
 from pipeline_stable_diffusion_xl_instantid_full import StableDiffusionXLInstantIDPipeline
 from pipeline_stable_diffusion_xl_instantid_img2img import StableDiffusionXLInstantIDImg2ImgPipeline
 from model_util import load_models_xl, get_torch_device, torch_gc
-from controlnet_util import openpose, get_depth_map, get_canny_image
+
+from controlnet_aux import OpenposeDetector
+from transformers import DPTImageProcessor, DPTForDepthEstimation
+device = get_torch_device()
+depth_estimator = DPTForDepthEstimation.from_pretrained("Intel/dpt-hybrid-midas").to(device)
+feature_extractor = DPTImageProcessor.from_pretrained("Intel/dpt-hybrid-midas")
+openpose = OpenposeDetector.from_pretrained("lllyasviel/ControlNet")
+
+def get_depth_map(image):
+    image = feature_extractor(images=image, return_tensors="pt").pixel_values.to("cuda")
+    with torch.no_grad(), torch.autocast("cuda"):
+        depth_map = depth_estimator(image).predicted_depth
+
+    depth_map = torch.nn.functional.interpolate(
+        depth_map.unsqueeze(1),
+        size=(1024, 1024),
+        mode="bicubic",
+        align_corners=False,
+    )
+    depth_min = torch.amin(depth_map, dim=[1, 2, 3], keepdim=True)
+    depth_max = torch.amax(depth_map, dim=[1, 2, 3], keepdim=True)
+    depth_map = (depth_map - depth_min) / (depth_max - depth_min)
+    image = torch.cat([depth_map] * 3, dim=1)
+
+    image = image.permute(0, 2, 3, 1).cpu().numpy()[0]
+    image = Image.fromarray((image * 255.0).clip(0, 255).astype(np.uint8))
+    return image
+
+def get_canny_image(image, t1=100, t2=200):
+    image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+    edges = cv2.Canny(image, t1, t2)
+    return Image.fromarray(edges, "L")
 
 import gradio as gr
 
 MAX_SEED = np.iinfo(np.int32).max
-device = get_torch_device()
 dtype = torch.float16 if str(device).__contains__("cuda") else torch.float32
 STYLE_NAMES = list(styles.keys())
 DEFAULT_STYLE_NAME = "(No style)"
@@ -2103,7 +2134,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v5.1.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v5.2.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
