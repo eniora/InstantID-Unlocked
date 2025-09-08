@@ -26,7 +26,6 @@ warning_messages = [
     ".*Should have .*<=t1 but got .*",
     ".*unable to parse version details from package URL.*",
     ".*cache-system uses symlinks by default.*",
-    ".*'mode' parameter is deprecated and will be removed.*",
 ]
 for msg in warning_messages:
     warnings.filterwarnings("ignore", message=msg)
@@ -121,7 +120,7 @@ def get_depth_map(image):
 def get_canny_image(image, t1=100, t2=200):
     image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
     edges = cv2.Canny(image, t1, t2)
-    return Image.fromarray(edges, "L")
+    return Image.fromarray(edges).convert("L")
 
 import gradio as gr
 
