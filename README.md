@@ -58,7 +58,7 @@ python instant-id-unlocked.py
 
 _______________________________________________
 For downloading the necessary models: face encoder models, controlnet models and IPAdatper etc. I uploaded all the necesseray files here:
-https://drive.google.com/file/d/1RdoGwK-6054eCnNw0ipi-j3bbgD8gj9J/view?usp=sharing
+https://drive.google.com/file/d/1NhEAXql1kuekE8GGOUvQSsHgm_twvQYq/view?usp=sharing
 This is my whole models and checkpoints folder except for the SDXL model(s).
 Just download the file, extract it and copy the folders into your root InstantID folder. Then you will only need an SDXL model to start generating. It will be downloaded automatically from huggingface when you start InstantID.
 
@@ -90,6 +90,7 @@ Huaxia Li<sup>2</sup> · Xu Tang<sup>2</sup> · Yao Hu<sup>2</sup>
 [![Open in OpenXLab](https://cdn-static.openxlab.org.cn/app-center/openxlab_app.svg)](https://openxlab.org.cn/apps/detail/InstantX/InstantID)
 
 InstantID is a new state-of-the-art tuning-free method to achieve ID-Preserving generation with only single image, supporting various downstream tasks.
+
 
 
 
