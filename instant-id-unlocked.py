@@ -188,7 +188,7 @@ EXCLUDED_MODELS = {
     "Intel/dpt-hybrid-midas",
     "lllyasviel/Annotators",
     "lllyasviel/ControlNet",
-    "thibaud/controlnet-openpose-sdxl-1.0"
+    "xinsir/controlnet-openpose-sdxl-1.0"
 }
 EXCLUDED_MODELS_LOWER = {m.lower() for m in EXCLUDED_MODELS}
 def get_available_models():
@@ -244,7 +244,7 @@ controlnet_identitynet = ControlNetModel.from_pretrained(
     controlnet_path, torch_dtype=dtype
 )
 
-controlnet_pose_model = "thibaud/controlnet-openpose-sdxl-1.0"
+controlnet_pose_model = "xinsir/controlnet-openpose-sdxl-1.0"
 controlnet_canny_model = "diffusers/controlnet-canny-sdxl-1.0"
 controlnet_depth_model = "diffusers/controlnet-depth-sdxl-1.0-small"
 
