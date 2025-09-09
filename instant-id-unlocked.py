@@ -1362,7 +1362,12 @@ Scheduler: {scheduler}"""
                         queue=False
                     )
                 with gr.Row():
-                    enable_img2img = gr.Checkbox(label="Enable img2img mode", value=False, scale=2)
+                    enable_img2img = gr.Checkbox(
+                        label="Enable img2img mode",
+                        value=False,
+                        info="Use this mode to preserve more unique details from the input image.",
+                        scale=2
+                    )
                     strength = gr.Slider(label="img2img Denoising Strength", minimum=0.1, maximum=1.0, value=0.95, step=0.05, visible=False, scale=5, info="Use this for more control over e.g., location setting, clothing style, pose, etc. A lower value preserves more of the original image. CFG scale of ~3 is recommended.")
 
                 def toggle_img2img(enable):
