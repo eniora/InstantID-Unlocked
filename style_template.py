@@ -5085,7 +5085,7 @@ style_list = [
         "negative_prompt": "happy, bright, modern, technological, casual"
     },
     {
-        "name": "Retro Futurism 2",
+        "name": "Retro Futurism 3",
         "prompt": "{prompt} in a 1950s vision of the future, wearing sleek silver jumpsuit with bubble helmet, standing in a rounded white space station with primary color accents",
         "negative_prompt": "medieval, rustic, modern realism, grunge"
     },
