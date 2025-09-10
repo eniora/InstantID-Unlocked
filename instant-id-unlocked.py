@@ -1170,7 +1170,7 @@ Scheduler: {scheduler}"""
                         value=False
                     )
                     custom_resize_width = gr.Slider(
-                        label="Custom Width",
+                        label="Custom Width ↔️",
                         minimum=256,
                         maximum=4096,
                         step=32,
@@ -1179,7 +1179,7 @@ Scheduler: {scheduler}"""
                         interactive=True
                     )
                     custom_resize_height = gr.Slider(
-                        label="Custom Height",
+                        label="Custom Height ↕️",
                         minimum=256,
                         maximum=4096,
                         step=32,
@@ -1188,7 +1188,7 @@ Scheduler: {scheduler}"""
                         interactive=True
                     )
                 resize_max_side_slider = gr.Slider(
-                    label="Max image size for resizing (output resolution)",
+                    label="Max image width/height resizing in pixels. This is for the final output resolution.",
                     minimum=512,
                     maximum=4096,
                     step=32,
