@@ -33,8 +33,7 @@ The code barely follows any DRY principles as it started as a personal modificat
 - Enhance Non-Face Region with adjustable padding with profiles: Default, Balanced, High, or Custom padding amount.
 
 ⚡ Performance
-- Tweaks to improve VRAM usage compared to the original repo.
-- Runs well on 12GB+ GPUs (16GB recommended).
+- Tweaks to improve VRAM usage compared to the original repo. Runs good on 12GB VRAM but 16GB+ is recommended.
 - Works on 8GB GPUs, but expect very slow generations (~15 minutes for 1280×960).
 
 And many many more improvements.
@@ -91,6 +90,7 @@ Huaxia Li<sup>2</sup> · Xu Tang<sup>2</sup> · Yao Hu<sup>2</sup>
 [![Open in OpenXLab](https://cdn-static.openxlab.org.cn/app-center/openxlab_app.svg)](https://openxlab.org.cn/apps/detail/InstantX/InstantID)
 
 InstantID is a new state-of-the-art tuning-free method to achieve ID-Preserving generation with only single image, supporting various downstream tasks.
+
 
 
 
