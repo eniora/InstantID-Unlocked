@@ -1229,7 +1229,6 @@ Scheduler: {scheduler}"""
                         value=1,
                         step=1,
                         minimum=1,
-                        maximum=1000,
                         scale=0,
                         min_width=70,
                         container=False,
