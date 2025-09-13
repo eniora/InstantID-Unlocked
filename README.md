@@ -57,10 +57,12 @@ pip install torch==2.7.1+cu128 torchvision==0.22.1+cu128 --index-url https://dow
 python instant-id-unlocked.py
 
 _______________________________________________
-For downloading the necessary models: face encoder models, controlnet models and IPAdatper etc. I uploaded all the necesseray files here:
+- For downloading the necessary models: face encoder models, controlnet models and IPAdatper etc. I uploaded all the necesseray files here:
 https://drive.google.com/file/d/1NhEAXql1kuekE8GGOUvQSsHgm_twvQYq/view?usp=sharing
 This is my whole models and checkpoints folder except for the SDXL model(s).
 Just download the file, extract it and copy the folders into your root InstantID folder. Then you will only need an SDXL model to start generating. It will be downloaded automatically from huggingface when you start InstantID.
+- If you want my "site-packages" folder for the venv, here it is: https://drive.google.com/file/d/17OgQBmNvHZdygONCzRSuaYmec5uW1hxT/view?usp=sharing
+Create a venv ("python -m venv venv") and then just copy the "site-packages" folder from the archive to "\venv\Lib\". If you do this and use my "site-packages" folder, you don't need to install the requirements.txt or torch/nvidia cuda or anything.
 
 Tested only on Windows and Python 3.10.6 and Nvidia GPUs, you may need to do extra steps to run the gradio interface successfully on MacOS/Linux or if you have an AMD GPU.
 
@@ -90,6 +92,7 @@ Huaxia Li<sup>2</sup> · Xu Tang<sup>2</sup> · Yao Hu<sup>2</sup>
 [![Open in OpenXLab](https://cdn-static.openxlab.org.cn/app-center/openxlab_app.svg)](https://openxlab.org.cn/apps/detail/InstantX/InstantID)
 
 InstantID is a new state-of-the-art tuning-free method to achieve ID-Preserving generation with only single image, supporting various downstream tasks.
+
 
 
 
