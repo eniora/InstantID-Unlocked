@@ -1359,7 +1359,7 @@ Scheduler: {scheduler}"""
                         info="Use this mode to preserve more unique details from the input image.",
                         scale=2
                     )
-                    strength = gr.Slider(label="img2img Denoising Strength", minimum=0.1, maximum=1.0, value=1.0, step=0.05, visible=False, scale=5, info="Use this for more control over e.g., location setting, clothing style, pose, etc. A lower value preserves more of the original image. CFG scale of ~3 is recommended.")
+                    strength = gr.Slider(label="img2img Denoising Strength", minimum=0.1, maximum=1.0, value=0.95, step=0.05, visible=False, scale=5, info="Use this for more control over e.g., location setting, clothing style, pose, etc. A lower value preserves more of the original image. CFG scale of ~3 is recommended.")
 
                 def toggle_img2img(enable):
                     return gr.update(visible=enable)
@@ -1777,7 +1777,7 @@ Scheduler: {scheduler}"""
                     "num_steps": 22,
                     "guidance_scale": 4.0,
                     "enable_img2img": False,
-                    "strength": 1.0,
+                    "strength": 0.95,
                     "identitynet_strength_ratio": 0.7,
                     "adapter_strength_ratio": 0.6,
                     "pose_strength": 0.40,
