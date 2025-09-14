@@ -1310,7 +1310,7 @@ Scheduler: {scheduler}"""
                 with gr.Row():
                     enhance_face_region = gr.Checkbox(label="Enhance non-face region", scale=2, value=True)
                     enhance_strength = gr.Dropdown(
-                        label="Enhance Non-Face Region Amount",
+                        label="Non-Face Region Mask Size",
                         choices=["Default", "Balanced", "High", "Custom"],
                         value="Balanced",
                         scale=3,
