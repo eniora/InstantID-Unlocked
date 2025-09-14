@@ -125,7 +125,7 @@ def get_canny_image(image, t1=100, t2=200):
 import gradio as gr
 
 MAX_SEED = 2**53 - 1
-MAX_SEED_RAND = np.iinfo(np.int32).max
+MAX_SEED_RAND = np.iinfo(np.uint32).max - 1
 dtype = torch.float16 if str(device).__contains__("cuda") else torch.float32
 STYLE_NAMES = list(styles.keys())
 DEFAULT_STYLE_NAME = "(No style)"
