@@ -1130,7 +1130,7 @@ Scheduler: {scheduler}"""
                                 outputs=negative_prompt,
                             )
                     with gr.Row():
-                        generate_alt_3 = gr.Button("Generate (Extra Settings Section Button)", variant="primary")
+                        generate_alt_2 = gr.Button("Generate (Extra Settings Section Button)", variant="primary")
                         open_folder_btn = gr.Button("📁", min_width=60, scale=0)
                         open_folder_btn.click(
                             fn=open_output_folder,
@@ -1304,7 +1304,7 @@ Scheduler: {scheduler}"""
                         maximum=MAX_SEED,
                         step=1,
                         scale=4,
-                        value=42,
+                        value=12345,
                         show_label=False
                     )
                 with gr.Row():
@@ -1341,15 +1341,6 @@ Scheduler: {scheduler}"""
                         value="640x640 (default)",
                         info="Only change this if you get 'No face detected'. Use low values for very close-up portraits. High values for small, distant faces."
                     )
-                with gr.Row():
-                    generate_alt_2 = gr.Button("Generate (Extra Bottom Button)", variant="primary")
-                    open_folder_btn = gr.Button("📁", min_width=60, scale=0)
-                    open_folder_btn.click(
-                        fn=open_output_folder,
-                        inputs=[],
-                        outputs=[],
-                        queue=False
-                    )
             with gr.Column(scale=1):
                 gallery = gr.Gallery(label="Generated image(s) preview. Open the output folder for full view.", height=400, object_fit="contain")
                 with gr.Row():
@@ -1368,7 +1359,7 @@ Scheduler: {scheduler}"""
                         info="Use this mode to preserve more unique details from the input image.",
                         scale=2
                     )
-                    strength = gr.Slider(label="img2img Denoising Strength", minimum=0.1, maximum=1.0, value=0.95, step=0.05, visible=False, scale=5, info="Use this for more control over e.g., location setting, clothing style, pose, etc. A lower value preserves more of the original image. CFG scale of ~3 is recommended.")
+                    strength = gr.Slider(label="img2img Denoising Strength", minimum=0.1, maximum=1.0, value=1.0, step=0.05, visible=False, scale=5, info="Use this for more control over e.g., location setting, clothing style, pose, etc. A lower value preserves more of the original image. CFG scale of ~3 is recommended.")
 
                 def toggle_img2img(enable):
                     return gr.update(visible=enable)
@@ -1756,9 +1747,6 @@ Scheduler: {scheduler}"""
             generate_alt_2.click(fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False).then(
                 fn=generate_image, inputs=shared_inputs, outputs=[gallery]
             )
-            generate_alt_3.click(fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False).then(
-                fn=generate_image, inputs=shared_inputs, outputs=[gallery]
-            )
 
             LORA_OUTPUTS = [
                 lora_row_1, lora_selection, lora_scale,
@@ -1785,11 +1773,11 @@ Scheduler: {scheduler}"""
                     "prompt": "",
                     "negative_prompt": DEFAULT_NEGATIVE_PROFILE,
                     "resize_max_side": 1280,
-                    "seed": 42,
+                    "seed": 12345,
                     "num_steps": 22,
                     "guidance_scale": 4.0,
                     "enable_img2img": False,
-                    "strength": 0.95,
+                    "strength": 1.0,
                     "identitynet_strength_ratio": 0.7,
                     "adapter_strength_ratio": 0.6,
                     "pose_strength": 0.40,
