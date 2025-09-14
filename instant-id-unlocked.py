@@ -1293,9 +1293,9 @@ Scheduler: {scheduler}"""
                     num_steps = gr.Slider(
                         label="Sampling steps",
                         minimum=1,
-                        maximum=100,
+                        maximum=150,
                         step=1,
-                        value=24,
+                        value=22,
                     )
                 with gr.Row():
                     randomize_seed = gr.Checkbox(label="Randomize seed", scale=1, value=True)
@@ -1313,8 +1313,8 @@ Scheduler: {scheduler}"""
                         label="Non-Face Region Mask Size",
                         choices=["Default", "Balanced", "High", "Custom"],
                         value="Balanced",
-                        scale=3,
-                        info="Larger values retain more from the input image around the face (e.g., hairstyle). 'Balanced' is good but you can use 'Default' for more control."
+                        scale=4,
+                        info="Larger values retain more from the input image around the face (e.g., hairstyle)."
                     )
                     custom_enhance_padding = gr.Slider(
                         label="Custom enhancement padding (%)",
@@ -1339,7 +1339,7 @@ Scheduler: {scheduler}"""
                         label="Face Detection Size",
                         choices=list(DET_SIZE_OPTIONS.keys()),
                         value="640x640 (default)",
-                        info="Change this in case you get 'No face detected'. Higher values can detect smaller faces better if the face in the input/reference image is too small/distant. Smaller values can better detect close-up portraits."
+                        info="Only change this if you get 'No face detected'. Use low values for very close-up portraits. High values for small, distant faces."
                     )
                 with gr.Row():
                     generate_alt_2 = gr.Button("Generate (Extra Bottom Button)", variant="primary")
@@ -1786,7 +1786,7 @@ Scheduler: {scheduler}"""
                     "negative_prompt": DEFAULT_NEGATIVE_PROFILE,
                     "resize_max_side": 1280,
                     "seed": 42,
-                    "num_steps": 24,
+                    "num_steps": 22,
                     "guidance_scale": 4.0,
                     "enable_img2img": False,
                     "strength": 0.95,
