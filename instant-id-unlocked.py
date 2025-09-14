@@ -124,7 +124,8 @@ def get_canny_image(image, t1=100, t2=200):
 
 import gradio as gr
 
-MAX_SEED = np.iinfo(np.int32).max
+MAX_SEED = 9007199254740991
+MAX_SEED_RAND = np.iinfo(np.int32).max
 dtype = torch.float16 if str(device).__contains__("cuda") else torch.float32
 STYLE_NAMES = list(styles.keys())
 DEFAULT_STYLE_NAME = "(No style)"
@@ -360,7 +361,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
 
     def randomize_seed_fn(seed: int, randomize_seed: bool) -> int:
         if randomize_seed:
-            seed = random.randint(0, MAX_SEED)
+            seed = random.randint(0, MAX_SEED_RAND)
         return seed
 
     def convert_from_cv2_to_image(img: np.ndarray) -> Image:
@@ -1298,13 +1299,13 @@ Scheduler: {scheduler}"""
                     )
                 with gr.Row():
                     randomize_seed = gr.Checkbox(label="Randomize seed", scale=1, value=True)
-                    seed = gr.Slider(
-                        label="Seed value",
+                    seed = gr.Number(
                         minimum=0,
                         maximum=MAX_SEED,
                         step=1,
-                        scale=5,
+                        scale=4,
                         value=42,
+                        show_label=False
                     )
                 with gr.Row():
                     enhance_face_region = gr.Checkbox(label="Enhance non-face region", scale=2, value=True)
@@ -2137,7 +2138,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v5.2.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v5.3.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
