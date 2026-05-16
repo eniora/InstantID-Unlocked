@@ -1050,6 +1050,27 @@ Scheduler: {scheduler}"""
                         height=400,
                         type="filepath"
                     )
+                    def update_img_resolution(img_path, default_label):
+                        if img_path:
+                            try:
+                                with Image.open(img_path) as img:
+                                    w, h = img.size
+                                return gr.update(label=f"{default_label} - (Dimensions: {w}x{h})")
+                            except Exception:
+                                pass
+                        return gr.update(label=default_label)
+                    face_file.change(
+                        fn=lambda x: update_img_resolution(x, "Upload a photo containing a face"),
+                        inputs=face_file,
+                        outputs=face_file,
+                        queue=False
+                    )
+                    pose_file.change(
+                        fn=lambda x: update_img_resolution(x, "Upload a reference pose image (Optional)"),
+                        inputs=pose_file,
+                        outputs=pose_file,
+                        queue=False
+                    )
                 prompt = gr.Textbox(
                     label="Prompt",
                     info="Giving a simple prompt is enough to achieve good face fidelity",
@@ -2126,7 +2147,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v5.3.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v5.4.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
