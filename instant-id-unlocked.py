@@ -1046,7 +1046,7 @@ Scheduler: {scheduler}"""
                         label="Upload a photo containing a face", height=400, type="filepath"
                     )
                     pose_file = gr.Image(
-                        label="Upload a reference pose image (Optional)",
+                        label="Reference pose image (Optional)",
                         height=400,
                         type="filepath"
                     )
@@ -1055,7 +1055,7 @@ Scheduler: {scheduler}"""
                             try:
                                 with Image.open(img_path) as img:
                                     w, h = img.size
-                                return gr.update(label=f"{default_label} - (Dimensions: {w}x{h})")
+                                return gr.update(label=f"{default_label} ({w}x{h})")
                             except Exception:
                                 pass
                         return gr.update(label=default_label)
@@ -1066,7 +1066,7 @@ Scheduler: {scheduler}"""
                         queue=False
                     )
                     pose_file.change(
-                        fn=lambda x: update_img_resolution(x, "Upload a reference pose image (Optional)"),
+                        fn=lambda x: update_img_resolution(x, "Reference pose image (Optional)"),
                         inputs=pose_file,
                         outputs=pose_file,
                         queue=False
