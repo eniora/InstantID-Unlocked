@@ -989,9 +989,9 @@ Scheduler: {scheduler}"""
     """
     with gr.Blocks(js="""
     () => new MutationObserver(() =>
-        document.querySelectorAll('[class*="toast"]').forEach(el =>
-            el.innerText?.includes('Waiting for file') && el.remove()
-        )
+        document.querySelectorAll('.toast-wrap > *').forEach(el => {
+            if (el.innerText?.includes('Waiting for file')) el.style.display = 'none';
+        })
     ).observe(document.body, {childList:true,subtree:true})
     """) as gui:
         with gr.Row():
