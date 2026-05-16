@@ -1065,9 +1065,21 @@ Scheduler: {scheduler}"""
                         outputs=face_file,
                         queue=False
                     )
+                    face_file.clear(
+                        fn=lambda: gr.update(label="Upload a photo containing a face"),
+                        inputs=None,
+                        outputs=face_file,
+                        queue=False
+                    )
                     pose_file.upload(
                         fn=lambda x: update_img_resolution(x, "Reference pose image (Optional)"),
                         inputs=pose_file,
+                        outputs=pose_file,
+                        queue=False
+                    )
+                    pose_file.clear(
+                        fn=lambda: gr.update(label="Reference pose image (Optional)"),
+                        inputs=None,
                         outputs=pose_file,
                         queue=False
                     )
