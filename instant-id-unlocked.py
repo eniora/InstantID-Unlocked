@@ -987,7 +987,13 @@ Scheduler: {scheduler}"""
     - If you find that the style or generated images are not good enough, try another model.
     - If you're having trouble detecting faces, try changing the "Face Detection Size" setting or try another input photo.
     """
-    with gr.Blocks() as gui:
+    with gr.Blocks(js="""
+    () => new MutationObserver(() =>
+        document.querySelectorAll('[class*="toast"]').forEach(el =>
+            el.innerText?.includes('Waiting for file') && el.remove()
+        )
+    ).observe(document.body, {childList:true,subtree:true})
+    """) as gui:
         with gr.Row():
             with gr.Column(scale=1):
                 with gr.Row():
