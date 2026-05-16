@@ -987,13 +987,7 @@ Scheduler: {scheduler}"""
     - If you find that the style or generated images are not good enough, try another model.
     - If you're having trouble detecting faces, try changing the "Face Detection Size" setting or try another input photo.
     """
-    with gr.Blocks(js="""
-    () => new MutationObserver(() =>
-        document.querySelectorAll('.toast-wrap > *').forEach(el => {
-            if (el.innerText?.includes('Waiting for file')) el.style.display = 'none';
-        })
-    ).observe(document.body, {childList:true,subtree:true})
-    """) as gui:
+    with gr.Blocks() as gui:
         with gr.Row():
             with gr.Column(scale=1):
                 with gr.Row():
@@ -1065,13 +1059,13 @@ Scheduler: {scheduler}"""
                             except Exception:
                                 pass
                         return gr.update(label=default_label)
-                    face_file.change(
+                    face_file.upload(
                         fn=lambda x: update_img_resolution(x, "Upload a photo containing a face"),
                         inputs=face_file,
                         outputs=face_file,
                         queue=False
                     )
-                    pose_file.change(
+                    pose_file.upload(
                         fn=lambda x: update_img_resolution(x, "Reference pose image (Optional)"),
                         inputs=pose_file,
                         outputs=pose_file,
