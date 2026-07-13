@@ -1374,6 +1374,15 @@ Scheduler: {scheduler}"""
                         value="640x640 (default)",
                         info="Only change this if you get 'No face detected'. Use low values for very close-up portraits. High values for small, distant faces."
                     )
+                with gr.Row():
+                    generate_alt_3 = gr.Button("Generate (Extra Bottom Section Button)", variant="primary")
+                    open_folder_btn = gr.Button("📁", min_width=60, scale=0)
+                    open_folder_btn.click(
+                        fn=open_output_folder,
+                        inputs=[],
+                        outputs=[],
+                        queue=False
+                    )
             with gr.Column(scale=1):
                 gallery = gr.Gallery(label="Generated image(s) preview. Open the output folder for full view.", height=400, object_fit="contain")
                 with gr.Row():
@@ -1780,6 +1789,9 @@ Scheduler: {scheduler}"""
             generate_alt_2.click(fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False).then(
                 fn=generate_image, inputs=shared_inputs, outputs=[gallery]
             )
+            generate_alt_3.click(fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False).then(
+                fn=generate_image, inputs=shared_inputs, outputs=[gallery]
+            )
 
             LORA_OUTPUTS = [
                 lora_row_1, lora_selection, lora_scale,
@@ -2159,7 +2171,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v5.4.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v5.4.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
