@@ -4,6 +4,7 @@ sys.path.append("./")
 from typing import Tuple
 
 import os
+import re
 import cv2
 import math
 import torch
@@ -14,6 +15,7 @@ import warnings
 import subprocess
 import PIL.PngImagePlugin
 import time
+from safetensors.torch import load_file as load_safetensors_file
 
 warning_messages = [
     ".*timm.models.layers.*",
@@ -271,6 +273,38 @@ def get_available_loras():
             lora_files.append(file)
     return lora_files
 
+EMBEDDINGS_DIR = "./models/Embeddings"
+
+def get_available_embeddings():
+    if not os.path.exists(EMBEDDINGS_DIR):
+        return []
+
+    embedding_files = []
+    for file in os.listdir(EMBEDDINGS_DIR):
+        if file.lower().endswith(('.safetensors', '.pt', '.bin')):
+            embedding_files.append(file)
+    return embedding_files
+
+def embedding_token_from_filename(filename):
+    stem = os.path.splitext(filename)[0]
+    token = re.sub(r'[^A-Za-z0-9_]+', '_', stem).strip('_')
+    return token if token else stem
+
+def format_embeddings_info():
+    embeddings = get_available_embeddings()
+    if not embeddings:
+        return (f"No embeddings found in `{EMBEDDINGS_DIR}`. Place SDXL/Pony textual inversion "
+                f"files (.safetensors, .pt, .bin) there, then click Refresh.")
+
+    lines = [
+        "Type the trigger word into your prompt/negative prompt to use one. "
+        "You can also use prompt weighting like (Embedding:0.8) for example.",
+        "",
+    ]
+    for file in embeddings:
+        lines.append(f"- `{file}` → trigger word: **{embedding_token_from_filename(file)}**")
+    return "\n".join(lines)
+
 def restart_server(open_browser):
     python = sys.executable
     script = os.path.abspath(sys.argv[0])
@@ -358,6 +392,90 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
 
     def toggle_lora_ui(enable_lora_checkbox):
         return [gr.update(visible=enable_lora_checkbox)] * len(LORA_OUTPUTS)
+
+    def toggle_embeddings_ui(enable_embeddings_checkbox):
+        return [gr.update(visible=enable_embeddings_checkbox)] * len(EMBEDDINGS_OUTPUTS)
+
+    def get_embedding_vector_dim(state_dict):
+        if not isinstance(state_dict, dict):
+            return None
+        if "string_to_param" in state_dict:
+            try:
+                tensor = list(state_dict["string_to_param"].values())[0]
+                return int(tensor.shape[-1])
+            except Exception:
+                return None
+        for v in state_dict.values():
+            if torch.is_tensor(v):
+                return int(v.shape[-1])
+        return None
+
+    def is_sdxl_compatible_embedding(emb_path):
+        try:
+            if emb_path.lower().endswith(".safetensors"):
+                state_dict = load_safetensors_file(emb_path)
+            else:
+                state_dict = torch.load(emb_path, map_location="cpu")
+
+            if isinstance(state_dict, dict) and "clip_g" in state_dict and "clip_l" in state_dict:
+                return True
+
+            dim = get_embedding_vector_dim(state_dict)
+            if dim is None:
+                return True
+            return dim != 768
+
+        except Exception as e:
+            print(f"Could not inspect embedding {os.path.basename(emb_path)} for compatibility: {e}")
+            return True
+
+    def load_all_embeddings(pipe):
+        loaded_tokens = []
+        embedding_files = get_available_embeddings()
+        for emb_file in embedding_files:
+            token = embedding_token_from_filename(emb_file)
+            emb_path = os.path.join(EMBEDDINGS_DIR, emb_file)
+
+            if not is_sdxl_compatible_embedding(emb_path):
+                print(f"Skipping embedding '{emb_file}': looks like an SD1.5-only embedding "
+                      f"(single 768-dim vector), which isn't compatible with this SDXL pipeline.")
+                continue
+
+            try:
+                if emb_file.lower().endswith(".safetensors"):
+                    state_dict = load_safetensors_file(emb_path)
+                    if "clip_g" in state_dict and "clip_l" in state_dict:
+                        pipe.load_textual_inversion(
+                            state_dict["clip_g"], token=token,
+                            text_encoder=pipe.text_encoder_2, tokenizer=pipe.tokenizer_2,
+                        )
+                        pipe.load_textual_inversion(
+                            state_dict["clip_l"], token=token,
+                            text_encoder=pipe.text_encoder, tokenizer=pipe.tokenizer,
+                        )
+                    else:
+                        pipe.load_textual_inversion(emb_path, token=token)
+                else:
+                    pipe.load_textual_inversion(emb_path, token=token)
+                loaded_tokens.append(token)
+                print(f"Loaded embedding: {emb_file} (trigger word: {token})")
+            except Exception as e:
+                print(f"Failed to load embedding {emb_file}: {e}")
+                gr.Warning(f"Failed to load embedding '{emb_file}': {e}")
+        return loaded_tokens
+
+    def unload_all_embeddings(pipe, loaded_tokens):
+        if not loaded_tokens:
+            return
+        try:
+            pipe.unload_textual_inversion(tokenizer=pipe.tokenizer, text_encoder=pipe.text_encoder)
+        except Exception as e:
+            print(f"Failed to unload embeddings from primary text encoder: {e}")
+        if getattr(pipe, "text_encoder_2", None) is not None and getattr(pipe, "tokenizer_2", None) is not None:
+            try:
+                pipe.unload_textual_inversion(tokenizer=pipe.tokenizer_2, text_encoder=pipe.text_encoder_2)
+            except Exception as e:
+                print(f"Failed to unload embeddings from secondary text encoder: {e}")
 
     def randomize_seed_fn(seed: int, randomize_seed: bool) -> int:
         if randomize_seed:
@@ -565,6 +683,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         disable_lora_8,
         lora_scale_8,
         lora_selection_8,
+        enable_embeddings,
         enhance_face_region,
         enhance_strength,
         custom_enhance_padding,
@@ -646,6 +765,14 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         else:
             pipe.disable_lora()
 
+        loaded_embedding_tokens = []
+        if enable_embeddings:
+            loaded_embedding_tokens = load_all_embeddings(pipe)
+            if loaded_embedding_tokens:
+                print(f"Successfully loaded {len(loaded_embedding_tokens)} embedding(s): {', '.join(loaded_embedding_tokens)}")
+            else:
+                print("No embeddings found to load.")
+
         face_image_filename = os.path.basename(face_image_path) if face_image_path else "None"
         pose_image_filename = os.path.basename(pose_image_path) if pose_image_path else "None"
 
@@ -678,6 +805,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             if enable_lora:
                 pipe.unfuse_lora()
                 pipe.unload_lora_weights()
+            unload_all_embeddings(pipe, loaded_embedding_tokens)
             raise gr.Error(
                 f"Cannot find any input face image! Please upload the face image"
             )
@@ -686,6 +814,12 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             prompt = " " if prompt_replacement_value == "Empty (none)" else prompt_replacement_value
 
         prompt, negative_prompt = apply_style(style_name, prompt, negative_prompt)
+
+        prompt_for_generation = prompt
+        negative_prompt_for_generation = negative_prompt
+        if enable_embeddings and loaded_embedding_tokens:
+            prompt_for_generation = pipe.maybe_convert_prompt(prompt, pipe.tokenizer)
+            negative_prompt_for_generation = pipe.maybe_convert_prompt(negative_prompt, pipe.tokenizer)
 
         face_image = load_image(face_image_path)
         custom_size = None
@@ -702,6 +836,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             if enable_lora:
                 pipe.unfuse_lora()
                 pipe.unload_lora_weights()
+            unload_all_embeddings(pipe, loaded_embedding_tokens)
             raise gr.Error(
                 f"Unable to detect a face in the image. Please upload a different photo with a clear face."
             )
@@ -722,6 +857,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 if enable_lora:
                     pipe.unfuse_lora()
                     pipe.unload_lora_weights()
+                unload_all_embeddings(pipe, loaded_embedding_tokens)
                 raise gr.Error(
                     f"Cannot find any face in the reference image! Please upload another person image"
                 )
@@ -838,6 +974,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 lora_info_str = "; ".join(lora_details)
 
         print(f"LoRA(s): {lora_info_str}")
+        print(f"Embeddings: {', '.join(loaded_embedding_tokens) if loaded_embedding_tokens else ('Disabled' if not enable_embeddings else 'None found')}")
 
         print(f"Scheduler: {scheduler}")
         print(f"Exact aspect ratio: {'Enabled' if exact_ratio else 'Disabled'}")
@@ -880,8 +1017,8 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
 
             generator = torch.Generator(device=device).manual_seed(seed + i)
             common_kwargs = dict(
-                prompt=prompt,
-                negative_prompt=negative_prompt,
+                prompt=prompt_for_generation,
+                negative_prompt=negative_prompt_for_generation,
                 image_embeds=face_emb,
                 controlnet_conditioning_scale=control_scales,
                 num_inference_steps=num_steps,
@@ -951,6 +1088,8 @@ LoRA 7 selection: {'None' if disable_lora_7 or not (enable_lora and lora_selecti
 LoRA 7 scale: {'Disabled' if disable_lora_7 or not (enable_lora and lora_selection_7 and os.path.exists(os.path.join('./models/Loras', lora_selection_7))) else lora_scale_7}
 LoRA 8 selection: {'None' if disable_lora_8 or not (enable_lora and lora_selection_8 and os.path.exists(os.path.join('./models/Loras', lora_selection_8))) else lora_selection_8}
 LoRA 8 scale: {'Disabled' if disable_lora_8 or not (enable_lora and lora_selection_8 and os.path.exists(os.path.join('./models/Loras', lora_selection_8))) else lora_scale_8}
+Embeddings Enabled: {enable_embeddings}
+Embeddings loaded: {', '.join(loaded_embedding_tokens) if loaded_embedding_tokens else 'None'}
 Scheduler: {scheduler}"""
 
             png_info = PIL.PngImagePlugin.PngInfo()
@@ -964,6 +1103,8 @@ Scheduler: {scheduler}"""
         if enable_lora:
             pipe.unfuse_lora()
             pipe.unload_lora_weights()
+
+        unload_all_embeddings(pipe, loaded_embedding_tokens)
 
         gc.collect()
         overall_elapsed_time = time.time() - overall_start_time
@@ -1720,6 +1861,40 @@ Scheduler: {scheduler}"""
                         ]
                     )
 
+                    enable_embeddings = gr.Checkbox(
+                        label="Enable Embeddings from your Models\\Embeddings folder",
+                        value=False,
+                    )
+                    embeddings_info = gr.Markdown(
+                        format_embeddings_info(),
+                        visible=False
+                    )
+                    with gr.Row():
+                        refresh_embeddings = gr.Button("🔄 Refresh Embeddings List", scale=1, elem_classes="toolbutton", visible=False)
+
+                    enable_embeddings.change(
+                        fn=lambda x: gr.Markdown(visible=x),
+                        inputs=enable_embeddings,
+                        outputs=embeddings_info
+                    )
+
+                    def refresh_embeddings_list():
+                        return gr.update(value=format_embeddings_info())
+
+                    refresh_embeddings.click(
+                        fn=refresh_embeddings_list,
+                        outputs=[embeddings_info]
+                    )
+
+                    EMBEDDINGS_OUTPUTS = [embeddings_info, refresh_embeddings]
+
+                    enable_embeddings.input(
+                        fn=toggle_embeddings_ui,
+                        inputs=[enable_embeddings],
+                        outputs=EMBEDDINGS_OUTPUTS,
+                        queue=False,
+                    )
+
             shared_inputs = [
                 resize_max_side_slider,
                 face_file,
@@ -1763,6 +1938,7 @@ Scheduler: {scheduler}"""
                 disable_lora_8,
                 lora_scale_8,
                 lora_selection_8,
+                enable_embeddings,
                 enhance_face_region,
                 enhance_strength,
                 custom_enhance_padding,
@@ -1847,6 +2023,7 @@ Scheduler: {scheduler}"""
                     "lora_selection_7": None,
                     "lora_scale_8": 0.5,
                     "lora_selection_8": None,
+                    "enable_embeddings": False,
                     "enhance_face_region": True,
                     "enhance_strength": "Balanced",
                     "custom_enhance_padding": 0.15,
@@ -1909,6 +2086,8 @@ Scheduler: {scheduler}"""
                             settings["exact_ratio"] = "true" in line.lower()
                         elif line.startswith("LoRA Enabled:"):
                             settings["enable_lora"] = "true" in line.lower()
+                        elif line.startswith("Embeddings Enabled:"):
+                            settings["enable_embeddings"] = "true" in line.lower()
                         elif line.startswith("LoRA 1 selection:"):
                             lora_selection = line.replace("LoRA 1 selection:", "").strip()
                             settings["lora_selection"] = lora_selection if lora_selection != "None" else None
@@ -2099,6 +2278,7 @@ Scheduler: {scheduler}"""
                     settings["custom_resize_width"],
                     settings["custom_resize_height"],
                     settings["exact_ratio"],
+                    settings["enable_embeddings"],
                     accordion_update,
                     gr.update(open=open_settings_accordion)
                 ]
@@ -2160,6 +2340,7 @@ Scheduler: {scheduler}"""
                     custom_resize_width,
                     custom_resize_height,
                     exact_ratio,
+                    enable_embeddings,
                     controlnet_accordion,
                     style_settings_accordion
                 ]
@@ -2167,11 +2348,15 @@ Scheduler: {scheduler}"""
                 fn=toggle_lora_ui,
                 inputs=[enable_lora],
                 outputs=LORA_OUTPUTS
+            ).then(
+                fn=toggle_embeddings_ui,
+                inputs=[enable_embeddings],
+                outputs=EMBEDDINGS_OUTPUTS
             )
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v5.4.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v5.5.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
