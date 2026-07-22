@@ -305,16 +305,24 @@ def get_embedding_choices():
     return [(f"{file} → {embedding_token_from_filename(file)}", embedding_token_from_filename(file))
             for file in embeddings]
 
-def insert_token_into_text(current_text, token):
+def insert_token_into_text(current_text, token, weight=1.0):
     if not token:
         return gr.update()
+    try:
+        weight = float(weight)
+    except (TypeError, ValueError):
+        weight = 1.0
+    if abs(weight - 1.0) < 1e-6:
+        insertion = token
+    else:
+        insertion = f"({token}:{weight:.2f})"
     current_text = current_text or ""
     stripped = current_text.strip()
     if not stripped:
-        return token
+        return insertion
     if stripped.endswith(","):
-        return f"{stripped} {token}"
-    return f"{stripped}, {token}"
+        return f"{stripped} {insertion}"
+    return f"{stripped}, {insertion}"
 
 def restart_server(open_browser):
     python = sys.executable
@@ -470,7 +478,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 else:
                     pipe.load_textual_inversion(emb_path, token=token)
                 loaded_tokens.append(token)
-                print(f"Loaded embedding: {emb_file} (trigger word: {token})")
+                print(f"Loaded embedding: {emb_file}")
             except Exception as e:
                 print(f"Failed to load embedding {emb_file}: {e}")
                 gr.Warning(f"Failed to load embedding '{emb_file}': {e}")
@@ -1908,6 +1916,14 @@ Scheduler: {scheduler}"""
                         value=None,
                         visible=False
                     )
+                    embeddings_weight = gr.Slider(
+                        label="Embedding Weight",
+                        minimum=0.1,
+                        maximum=2.0,
+                        value=1.0,
+                        step=0.05,
+                        visible=False
+                    )
                     with gr.Row():
                         insert_embedding_prompt = gr.Button("➕ Insert into Prompt", scale=1, visible=False)
                         insert_embedding_negative = gr.Button("➕ Insert into Negative Prompt", scale=1, visible=False)
@@ -1930,17 +1946,17 @@ Scheduler: {scheduler}"""
 
                     insert_embedding_prompt.click(
                         fn=insert_token_into_text,
-                        inputs=[prompt, embeddings_dropdown],
+                        inputs=[prompt, embeddings_dropdown, embeddings_weight],
                         outputs=[prompt]
                     )
 
                     insert_embedding_negative.click(
                         fn=insert_token_into_text,
-                        inputs=[negative_prompt, embeddings_dropdown],
+                        inputs=[negative_prompt, embeddings_dropdown, embeddings_weight],
                         outputs=[negative_prompt]
                     )
 
-                    EMBEDDINGS_OUTPUTS = [embeddings_info, embeddings_dropdown, insert_embedding_prompt, insert_embedding_negative, refresh_embeddings]
+                    EMBEDDINGS_OUTPUTS = [embeddings_info, embeddings_dropdown, embeddings_weight, insert_embedding_prompt, insert_embedding_negative, refresh_embeddings]
 
                     enable_embeddings.input(
                         fn=toggle_embeddings_ui,
@@ -2410,7 +2426,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v5.6.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v5.6.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
