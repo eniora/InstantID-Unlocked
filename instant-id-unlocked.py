@@ -295,15 +295,26 @@ def format_embeddings_info():
     if not embeddings:
         return (f"No embeddings found in `{EMBEDDINGS_DIR}`. Place SDXL/Pony textual inversion "
                 f"files (.safetensors, .pt, .bin) there, then click Refresh.")
+    return ("Select an embedding below, then click a button to insert its trigger word into your "
+            "prompt or negative prompt. You can also use prompt weighting like (trigger_word:0.8).")
 
-    lines = [
-        "Type the trigger word into your prompt/negative prompt to use one. "
-        "You can also use prompt weighting like (Embedding:0.8) for example.",
-        "",
-    ]
-    for file in embeddings:
-        lines.append(f"- `{file}` → trigger word: **{embedding_token_from_filename(file)}**")
-    return "\n".join(lines)
+def get_embedding_choices():
+    embeddings = get_available_embeddings()
+    if not embeddings:
+        return []
+    return [(f"{file} → {embedding_token_from_filename(file)}", embedding_token_from_filename(file))
+            for file in embeddings]
+
+def insert_token_into_text(current_text, token):
+    if not token:
+        return gr.update()
+    current_text = current_text or ""
+    stripped = current_text.strip()
+    if not stripped:
+        return token
+    if stripped.endswith(","):
+        return f"{stripped} {token}"
+    return f"{stripped}, {token}"
 
 def restart_server(open_browser):
     python = sys.executable
@@ -1891,6 +1902,15 @@ Scheduler: {scheduler}"""
                         format_embeddings_info(),
                         visible=False
                     )
+                    embeddings_dropdown = gr.Dropdown(
+                        label="Available Embeddings",
+                        choices=get_embedding_choices(),
+                        value=None,
+                        visible=False
+                    )
+                    with gr.Row():
+                        insert_embedding_prompt = gr.Button("➕ Insert into Prompt", scale=1, visible=False)
+                        insert_embedding_negative = gr.Button("➕ Insert into Negative Prompt", scale=1, visible=False)
                     with gr.Row():
                         refresh_embeddings = gr.Button("🔄 Refresh Embeddings List", scale=1, elem_classes="toolbutton", visible=False)
 
@@ -1901,14 +1921,26 @@ Scheduler: {scheduler}"""
                     )
 
                     def refresh_embeddings_list():
-                        return gr.update(value=format_embeddings_info())
+                        return gr.update(value=format_embeddings_info()), gr.update(choices=get_embedding_choices(), value=None)
 
                     refresh_embeddings.click(
                         fn=refresh_embeddings_list,
-                        outputs=[embeddings_info]
+                        outputs=[embeddings_info, embeddings_dropdown]
                     )
 
-                    EMBEDDINGS_OUTPUTS = [embeddings_info, refresh_embeddings]
+                    insert_embedding_prompt.click(
+                        fn=insert_token_into_text,
+                        inputs=[prompt, embeddings_dropdown],
+                        outputs=[prompt]
+                    )
+
+                    insert_embedding_negative.click(
+                        fn=insert_token_into_text,
+                        inputs=[negative_prompt, embeddings_dropdown],
+                        outputs=[negative_prompt]
+                    )
+
+                    EMBEDDINGS_OUTPUTS = [embeddings_info, embeddings_dropdown, insert_embedding_prompt, insert_embedding_negative, refresh_embeddings]
 
                     enable_embeddings.input(
                         fn=toggle_embeddings_ui,
