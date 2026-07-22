@@ -1137,7 +1137,20 @@ Scheduler: {scheduler}"""
     - If you find that the style or generated images are not good enough, try another model.
     - If you're having trouble detecting faces, try changing the "Face Detection Size" setting or try another input photo.
     """
-    with gr.Blocks() as gui:
+    ctrl_enter_js = """
+    () => {
+        document.addEventListener("keydown", (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                e.preventDefault();
+                const btn = document.querySelector("#generate_btn_main button, button#generate_btn_main");
+                if (btn) {
+                    btn.click();
+                }
+            }
+        });
+    }
+    """
+    with gr.Blocks(js=ctrl_enter_js) as gui:
         with gr.Row():
             with gr.Column(scale=1):
                 with gr.Row():
@@ -1408,7 +1421,7 @@ Scheduler: {scheduler}"""
                     outputs=[resize_max_side_slider]
                 )
                 with gr.Row():
-                    generate = gr.Button("Generate", scale=8, variant="primary")
+                    generate = gr.Button("Generate", scale=8, variant="primary", elem_id="generate_btn_main")
                     num_outputs = gr.Number(
                         value=1,
                         step=1,
@@ -2365,7 +2378,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v5.5.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v5.6.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
