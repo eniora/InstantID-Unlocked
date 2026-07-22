@@ -819,8 +819,16 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         prompt_for_generation = prompt
         negative_prompt_for_generation = negative_prompt
         if enable_embeddings and loaded_embedding_tokens:
-            prompt_for_generation = pipe.maybe_convert_prompt(prompt, pipe.tokenizer)
-            negative_prompt_for_generation = pipe.maybe_convert_prompt(negative_prompt, pipe.tokenizer)
+            def _normalize_embedding_casing(text, tokens):
+                for tok in tokens:
+                    text = re.sub(re.escape(tok), tok, text, flags=re.IGNORECASE)
+                return text
+
+            prompt_normalized = _normalize_embedding_casing(prompt, loaded_embedding_tokens)
+            negative_prompt_normalized = _normalize_embedding_casing(negative_prompt, loaded_embedding_tokens)
+
+            prompt_for_generation = pipe.maybe_convert_prompt(prompt_normalized, pipe.tokenizer)
+            negative_prompt_for_generation = pipe.maybe_convert_prompt(negative_prompt_normalized, pipe.tokenizer)
 
         face_image = load_image(face_image_path)
         custom_size = None
