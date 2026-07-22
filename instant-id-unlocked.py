@@ -1142,7 +1142,7 @@ Scheduler: {scheduler}"""
         document.addEventListener("keydown", (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
                 e.preventDefault();
-                const btn = document.querySelector("#generate_btn_main button, button#generate_btn_main");
+                const btn = document.querySelector("#generate_btn_settings button, button#generate_btn_settings");
                 if (btn) {
                     btn.click();
                 }
@@ -1326,7 +1326,7 @@ Scheduler: {scheduler}"""
                                 outputs=negative_prompt,
                             )
                     with gr.Row():
-                        generate_alt_2 = gr.Button("Generate (Extra Settings Section Button)", variant="primary")
+                        generate_alt_2 = gr.Button("Generate (Extra Settings Section Button)", variant="primary", elem_id="generate_btn_settings")
                         open_folder_btn = gr.Button("📁", min_width=60, scale=0)
                         open_folder_btn.click(
                             fn=open_output_folder,
@@ -1421,7 +1421,7 @@ Scheduler: {scheduler}"""
                     outputs=[resize_max_side_slider]
                 )
                 with gr.Row():
-                    generate = gr.Button("Generate", scale=8, variant="primary", elem_id="generate_btn_main")
+                    generate = gr.Button("Generate", scale=8, variant="primary")
                     num_outputs = gr.Number(
                         value=1,
                         step=1,
