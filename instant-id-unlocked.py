@@ -444,17 +444,18 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             try:
                 if emb_file.lower().endswith(".safetensors"):
                     state_dict = load_safetensors_file(emb_path)
-                    if "clip_g" in state_dict and "clip_l" in state_dict:
-                        pipe.load_textual_inversion(
-                            state_dict["clip_g"], token=token,
-                            text_encoder=pipe.text_encoder_2, tokenizer=pipe.tokenizer_2,
-                        )
-                        pipe.load_textual_inversion(
-                            state_dict["clip_l"], token=token,
-                            text_encoder=pipe.text_encoder, tokenizer=pipe.tokenizer,
-                        )
-                    else:
-                        pipe.load_textual_inversion(emb_path, token=token)
+                else:
+                    state_dict = torch.load(emb_path, map_location="cpu")
+
+                if isinstance(state_dict, dict) and "clip_g" in state_dict and "clip_l" in state_dict:
+                    pipe.load_textual_inversion(
+                        state_dict["clip_g"], token=token,
+                        text_encoder=pipe.text_encoder_2, tokenizer=pipe.tokenizer_2,
+                    )
+                    pipe.load_textual_inversion(
+                        state_dict["clip_l"], token=token,
+                        text_encoder=pipe.text_encoder, tokenizer=pipe.tokenizer,
+                    )
                 else:
                     pipe.load_textual_inversion(emb_path, token=token)
                 loaded_tokens.append(token)
