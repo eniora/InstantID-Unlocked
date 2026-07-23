@@ -1473,7 +1473,7 @@ Scheduler: {scheduler}"""
                     outputs=[resize_max_side_slider]
                 )
                 with gr.Row():
-                    generate = gr.Button("Generate", scale=8, variant="primary")
+                    generate = gr.Button("Generate (Control + Enter)", scale=8, variant="primary")
                     stop_btn = gr.Button("⏹ Stop", scale=1, min_width=90, variant="stop")
                     num_outputs = gr.Number(
                         value=1,
