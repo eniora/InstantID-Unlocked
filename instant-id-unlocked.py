@@ -296,7 +296,7 @@ def format_embeddings_info():
         return (f"No embeddings found in `{EMBEDDINGS_DIR}`. Place SDXL/Pony textual inversion "
                 f"files (.safetensors, .pt, .bin) there, then click Refresh.")
     return ("Select an embedding below, then click a button to insert its trigger word into your "
-            "prompt or negative prompt. You can also use prompt weighting like (trigger_word:0.8).")
+            "prompt or negative prompt. You can insert the same embedding multiple times for stacked effect, which is different than embedding weight.")
 
 def get_embedding_choices():
     embeddings = get_available_embeddings()
