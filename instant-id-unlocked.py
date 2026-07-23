@@ -1002,7 +1002,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 lora_info_str = "; ".join(lora_details)
 
         print(f"LoRA(s): {lora_info_str}")
-        print(f"Embeddings: {', '.join(loaded_embedding_tokens) if loaded_embedding_tokens else ('Disabled' if not enable_embeddings else 'None found')}")
+        print(f"Embeddings: {'Enabled' if enable_embeddings else 'Disabled'}")
 
         print(f"Scheduler: {scheduler}")
         print(f"Exact aspect ratio: {'Enabled' if exact_ratio else 'Disabled'}")
@@ -1117,7 +1117,6 @@ LoRA 7 scale: {'Disabled' if disable_lora_7 or not (enable_lora and lora_selecti
 LoRA 8 selection: {'None' if disable_lora_8 or not (enable_lora and lora_selection_8 and os.path.exists(os.path.join('./models/Loras', lora_selection_8))) else lora_selection_8}
 LoRA 8 scale: {'Disabled' if disable_lora_8 or not (enable_lora and lora_selection_8 and os.path.exists(os.path.join('./models/Loras', lora_selection_8))) else lora_scale_8}
 Embeddings Enabled: {enable_embeddings}
-Embeddings loaded: {', '.join(loaded_embedding_tokens) if loaded_embedding_tokens else 'None'}
 Scheduler: {scheduler}"""
 
             png_info = PIL.PngImagePlugin.PngInfo()
@@ -1937,11 +1936,11 @@ Scheduler: {scheduler}"""
                     )
 
                     def refresh_embeddings_list():
-                        return gr.update(value=format_embeddings_info()), gr.update(choices=get_embedding_choices(), value=None)
+                        return gr.update(choices=get_embedding_choices(), value=None)
 
                     refresh_embeddings.click(
                         fn=refresh_embeddings_list,
-                        outputs=[embeddings_info, embeddings_dropdown]
+                        outputs=[embeddings_dropdown]
                     )
 
                     insert_embedding_prompt.click(
