@@ -1097,6 +1097,9 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 stopped_early = True
                 torch.cuda.empty_cache()
                 break
+            except Exception:
+                unload_all_embeddings(pipe, loaded_embedding_tokens)
+                raise
 
             image = result.images[0]
             images.append(image)
