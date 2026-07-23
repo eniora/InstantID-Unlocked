@@ -12,6 +12,7 @@ import random
 import numpy as np
 import gc
 import warnings
+import threading
 import subprocess
 import PIL.PngImagePlugin
 import time
@@ -47,6 +48,9 @@ os.environ["GRADIO_DISABLE_TELEMETRY"] = "1"
 vram_bytes = torch.cuda.get_device_properties(0).total_memory
 vram_gb = vram_bytes / (1024**3)
 default_vae_tiling = vram_gb >= 15
+
+class GenerationStopped(Exception):
+    pass
 
 def open_output_folder():
     path = os.path.abspath("output")
@@ -358,6 +362,12 @@ def update_det_size(det_size_name):
     return f"Detection size set to {current_det_size}"
 
 def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
+    stop_event = threading.Event()
+
+    def request_stop():
+        stop_event.set()
+        gr.Info("Stopping generation...")
+
     if vram_gb >= 15:
         pipe = None
 
@@ -727,6 +737,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         file_prefix = file_prefix.strip().translate(FILENAME_SAFE_TRANS)
         file_prefix = DEFAULT_FILE_PREFIX if not file_prefix else (f"{file_prefix}_" if not file_prefix.endswith('_') else file_prefix)
         nonlocal pipe
+        stop_event.clear()
         overall_start_time = time.time()
         
         update_det_size(det_size_name)
@@ -1014,7 +1025,13 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         pipe.set_ip_adapter_scale(adapter_strength_ratio)
         images = []
         generation_infos = []
+        stopped_early = False
         for i in range(num_outputs):
+            if stop_event.is_set():
+                print("Stop requested - halting before starting generation.\n")
+                stopped_early = True
+                break
+
             print(f"Generating image {i + 1} of {num_outputs}...\n")
 
             steps = max(1, int(num_steps * strength)) if enable_img2img else num_steps
@@ -1023,6 +1040,8 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
 
             if is_slow_scheduler:
                 def gradio_callback_lambda(pipe_obj, step, timestep, callback_kwargs):
+                    if stop_event.is_set():
+                        raise GenerationStopped()
                     if step != step_tracker["last"]:
                         step_tracker["last"] = step
                         step_tracker["total"] += 1
@@ -1035,13 +1054,14 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                     )
                     return callback_kwargs
             else:
-                gradio_callback_lambda = lambda pipe_obj, step, timestep, callback_kwargs: (
+                def gradio_callback_lambda(pipe_obj, step, timestep, callback_kwargs):
+                    if stop_event.is_set():
+                        raise GenerationStopped()
                     progress(
                         ((i / num_outputs) + (((step + 1) / steps) / num_outputs)),
                         desc=f"Generating image {i + 1} of {num_outputs} (Step {step + 1}/{steps})"
-                    ),
-                    callback_kwargs
-                )[1]
+                    )
+                    return callback_kwargs
 
             print(f"Seed: {seed + i}\n")
 
@@ -1058,19 +1078,26 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 generator=generator,
                 callback_on_step_end=gradio_callback_lambda,
             )
-            if enable_img2img:
-                result = pipe(
-                    **common_kwargs,
-                    image=face_image,
-                    control_image=control_images,
-                    strength=strength,
-                )
-            else:
-                result = pipe(
-                    **common_kwargs,
-                    image=control_images,
-                    control_mask=control_mask,
-                )
+            try:
+                if enable_img2img:
+                    result = pipe(
+                        **common_kwargs,
+                        image=face_image,
+                        control_image=control_images,
+                        strength=strength,
+                    )
+                else:
+                    result = pipe(
+                        **common_kwargs,
+                        image=control_images,
+                        control_mask=control_mask,
+                    )
+            except GenerationStopped:
+                print(f"Stop requested - generation of image {i + 1} was interrupted mid-way.\n")
+                stopped_early = True
+                torch.cuda.empty_cache()
+                break
+
             image = result.images[0]
             images.append(image)
 
@@ -1134,6 +1161,10 @@ Scheduler: {scheduler}"""
             pipe.unload_lora_weights()
 
         unload_all_embeddings(pipe, loaded_embedding_tokens)
+
+        stop_event.clear()
+        if stopped_early:
+            gr.Warning(f"Generation stopped by user. {len(images)} of {num_outputs} image(s) were completed.")
 
         gc.collect()
         overall_elapsed_time = time.time() - overall_start_time
@@ -1347,6 +1378,7 @@ Scheduler: {scheduler}"""
                             )
                     with gr.Row():
                         generate_alt_2 = gr.Button("Generate (Extra Settings Section Button)", variant="primary", elem_id="generate_btn_settings")
+                        stop_btn_2 = gr.Button("⏹ Stop", scale=0, min_width=90, variant="stop")
                         open_folder_btn = gr.Button("📁", min_width=60, scale=0)
                         open_folder_btn.click(
                             fn=open_output_folder,
@@ -1442,6 +1474,7 @@ Scheduler: {scheduler}"""
                 )
                 with gr.Row():
                     generate = gr.Button("Generate", scale=8, variant="primary")
+                    stop_btn = gr.Button("⏹ Stop", scale=1, min_width=90, variant="stop")
                     num_outputs = gr.Number(
                         value=1,
                         step=1,
@@ -1559,6 +1592,7 @@ Scheduler: {scheduler}"""
                     )
                 with gr.Row():
                     generate_alt_3 = gr.Button("Generate (Extra Bottom Section Button)", variant="primary")
+                    stop_btn_3 = gr.Button("⏹ Stop", scale=0, min_width=90, variant="stop")
                     open_folder_btn = gr.Button("📁", min_width=60, scale=0)
                     open_folder_btn.click(
                         fn=open_output_folder,
@@ -1570,6 +1604,7 @@ Scheduler: {scheduler}"""
                 gallery = gr.Gallery(label="Generated image(s) preview. Open the output folder for full view.", height=400, object_fit="contain")
                 with gr.Row():
                     generate_alt = gr.Button("Generate (Extra Right Side Button)", variant="primary")
+                    stop_btn_alt = gr.Button("⏹ Stop", scale=0, min_width=90, variant="stop")
                     open_folder_btn = gr.Button("📁", min_width=60, scale=0)
                     open_folder_btn.click(
                         fn=open_output_folder,
@@ -2040,6 +2075,11 @@ Scheduler: {scheduler}"""
                 fn=generate_image, inputs=shared_inputs, outputs=[gallery]
             )
 
+            stop_btn.click(fn=request_stop, inputs=[], outputs=[], queue=False, api_name=False)
+            stop_btn_alt.click(fn=request_stop, inputs=[], outputs=[], queue=False, api_name=False)
+            stop_btn_2.click(fn=request_stop, inputs=[], outputs=[], queue=False, api_name=False)
+            stop_btn_3.click(fn=request_stop, inputs=[], outputs=[], queue=False, api_name=False)
+
             LORA_OUTPUTS = [
                 lora_row_1, lora_selection, lora_scale,
                 lora_row_2, lora_selection_2, lora_scale_2,
@@ -2427,7 +2467,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v5.6.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v5.7.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
