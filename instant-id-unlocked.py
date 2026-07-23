@@ -34,6 +34,8 @@ for msg in warning_messages:
 import logging
 logger = logging.getLogger("transformers.tokenization_utils_base")
 logger.addFilter(lambda record: "Token indices sequence length is longer" not in record.getMessage())
+logger = logging.getLogger("transformers.modeling_utils")
+logger.addFilter(lambda record: "mean_resizing" not in record.getMessage())
 
 os.environ["NO_ALBUMENTATIONS_UPDATE"] = "1"
 # os.environ["TRANSFORMERS_OFFLINE"] = "1"
