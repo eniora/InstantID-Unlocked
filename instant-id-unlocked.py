@@ -1936,11 +1936,11 @@ Scheduler: {scheduler}"""
                     )
 
                     def refresh_embeddings_list():
-                        return gr.update(choices=get_embedding_choices(), value=None)
+                        return gr.update(value=format_embeddings_info()), gr.update(choices=get_embedding_choices(), value=None)
 
                     refresh_embeddings.click(
                         fn=refresh_embeddings_list,
-                        outputs=[embeddings_dropdown]
+                        outputs=[embeddings_info, embeddings_dropdown]
                     )
 
                     insert_embedding_prompt.click(
