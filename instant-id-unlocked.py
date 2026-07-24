@@ -303,8 +303,7 @@ def format_embeddings_info():
     if not embeddings:
         return (f"No embeddings found in `{EMBEDDINGS_DIR}`. Place SDXL/Pony textual inversion "
                 f"files (.safetensors, .pt, .bin) there, then click Refresh.")
-    return ("Select an embedding below, then click a button to insert its trigger word into your "
-            "prompt or negative prompt. You can insert the same embedding multiple times for stacked effect, which is different than embedding weight.")
+    return ("Select one then click a button to insert its trigger word into prompt or negative prompt. You can insert the same embedding multiple times for stacked effect, which is different than embedding weight. Above 2.0 weight is generally not good.")
 
 def get_embedding_choices():
     embeddings = get_available_embeddings()
@@ -320,10 +319,7 @@ def insert_token_into_text(current_text, token, weight=1.0):
         weight = float(weight)
     except (TypeError, ValueError):
         weight = 1.0
-    if abs(weight - 1.0) < 1e-6:
-        insertion = token
-    else:
-        insertion = f"({token}:{weight:.2f})"
+    insertion = f"({token}:{weight:.1f})"
     current_text = current_text or ""
     stripped = current_text.strip()
     if not stripped:
@@ -1967,16 +1963,16 @@ Scheduler: {scheduler}"""
                     embeddings_weight = gr.Slider(
                         label="Embedding Weight",
                         minimum=0.1,
-                        maximum=2.0,
+                        maximum=3.0,
                         value=1.0,
-                        step=0.05,
+                        step=0.1,
                         visible=False
                     )
                     with gr.Row():
                         insert_embedding_prompt = gr.Button("➕ Insert into Prompt", scale=1, visible=False)
                         insert_embedding_negative = gr.Button("➕ Insert into Negative Prompt", scale=1, visible=False)
                     with gr.Row():
-                        refresh_embeddings = gr.Button("🔄 Refresh Embeddings List", scale=1, elem_classes="toolbutton", visible=False)
+                        refresh_embeddings = gr.Button("🔄 Refresh Embeddings List (forces a reload on next generation)", scale=1, elem_classes="toolbutton", visible=False)
 
                     enable_embeddings.change(
                         fn=lambda x: gr.Markdown(visible=x),
