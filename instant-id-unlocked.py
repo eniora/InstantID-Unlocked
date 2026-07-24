@@ -366,7 +366,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
 
     def request_stop():
         stop_event.set()
-        gr.Info("A request to stop all currently running tasks has been initiated. Generation will stop when the current task is finished processing.")
+        gr.Info("A request to stop all currently running tasks has been initiated. Generation will stop when the current task or step is finished processing.")
 
     if vram_gb >= 15:
         pipe = None
@@ -1381,7 +1381,7 @@ Scheduler: {scheduler}"""
                             )
                     with gr.Row():
                         generate_alt_2 = gr.Button("Generate (Extra Settings Section Button)", variant="primary", elem_id="generate_btn_settings")
-                        stop_btn_2 = gr.Button("⏹ Stop", scale=0, min_width=90, variant="stop")
+                        stop_btn_2 = gr.Button("⏹", scale=0, min_width=60, variant="stop", interactive=False)
                         open_folder_btn = gr.Button("📁", min_width=60, scale=0)
                         open_folder_btn.click(
                             fn=open_output_folder,
@@ -1477,7 +1477,7 @@ Scheduler: {scheduler}"""
                 )
                 with gr.Row():
                     generate = gr.Button("Generate (Control + Enter)", scale=8, variant="primary")
-                    stop_btn = gr.Button("⏹ Stop", scale=1, min_width=90, variant="stop")
+                    stop_btn = gr.Button("⏹", scale=0, min_width=60, variant="stop", interactive=False)
                     num_outputs = gr.Number(
                         value=1,
                         step=1,
@@ -1595,7 +1595,7 @@ Scheduler: {scheduler}"""
                     )
                 with gr.Row():
                     generate_alt_3 = gr.Button("Generate (Extra Bottom Section Button)", variant="primary")
-                    stop_btn_3 = gr.Button("⏹ Stop", scale=0, min_width=90, variant="stop")
+                    stop_btn_3 = gr.Button("⏹", scale=0, min_width=60, variant="stop", interactive=False)
                     open_folder_btn = gr.Button("📁", min_width=60, scale=0)
                     open_folder_btn.click(
                         fn=open_output_folder,
@@ -1607,7 +1607,7 @@ Scheduler: {scheduler}"""
                 gallery = gr.Gallery(label="Generated image(s) preview. Open the output folder for full view.", height=400, object_fit="contain")
                 with gr.Row():
                     generate_alt = gr.Button("Generate (Extra Right Side Button)", variant="primary")
-                    stop_btn_alt = gr.Button("⏹ Stop", scale=0, min_width=90, variant="stop")
+                    stop_btn_alt = gr.Button("⏹", scale=0, min_width=60, variant="stop", interactive=False)
                     open_folder_btn = gr.Button("📁", min_width=60, scale=0)
                     open_folder_btn.click(
                         fn=open_output_folder,
@@ -2065,17 +2065,38 @@ Scheduler: {scheduler}"""
                 strength,
                 exact_ratio,
             ]
+            all_stop_btns = [stop_btn, stop_btn_alt, stop_btn_2, stop_btn_3]
+
+            def enable_stop_btns():
+                return [gr.update(interactive=True)] * len(all_stop_btns)
+
+            def generate_image_and_toggle_stop(*args, progress=gr.Progress()):
+                try:
+                    images = generate_image(*args, progress=progress)
+                    yield tuple([images] + [gr.update(interactive=False)] * len(all_stop_btns))
+                except Exception:
+                    yield tuple([gr.update()] + [gr.update(interactive=False)] * len(all_stop_btns))
+                    raise
+
             generate.click(fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False).then(
-                fn=generate_image, inputs=shared_inputs, outputs=[gallery]
+                fn=enable_stop_btns, inputs=[], outputs=all_stop_btns, queue=False, api_name=False
+            ).then(
+                fn=generate_image_and_toggle_stop, inputs=shared_inputs, outputs=[gallery] + all_stop_btns
             )
             generate_alt.click(fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False).then(
-                fn=generate_image, inputs=shared_inputs, outputs=[gallery]
+                fn=enable_stop_btns, inputs=[], outputs=all_stop_btns, queue=False, api_name=False
+            ).then(
+                fn=generate_image_and_toggle_stop, inputs=shared_inputs, outputs=[gallery] + all_stop_btns
             )
             generate_alt_2.click(fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False).then(
-                fn=generate_image, inputs=shared_inputs, outputs=[gallery]
+                fn=enable_stop_btns, inputs=[], outputs=all_stop_btns, queue=False, api_name=False
+            ).then(
+                fn=generate_image_and_toggle_stop, inputs=shared_inputs, outputs=[gallery] + all_stop_btns
             )
             generate_alt_3.click(fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False).then(
-                fn=generate_image, inputs=shared_inputs, outputs=[gallery]
+                fn=enable_stop_btns, inputs=[], outputs=all_stop_btns, queue=False, api_name=False
+            ).then(
+                fn=generate_image_and_toggle_stop, inputs=shared_inputs, outputs=[gallery] + all_stop_btns
             )
 
             stop_btn.click(fn=request_stop, inputs=[], outputs=[], queue=True, api_name=False)
@@ -2470,7 +2491,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v5.7.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v5.8.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
