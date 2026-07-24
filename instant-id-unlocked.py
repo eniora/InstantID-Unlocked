@@ -755,6 +755,8 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         ):
             pipe = load_model_and_update_pipe(model_name, enable_img2img)
             pipe._current_model = model_name
+            embedding_state["loaded"] = False
+            embedding_state["tokens"] = []
 
         if enable_vae_tiling:
             pipe.enable_vae_tiling()
