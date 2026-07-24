@@ -500,17 +500,16 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         return loaded_tokens
 
     def unload_all_embeddings(pipe, loaded_tokens):
-        if not loaded_tokens:
-            return
-        try:
-            pipe.unload_textual_inversion(tokenizer=pipe.tokenizer, text_encoder=pipe.text_encoder)
-        except Exception as e:
-            print(f"Failed to unload embeddings from primary text encoder: {e}")
-        if getattr(pipe, "text_encoder_2", None) is not None and getattr(pipe, "tokenizer_2", None) is not None:
+        if loaded_tokens:
             try:
-                pipe.unload_textual_inversion(tokenizer=pipe.tokenizer_2, text_encoder=pipe.text_encoder_2)
+                pipe.unload_textual_inversion(tokenizer=pipe.tokenizer, text_encoder=pipe.text_encoder)
             except Exception as e:
-                print(f"Failed to unload embeddings from secondary text encoder: {e}")
+                print(f"Failed to unload embeddings from primary text encoder: {e}")
+            if getattr(pipe, "text_encoder_2", None) is not None and getattr(pipe, "tokenizer_2", None) is not None:
+                try:
+                    pipe.unload_textual_inversion(tokenizer=pipe.tokenizer_2, text_encoder=pipe.text_encoder_2)
+                except Exception as e:
+                    print(f"Failed to unload embeddings from secondary text encoder: {e}")
         embedding_state["loaded"] = False
         embedding_state["tokens"] = []
 
