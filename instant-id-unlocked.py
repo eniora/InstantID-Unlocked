@@ -366,7 +366,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
 
     def request_stop():
         stop_event.set()
-        gr.Info("Stopping generation...")
+        gr.Info("A request to stop all currently running tasks has been initiated. Generation will stop when the current task is finished processing.")
 
     if vram_gb >= 15:
         pipe = None
@@ -2078,10 +2078,10 @@ Scheduler: {scheduler}"""
                 fn=generate_image, inputs=shared_inputs, outputs=[gallery]
             )
 
-            stop_btn.click(fn=request_stop, inputs=[], outputs=[], queue=False, api_name=False)
-            stop_btn_alt.click(fn=request_stop, inputs=[], outputs=[], queue=False, api_name=False)
-            stop_btn_2.click(fn=request_stop, inputs=[], outputs=[], queue=False, api_name=False)
-            stop_btn_3.click(fn=request_stop, inputs=[], outputs=[], queue=False, api_name=False)
+            stop_btn.click(fn=request_stop, inputs=[], outputs=[], queue=True, api_name=False)
+            stop_btn_alt.click(fn=request_stop, inputs=[], outputs=[], queue=True, api_name=False)
+            stop_btn_2.click(fn=request_stop, inputs=[], outputs=[], queue=True, api_name=False)
+            stop_btn_3.click(fn=request_stop, inputs=[], outputs=[], queue=True, api_name=False)
 
             LORA_OUTPUTS = [
                 lora_row_1, lora_selection, lora_scale,
