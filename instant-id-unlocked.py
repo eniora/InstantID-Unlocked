@@ -365,6 +365,7 @@ def update_det_size(det_size_name):
 
 def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
     stop_event = threading.Event()
+    embedding_state = {"loaded": False, "tokens": []}
 
     def request_stop():
         stop_event.set()
@@ -510,6 +511,8 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 pipe.unload_textual_inversion(tokenizer=pipe.tokenizer_2, text_encoder=pipe.text_encoder_2)
             except Exception as e:
                 print(f"Failed to unload embeddings from secondary text encoder: {e}")
+        embedding_state["loaded"] = False
+        embedding_state["tokens"] = []
 
     def randomize_seed_fn(seed: int, randomize_seed: bool) -> int:
         if randomize_seed:
@@ -802,11 +805,20 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
 
         loaded_embedding_tokens = []
         if enable_embeddings:
-            loaded_embedding_tokens = load_all_embeddings(pipe)
-            if loaded_embedding_tokens:
-                print(f"Successfully loaded {len(loaded_embedding_tokens)} embedding(s): {', '.join(loaded_embedding_tokens)}")
+            if embedding_state["loaded"]:
+                loaded_embedding_tokens = embedding_state["tokens"]
+                if loaded_embedding_tokens:
+                    print(f"Using {len(loaded_embedding_tokens)} already-loaded embedding(s): {', '.join(loaded_embedding_tokens)}")
+                else:
+                    print("No embeddings found to load.")
             else:
-                print("No embeddings found to load.")
+                loaded_embedding_tokens = load_all_embeddings(pipe)
+                embedding_state["loaded"] = True
+                embedding_state["tokens"] = loaded_embedding_tokens
+                if loaded_embedding_tokens:
+                    print(f"Successfully loaded {len(loaded_embedding_tokens)} embedding(s): {', '.join(loaded_embedding_tokens)}")
+                else:
+                    print("No embeddings found to load.")
 
         face_image_filename = os.path.basename(face_image_path) if face_image_path else "None"
         pose_image_filename = os.path.basename(pose_image_path) if pose_image_path else "None"
@@ -840,7 +852,6 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             if enable_lora:
                 pipe.unfuse_lora()
                 pipe.unload_lora_weights()
-            unload_all_embeddings(pipe, loaded_embedding_tokens)
             raise gr.Error(
                 f"Cannot find any input face image! Please upload the face image"
             )
@@ -879,7 +890,6 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             if enable_lora:
                 pipe.unfuse_lora()
                 pipe.unload_lora_weights()
-            unload_all_embeddings(pipe, loaded_embedding_tokens)
             raise gr.Error(
                 f"Unable to detect a face in the image. Please upload a different photo with a clear face."
             )
@@ -900,7 +910,6 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 if enable_lora:
                     pipe.unfuse_lora()
                     pipe.unload_lora_weights()
-                unload_all_embeddings(pipe, loaded_embedding_tokens)
                 raise gr.Error(
                     f"Cannot find any face in the reference image! Please upload another person image"
                 )
@@ -1100,7 +1109,6 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 torch.cuda.empty_cache()
                 break
             except Exception:
-                unload_all_embeddings(pipe, loaded_embedding_tokens)
                 raise
 
             image = result.images[0]
@@ -1164,8 +1172,6 @@ Scheduler: {scheduler}"""
         if enable_lora:
             pipe.unfuse_lora()
             pipe.unload_lora_weights()
-
-        unload_all_embeddings(pipe, loaded_embedding_tokens)
 
         stop_event.clear()
         if stopped_early:
@@ -1978,6 +1984,8 @@ Scheduler: {scheduler}"""
                     )
 
                     def refresh_embeddings_list():
+                        if embedding_state["loaded"] and pipe is not None:
+                            unload_all_embeddings(pipe, embedding_state["tokens"])
                         return gr.update(value=format_embeddings_info()), gr.update(choices=get_embedding_choices(), value=None)
 
                     refresh_embeddings.click(
@@ -2493,7 +2501,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v5.8.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v5.8.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
