@@ -441,7 +441,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         return None
 
     def load_all_embeddings(pipe):
-        print("Loading embeddings, please wait...")
+        print("\nLoading embeddings, please wait...\n")
         loaded_tokens = []
         embedding_files = get_available_embeddings()
 
@@ -831,15 +831,15 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             if embedding_state["loaded"]:
                 loaded_embedding_tokens = embedding_state["tokens"]
                 if loaded_embedding_tokens:
-                    print(f"Using {len(loaded_embedding_tokens)} already-loaded embedding(s): {', '.join(loaded_embedding_tokens)}")
+                    print(f"\nUsing {len(loaded_embedding_tokens)} already-loaded embedding(s): {', '.join(loaded_embedding_tokens)}\n")
                 else:
-                    print("No embeddings found to load.")
+                    print("\nNo embeddings found to load.\n")
             else:
                 loaded_embedding_tokens = load_all_embeddings(pipe)
                 embedding_state["loaded"] = True
                 embedding_state["tokens"] = loaded_embedding_tokens
                 if loaded_embedding_tokens:
-                    print(f"Successfully loaded {len(loaded_embedding_tokens)} embedding(s): {', '.join(loaded_embedding_tokens)}")
+                    print(f"\nSuccessfully loaded {len(loaded_embedding_tokens)} embedding(s): {', '.join(loaded_embedding_tokens)}\n")
                 else:
                     print("No embeddings found to load.")
 
