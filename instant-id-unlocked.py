@@ -441,7 +441,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         return None
 
     def load_all_embeddings(pipe):
-        print("\nLoading embeddings, please wait...\n")
+        print("\nLoading embeddings, please wait...")
         loaded_tokens = []
         embedding_files = get_available_embeddings()
 
