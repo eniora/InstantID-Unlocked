@@ -440,59 +440,85 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 return int(v.shape[-1])
         return None
 
-    def is_sdxl_compatible_embedding(emb_path):
-        try:
-            if emb_path.lower().endswith(".safetensors"):
-                state_dict = load_safetensors_file(emb_path)
-            else:
-                state_dict = torch.load(emb_path, map_location="cpu")
-
-            if isinstance(state_dict, dict) and "clip_g" in state_dict and "clip_l" in state_dict:
-                return True
-
-            dim = get_embedding_vector_dim(state_dict)
-            if dim is None:
-                return True
-            return dim != 768
-
-        except Exception as e:
-            print(f"Could not inspect embedding {os.path.basename(emb_path)} for compatibility: {e}")
-            return True
-
     def load_all_embeddings(pipe):
+        print("Loading embeddings, please wait...")
         loaded_tokens = []
         embedding_files = get_available_embeddings()
+
+        dual_state_dicts, dual_tokens = [], []
+        single_state_dicts, single_tokens = [], []
+
         for emb_file in embedding_files:
             token = embedding_token_from_filename(emb_file)
             emb_path = os.path.join(EMBEDDINGS_DIR, emb_file)
-
-            if not is_sdxl_compatible_embedding(emb_path):
-                print(f"Skipping embedding '{emb_file}': looks like an SD1.5-only embedding "
-                      f"(single 768-dim vector), which isn't compatible with this SDXL pipeline.")
-                continue
 
             try:
                 if emb_file.lower().endswith(".safetensors"):
                     state_dict = load_safetensors_file(emb_path)
                 else:
                     state_dict = torch.load(emb_path, map_location="cpu")
-
-                if isinstance(state_dict, dict) and "clip_g" in state_dict and "clip_l" in state_dict:
-                    pipe.load_textual_inversion(
-                        state_dict["clip_g"], token=token,
-                        text_encoder=pipe.text_encoder_2, tokenizer=pipe.tokenizer_2,
-                    )
-                    pipe.load_textual_inversion(
-                        state_dict["clip_l"], token=token,
-                        text_encoder=pipe.text_encoder, tokenizer=pipe.tokenizer,
-                    )
-                else:
-                    pipe.load_textual_inversion(emb_path, token=token)
-                loaded_tokens.append(token)
-                print(f"Loaded embedding: {emb_file}")
             except Exception as e:
-                print(f"Failed to load embedding {emb_file}: {e}")
+                print(f"Failed to read embedding {emb_file}: {e}")
                 gr.Warning(f"Failed to load embedding '{emb_file}': {e}")
+                continue
+
+            if isinstance(state_dict, dict) and "clip_g" in state_dict and "clip_l" in state_dict:
+                dual_state_dicts.append(state_dict)
+                dual_tokens.append(token)
+                continue
+
+            dim = get_embedding_vector_dim(state_dict)
+            if dim == 768:
+                print(f"Skipping embedding '{emb_file}': looks like an SD1.5-only embedding "
+                      f"(single 768-dim vector), which isn't compatible with this SDXL pipeline.")
+                continue
+
+            single_state_dicts.append(state_dict)
+            single_tokens.append(token)
+
+        if dual_state_dicts:
+            try:
+                pipe.load_textual_inversion(
+                    [sd["clip_g"] for sd in dual_state_dicts], token=list(dual_tokens),
+                    text_encoder=pipe.text_encoder_2, tokenizer=pipe.tokenizer_2,
+                )
+                pipe.load_textual_inversion(
+                    [sd["clip_l"] for sd in dual_state_dicts], token=list(dual_tokens),
+                    text_encoder=pipe.text_encoder, tokenizer=pipe.tokenizer,
+                )
+                loaded_tokens.extend(dual_tokens)
+            except Exception as e:
+                print(f"Batched dual-encoder load failed ({e}), falling back to per-file loading")
+                for sd, token in zip(dual_state_dicts, dual_tokens):
+                    try:
+                        pipe.load_textual_inversion(
+                            sd["clip_g"], token=token,
+                            text_encoder=pipe.text_encoder_2, tokenizer=pipe.tokenizer_2,
+                        )
+                        pipe.load_textual_inversion(
+                            sd["clip_l"], token=token,
+                            text_encoder=pipe.text_encoder, tokenizer=pipe.tokenizer,
+                        )
+                        loaded_tokens.append(token)
+                    except Exception as e2:
+                        print(f"Failed to load embedding for token {token}: {e2}")
+                        gr.Warning(f"Failed to load embedding '{token}': {e2}")
+
+        if single_state_dicts:
+            try:
+                pipe.load_textual_inversion(single_state_dicts, token=list(single_tokens))
+                loaded_tokens.extend(single_tokens)
+                print(f"Loaded {len(single_tokens)} single-encoder embedding(s): {', '.join(single_tokens)}")
+            except Exception as e:
+                print(f"Batched single-encoder load failed ({e}), falling back to per-file loading")
+                for sd, token in zip(single_state_dicts, single_tokens):
+                    try:
+                        pipe.load_textual_inversion(sd, token=token)
+                        loaded_tokens.append(token)
+                    except Exception as e2:
+                        print(f"Failed to load embedding for token {token}: {e2}")
+                        gr.Warning(f"Failed to load embedding '{token}': {e2}")
+
         return loaded_tokens
 
     def unload_all_embeddings(pipe, loaded_tokens):
@@ -1386,7 +1412,7 @@ Scheduler: {scheduler}"""
                             )
                     with gr.Row():
                         generate_alt_2 = gr.Button("Generate (Extra Settings Section Button)", variant="primary", elem_id="generate_btn_settings")
-                        stop_btn_2 = gr.Button("⏹", scale=0, min_width=60, variant="stop", interactive=False)
+                        stop_btn_2 = gr.Button("⏹", scale=0, min_width=60, variant="stop")
                         open_folder_btn = gr.Button("📁", min_width=60, scale=0)
                         open_folder_btn.click(
                             fn=open_output_folder,
@@ -1482,7 +1508,7 @@ Scheduler: {scheduler}"""
                 )
                 with gr.Row():
                     generate = gr.Button("Generate (Control + Enter)", scale=8, variant="primary")
-                    stop_btn = gr.Button("⏹", scale=0, min_width=60, variant="stop", interactive=False)
+                    stop_btn = gr.Button("⏹", scale=0, min_width=60, variant="stop")
                     num_outputs = gr.Number(
                         value=1,
                         step=1,
@@ -1600,7 +1626,7 @@ Scheduler: {scheduler}"""
                     )
                 with gr.Row():
                     generate_alt_3 = gr.Button("Generate (Extra Bottom Section Button)", variant="primary")
-                    stop_btn_3 = gr.Button("⏹", scale=0, min_width=60, variant="stop", interactive=False)
+                    stop_btn_3 = gr.Button("⏹", scale=0, min_width=60, variant="stop")
                     open_folder_btn = gr.Button("📁", min_width=60, scale=0)
                     open_folder_btn.click(
                         fn=open_output_folder,
@@ -1612,7 +1638,7 @@ Scheduler: {scheduler}"""
                 gallery = gr.Gallery(label="Generated image(s) preview. Open the output folder for full view.", height=400, object_fit="contain")
                 with gr.Row():
                     generate_alt = gr.Button("Generate (Extra Right Side Button)", variant="primary")
-                    stop_btn_alt = gr.Button("⏹", scale=0, min_width=60, variant="stop", interactive=False)
+                    stop_btn_alt = gr.Button("⏹", scale=0, min_width=60, variant="stop")
                     open_folder_btn = gr.Button("📁", min_width=60, scale=0)
                     open_folder_btn.click(
                         fn=open_output_folder,
@@ -2072,38 +2098,17 @@ Scheduler: {scheduler}"""
                 strength,
                 exact_ratio,
             ]
-            all_stop_btns = [stop_btn, stop_btn_alt, stop_btn_2, stop_btn_3]
-
-            def enable_stop_btns():
-                return [gr.update(interactive=True)] * len(all_stop_btns)
-
-            def generate_image_and_toggle_stop(*args, progress=gr.Progress()):
-                try:
-                    images = generate_image(*args, progress=progress)
-                    yield tuple([images] + [gr.update(interactive=False)] * len(all_stop_btns))
-                except Exception:
-                    yield tuple([gr.update()] + [gr.update(interactive=False)] * len(all_stop_btns))
-                    raise
-
             generate.click(fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False).then(
-                fn=enable_stop_btns, inputs=[], outputs=all_stop_btns, queue=False, api_name=False
-            ).then(
-                fn=generate_image_and_toggle_stop, inputs=shared_inputs, outputs=[gallery] + all_stop_btns
+                fn=generate_image, inputs=shared_inputs, outputs=[gallery]
             )
             generate_alt.click(fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False).then(
-                fn=enable_stop_btns, inputs=[], outputs=all_stop_btns, queue=False, api_name=False
-            ).then(
-                fn=generate_image_and_toggle_stop, inputs=shared_inputs, outputs=[gallery] + all_stop_btns
+                fn=generate_image, inputs=shared_inputs, outputs=[gallery]
             )
             generate_alt_2.click(fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False).then(
-                fn=enable_stop_btns, inputs=[], outputs=all_stop_btns, queue=False, api_name=False
-            ).then(
-                fn=generate_image_and_toggle_stop, inputs=shared_inputs, outputs=[gallery] + all_stop_btns
+                fn=generate_image, inputs=shared_inputs, outputs=[gallery]
             )
             generate_alt_3.click(fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False).then(
-                fn=enable_stop_btns, inputs=[], outputs=all_stop_btns, queue=False, api_name=False
-            ).then(
-                fn=generate_image_and_toggle_stop, inputs=shared_inputs, outputs=[gallery] + all_stop_btns
+                fn=generate_image, inputs=shared_inputs, outputs=[gallery]
             )
 
             stop_btn.click(fn=request_stop, inputs=[], outputs=[], queue=True, api_name=False)
@@ -2498,7 +2503,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v5.8.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v5.8.2</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
