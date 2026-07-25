@@ -36,7 +36,7 @@ The code barely follows any DRY principles as it started as a personal modificat
 
 ⚡ Performance
 - Tweaks to improve VRAM usage compared to the original repo. Runs good on 12GB VRAM but 16GB+ is recommended.
-- Works on 8GB GPUs, but expect very slow generations (~15 minutes for 1280×960).
+- Works on 8GB GPUs, but expect slow generations (~3-5 minutes for 1280×960).
 
 And many many more improvements.
 
