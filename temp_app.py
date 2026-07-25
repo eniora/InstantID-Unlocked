@@ -847,6 +847,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
 
         face_image_filename = os.path.basename(face_image_path) if face_image_path else "None"
         pose_image_filename = os.path.basename(pose_image_path) if pose_image_path else "None"
+        visual_prompt_filename = os.path.basename(visual_prompt_image) if visual_prompt_image else "None"
 
         with torch.no_grad():
             scheduler_config = dict(pipe.scheduler.config.items())
@@ -1170,6 +1171,7 @@ Custom resize size: {custom_resize_width}x{custom_resize_height}
 img2img Strength: {strength}
 img2img Mode Enabled: {enable_img2img}
 Visual Prompt Enabled: {visual_prompt_pil is not None}
+Visual Prompt Image: {visual_prompt_filename if visual_prompt_pil is not None else 'N/A'}
 Visual Prompt Strength: {visual_prompt_strength if visual_prompt_pil is not None else 'N/A'}
 IdentityNet strength: {identitynet_strength_ratio}
 Adapter strength: {adapter_strength_ratio}
@@ -1668,21 +1670,21 @@ Scheduler: {scheduler}"""
                     strength = gr.Slider(label="img2img Denoising Strength", minimum=0.1, maximum=1.0, value=0.95, step=0.05, visible=False, scale=5, info="Use this for more control over e.g., location setting, clothing style, pose, etc. A lower value preserves more of the original image. CFG scale of ~3 is recommended.")
                 with gr.Row():
                     visual_prompt_file = gr.Image(
-                        label="Visual Prompt (Optional)",
-                        height=200,
+                        label="Visual Prompt (Optional, disabled if no image)",
+                        height=270,
                         type="filepath",
                         visible=False,
                         scale=2,
                     )
                     visual_prompt_strength_slider = gr.Slider(
                         label="Visual Prompt Strength",
-                        minimum=0.0,
-                        maximum=0.5,
-                        value=0.15,
-                        step=0.01,
+                        minimum=0.1,
+                        maximum=1.0,
+                        value=0.8,
+                        step=0.1,
                         visible=False,
                         scale=3,
-                        info="Optional secondary reference image that nudges the color palette / overall style of the img2img result. Has no effect unless an image is uploaded. Recommended: 0.05 - 0.3."
+                        info="Optional secondary reference image that nudges the color palette / overall style of the img2img result. Has no effect unless an image is uploaded."
                     )
 
                 def toggle_img2img(enable):
@@ -2182,6 +2184,7 @@ Scheduler: {scheduler}"""
                     "guidance_scale": 4.0,
                     "enable_img2img": False,
                     "strength": 0.95,
+                    "visual_prompt_strength": 0.1,
                     "identitynet_strength_ratio": 0.7,
                     "adapter_strength_ratio": 0.6,
                     "pose_strength": 0.40,
@@ -2331,6 +2334,13 @@ Scheduler: {scheduler}"""
                             settings["enable_img2img"] = "true" in line.lower()
                         elif line.startswith("img2img Strength:"):
                             settings["strength"] = float(line.replace("img2img Strength:", "").strip())
+                        elif line.startswith("Visual Prompt Strength:"):
+                            vps_str = line.replace("Visual Prompt Strength:", "").strip()
+                            if vps_str != "N/A":
+                                try:
+                                    settings["visual_prompt_strength"] = float(vps_str)
+                                except ValueError:
+                                    pass
                         elif line.startswith("Enhance non-face region:"):
                             settings["enhance_face_region"] = "true" in line.lower()
                         elif line.startswith("Enhance region profile:"):
@@ -2414,6 +2424,7 @@ Scheduler: {scheduler}"""
                     settings["num_steps"],
                     settings["enable_img2img"],
                     settings["strength"],
+                    settings["visual_prompt_strength"],
                     settings["identitynet_strength_ratio"],
                     settings["adapter_strength_ratio"],
                     settings["pose_strength"],
@@ -2476,6 +2487,7 @@ Scheduler: {scheduler}"""
                     num_steps,
                     enable_img2img,
                     strength,
+                    visual_prompt_strength_slider,
                     identitynet_strength_ratio,
                     adapter_strength_ratio,
                     pose_strength,

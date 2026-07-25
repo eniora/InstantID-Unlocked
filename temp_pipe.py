@@ -33,7 +33,7 @@ from diffusers.utils import (
     replace_example_docstring,
 )
 from diffusers.utils.import_utils import is_xformers_available
-from diffusers.utils.torch_utils import is_compiled_module, is_torch_version
+from diffusers.utils.torch_utils import is_compiled_module, is_torch_version, randn_tensor
 
 
 try:
@@ -1242,14 +1242,62 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
         else:
             assert False
 
+        # NOTE ON VISUAL PROMPT FIX (part 1 - effective strength):
+        # The fork ties its *only* strength knob (`visual_prompt_strength`) directly to
+        # `get_timesteps`, via `strength_for_schedule = 1 - visual_prompt_strength`. A LOW
+        # visual_prompt_strength (e.g. 0.15) therefore means a HIGH strength_for_schedule
+        # (0.85), which makes `get_timesteps` keep almost the *entire* timestep schedule
+        # (t_start close to 0) — i.e. the model gets to run nearly all denoising steps,
+        # starting from a heavily-noised latent. That's what lets a light visual_prompt
+        # bias (low strength) still produce a fully-denoised, high quality image: the
+        # small structural nudge only has to survive a lot of noise, so it never dominates
+        # or muddies the output, and the model has plenty of steps to reconcile it.
+        #
+        # Here, `strength` (the main img2img slider) and `visual_prompt_strength` were
+        # driving the schedule and the blend independently. Since `strength` alone decided
+        # how many steps run, a low `strength` value forced the model to reconcile a
+        # blended (two-source) latent in very few steps — which is what still looked soft/
+        # muddy even after the clean-vs-noisy blending bug was fixed, and why cranking
+        # `strength` to 1.0 was needed to approach the fork's quality at
+        # `visual_prompt_strength=0.15`.
+        #
+        # Fix: when a visual_prompt is present, mirror the fork's own inversion to get the
+        # "how many steps does the visual prompt need" signal, and let it raise (never
+        # lower) the effective strength used for the timestep schedule. `strength` still
+        # keeps its original meaning and still works standalone / together with a strongly
+        # blended visual_prompt (high vp_strength => low 1 - vp_strength => `strength`
+        # takes over), matching the fork's behavior without taking away the main slider's
+        # existing function.
+        if visual_prompt is not None:
+            vp_strength = 0.15 if visual_prompt_strength is None else float(visual_prompt_strength)
+            vp_strength = max(0.0, min(1.0, vp_strength))
+            effective_strength = max(strength, 1.0 - vp_strength)
+        else:
+            vp_strength = 0.0
+            effective_strength = strength
+
         # 5. Prepare timesteps
         self.scheduler.set_timesteps(num_inference_steps, device=device)
-        timesteps, num_inference_steps = self.get_timesteps(num_inference_steps, strength, device)
+        timesteps, num_inference_steps = self.get_timesteps(num_inference_steps, effective_strength, device)
         latent_timestep = timesteps[:1].repeat(batch_size * num_images_per_prompt)
         self._num_timesteps = len(timesteps)
 
         # 6. Prepare latent variables
-        latents = self.prepare_latents(
+        # NOTE ON VISUAL PROMPT FIX (part 2 - clean vs. noisy latents):
+        # Previously, `visual_prompt` was VAE-encoded to a *clean* (noise-free) latent
+        # and linearly blended directly into `latents` *after* `latents` had already
+        # been noised to `latent_timestep` by `prepare_latents(..., add_noise=True)`.
+        # Mixing a clean latent into an already-noised latent injects out-of-distribution,
+        # un-attenuated high-frequency signal that does not match the amount of noise the
+        # UNet expects at that timestep. The model cannot reconcile this mismatch and the
+        # result is a soft/blurry image, no matter how the strength sliders are tuned.
+        #
+        # The fix (matching how the reference/fork implementation handles its single
+        # img2img source image) is to always blend in *clean* latent space first, and
+        # only add the diffusion noise once, after blending, at the correct timestep.
+
+        # Get the *clean* (noise-free) encoded latents for the main img2img image.
+        init_latents = self.prepare_latents(
             image,
             latent_timestep,
             batch_size,
@@ -1257,17 +1305,10 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
             prompt_embeds.dtype,
             device,
             generator,
-            True,
+            False,
         )
 
-        # 6.1 Optional Visual Prompt blending (fully opt-in, does not touch existing img2img behavior)
-        # When `visual_prompt` is None (the default) this block is skipped entirely and generation is
-        # identical to before this feature existed. When provided, it lightly biases the already-prepared
-        # `latents` toward the color palette / overall look of the reference image.
         if visual_prompt is not None:
-            vp_strength = 0.15 if visual_prompt_strength is None else float(visual_prompt_strength)
-            vp_strength = max(0.0, min(1.0, vp_strength))
-
             vp_image = self.image_processor.preprocess(visual_prompt, height=height, width=width).to(dtype=torch.float32)
 
             needs_upcasting_vp = self.vae.dtype == torch.float16 and self.vae.config.force_upcast
@@ -1279,18 +1320,27 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
             vp_latents = self.vae.encode(vp_image).latent_dist.sample(generator=generator)
 
             if needs_upcasting_vp:
-                self.vae.to(latents.dtype)
+                self.vae.to(init_latents.dtype)
 
-            vp_latents = vp_latents.to(latents.dtype)
+            vp_latents = vp_latents.to(init_latents.dtype)
             vp_latents = self.vae.config.scaling_factor * vp_latents
 
-            if vp_latents.shape[0] != latents.shape[0]:
-                if latents.shape[0] % vp_latents.shape[0] == 0:
-                    vp_latents = vp_latents.repeat(latents.shape[0] // vp_latents.shape[0], 1, 1, 1)
+            if vp_latents.shape[0] != init_latents.shape[0]:
+                if init_latents.shape[0] % vp_latents.shape[0] == 0:
+                    vp_latents = vp_latents.repeat(init_latents.shape[0] // vp_latents.shape[0], 1, 1, 1)
                 else:
-                    vp_latents = vp_latents[:1].repeat(latents.shape[0], 1, 1, 1)
+                    vp_latents = vp_latents[:1].repeat(init_latents.shape[0], 1, 1, 1)
 
-            latents = (1.0 - vp_strength) * latents + vp_strength * vp_latents
+            # Blend the two *clean* latents together (no noise involved yet).
+            init_latents = (1.0 - vp_strength) * init_latents + vp_strength * vp_latents
+
+        # Add the diffusion noise exactly once, on the (possibly blended) clean latents,
+        # at the timestep the denoising loop is actually about to start from. This is the
+        # same noise-injection step `prepare_latents(..., add_noise=True)` would have done
+        # for a single image, just applied after blending instead of before.
+        noise = randn_tensor(init_latents.shape, generator=generator, device=device, dtype=init_latents.dtype)
+        latents = self.scheduler.add_noise(init_latents, noise, latent_timestep)
+
 
         # # 6.5 Optionally get Guidance Scale Embedding
         timestep_cond = None
