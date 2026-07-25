@@ -13,9 +13,10 @@ The code barely follows any DRY principles as it started as a personal modificat
 - PNG metadata writing for all autosaved images.
 - Metadata reader box in the GUI (load metadata from a PNG and apply it back to all fields).
 
-🎨 Models, LoRAs & Styles
+🎨 Models, LoRAs, Embeddings & Styles
 - Model selector dropdown (choose your base SDXL model easily).
 - Multiple LoRA loader. Load and combine up to 8 LoRAs with different weights.
+- Embeddings loader with a dropdown menu to insert to prompt or negative prompt.
 - New default model: eniora/RealVisXL_V5.0 (better than YamerMIX). Other good tested models: John6666/albedobase-xl-v31large-sdxl/, ProtoVision XL 6.6, misri/juggernautXL_juggXIByRundiffusion, John6666/cyberrealistic-xl-v58-sdxl.
 - Added over 1100 styles, including many from Fooocus and StyleSelectorXL.
 - New CN pose model by xinsir, found it a bit better than the original with better colors.
@@ -28,6 +29,7 @@ The code barely follows any DRY principles as it started as a personal modificat
 - VAE tiling option to improve VRAM efficiency.
 - Resolution slider up to 4096px.
 - Generate multiple images in one run, each with a random seed.
+- Stop button.
 
 👤 Face Enhancement
 - Enhance Non-Face Region with adjustable padding with profiles: Default, Balanced, High, or Custom padding amount.
