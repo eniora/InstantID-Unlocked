@@ -365,7 +365,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
 
     def request_stop():
         stop_event.set()
-        gr.Info("A request to stop all currently running tasks has been initiated. Generation will stop when the current task or step is finished processing.")
+        gr.Info("A request to stop all currently running tasks has been initiated. Generation will stop when the current task or step has finished processing.")
 
     if vram_gb >= 15:
         pipe = None
@@ -1972,7 +1972,7 @@ Scheduler: {scheduler}"""
                         insert_embedding_prompt = gr.Button("➕ Insert into Prompt", scale=1, visible=False)
                         insert_embedding_negative = gr.Button("➕ Insert into Negative Prompt", scale=1, visible=False)
                     with gr.Row():
-                        refresh_embeddings = gr.Button("🔄 Refresh Embeddings List (forces a reload on next generation)", scale=1, elem_classes="toolbutton", visible=False)
+                        refresh_embeddings = gr.Button("🔄 Refresh Embeddings List (forces embeddings reload on next generation)", scale=1, elem_classes="toolbutton", visible=False)
 
                     enable_embeddings.change(
                         fn=lambda x: gr.Markdown(visible=x),
