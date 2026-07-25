@@ -757,6 +757,8 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         custom_resize_height,
         enable_img2img,
         strength,
+        visual_prompt_image,
+        visual_prompt_strength,
         exact_ratio,
         progress=gr.Progress(),
     ):
@@ -1000,6 +1002,11 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             control_scales = float(identitynet_strength_ratio)
             control_images = face_kps
 
+        visual_prompt_pil = None
+        if enable_img2img and visual_prompt_image:
+            visual_prompt_pil = load_image(visual_prompt_image)
+            visual_prompt_pil = resize_img(visual_prompt_pil, size=(width, height), mode=resize_mode_enum)
+
         generator = torch.Generator(device=device).manual_seed(seed)
 
         print("Starting image generation...")
@@ -1011,6 +1018,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         print(f"img2img Mode: {'Enabled' if enable_img2img else 'Disabled'}")
         if enable_img2img:
             print(f"img2img Denoising Strength: {strength}")
+            print(f"Visual Prompt: {'Enabled (Strength: ' + str(visual_prompt_strength) + ')' if visual_prompt_pil is not None else 'Disabled'}")
         print(f"Enhance non-face region: {'True' if enhance_face_region else 'False'} ({enhance_strength}{f' | Padding: {custom_enhance_padding:.2f}' if enhance_strength == 'Custom' else ''})")
         print(f"Guidance scale: {guidance_scale}")
         print(f"Model: {model_name}")
@@ -1119,6 +1127,8 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                         image=face_image,
                         control_image=control_images,
                         strength=strength,
+                        visual_prompt=visual_prompt_pil,
+                        visual_prompt_strength=visual_prompt_strength,
                     )
                 else:
                     result = pipe(
@@ -1159,6 +1169,8 @@ Use custom resize: {enable_custom_resize}
 Custom resize size: {custom_resize_width}x{custom_resize_height}
 img2img Strength: {strength}
 img2img Mode Enabled: {enable_img2img}
+Visual Prompt Enabled: {visual_prompt_pil is not None}
+Visual Prompt Strength: {visual_prompt_strength if visual_prompt_pil is not None else 'N/A'}
 IdentityNet strength: {identitynet_strength_ratio}
 Adapter strength: {adapter_strength_ratio}
 Pose strength: {pose_strength}
@@ -1654,11 +1666,33 @@ Scheduler: {scheduler}"""
                         scale=2
                     )
                     strength = gr.Slider(label="img2img Denoising Strength", minimum=0.1, maximum=1.0, value=0.95, step=0.05, visible=False, scale=5, info="Use this for more control over e.g., location setting, clothing style, pose, etc. A lower value preserves more of the original image. CFG scale of ~3 is recommended.")
+                with gr.Row():
+                    visual_prompt_file = gr.Image(
+                        label="Visual Prompt (Optional)",
+                        height=200,
+                        type="filepath",
+                        visible=False,
+                        scale=2,
+                    )
+                    visual_prompt_strength_slider = gr.Slider(
+                        label="Visual Prompt Strength",
+                        minimum=0.0,
+                        maximum=0.5,
+                        value=0.15,
+                        step=0.01,
+                        visible=False,
+                        scale=3,
+                        info="Optional secondary reference image that nudges the color palette / overall style of the img2img result. Has no effect unless an image is uploaded. Recommended: 0.05 - 0.3."
+                    )
 
                 def toggle_img2img(enable):
-                    return gr.update(visible=enable)
+                    return gr.update(visible=enable), gr.update(visible=enable), gr.update(visible=enable)
 
-                enable_img2img.change(toggle_img2img, inputs=enable_img2img, outputs=strength)
+                enable_img2img.change(
+                    toggle_img2img,
+                    inputs=enable_img2img,
+                    outputs=[strength, visual_prompt_file, visual_prompt_strength_slider],
+                )
                 with gr.Accordion("PNG Metadata Reader", open=True):
                     with gr.Row():
                         metadata_input = gr.Image(
@@ -2096,6 +2130,8 @@ Scheduler: {scheduler}"""
                 custom_resize_height,
                 enable_img2img,
                 strength,
+                visual_prompt_file,
+                visual_prompt_strength_slider,
                 exact_ratio,
             ]
             generate.click(fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False).then(

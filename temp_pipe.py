@@ -926,6 +926,8 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
         image: PipelineImageInput = None,
         control_image: PipelineImageInput = None,
         strength: float = 0.8,
+        visual_prompt: Optional[PipelineImageInput] = None,
+        visual_prompt_strength: Optional[float] = None,
         height: Optional[int] = None,
         width: Optional[int] = None,
         num_inference_steps: int = 50,
@@ -978,6 +980,13 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
                 and/or width are passed, `image` is resized accordingly. If multiple ControlNets are specified in
                 `init`, images must be passed as a list such that each element of the list can be correctly batched for
                 input to a single ControlNet.
+            visual_prompt (`PIL.Image.Image`, *optional*):
+                An optional secondary reference image used only to nudge the overall color palette / style of
+                the generation. It does not replace or affect the `image`/`strength` img2img behavior in any way;
+                if left as `None` (the default) generation is completely unchanged.
+            visual_prompt_strength (`float`, *optional*, defaults to 0.15 when `visual_prompt` is provided):
+                How strongly the `visual_prompt` biases the starting latents. Recommended values: 0.05 - 0.3.
+                Ignored if `visual_prompt` is `None`.
             height (`int`, *optional*, defaults to `self.unet.config.sample_size * self.vae_scale_factor`):
                 The height in pixels of the generated image. Anything below 512 pixels won't work well for
                 [stabilityai/stable-diffusion-xl-base-1.0](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0)
@@ -1250,6 +1259,38 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
             generator,
             True,
         )
+
+        # 6.1 Optional Visual Prompt blending (fully opt-in, does not touch existing img2img behavior)
+        # When `visual_prompt` is None (the default) this block is skipped entirely and generation is
+        # identical to before this feature existed. When provided, it lightly biases the already-prepared
+        # `latents` toward the color palette / overall look of the reference image.
+        if visual_prompt is not None:
+            vp_strength = 0.15 if visual_prompt_strength is None else float(visual_prompt_strength)
+            vp_strength = max(0.0, min(1.0, vp_strength))
+
+            vp_image = self.image_processor.preprocess(visual_prompt, height=height, width=width).to(dtype=torch.float32)
+
+            needs_upcasting_vp = self.vae.dtype == torch.float16 and self.vae.config.force_upcast
+            if needs_upcasting_vp:
+                vp_image = vp_image.float()
+                self.vae.to(dtype=torch.float32)
+
+            vp_image = vp_image.to(device=device)
+            vp_latents = self.vae.encode(vp_image).latent_dist.sample(generator=generator)
+
+            if needs_upcasting_vp:
+                self.vae.to(latents.dtype)
+
+            vp_latents = vp_latents.to(latents.dtype)
+            vp_latents = self.vae.config.scaling_factor * vp_latents
+
+            if vp_latents.shape[0] != latents.shape[0]:
+                if latents.shape[0] % vp_latents.shape[0] == 0:
+                    vp_latents = vp_latents.repeat(latents.shape[0] // vp_latents.shape[0], 1, 1, 1)
+                else:
+                    vp_latents = vp_latents[:1].repeat(latents.shape[0], 1, 1, 1)
+
+            latents = (1.0 - vp_strength) * latents + vp_strength * vp_latents
 
         # # 6.5 Optionally get Guidance Scale Embedding
         timestep_cond = None
