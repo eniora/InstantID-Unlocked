@@ -281,6 +281,89 @@ def get_available_loras():
             lora_files.append(file)
     return lora_files
 
+UPSCALERS_DIR = "./models/Upscalers"
+DEFAULT_UPSCALER = "4x_NMKD-Superscale-SP_178000_G.pth"
+
+def get_available_upscalers():
+    if not os.path.exists(UPSCALERS_DIR):
+        return []
+    upscaler_files = []
+    for file in os.listdir(UPSCALERS_DIR):
+        if file.lower().endswith(('.pth', '.safetensors', '.pt')):
+            upscaler_files.append(file)
+    return sorted(upscaler_files)
+
+_upscaler_model_cache = {}
+
+def load_upscaler_model(upscaler_name):
+    """
+    Loads (and caches) a single-file ESRGAN-family super-resolution model
+    (e.g. 4x_NMKD-Superscale-SP, RealESRGAN, 4x-UltraSharp, SwinIR, etc.)
+    via the `spandrel` library, which auto-detects the architecture from
+    the checkpoint the same way ComfyUI / Forge / recent A1111 builds do.
+    """
+    if upscaler_name in _upscaler_model_cache:
+        return _upscaler_model_cache[upscaler_name]
+
+    upscaler_path = os.path.join(UPSCALERS_DIR, upscaler_name)
+    if not os.path.exists(upscaler_path):
+        raise gr.Error(f"Upscaler model not found at {upscaler_path}")
+
+    try:
+        from spandrel import ModelLoader
+    except ImportError:
+        raise gr.Error(
+            "The 'spandrel' package is required for Hires Fix upscaling. "
+            "Install it with: pip install spandrel"
+        )
+
+    model = ModelLoader().load_from_file(upscaler_path)
+    model = model.to(device)
+    model.eval()
+    _upscaler_model_cache[upscaler_name] = model
+    return model
+
+def _tile_starts(total, tile, stride):
+    if total <= tile:
+        return [0]
+    starts = list(range(0, total - tile + 1, stride))
+    if not starts or starts[-1] != total - tile:
+        starts.append(total - tile)
+    return starts
+
+@torch.no_grad()
+def run_upscaler_model(model, image, tile_size=512, tile_overlap=32):
+    """
+    Runs a spandrel image super-resolution model over a PIL image. Large
+    images are processed in overlapping tiles (blended in the overlap
+    region) so VRAM usage stays bounded regardless of input resolution.
+    Returns a PIL image scaled by the model's native scale factor.
+    """
+    img = np.array(image.convert("RGB")).astype(np.float32) / 255.0
+    img_tensor = torch.from_numpy(img).permute(2, 0, 1).unsqueeze(0).to(device=device, dtype=torch.float32)
+
+    scale = getattr(model, "scale", None) or 4
+    _, _, h, w = img_tensor.shape
+    stride = max(tile_size - tile_overlap, 1)
+
+    if h <= tile_size and w <= tile_size:
+        output = model(img_tensor)
+    else:
+        output = torch.zeros((1, 3, h * scale, w * scale), device=device, dtype=torch.float32)
+        weight = torch.zeros_like(output)
+        for y in _tile_starts(h, tile_size, stride):
+            for x in _tile_starts(w, tile_size, stride):
+                tile = img_tensor[:, :, y:y + tile_size, x:x + tile_size]
+                tile_out = model(tile)
+                oy, ox = y * scale, x * scale
+                oh, ow = tile_out.shape[2], tile_out.shape[3]
+                output[:, :, oy:oy + oh, ox:ox + ow] += tile_out
+                weight[:, :, oy:oy + oh, ox:ox + ow] += 1.0
+        output = output / weight.clamp(min=1e-8)
+
+    output = output.clamp(0, 1).squeeze(0).permute(1, 2, 0).cpu().numpy()
+    return Image.fromarray((output * 255.0).round().astype(np.uint8))
+
 EMBEDDINGS_DIR = "./models/Embeddings"
 
 def get_available_embeddings():
@@ -362,6 +445,7 @@ def update_det_size(det_size_name):
 def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
     stop_event = threading.Event()
     embedding_state = {"loaded": False, "tokens": []}
+    hires_sibling_pipe = None
 
     def request_stop():
         stop_event.set()
@@ -642,6 +726,43 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             input_image = Image.fromarray(res)
         return input_image
 
+    def resize_control_images(control_images, size):
+        if control_images is None:
+            return control_images
+        if isinstance(control_images, list):
+            return [img.resize(size, PIL.Image.LANCZOS) if hasattr(img, "resize") else img for img in control_images]
+        return control_images.resize(size, PIL.Image.LANCZOS) if hasattr(control_images, "resize") else control_images
+
+    def get_img2img_sibling_pipe(base_pipe):
+        """
+        Hires Fix needs a second img2img denoising pass. Rather than doing a
+        full disk reload of a second SDXL pipeline (expensive and VRAM-heavy),
+        this builds a lightweight wrapper pipeline that reuses the *same*
+        already-loaded unet/vae/text encoders/controlnet objects as the base
+        pipe (diffusers' `.components` returns references, not copies), so it
+        costs effectively no extra VRAM. Falls back to a full reload only if
+        that fails for some reason.
+        """
+        nonlocal hires_sibling_pipe
+        if isinstance(base_pipe, StableDiffusionXLInstantIDImg2ImgPipeline):
+            return base_pipe
+
+        if hires_sibling_pipe is not None and getattr(hires_sibling_pipe, "_base_pipe_id", None) == id(base_pipe):
+            return hires_sibling_pipe
+
+        try:
+            hires_sibling_pipe = StableDiffusionXLInstantIDImg2ImgPipeline(**base_pipe.components).to(device)
+            hires_sibling_pipe.load_ip_adapter_instantid(face_adapter)
+            hires_sibling_pipe._base_pipe_id = id(base_pipe)
+            hires_sibling_pipe._current_model = getattr(base_pipe, "_current_model", None)
+        except Exception as e:
+            print(f"Could not build a lightweight img2img sibling pipeline for Hires Fix ({e}); "
+                  f"falling back to a full reload instead.")
+            hires_sibling_pipe = load_model_and_update_pipe(getattr(base_pipe, "_current_model", DEFAULT_MODEL), True)
+            hires_sibling_pipe._base_pipe_id = id(base_pipe)
+
+        return hires_sibling_pipe
+
     def apply_style(
         style_name: str, positive: str, negative: str = ""
     ) -> Tuple[str, str]:
@@ -758,6 +879,11 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         enable_img2img,
         strength,
         exact_ratio,
+        enable_hires_fix,
+        hires_upscaler,
+        hires_upscale_by,
+        hires_steps,
+        hires_denoising_strength,
         progress=gr.Progress(),
     ):
         file_prefix = file_prefix.strip().translate(FILENAME_SAFE_TRANS)
@@ -1011,6 +1137,12 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         print(f"img2img Mode: {'Enabled' if enable_img2img else 'Disabled'}")
         if enable_img2img:
             print(f"img2img Denoising Strength: {strength}")
+        print(f"Hires Fix: {'Enabled' if enable_hires_fix else 'Disabled'}")
+        if enable_hires_fix:
+            print(f"Hires Upscaler: {hires_upscaler}")
+            print(f"Hires Upscale By: {hires_upscale_by}")
+            print(f"Hires Steps: {hires_steps}{' (Auto)' if hires_steps == 0 else ''}")
+            print(f"Hires Denoising Strength: {hires_denoising_strength}")
         print(f"Enhance non-face region: {'True' if enhance_face_region else 'False'} ({enhance_strength}{f' | Padding: {custom_enhance_padding:.2f}' if enhance_strength == 'Custom' else ''})")
         print(f"Guidance scale: {guidance_scale}")
         print(f"Model: {model_name}")
@@ -1135,6 +1267,59 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 raise
 
             image = result.images[0]
+
+            if enable_hires_fix:
+                print("Running Hires fix pass...")
+                progress(
+                    0.0,
+                    desc=f"Hires Fix: upscaling image {i + 1} of {num_outputs}"
+                )
+                upscaler_model = load_upscaler_model(hires_upscaler)
+                upscaled_image = run_upscaler_model(upscaler_model, image)
+
+                hires_width = max(8, int(round((width * hires_upscale_by) / 8) * 8))
+                hires_height = max(8, int(round((height * hires_upscale_by) / 8) * 8))
+                upscaled_image = upscaled_image.resize((hires_width, hires_height), PIL.Image.LANCZOS)
+
+                hires_pipe = get_img2img_sibling_pipe(pipe)
+                hires_pipe.set_ip_adapter_scale(adapter_strength_ratio)
+                hires_control_images = resize_control_images(control_images, (hires_width, hires_height))
+                effective_hires_steps = int(hires_steps) if hires_steps and hires_steps > 0 else num_steps
+                hires_generator = torch.Generator(device=device).manual_seed(seed + i)
+
+                def hires_gradio_callback_lambda(pipe_obj, step, timestep, callback_kwargs):
+                    if stop_event.is_set():
+                        raise GenerationStopped()
+                    progress(
+                        ((step + 1) / effective_hires_steps),
+                        desc=f"Hires Fix: denoising image {i + 1} of {num_outputs} (Step {step + 1}/{effective_hires_steps})"
+                    )
+                    return callback_kwargs
+
+                try:
+                    hires_result = hires_pipe(
+                        prompt=prompt_for_generation,
+                        negative_prompt=negative_prompt_for_generation,
+                        image_embeds=face_emb,
+                        image=upscaled_image,
+                        control_image=hires_control_images,
+                        controlnet_conditioning_scale=control_scales,
+                        strength=hires_denoising_strength,
+                        num_inference_steps=effective_hires_steps,
+                        guidance_scale=guidance_scale,
+                        height=hires_height,
+                        width=hires_width,
+                        generator=hires_generator,
+                        callback_on_step_end=hires_gradio_callback_lambda,
+                    )
+                    image = hires_result.images[0]
+                except GenerationStopped:
+                    print(f"Stop requested - Hires Fix pass of image {i + 1} was interrupted mid-way.\n")
+                    stopped_early = True
+                    torch.cuda.empty_cache()
+                    break
+                torch.cuda.empty_cache()
+
             images.append(image)
 
             info_text = f"""Prompt: {prompt}
@@ -1159,6 +1344,11 @@ Use custom resize: {enable_custom_resize}
 Custom resize size: {custom_resize_width}x{custom_resize_height}
 img2img Strength: {strength}
 img2img Mode Enabled: {enable_img2img}
+Hires Fix Enabled: {enable_hires_fix}
+Hires Upscaler: {hires_upscaler}
+Hires Upscale By: {hires_upscale_by}
+Hires Steps: {hires_steps}
+Hires Denoising Strength: {hires_denoising_strength}
 IdentityNet strength: {identitynet_strength_ratio}
 Adapter strength: {adapter_strength_ratio}
 Pose strength: {pose_strength}
@@ -1677,6 +1867,65 @@ Scheduler: {scheduler}"""
                         inputs=enhance_strength,
                         outputs=custom_enhance_padding
                     )
+                with gr.Group():
+                    with gr.Row():
+                        enable_hires_fix = gr.Checkbox(label="Enable Hires Fix", value=False, scale=1)
+                        hires_upscaler = gr.Dropdown(
+                            label="Upscaler",
+                            choices=get_available_upscalers() or [DEFAULT_UPSCALER],
+                            value=DEFAULT_UPSCALER if DEFAULT_UPSCALER in get_available_upscalers() else (get_available_upscalers()[0] if get_available_upscalers() else DEFAULT_UPSCALER),
+                            allow_custom_value=True,
+                            info=f"Place upscaler .pth/.safetensors files in /models/Upscalers",
+                            visible=False,
+                            scale=3
+                        )
+                        refresh_hires_upscalers = gr.Button("🔄", scale=0, min_width=40, visible=False)
+                    with gr.Row(visible=False) as hires_fix_row:
+                        hires_upscale_by = gr.Slider(
+                            label="Hires Upscale By",
+                            minimum=1.0,
+                            maximum=4.0,
+                            step=0.05,
+                            value=1.5,
+                            info="Target resolution = base resolution × this factor.",
+                            scale=3
+                        )
+                        hires_steps = gr.Slider(
+                            label="Hires Steps (0 = Auto)",
+                            minimum=0,
+                            maximum=100,
+                            step=1,
+                            value=0,
+                            info="Steps for the second (hires) pass. 0 = Auto (same as Steps above * Hires strength value).",
+                            scale=3
+                        )
+                        hires_denoising_strength = gr.Slider(
+                            label="Hires Denoising Strength",
+                            minimum=0.0,
+                            maximum=1.0,
+                            step=0.05,
+                            value=0.5,
+                            info="Lower preserves more of the upscaled image; higher adds more new detail/noise.",
+                            scale=3
+                        )
+
+                    def toggle_hires_fix_ui(enable):
+                        return gr.update(visible=enable), gr.update(visible=enable), gr.update(visible=enable)
+
+                    enable_hires_fix.change(
+                        fn=toggle_hires_fix_ui,
+                        inputs=enable_hires_fix,
+                        outputs=[hires_upscaler, refresh_hires_upscalers, hires_fix_row]
+                    )
+
+                    def refresh_hires_upscaler_list():
+                        choices = get_available_upscalers() or [DEFAULT_UPSCALER]
+                        return gr.update(choices=choices)
+
+                    refresh_hires_upscalers.click(
+                        fn=refresh_hires_upscaler_list,
+                        outputs=hires_upscaler
+                    )
                 with gr.Row():
                     det_size_name = gr.Dropdown(
                         label="Face Detection Size",
@@ -2157,6 +2406,11 @@ Scheduler: {scheduler}"""
                 enable_img2img,
                 strength,
                 exact_ratio,
+                enable_hires_fix,
+                hires_upscaler,
+                hires_upscale_by,
+                hires_steps,
+                hires_denoising_strength,
             ]
             generate.click(fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False).then(
                 fn=generate_image, inputs=shared_inputs, outputs=[gallery]
@@ -2251,7 +2505,12 @@ Scheduler: {scheduler}"""
                     "pad_to_max_side": False,
                     "enable_custom_resize": False,
                     "custom_resize_width": 960,
-                    "custom_resize_height": 1280
+                    "custom_resize_height": 1280,
+                    "enable_hires_fix": False,
+                    "hires_upscaler": DEFAULT_UPSCALER,
+                    "hires_upscale_by": 1.5,
+                    "hires_steps": 0,
+                    "hires_denoising_strength": 0.5
                 }
                 if metadata_text:
                     lines = metadata_text.split('\n')
@@ -2355,6 +2614,27 @@ Scheduler: {scheduler}"""
                             settings["enable_img2img"] = "true" in line.lower()
                         elif line.startswith("img2img Strength:"):
                             settings["strength"] = float(line.replace("img2img Strength:", "").strip())
+                        elif line.startswith("Hires Fix Enabled:"):
+                            settings["enable_hires_fix"] = "true" in line.lower()
+                        elif line.startswith("Hires Upscaler:"):
+                            upscaler_value = line.replace("Hires Upscaler:", "").strip()
+                            if upscaler_value:
+                                settings["hires_upscaler"] = upscaler_value
+                        elif line.startswith("Hires Upscale By:"):
+                            try:
+                                settings["hires_upscale_by"] = float(line.replace("Hires Upscale By:", "").strip())
+                            except ValueError:
+                                pass
+                        elif line.startswith("Hires Steps:"):
+                            try:
+                                settings["hires_steps"] = int(line.replace("Hires Steps:", "").strip())
+                            except ValueError:
+                                pass
+                        elif line.startswith("Hires Denoising Strength:"):
+                            try:
+                                settings["hires_denoising_strength"] = float(line.replace("Hires Denoising Strength:", "").strip())
+                            except ValueError:
+                                pass
                         elif line.startswith("Enhance non-face region:"):
                             settings["enhance_face_region"] = "true" in line.lower()
                         elif line.startswith("Enhance region profile:"):
@@ -2486,6 +2766,11 @@ Scheduler: {scheduler}"""
                     settings["custom_resize_height"],
                     settings["exact_ratio"],
                     settings["enable_embeddings"],
+                    settings["enable_hires_fix"],
+                    settings["hires_upscaler"],
+                    settings["hires_upscale_by"],
+                    settings["hires_steps"],
+                    settings["hires_denoising_strength"],
                     accordion_update,
                     gr.update(open=open_settings_accordion)
                 ]
@@ -2548,6 +2833,11 @@ Scheduler: {scheduler}"""
                     custom_resize_height,
                     exact_ratio,
                     enable_embeddings,
+                    enable_hires_fix,
+                    hires_upscaler,
+                    hires_upscale_by,
+                    hires_steps,
+                    hires_denoising_strength,
                     controlnet_accordion,
                     style_settings_accordion
                 ]
@@ -2559,11 +2849,15 @@ Scheduler: {scheduler}"""
                 fn=toggle_embeddings_ui,
                 inputs=[enable_embeddings],
                 outputs=EMBEDDINGS_OUTPUTS
+            ).then(
+                fn=toggle_hires_fix_ui,
+                inputs=[enable_hires_fix],
+                outputs=[hires_upscaler, refresh_hires_upscalers, hires_fix_row]
             )
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v6.0.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v6.1.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
