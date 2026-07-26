@@ -1284,15 +1284,19 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 hires_pipe = get_img2img_sibling_pipe(pipe)
                 hires_pipe.set_ip_adapter_scale(adapter_strength_ratio)
                 hires_control_images = resize_control_images(control_images, (hires_width, hires_height))
-                effective_hires_steps = int(hires_steps) if hires_steps and hires_steps > 0 else num_steps
+                if hires_steps and hires_steps > 0:
+                    effective_hires_steps = max(1, int(round(hires_steps / max(hires_denoising_strength, 1e-4))))
+                    display_hires_steps = int(hires_steps)
+                else:
+                    effective_hires_steps = num_steps
+                    display_hires_steps = max(1, int(round(num_steps * hires_denoising_strength)))
                 hires_generator = torch.Generator(device=device).manual_seed(seed + i)
-
                 def hires_gradio_callback_lambda(pipe_obj, step, timestep, callback_kwargs):
                     if stop_event.is_set():
                         raise GenerationStopped()
                     progress(
-                        ((step + 1) / effective_hires_steps),
-                        desc=f"Hires Fix: denoising image {i + 1} of {num_outputs} (Step {step + 1}/{effective_hires_steps})"
+                        ((step + 1) / display_hires_steps),
+                        desc=f"Hires Fix: denoising image {i + 1} of {num_outputs} (Step {step + 1}/{display_hires_steps})"
                     )
                     return callback_kwargs
 
