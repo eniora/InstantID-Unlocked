@@ -1599,7 +1599,7 @@ Scheduler: {scheduler}"""
                     step=0.05,
                     value=0.6,
                 )
-                with gr.Accordion("Controlnet", open=False) as controlnet_accordion:
+                with gr.Accordion("🎚️ Controlnet", open=False) as controlnet_accordion:
                     controlnet_selection = gr.CheckboxGroup(
                         ["pose", "canny", "depth"], value=[], show_label=False,
                         info="Use pose for skeleton inference, canny for edge detection, and depth for depth map estimation. You can try all three to control the generation process"
@@ -1638,7 +1638,7 @@ Scheduler: {scheduler}"""
                         minimum=1,
                         maximum=150,
                         step=1,
-                        value=22,
+                        value=20,
                     )
                 with gr.Row():
                     randomize_seed = gr.Checkbox(label="Randomize seed", scale=1, value=True)
@@ -2202,7 +2202,7 @@ Scheduler: {scheduler}"""
                     "negative_prompt": DEFAULT_NEGATIVE_PROFILE,
                     "resize_max_side": 1280,
                     "seed": 12345,
-                    "num_steps": 22,
+                    "num_steps": 20,
                     "guidance_scale": 4.0,
                     "enable_img2img": False,
                     "strength": 0.95,
