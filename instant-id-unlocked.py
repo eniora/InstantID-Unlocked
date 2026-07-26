@@ -1840,33 +1840,6 @@ Scheduler: {scheduler}"""
                         value=12345,
                         show_label=False
                     )
-                with gr.Row():
-                    enhance_face_region = gr.Checkbox(label="Enhance non-face region", scale=2, value=True)
-                    enhance_strength = gr.Dropdown(
-                        label="Non-Face Region Mask Size",
-                        choices=["Default", "Balanced", "High", "Custom"],
-                        value="Balanced",
-                        scale=4,
-                        info="Larger values retain more from the input image around the face (e.g., hairstyle)."
-                    )
-                    custom_enhance_padding = gr.Slider(
-                        label="Custom enhancement padding (%)",
-                        minimum=0.0,
-                        maximum=0.9,
-                        step=0.05,
-                        value=0.15,
-                        visible=False,
-                        scale=3,
-                        interactive=True
-                    )
-                    def toggle_custom_padding_dropdown(value):
-                        return gr.update(visible=(value == "Custom"))
-
-                    enhance_strength.change(
-                        fn=toggle_custom_padding_dropdown,
-                        inputs=enhance_strength,
-                        outputs=custom_enhance_padding
-                    )
                 with gr.Group():
                     with gr.Row():
                         enable_hires_fix = gr.Checkbox(label="Enable Hires Fix", value=False, scale=1)
@@ -1925,6 +1898,33 @@ Scheduler: {scheduler}"""
                     refresh_hires_upscalers.click(
                         fn=refresh_hires_upscaler_list,
                         outputs=hires_upscaler
+                    )
+                with gr.Row():
+                    enhance_face_region = gr.Checkbox(label="Enhance non-face region", scale=2, value=True)
+                    enhance_strength = gr.Dropdown(
+                        label="Non-Face Region Mask Size",
+                        choices=["Default", "Balanced", "High", "Custom"],
+                        value="Balanced",
+                        scale=4,
+                        info="Larger values retain more from the input image around the face (e.g., hairstyle)."
+                    )
+                    custom_enhance_padding = gr.Slider(
+                        label="Custom enhancement padding (%)",
+                        minimum=0.0,
+                        maximum=0.9,
+                        step=0.05,
+                        value=0.15,
+                        visible=False,
+                        scale=3,
+                        interactive=True
+                    )
+                    def toggle_custom_padding_dropdown(value):
+                        return gr.update(visible=(value == "Custom"))
+
+                    enhance_strength.change(
+                        fn=toggle_custom_padding_dropdown,
+                        inputs=enhance_strength,
+                        outputs=custom_enhance_padding
                     )
                 with gr.Row():
                     det_size_name = gr.Dropdown(
