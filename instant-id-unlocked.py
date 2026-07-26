@@ -1234,8 +1234,6 @@ Scheduler: {scheduler}"""
             }
         });
 
-        // Ctrl/Cmd + Up/Down: adjust the weight of the selected (or word under the
-        // cursor) text in the Prompt / Negative Prompt boxes, e.g. "city" -> "(city:1.1)"
         document.addEventListener("keydown", (e) => {
             if (!(e.ctrlKey || e.metaKey)) return;
             if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
@@ -1250,7 +1248,6 @@ Scheduler: {scheduler}"""
             let start = target.selectionStart;
             let end = target.selectionEnd;
 
-            // No selection: expand to the "word" under the cursor.
             if (start === end) {
                 const isWordChar = (c) => c !== undefined && !/[\\s,()\\[\\]{}]/.test(c);
                 while (start > 0 && isWordChar(text[start - 1])) start--;
@@ -1258,7 +1255,6 @@ Scheduler: {scheduler}"""
             }
             if (start === end) return;
 
-            // If the selection is already wrapped like "(...:1.1)", read the existing weight.
             let wrapStart = start;
             let wrapEnd = end;
             let inner = text.slice(start, end);
@@ -1280,7 +1276,6 @@ Scheduler: {scheduler}"""
 
             let newText, newSelStart, newSelEnd;
             if (Math.abs(newWeight - 1.0) < 0.001) {
-                // Back to neutral: strip the wrapper entirely.
                 newText = text.slice(0, wrapStart) + inner + text.slice(wrapEnd);
                 newSelStart = wrapStart;
                 newSelEnd = wrapStart + inner.length;
