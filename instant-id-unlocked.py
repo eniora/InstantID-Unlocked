@@ -1294,11 +1294,11 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 def hires_gradio_callback_lambda(pipe_obj, step, timestep, callback_kwargs):
                     if stop_event.is_set():
                         raise GenerationStopped()
-                    actual_total = getattr(pipe_obj, "_num_timesteps", None) or display_hires_steps
-                    current_step = min(step + 1, actual_total)
+                    divisor = 2 if (enable_img2img and is_slow_scheduler) else 1
+                    current_step = min((step + 1) // divisor, display_hires_steps)
                     progress(
-                        (current_step / actual_total),
-                        desc=f"Hires Fix: denoising image {i + 1} of {num_outputs} (Step {current_step}/{actual_total})"
+                        (current_step / display_hires_steps),
+                        desc=f"Hires Fix: denoising image {i + 1} of {num_outputs} (Step {current_step}/{display_hires_steps})"
                     )
                     return callback_kwargs
 
