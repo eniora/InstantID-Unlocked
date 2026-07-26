@@ -1233,6 +1233,69 @@ Scheduler: {scheduler}"""
                 }
             }
         });
+
+        // Ctrl/Cmd + Up/Down: adjust the weight of the selected (or word under the
+        // cursor) text in the Prompt / Negative Prompt boxes, e.g. "city" -> "(city:1.1)"
+        document.addEventListener("keydown", (e) => {
+            if (!(e.ctrlKey || e.metaKey)) return;
+            if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+
+            const target = e.target;
+            if (!target || target.tagName !== "TEXTAREA") return;
+            if (!target.closest("#prompt_textbox, #negative_prompt_textbox")) return;
+
+            e.preventDefault();
+
+            const text = target.value;
+            let start = target.selectionStart;
+            let end = target.selectionEnd;
+
+            // No selection: expand to the "word" under the cursor.
+            if (start === end) {
+                const isWordChar = (c) => c !== undefined && !/[\\s,()\\[\\]{}]/.test(c);
+                while (start > 0 && isWordChar(text[start - 1])) start--;
+                while (end < text.length && isWordChar(text[end])) end++;
+            }
+            if (start === end) return;
+
+            // If the selection is already wrapped like "(...:1.1)", read the existing weight.
+            let wrapStart = start;
+            let wrapEnd = end;
+            let inner = text.slice(start, end);
+            let weight = null;
+            if (text[start - 1] === "(") {
+                const after = text.slice(end);
+                const m = after.match(/^:([0-9]*\\.?[0-9]+)\\)/);
+                if (m) {
+                    weight = parseFloat(m[1]);
+                    wrapStart = start - 1;
+                    wrapEnd = end + m[0].length;
+                }
+            }
+
+            const step = 0.1;
+            const delta = e.key === "ArrowUp" ? step : -step;
+            let newWeight = Math.round(((weight !== null ? weight : 1.0) + delta) * 100) / 100;
+            newWeight = Math.max(0.1, newWeight);
+
+            let newText, newSelStart, newSelEnd;
+            if (Math.abs(newWeight - 1.0) < 0.001) {
+                // Back to neutral: strip the wrapper entirely.
+                newText = text.slice(0, wrapStart) + inner + text.slice(wrapEnd);
+                newSelStart = wrapStart;
+                newSelEnd = wrapStart + inner.length;
+            } else {
+                const replacement = "(" + inner + ":" + newWeight.toFixed(1) + ")";
+                newText = text.slice(0, wrapStart) + replacement + text.slice(wrapEnd);
+                newSelStart = wrapStart + 1;
+                newSelEnd = newSelStart + inner.length;
+            }
+
+            target.value = newText;
+            target.selectionStart = newSelStart;
+            target.selectionEnd = newSelEnd;
+            target.dispatchEvent(new Event("input", { bubbles: true }));
+        });
     }
     """
     with gr.Blocks(js=ctrl_enter_js) as gui:
@@ -1333,14 +1396,16 @@ Scheduler: {scheduler}"""
                     )
                 prompt = gr.Textbox(
                     label="Prompt",
-                    info="Giving a simple prompt is enough to achieve good face fidelity",
+                    info="Giving a simple prompt is usually enough. You can highlight text & use Ctrl + ↑/↓ keys to change the weight.",
                     placeholder="A man/woman/girl/boy in/with/as etc.",
                     value="",
+                    elem_id="prompt_textbox",
                 )
                 negative_prompt = gr.Textbox(
                     label="Negative Prompt",
                     placeholder="You can select a negative prompt profile from the settings tab below.",
-                    value=NEGATIVE_PROMPT_PRESETS["Default Negative Profile"]
+                    value=NEGATIVE_PROMPT_PRESETS["Default Negative Profile"],
+                    elem_id="negative_prompt_textbox",
                 )
                 with gr.Accordion("⚙️ Style templates and other settings including custom resolution", open=False) as style_settings_accordion:
                     with gr.Group():
@@ -2503,7 +2568,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v5.8.2</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v6.0.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
