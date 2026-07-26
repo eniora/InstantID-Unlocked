@@ -25,6 +25,7 @@ The code barely follows any DRY principles as it started as a personal modificat
 - img2img mode integrated directly (no need to run a separate pipeline).
 - Negative Prompt Profiles dropdown with many presets (General, Minimalist, Portraits, Realism, Anime, Fooocus, etc.).
 - Detection Size selector for face detection in input/reference photos.
+- Hires Fix support with upscaler drop down menu.
 - Multiple schedulers available (beyond the original EulerDiscrete).
 - VAE tiling option to improve VRAM efficiency.
 - Resolution slider up to 4096px.
