@@ -1880,7 +1880,7 @@ Scheduler: {scheduler}"""
                         )
                         hires_denoising_strength = gr.Slider(
                             label="Hires Denoising Strength",
-                            minimum=0.0,
+                            minimum=0.1,
                             maximum=1.0,
                             step=0.05,
                             value=0.5,
