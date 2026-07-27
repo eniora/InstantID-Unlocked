@@ -865,6 +865,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         hires_upscale_by,
         hires_steps,
         hires_denoising_strength,
+        save_hires_original,
         progress=gr.Progress(),
     ):
         file_prefix = file_prefix.strip().translate(FILENAME_SAFE_TRANS)
@@ -1249,7 +1250,69 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
 
             image = result.images[0]
 
+            info_text = f"""Prompt: {prompt}
+Negative Prompt: {negative_prompt}
+Input Face Image: {face_image_filename}
+Reference Pose Image: {pose_image_filename}
+Detection size: {current_det_size}
+Steps: {num_steps}
+Guidance scale: {guidance_scale}
+Seed: {seed + i}
+Model: {model_name}
+ControlNet selection: {controlnet_selection}
+Max resize side: {resize_max_side}
+Image size: {width}x{height}
+Exact aspect ratio: {exact_ratio}
+Enhance non-face region: {enhance_face_region}
+Enhance region profile: {enhance_strength}
+Enhance padding ratio: {custom_enhance_padding}
+Resize mode: {resize_mode}
+Pad to max side: {pad_to_max_side}
+Use custom resize: {enable_custom_resize}
+Custom resize size: {custom_resize_width}x{custom_resize_height}
+img2img Strength: {strength}
+img2img Mode Enabled: {enable_img2img}
+Hires Fix Enabled: {enable_hires_fix}
+Hires Upscaler: {hires_upscaler}
+Hires Upscale By: {hires_upscale_by}
+Hires Steps: {hires_steps}
+Hires Denoising Strength: {hires_denoising_strength}
+IdentityNet strength: {identitynet_strength_ratio}
+Adapter strength: {adapter_strength_ratio}
+Pose strength: {pose_strength}
+Canny strength: {canny_strength}
+Depth strength: {depth_strength}
+LoRA Enabled: {enable_lora}
+LoRA 1 selection: {'None' if disable_lora_1 or not (enable_lora and lora_selection and os.path.exists(os.path.join('./models/Loras', lora_selection))) else lora_selection}
+LoRA 1 scale: {'Disabled' if disable_lora_1 or not (enable_lora and lora_selection and os.path.exists(os.path.join('./models/Loras', lora_selection))) else lora_scale}
+LoRA 2 selection: {'None' if disable_lora_2 or not (enable_lora and lora_selection_2 and os.path.exists(os.path.join('./models/Loras', lora_selection_2))) else lora_selection_2}
+LoRA 2 scale: {'Disabled' if disable_lora_2 or not (enable_lora and lora_selection_2 and os.path.exists(os.path.join('./models/Loras', lora_selection_2))) else lora_scale_2}
+LoRA 3 selection: {'None' if disable_lora_3 or not (enable_lora and lora_selection_3 and os.path.exists(os.path.join('./models/Loras', lora_selection_3))) else lora_selection_3}
+LoRA 3 scale: {'Disabled' if disable_lora_3 or not (enable_lora and lora_selection_3 and os.path.exists(os.path.join('./models/Loras', lora_selection_3))) else lora_scale_3}
+LoRA 4 selection: {'None' if disable_lora_4 or not (enable_lora and lora_selection_4 and os.path.exists(os.path.join('./models/Loras', lora_selection_4))) else lora_selection_4}
+LoRA 4 scale: {'Disabled' if disable_lora_4 or not (enable_lora and lora_selection_4 and os.path.exists(os.path.join('./models/Loras', lora_selection_4))) else lora_scale_4}
+LoRA 5 selection: {'None' if disable_lora_5 or not (enable_lora and lora_selection_5 and os.path.exists(os.path.join('./models/Loras', lora_selection_5))) else lora_selection_5}
+LoRA 5 scale: {'Disabled' if disable_lora_5 or not (enable_lora and lora_selection_5 and os.path.exists(os.path.join('./models/Loras', lora_selection_5))) else lora_scale_5}
+LoRA 6 selection: {'None' if disable_lora_6 or not (enable_lora and lora_selection_6 and os.path.exists(os.path.join('./models/Loras', lora_selection_6))) else lora_selection_6}
+LoRA 6 scale: {'Disabled' if disable_lora_6 or not (enable_lora and lora_selection_6 and os.path.exists(os.path.join('./models/Loras', lora_selection_6))) else lora_scale_6}
+LoRA 7 selection: {'None' if disable_lora_7 or not (enable_lora and lora_selection_7 and os.path.exists(os.path.join('./models/Loras', lora_selection_7))) else lora_selection_7}
+LoRA 7 scale: {'Disabled' if disable_lora_7 or not (enable_lora and lora_selection_7 and os.path.exists(os.path.join('./models/Loras', lora_selection_7))) else lora_scale_7}
+LoRA 8 selection: {'None' if disable_lora_8 or not (enable_lora and lora_selection_8 and os.path.exists(os.path.join('./models/Loras', lora_selection_8))) else lora_selection_8}
+LoRA 8 scale: {'Disabled' if disable_lora_8 or not (enable_lora and lora_selection_8 and os.path.exists(os.path.join('./models/Loras', lora_selection_8))) else lora_scale_8}
+Embeddings Enabled: {enable_embeddings}
+Scheduler: {scheduler}"""
+
+            png_info = PIL.PngImagePlugin.PngInfo()
+            png_info.add_text("Generation Parameters", info_text)
+
             if enable_hires_fix:
+                if save_hires_original:
+                    original_info_text = info_text.replace("Hires Fix Enabled: True", "Hires Fix Enabled: False")
+                    original_png_info = PIL.PngImagePlugin.PngInfo()
+                    original_png_info.add_text("Generation Parameters", original_info_text)
+                    save_images([image], generation_info=[original_png_info], prefix=file_prefix)
+                    images.append(image)
+                    print("\nOriginal non-upscaled image saved.")
                 print("\nRunning Hires Fix pass...\n")
                 progress(
                     0.0,
@@ -1315,60 +1378,6 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
 
             images.append(image)
 
-            info_text = f"""Prompt: {prompt}
-Negative Prompt: {negative_prompt}
-Input Face Image: {face_image_filename}
-Reference Pose Image: {pose_image_filename}
-Detection size: {current_det_size}
-Steps: {num_steps}
-Guidance scale: {guidance_scale}
-Seed: {seed + i}
-Model: {model_name}
-ControlNet selection: {controlnet_selection}
-Max resize side: {resize_max_side}
-Image size: {width}x{height}
-Exact aspect ratio: {exact_ratio}
-Enhance non-face region: {enhance_face_region}
-Enhance region profile: {enhance_strength}
-Enhance padding ratio: {custom_enhance_padding}
-Resize mode: {resize_mode}
-Pad to max side: {pad_to_max_side}
-Use custom resize: {enable_custom_resize}
-Custom resize size: {custom_resize_width}x{custom_resize_height}
-img2img Strength: {strength}
-img2img Mode Enabled: {enable_img2img}
-Hires Fix Enabled: {enable_hires_fix}
-Hires Upscaler: {hires_upscaler}
-Hires Upscale By: {hires_upscale_by}
-Hires Steps: {hires_steps}
-Hires Denoising Strength: {hires_denoising_strength}
-IdentityNet strength: {identitynet_strength_ratio}
-Adapter strength: {adapter_strength_ratio}
-Pose strength: {pose_strength}
-Canny strength: {canny_strength}
-Depth strength: {depth_strength}
-LoRA Enabled: {enable_lora}
-LoRA 1 selection: {'None' if disable_lora_1 or not (enable_lora and lora_selection and os.path.exists(os.path.join('./models/Loras', lora_selection))) else lora_selection}
-LoRA 1 scale: {'Disabled' if disable_lora_1 or not (enable_lora and lora_selection and os.path.exists(os.path.join('./models/Loras', lora_selection))) else lora_scale}
-LoRA 2 selection: {'None' if disable_lora_2 or not (enable_lora and lora_selection_2 and os.path.exists(os.path.join('./models/Loras', lora_selection_2))) else lora_selection_2}
-LoRA 2 scale: {'Disabled' if disable_lora_2 or not (enable_lora and lora_selection_2 and os.path.exists(os.path.join('./models/Loras', lora_selection_2))) else lora_scale_2}
-LoRA 3 selection: {'None' if disable_lora_3 or not (enable_lora and lora_selection_3 and os.path.exists(os.path.join('./models/Loras', lora_selection_3))) else lora_selection_3}
-LoRA 3 scale: {'Disabled' if disable_lora_3 or not (enable_lora and lora_selection_3 and os.path.exists(os.path.join('./models/Loras', lora_selection_3))) else lora_scale_3}
-LoRA 4 selection: {'None' if disable_lora_4 or not (enable_lora and lora_selection_4 and os.path.exists(os.path.join('./models/Loras', lora_selection_4))) else lora_selection_4}
-LoRA 4 scale: {'Disabled' if disable_lora_4 or not (enable_lora and lora_selection_4 and os.path.exists(os.path.join('./models/Loras', lora_selection_4))) else lora_scale_4}
-LoRA 5 selection: {'None' if disable_lora_5 or not (enable_lora and lora_selection_5 and os.path.exists(os.path.join('./models/Loras', lora_selection_5))) else lora_selection_5}
-LoRA 5 scale: {'Disabled' if disable_lora_5 or not (enable_lora and lora_selection_5 and os.path.exists(os.path.join('./models/Loras', lora_selection_5))) else lora_scale_5}
-LoRA 6 selection: {'None' if disable_lora_6 or not (enable_lora and lora_selection_6 and os.path.exists(os.path.join('./models/Loras', lora_selection_6))) else lora_selection_6}
-LoRA 6 scale: {'Disabled' if disable_lora_6 or not (enable_lora and lora_selection_6 and os.path.exists(os.path.join('./models/Loras', lora_selection_6))) else lora_scale_6}
-LoRA 7 selection: {'None' if disable_lora_7 or not (enable_lora and lora_selection_7 and os.path.exists(os.path.join('./models/Loras', lora_selection_7))) else lora_selection_7}
-LoRA 7 scale: {'Disabled' if disable_lora_7 or not (enable_lora and lora_selection_7 and os.path.exists(os.path.join('./models/Loras', lora_selection_7))) else lora_scale_7}
-LoRA 8 selection: {'None' if disable_lora_8 or not (enable_lora and lora_selection_8 and os.path.exists(os.path.join('./models/Loras', lora_selection_8))) else lora_selection_8}
-LoRA 8 scale: {'Disabled' if disable_lora_8 or not (enable_lora and lora_selection_8 and os.path.exists(os.path.join('./models/Loras', lora_selection_8))) else lora_scale_8}
-Embeddings Enabled: {enable_embeddings}
-Scheduler: {scheduler}"""
-
-            png_info = PIL.PngImagePlugin.PngInfo()
-            png_info.add_text("Generation Parameters", info_text)
             generation_infos.append(png_info)
             save_images([image], generation_info=[png_info], prefix=file_prefix)
             print(f"(√) Finished generating image {i + 1} of {num_outputs}\n")
@@ -1906,17 +1915,23 @@ Scheduler: {scheduler}"""
 
                 with gr.Group():
                     with gr.Row():
-                        enable_hires_fix = gr.Checkbox(label="Enable Hires Fix (upscale images during generation)", value=False, scale=1)
+                        enable_hires_fix = gr.Checkbox(label="Enable Hires Fix", value=False, scale=1)
                         hires_upscaler = gr.Dropdown(
                             label="Upscaler Model",
                             choices=get_available_upscalers() or [DEFAULT_UPSCALER],
                             value=DEFAULT_UPSCALER if DEFAULT_UPSCALER in get_available_upscalers() else (get_available_upscalers()[0] if get_available_upscalers() else DEFAULT_UPSCALER),
                             allow_custom_value=True,
-                            info=f"Place upscaler .pth/.safetensors files in /models/Upscalers",
+                            info=f"Place in /models/Upscalers",
                             visible=False,
                             scale=3
                         )
                         refresh_hires_upscalers = gr.Button("🔄", scale=0, min_width=40, visible=False)
+                        save_hires_original = gr.Checkbox(
+                            label="Save original and upscaled",
+                            value=False,
+                            visible=False,
+                            scale=2
+                        )
                     with gr.Row(visible=False) as hires_fix_row:
                         hires_upscale_by = gr.Slider(
                             label="Hires Upscale By",
@@ -1947,12 +1962,12 @@ Scheduler: {scheduler}"""
                         )
 
                     def toggle_hires_fix_ui(enable):
-                        return gr.update(visible=enable), gr.update(visible=enable), gr.update(visible=enable)
+                        return gr.update(visible=enable), gr.update(visible=enable), gr.update(visible=enable), gr.update(visible=enable)
 
                     enable_hires_fix.change(
                         fn=toggle_hires_fix_ui,
                         inputs=enable_hires_fix,
-                        outputs=[hires_upscaler, refresh_hires_upscalers, hires_fix_row]
+                        outputs=[hires_upscaler, refresh_hires_upscalers, hires_fix_row, save_hires_original]
                     )
 
                     def refresh_hires_upscaler_list():
@@ -2406,6 +2421,7 @@ Scheduler: {scheduler}"""
                 hires_upscale_by,
                 hires_steps,
                 hires_denoising_strength,
+                save_hires_original,
             ]
             generate.click(fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False).then(
                 fn=generate_image, inputs=shared_inputs, outputs=[gallery]
@@ -2847,7 +2863,7 @@ Scheduler: {scheduler}"""
             ).then(
                 fn=toggle_hires_fix_ui,
                 inputs=[enable_hires_fix],
-                outputs=[hires_upscaler, refresh_hires_upscalers, hires_fix_row]
+                outputs=[hires_upscaler, refresh_hires_upscalers, hires_fix_row, save_hires_original]
             )
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
