@@ -98,6 +98,7 @@ from insightface.app import FaceAnalysis
 from style_template import styles
 from pipeline_stable_diffusion_xl_instantid_full import StableDiffusionXLInstantIDPipeline
 from pipeline_stable_diffusion_xl_instantid_img2img import StableDiffusionXLInstantIDImg2ImgPipeline
+from ip_adapter.attention_processor import region_control
 from model_util import load_models_xl, get_torch_device, torch_gc
 
 from controlnet_aux import OpenposeDetector
@@ -752,7 +753,8 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
 
         try:
             hires_sibling_pipe = StableDiffusionXLInstantIDImg2ImgPipeline(**base_pipe.components).to(device)
-            hires_sibling_pipe.load_ip_adapter_instantid(face_adapter)
+            hires_sibling_pipe.image_proj_model = base_pipe.image_proj_model
+            hires_sibling_pipe.image_proj_model_in_features = base_pipe.image_proj_model_in_features
             hires_sibling_pipe._base_pipe_id = id(base_pipe)
             hires_sibling_pipe._current_model = getattr(base_pipe, "_current_model", None)
         except Exception as e:
@@ -1282,7 +1284,11 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 upscaled_image = upscaled_image.resize((hires_width, hires_height), PIL.Image.LANCZOS)
 
                 hires_pipe = get_img2img_sibling_pipe(pipe)
+                hires_pipe.controlnet = pipe.controlnet
+                hires_pipe.scheduler = pipe.scheduler
                 hires_pipe.set_ip_adapter_scale(adapter_strength_ratio)
+                saved_region_conditioning = region_control.prompt_image_conditioning
+                region_control.prompt_image_conditioning = []
                 hires_control_images = resize_control_images(control_images, (hires_width, hires_height))
                 if hires_steps and hires_steps > 0:
                     effective_hires_steps = max(1, int(round(hires_steps / max(hires_denoising_strength, 1e-4))))
@@ -1324,6 +1330,8 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                     stopped_early = True
                     torch.cuda.empty_cache()
                     break
+                finally:
+                    region_control.prompt_image_conditioning = saved_region_conditioning
                 torch.cuda.empty_cache()
 
             images.append(image)
