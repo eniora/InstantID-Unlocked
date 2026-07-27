@@ -245,7 +245,7 @@ def read_png_metadata(filepath):
             metadata = img.info
             if "Generation Parameters" in metadata:
                 return metadata["Generation Parameters"]
-            return "No generation metadata found in this PNG file."
+            return "No generation metadata found in this image file."
     except Exception as e:
         return f"Error reading metadata: {str(e)}"
 
@@ -297,12 +297,6 @@ def get_available_upscalers():
 _upscaler_model_cache = {}
 
 def load_upscaler_model(upscaler_name):
-    """
-    Loads (and caches) a single-file ESRGAN-family super-resolution model
-    (e.g. 4x_NMKD-Superscale-SP, RealESRGAN, 4x-UltraSharp, SwinIR, etc.)
-    via the `spandrel` library, which auto-detects the architecture from
-    the checkpoint the same way ComfyUI / Forge / recent A1111 builds do.
-    """
     if upscaler_name in _upscaler_model_cache:
         return _upscaler_model_cache[upscaler_name]
 
@@ -334,12 +328,6 @@ def _tile_starts(total, tile, stride):
 
 @torch.no_grad()
 def run_upscaler_model(model, image, tile_size=512, tile_overlap=32):
-    """
-    Runs a spandrel image super-resolution model over a PIL image. Large
-    images are processed in overlapping tiles (blended in the overlap
-    region) so VRAM usage stays bounded regardless of input resolution.
-    Returns a PIL image scaled by the model's native scale factor.
-    """
     img = np.array(image.convert("RGB")).astype(np.float32) / 255.0
     img_tensor = torch.from_numpy(img).permute(2, 0, 1).unsqueeze(0).to(device=device, dtype=torch.float32)
 
@@ -735,15 +723,6 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         return control_images.resize(size, PIL.Image.LANCZOS) if hasattr(control_images, "resize") else control_images
 
     def get_img2img_sibling_pipe(base_pipe):
-        """
-        Hires Fix needs a second img2img denoising pass. Rather than doing a
-        full disk reload of a second SDXL pipeline (expensive and VRAM-heavy),
-        this builds a lightweight wrapper pipeline that reuses the *same*
-        already-loaded unet/vae/text encoders/controlnet objects as the base
-        pipe (diffusers' `.components` returns references, not copies), so it
-        costs effectively no extra VRAM. Falls back to a full reload only if
-        that fails for some reason.
-        """
         nonlocal hires_sibling_pipe
         if isinstance(base_pipe, StableDiffusionXLInstantIDImg2ImgPipeline):
             return base_pipe
@@ -1415,7 +1394,8 @@ Scheduler: {scheduler}"""
     - (Optional) You can select multiple ControlNet models to control the generation process. The default is to use the IdentityNet only. The ControlNet models include pose skeleton, canny, and depth. You can adjust the strength of each ControlNet model to control the generation process.
     - Enter a text prompt, as done in normal text-to-image models.
     - Click the Generate button to begin image generation.
-    - img2img mode imports the "pipeline_stable_diffusion_xl_instantid_img2img" pipeline, it's good to experiment with it and I got quite good results using it. It uses a lot of VRAM though (~20GB). Enhance non-face region (control_mask) has no effect on this mode and that's by design.
+    - img2img mode imports the "pipeline_stable_diffusion_xl_instantid_img2img" pipeline, it's good to experiment with it and I got quite good results using it. It uses a lot of VRAM though (~16-20GB). Enhance non-face region (control_mask) has no effect on this mode and that's by design.
+    - Upscale and use Enable Hires Fix to generate images with a resolution of what SDXL is best at (usually 1280 max side) to prevent anatomy errors like long necks while still producing good quality images.
     - Select a model to use for generation from the upper left corner dropdown. Only use SDXL and Pony. Illustrious can be loaded but isn't well supported.
     - You can select a scheduler from the upper right corner dropdown. DPMSolver, KDPM2 and Euler are usually the best.
     
@@ -1858,7 +1838,7 @@ Scheduler: {scheduler}"""
                     with gr.Row():
                         enable_hires_fix = gr.Checkbox(label="Enable Hires Fix", value=False, scale=1)
                         hires_upscaler = gr.Dropdown(
-                            label="Upscaler",
+                            label="Upscaler Model",
                             choices=get_available_upscalers() or [DEFAULT_UPSCALER],
                             value=DEFAULT_UPSCALER if DEFAULT_UPSCALER in get_available_upscalers() else (get_available_upscalers()[0] if get_available_upscalers() else DEFAULT_UPSCALER),
                             allow_custom_value=True,
@@ -1892,7 +1872,7 @@ Scheduler: {scheduler}"""
                             maximum=1.0,
                             step=0.05,
                             value=0.5,
-                            info="Lower preserves more of the upscaled image; higher adds more new detail/noise.",
+                            info="Lower preserves more of the upscaled image. 0.5 is a good balance.",
                             scale=3
                         )
 
@@ -1998,7 +1978,7 @@ Scheduler: {scheduler}"""
                         )
 
                     with gr.Row():
-                        apply_metadata_btn = gr.Button("Apply to all fields", variant="secondary")
+                        apply_metadata_btn = gr.Button("Apply to all fields (resets all fields if no generation metadata)", variant="secondary")
             
                     metadata_input.upload(
                         fn=lambda x: (x, read_png_metadata(x) if x is not None else ""),
@@ -2321,7 +2301,7 @@ Scheduler: {scheduler}"""
                         insert_embedding_prompt = gr.Button("➕ Insert into Prompt", scale=1, visible=False)
                         insert_embedding_negative = gr.Button("➕ Insert into Negative Prompt", scale=1, visible=False)
                     with gr.Row():
-                        refresh_embeddings = gr.Button("🔄 Refresh Embeddings List (forces embeddings reload on next generation)", scale=1, elem_classes="toolbutton", visible=False)
+                        refresh_embeddings = gr.Button("🔄 Refresh Embeddings List (forces embeddings to reload on next generation)", scale=1, elem_classes="toolbutton", visible=False)
 
                     enable_embeddings.change(
                         fn=lambda x: gr.Markdown(visible=x),
@@ -2871,7 +2851,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v6.1.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v6.1.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
