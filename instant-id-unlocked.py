@@ -1395,7 +1395,7 @@ Scheduler: {scheduler}"""
     - Enter a text prompt, as done in normal text-to-image models.
     - Click the Generate button to begin image generation.
     - img2img mode imports the "pipeline_stable_diffusion_xl_instantid_img2img" pipeline, it's good to experiment with it and I got quite good results using it. It uses a lot of VRAM though (~16-20GB). Enhance non-face region (control_mask) has no effect on this mode and that's by design.
-    - Upscale and use Enable Hires Fix to generate images with a resolution of what SDXL is best at (usually 1280 max side) to prevent anatomy errors like long necks while still producing good quality images.
+    - Upscale and use Enable Hires Fix to generate images with a resolution of what SDXL is best at (usually 1280 max side) to prevent anatomy errors like long necks while still producing good quality images. Hires Fix uses img2img pipeline and uses a lot of VRAM.
     - Select a model to use for generation from the upper left corner dropdown. Only use SDXL and Pony. Illustrious can be loaded but isn't well supported.
     - You can select a scheduler from the upper right corner dropdown. DPMSolver, KDPM2 and Euler are usually the best.
     
@@ -1834,65 +1834,6 @@ Scheduler: {scheduler}"""
                         value=12345,
                         show_label=False
                     )
-                with gr.Group():
-                    with gr.Row():
-                        enable_hires_fix = gr.Checkbox(label="Enable Hires Fix", value=False, scale=1)
-                        hires_upscaler = gr.Dropdown(
-                            label="Upscaler Model",
-                            choices=get_available_upscalers() or [DEFAULT_UPSCALER],
-                            value=DEFAULT_UPSCALER if DEFAULT_UPSCALER in get_available_upscalers() else (get_available_upscalers()[0] if get_available_upscalers() else DEFAULT_UPSCALER),
-                            allow_custom_value=True,
-                            info=f"Place upscaler .pth/.safetensors files in /models/Upscalers",
-                            visible=False,
-                            scale=3
-                        )
-                        refresh_hires_upscalers = gr.Button("🔄", scale=0, min_width=40, visible=False)
-                    with gr.Row(visible=False) as hires_fix_row:
-                        hires_upscale_by = gr.Slider(
-                            label="Hires Upscale By",
-                            minimum=1.0,
-                            maximum=4.0,
-                            step=0.05,
-                            value=1.5,
-                            info="Target resolution = base resolution × this factor.",
-                            scale=3
-                        )
-                        hires_steps = gr.Slider(
-                            label="Hires Steps (0 = Auto)",
-                            minimum=0,
-                            maximum=100,
-                            step=1,
-                            value=0,
-                            info="Steps for the second (hires) pass. 0 = Auto (same as Steps above * Hires strength value).",
-                            scale=3
-                        )
-                        hires_denoising_strength = gr.Slider(
-                            label="Hires Denoising Strength",
-                            minimum=0.1,
-                            maximum=1.0,
-                            step=0.05,
-                            value=0.5,
-                            info="Lower preserves more of the upscaled image. 0.5 is a good balance.",
-                            scale=3
-                        )
-
-                    def toggle_hires_fix_ui(enable):
-                        return gr.update(visible=enable), gr.update(visible=enable), gr.update(visible=enable)
-
-                    enable_hires_fix.change(
-                        fn=toggle_hires_fix_ui,
-                        inputs=enable_hires_fix,
-                        outputs=[hires_upscaler, refresh_hires_upscalers, hires_fix_row]
-                    )
-
-                    def refresh_hires_upscaler_list():
-                        choices = get_available_upscalers() or [DEFAULT_UPSCALER]
-                        return gr.update(choices=choices)
-
-                    refresh_hires_upscalers.click(
-                        fn=refresh_hires_upscaler_list,
-                        outputs=hires_upscaler
-                    )
                 with gr.Row():
                     enhance_face_region = gr.Checkbox(label="Enhance non-face region", scale=2, value=True)
                     enhance_strength = gr.Dropdown(
@@ -1962,6 +1903,66 @@ Scheduler: {scheduler}"""
                     return gr.update(visible=enable)
 
                 enable_img2img.change(toggle_img2img, inputs=enable_img2img, outputs=strength)
+
+                with gr.Group():
+                    with gr.Row():
+                        enable_hires_fix = gr.Checkbox(label="Enable Hires Fix (upscale images during generation)", value=False, scale=1)
+                        hires_upscaler = gr.Dropdown(
+                            label="Upscaler Model",
+                            choices=get_available_upscalers() or [DEFAULT_UPSCALER],
+                            value=DEFAULT_UPSCALER if DEFAULT_UPSCALER in get_available_upscalers() else (get_available_upscalers()[0] if get_available_upscalers() else DEFAULT_UPSCALER),
+                            allow_custom_value=True,
+                            info=f"Place upscaler .pth/.safetensors files in /models/Upscalers",
+                            visible=False,
+                            scale=3
+                        )
+                        refresh_hires_upscalers = gr.Button("🔄", scale=0, min_width=40, visible=False)
+                    with gr.Row(visible=False) as hires_fix_row:
+                        hires_upscale_by = gr.Slider(
+                            label="Hires Upscale By",
+                            minimum=1.0,
+                            maximum=4.0,
+                            step=0.05,
+                            value=1.5,
+                            info="Target resolution = base resolution × this factor.",
+                            scale=3
+                        )
+                        hires_steps = gr.Slider(
+                            label="Hires Steps (0 = Auto)",
+                            minimum=0,
+                            maximum=100,
+                            step=1,
+                            value=0,
+                            info="Steps for the second (hires) pass. 0 = Auto (same as Steps above * Hires strength value).",
+                            scale=3
+                        )
+                        hires_denoising_strength = gr.Slider(
+                            label="Hires Denoising Strength",
+                            minimum=0.1,
+                            maximum=1.0,
+                            step=0.05,
+                            value=0.5,
+                            info="Lower preserves more of the upscaled image. 0.5 is a good balance.",
+                            scale=3
+                        )
+
+                    def toggle_hires_fix_ui(enable):
+                        return gr.update(visible=enable), gr.update(visible=enable), gr.update(visible=enable)
+
+                    enable_hires_fix.change(
+                        fn=toggle_hires_fix_ui,
+                        inputs=enable_hires_fix,
+                        outputs=[hires_upscaler, refresh_hires_upscalers, hires_fix_row]
+                    )
+
+                    def refresh_hires_upscaler_list():
+                        choices = get_available_upscalers() or [DEFAULT_UPSCALER]
+                        return gr.update(choices=choices)
+
+                    refresh_hires_upscalers.click(
+                        fn=refresh_hires_upscaler_list,
+                        outputs=hires_upscaler
+                    )
                 with gr.Accordion("PNG Metadata Reader", open=True):
                     with gr.Row():
                         metadata_input = gr.Image(
