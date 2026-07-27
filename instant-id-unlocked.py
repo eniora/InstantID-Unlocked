@@ -870,7 +870,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
     ):
         file_prefix = file_prefix.strip().translate(FILENAME_SAFE_TRANS)
         file_prefix = DEFAULT_FILE_PREFIX if not file_prefix else (f"{file_prefix}_" if not file_prefix.endswith('_') else file_prefix)
-        nonlocal pipe
+        nonlocal pipe, hires_sibling_pipe
         stop_event.clear()
         overall_start_time = time.time()
         
@@ -1226,6 +1226,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 generator=generator,
                 callback_on_step_end=gradio_callback_lambda,
             )
+            torch.cuda.empty_cache()
             try:
                 if enable_img2img:
                     result = pipe(
@@ -1246,6 +1247,11 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 torch.cuda.empty_cache()
                 break
             except Exception:
+                print(f"\nGeneration failed on image {i + 1}: forcing a full model reload on next generation since this crash can leave the pipeline in a corrupted state.\n")
+                pipe._current_model = None
+                hires_sibling_pipe = None
+                torch.cuda.empty_cache()
+                gc.collect()
                 raise
 
             image = result.images[0]
@@ -1313,6 +1319,7 @@ Scheduler: {scheduler}"""
                     save_images([image], generation_info=[original_png_info], prefix=file_prefix)
                     images.append(image)
                     print("\nOriginal non-upscaled image saved.")
+                torch.cuda.empty_cache()
                 print("\nRunning Hires Fix pass...\n")
                 progress(
                     0.0,
@@ -1372,6 +1379,13 @@ Scheduler: {scheduler}"""
                     stopped_early = True
                     torch.cuda.empty_cache()
                     break
+                except Exception:
+                    print(f"\nHires Fix pass failed on image {i + 1}: forcing a full model reload on next generation since this crash can leave the pipeline in a corrupted state.\n")
+                    pipe._current_model = None
+                    hires_sibling_pipe = None
+                    torch.cuda.empty_cache()
+                    gc.collect()
+                    raise
                 finally:
                     region_control.prompt_image_conditioning = saved_region_conditioning
                 torch.cuda.empty_cache()
@@ -1927,7 +1941,7 @@ Scheduler: {scheduler}"""
                         )
                         refresh_hires_upscalers = gr.Button("🔄", scale=0, min_width=40, visible=False)
                         save_hires_original = gr.Checkbox(
-                            label="Save original and upscaled",
+                            label="Save & show non-upscaled too",
                             value=False,
                             visible=False,
                             scale=2
@@ -1956,8 +1970,8 @@ Scheduler: {scheduler}"""
                             minimum=0.1,
                             maximum=1.0,
                             step=0.05,
-                            value=0.5,
-                            info="Lower preserves more of the upscaled image. 0.5 is a good balance.",
+                            value=0.4,
+                            info="Lower preserves more of the upscaled image. 0.4 is a good balance.",
                             scale=3
                         )
 
@@ -2521,7 +2535,7 @@ Scheduler: {scheduler}"""
                     "hires_upscaler": DEFAULT_UPSCALER,
                     "hires_upscale_by": 1.5,
                     "hires_steps": 0,
-                    "hires_denoising_strength": 0.5
+                    "hires_denoising_strength": 0.4
                 }
                 if metadata_text:
                     lines = metadata_text.split('\n')
@@ -2868,7 +2882,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v6.1.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v6.2.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
