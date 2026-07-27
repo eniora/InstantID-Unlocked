@@ -526,7 +526,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         return None
 
     def load_all_embeddings(pipe):
-        print("\nLoading embeddings, please wait...")
+        print("\nLoading embeddings...")
         loaded_tokens = []
         embedding_files = get_available_embeddings()
 
@@ -1271,7 +1271,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             image = result.images[0]
 
             if enable_hires_fix:
-                print("Running Hires fix pass...")
+                print("\nRunning Hires Fix pass...\n")
                 progress(
                     0.0,
                     desc=f"Hires Fix: upscaling image {i + 1} of {num_outputs}"
