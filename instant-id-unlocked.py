@@ -1135,7 +1135,18 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         print(f"Use custom resize: {enable_custom_resize}")
         if enable_custom_resize:
             print(f"Custom resize size: {custom_resize_width}x{custom_resize_height}")
-        print(f"ControlNet selection: {controlnet_selection} | Strengths - Pose: {pose_strength}, Canny: {canny_strength}, Depth: {depth_strength}")
+        if controlnet_selection:
+            cn_strengths = {
+                "pose": pose_strength,
+                "canny": canny_strength,
+                "depth": depth_strength,
+            }
+            cn_strength_str = ", ".join(
+                f"{s.capitalize()}: {cn_strengths[s]}" for s in controlnet_selection if s in cn_strengths
+            )
+            print(f"ControlNet selection: {controlnet_selection} | Strengths - {cn_strength_str}")
+        else:
+            print("ControlNet selection: None (Disabled)")
         print(f"IdentityNet strength: {identitynet_strength_ratio}")
         print(f"Adapter strength: {adapter_strength_ratio}")
 
