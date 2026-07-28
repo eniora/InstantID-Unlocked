@@ -1939,11 +1939,11 @@ Scheduler: {scheduler}"""
                             allow_custom_value=True,
                             info=f"Place in /models/Upscalers",
                             visible=False,
-                            scale=3
+                            scale=4
                         )
                         refresh_hires_upscalers = gr.Button("🔄", scale=0, min_width=40, visible=False)
                         save_hires_original = gr.Checkbox(
-                            label="Save & show non-upscaled too",
+                            label="Save non-upscaled too",
                             value=False,
                             visible=False,
                             scale=2
@@ -1955,8 +1955,8 @@ Scheduler: {scheduler}"""
                             maximum=4.0,
                             step=0.05,
                             value=1.5,
-                            info="Target resolution = base resolution × this factor.",
-                            scale=3
+                            info="Target resolution = base resolution on the left (max_side) * this factor.",
+                            scale=4
                         )
                         hires_steps = gr.Slider(
                             label="Hires Steps (0 = Auto)",
@@ -1964,7 +1964,7 @@ Scheduler: {scheduler}"""
                             maximum=100,
                             step=1,
                             value=0,
-                            info="Steps for the second (hires) pass. 0 = Auto (same as Steps above * Hires strength value).",
+                            info="Steps for the second (hires) pass. 0 = Auto (same as Steps below * Hires strength value).",
                             scale=3
                         )
                         hires_denoising_strength = gr.Slider(
