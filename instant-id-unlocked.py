@@ -1214,6 +1214,8 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                     return callback_kwargs
 
             print(f"Seed: {seed + i}\n")
+            if enable_hires_fix:
+                print(f"Running the first main pass before proceeding to the Hires Fix pass...\n")
 
             generator = torch.Generator(device=device).manual_seed(seed + i)
             common_kwargs = dict(
