@@ -1008,6 +1008,12 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             prompt_for_generation = pipe.maybe_convert_prompt(prompt_normalized, pipe.tokenizer)
             negative_prompt_for_generation = pipe.maybe_convert_prompt(negative_prompt_normalized, pipe.tokenizer)
 
+        used_embedding_tokens = [
+            tok for tok in loaded_embedding_tokens
+            if re.search(re.escape(tok), prompt_for_generation, flags=re.IGNORECASE)
+            or re.search(re.escape(tok), negative_prompt_for_generation, flags=re.IGNORECASE)
+        ]
+
         face_image = load_image(face_image_path)
         custom_size = None
         if enable_custom_resize:
@@ -1176,7 +1182,12 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 lora_info_str = "; ".join(lora_details)
 
         print(f"LoRA(s): {lora_info_str}")
-        print(f"Embeddings: {'Enabled' if enable_embeddings else 'Disabled'}")
+        if not enable_embeddings:
+            print("Embeddings: Disabled")
+        elif used_embedding_tokens:
+            print(f"Embeddings: Enabled | Embeddings Used: {', '.join(used_embedding_tokens)}")
+        else:
+            print("Embeddings: Enabled but none found in prompt or negative prompt")
 
         print(f"Scheduler: {scheduler}")
         print(f"Exact aspect ratio: {'Enabled' if exact_ratio else 'Disabled'}")
@@ -1321,6 +1332,7 @@ LoRA 7 scale: {'Disabled' if disable_lora_7 or not (enable_lora and lora_selecti
 LoRA 8 selection: {'None' if disable_lora_8 or not (enable_lora and lora_selection_8 and os.path.exists(os.path.join('./models/Loras', lora_selection_8))) else lora_selection_8}
 LoRA 8 scale: {'Disabled' if disable_lora_8 or not (enable_lora and lora_selection_8 and os.path.exists(os.path.join('./models/Loras', lora_selection_8))) else lora_scale_8}
 Embeddings Enabled: {enable_embeddings}
+Embeddings Used: {', '.join(used_embedding_tokens) if used_embedding_tokens else 'None'}
 Scheduler: {scheduler}"""
 
             png_info = PIL.PngImagePlugin.PngInfo()
