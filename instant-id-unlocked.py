@@ -888,6 +888,8 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             embedding_state["loaded"] = False
             embedding_state["tokens"] = []
 
+            hires_sibling_pipe = get_img2img_sibling_pipe(pipe)
+
         if enable_vae_tiling:
             pipe.enable_vae_tiling()
         else:
