@@ -1956,7 +1956,7 @@ Scheduler: {scheduler}"""
                             step=0.05,
                             value=1.5,
                             info="Target resolution = base resolution on the left (max_side) * this factor.",
-                            scale=4
+                            scale=3
                         )
                         hires_steps = gr.Slider(
                             label="Hires Steps (0 = Auto)",
