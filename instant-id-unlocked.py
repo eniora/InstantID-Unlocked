@@ -368,7 +368,8 @@ def get_available_embeddings():
 def embedding_token_from_filename(filename):
     stem = os.path.splitext(filename)[0]
     token = re.sub(r'[^A-Za-z0-9_]+', '_', stem).strip('_')
-    return token if token else stem
+    token = token if token else stem
+    return f"<{token}>"
 
 def format_embeddings_info():
     embeddings = get_available_embeddings()
@@ -581,8 +582,8 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                         )
                         loaded_tokens.append(token)
                     except Exception as e2:
-                        print(f"Failed to load embedding for token {token}: {e2}. If it says embedding already in tokenizer vocabulary, try to rename the embedding file to a unique word.")
-                        gr.Warning(f"Failed to load embedding '{token}': {e2}. If it says embedding already in tokenizer vocabulary, try to rename the embedding file to a unique word.")
+                        print(f"Failed to load embedding for token {token}: {e2}.")
+                        gr.Warning(f"Failed to load embedding '{token}': {e2}.")
 
         if single_state_dicts:
             try:
@@ -2924,7 +2925,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v6.2.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v6.3.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
