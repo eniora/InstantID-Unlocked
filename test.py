@@ -513,10 +513,17 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 return int(v.shape[-1])
         return None
 
-    def load_all_embeddings(pipe):
+    def load_all_embeddings(pipe, required_tokens=None):
         print("\nLoading embeddings...")
         loaded_tokens = []
         embedding_files = get_available_embeddings()
+
+        if required_tokens is not None:
+            required_lower = {t.lower() for t in required_tokens}
+            embedding_files = [
+                f for f in embedding_files
+                if embedding_token_from_filename(f).lower() in required_lower
+            ]
 
         dual_state_dicts, dual_tokens = [], []
         single_state_dicts, single_tokens = [], []
@@ -936,22 +943,35 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         else:
             pipe.disable_lora()
 
+        if not prompt:
+            prompt = " " if prompt_replacement_value == "Empty (none)" else prompt_replacement_value
+
+        prompt, negative_prompt = apply_style(style_name, prompt, negative_prompt)
+
         loaded_embedding_tokens = []
         if enable_embeddings:
-            if embedding_state["loaded"]:
-                loaded_embedding_tokens = embedding_state["tokens"]
-                if loaded_embedding_tokens:
-                    print(f"\nUsing {len(loaded_embedding_tokens)} already-loaded embedding(s): {', '.join(loaded_embedding_tokens)}\n")
-                else:
-                    print("\nNo embeddings found to load.\n")
-            else:
-                loaded_embedding_tokens = load_all_embeddings(pipe)
+            combined_text = f"{prompt}\n{negative_prompt}"
+            needed_tokens = [
+                embedding_token_from_filename(f) for f in get_available_embeddings()
+                if re.search(re.escape(embedding_token_from_filename(f)), combined_text, flags=re.IGNORECASE)
+            ]
+
+            already_loaded_lower = {t.lower() for t in embedding_state["tokens"]}
+            missing_tokens = [t for t in needed_tokens if t.lower() not in already_loaded_lower]
+
+            if missing_tokens:
+                newly_loaded = load_all_embeddings(pipe, required_tokens=missing_tokens)
+                embedding_state["tokens"] = embedding_state["tokens"] + newly_loaded
                 embedding_state["loaded"] = True
-                embedding_state["tokens"] = loaded_embedding_tokens
-                if loaded_embedding_tokens:
-                    print(f"\nSuccessfully loaded {len(loaded_embedding_tokens)} embedding(s): {', '.join(loaded_embedding_tokens)}\n")
-                else:
-                    print("No embeddings found to load.")
+                if newly_loaded:
+                    print(f"\nSuccessfully loaded {len(newly_loaded)} embedding(s): {', '.join(newly_loaded)}\n")
+
+            needed_lower = {t.lower() for t in needed_tokens}
+            loaded_embedding_tokens = [t for t in embedding_state["tokens"] if t.lower() in needed_lower]
+            if loaded_embedding_tokens:
+                print(f"\nUsing {len(loaded_embedding_tokens)} embedding(s) for this prompt: {', '.join(loaded_embedding_tokens)}\n")
+            else:
+                print("\nNo matching embeddings found in prompt or negative prompt.\n")
 
         face_image_filename = os.path.basename(face_image_path) if face_image_path else "None"
         pose_image_filename = os.path.basename(pose_image_path) if pose_image_path else "None"
@@ -988,11 +1008,6 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             raise gr.Error(
                 f"Cannot find any input face image! Please upload the face image"
             )
-
-        if not prompt:
-            prompt = " " if prompt_replacement_value == "Empty (none)" else prompt_replacement_value
-
-        prompt, negative_prompt = apply_style(style_name, prompt, negative_prompt)
 
         prompt_for_generation = prompt
         negative_prompt_for_generation = negative_prompt
