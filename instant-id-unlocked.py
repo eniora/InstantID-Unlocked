@@ -1451,9 +1451,12 @@ Scheduler: {scheduler}"""
 
         gc.collect()
         overall_elapsed_time = time.time() - overall_start_time
-        minutes = int(overall_elapsed_time // 60)
-        seconds = int(overall_elapsed_time % 60)
-        print(f"Total generation time: {overall_elapsed_time:.2f} seconds ({minutes} minutes and {seconds} seconds)\n")
+        if overall_elapsed_time >= 60:
+            minutes = int(overall_elapsed_time // 60)
+            seconds = int(overall_elapsed_time % 60)
+            print(f"Total generation time: {overall_elapsed_time:.2f} seconds ({minutes} minutes and {seconds} seconds)\n")
+        else:
+            print(f"Total generation time: {overall_elapsed_time:.2f} seconds\n")
         return images
 
     article = r"""
