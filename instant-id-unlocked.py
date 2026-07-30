@@ -2056,7 +2056,8 @@ Scheduler: {scheduler}"""
                     metadata_input.upload(
                         fn=lambda x: (x, read_png_metadata(x) if x is not None else ""),
                         inputs=metadata_input,
-                        outputs=[metadata_input, metadata_output]
+                        outputs=[metadata_input, metadata_output],
+                        queue=False
                     )
                 with gr.Column():
                     enable_lora = gr.Checkbox(
