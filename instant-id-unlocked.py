@@ -675,7 +675,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
     def resize_img(
         input_image,
         max_side=4096,
-        min_side=512,
+        min_side=256,
         size=None,
         pad_to_max_side=False,
         mode=PIL.Image.LANCZOS,
@@ -1787,7 +1787,7 @@ Scheduler: {scheduler}"""
                     )
                 resize_max_side_slider = gr.Slider(
                     label="Max image width/height resizing in pixels. This is for the final output resolution.",
-                    minimum=512,
+                    minimum=256,
                     maximum=4096,
                     step=32,
                     value=1280,
@@ -1998,7 +1998,7 @@ Scheduler: {scheduler}"""
                         hires_upscale_by = gr.Slider(
                             label="Hires Upscale By",
                             minimum=1.0,
-                            maximum=4.0,
+                            maximum=8.0,
                             step=0.05,
                             value=1.5,
                             info="Target resolution = base resolution on the left (max_side) * this factor.",
