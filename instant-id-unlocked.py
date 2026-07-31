@@ -1363,7 +1363,9 @@ Scheduler: {scheduler}"""
                     images.append(image)
                     print("\nOriginal non-upscaled image saved.")
                 torch.cuda.empty_cache()
-                print("\nRunning Hires Fix pass...\n")
+                hires_preview_width = max(8, int(round((width * hires_upscale_by) / 8) * 8))
+                hires_preview_height = max(8, int(round((height * hires_upscale_by) / 8) * 8))
+                print(f"\nRunning Hires Fix pass and upscaling by {hires_upscale_by}x for a final image output resolution of {hires_preview_width}x{hires_preview_height}...\n")
                 progress(
                     0.0,
                     desc=f"Hires Fix: upscaling image {i + 1} of {num_outputs}"
@@ -2931,7 +2933,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v6.3.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v6.3.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
