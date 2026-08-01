@@ -203,7 +203,8 @@ EXCLUDED_MODELS = {
     "Intel/dpt-hybrid-midas",
     "lllyasviel/Annotators",
     "lllyasviel/ControlNet",
-    "xinsir/controlnet-openpose-sdxl-1.0"
+    "xinsir/controlnet-openpose-sdxl-1.0",
+    "stabilityai/stable-diffusion-xl-base-1.0"
 }
 EXCLUDED_MODELS_LOWER = {m.lower() for m in EXCLUDED_MODELS}
 SAFETENSORS_CHECKPOINTS_DIR = "models"
