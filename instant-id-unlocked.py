@@ -5,7 +5,6 @@ from typing import Tuple
 
 import os
 import re
-import json
 import cv2
 import math
 import torch
@@ -464,15 +463,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         if pretrained_model_name_or_path.endswith(
             ".ckpt"
         ) or pretrained_model_name_or_path.endswith(".safetensors"):
-            scheduler_kwargs = hf_hub_download(
-                repo_id="eniora/RealVisXL_V5.0",
-                subfolder="scheduler",
-                filename="scheduler_config.json",
-            )
-            with open(scheduler_kwargs, "r") as f:
-                scheduler_kwargs = json.load(f)
-
-            (tokenizers, text_encoders, unet, _, vae) = load_models_xl(
+            (tokenizers, text_encoders, unet, scheduler_kwargs, vae) = load_models_xl(
                 pretrained_model_name_or_path=pretrained_model_name_or_path,
                 scheduler_name=None,
                 weight_dtype=dtype,
@@ -780,7 +771,6 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
 
     def load_model_and_update_pipe(model_name, enable_img2img):
         nonlocal pipe
-
         if vram_gb >= 15 and pipe is not None:
             del pipe
             torch.cuda.empty_cache()
@@ -789,14 +779,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         PipeClass = StableDiffusionXLInstantIDImg2ImgPipeline if enable_img2img else StableDiffusionXLInstantIDPipeline
 
         if model_name.endswith((".ckpt", ".safetensors")):
-            scheduler_kwargs = hf_hub_download(
-                repo_id="eniora/RealVisXL_V5.0",
-                subfolder="scheduler",
-                filename="scheduler_config.json",
-            )
-            with open(scheduler_kwargs, "r") as f:
-                scheduler_kwargs = json.load(f)
-            tokenizers, text_encoders, unet, _, vae = load_models_xl(
+            tokenizers, text_encoders, unet, scheduler_kwargs, vae = load_models_xl(
                 pretrained_model_name_or_path=model_name,
                 scheduler_name=None,
                 weight_dtype=dtype,
