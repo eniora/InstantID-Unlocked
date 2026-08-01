@@ -50,6 +50,7 @@ os.environ["GRADIO_DISABLE_TELEMETRY"] = "1"
 vram_bytes = torch.cuda.get_device_properties(0).total_memory
 vram_gb = vram_bytes / (1024**3)
 default_vae_tiling = vram_gb >= 15
+gpu_name = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU"
 
 class GenerationStopped(Exception):
     pass
@@ -484,8 +485,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 pipe.scheduler.config
             )
 
-    print(f"Detected GPU VRAM: {vram_gb:.2f} GB → "
-          f"VAE Tiling: {'Enabled' if default_vae_tiling else 'Disabled'} (you can change it manually in the UI)")
+    print(f"\nDetected GPU: {gpu_name} with {vram_gb:.2f} GB VRAM → VAE Tiling: {'Enabled' if default_vae_tiling else 'Disabled'} (you can change it manually in the UI)\n")
 
     def load_and_cache_controlnet_model(controlnet_type):
         if controlnet_type not in cached_controlnet_models:
@@ -1349,6 +1349,7 @@ LoRA 8 selection: {'None' if disable_lora_8 or not (enable_lora and lora_selecti
 LoRA 8 scale: {'Disabled' if disable_lora_8 or not (enable_lora and lora_selection_8 and os.path.exists(os.path.join('./models/Loras', lora_selection_8))) else lora_scale_8}
 Embeddings Enabled: {enable_embeddings}
 Embeddings Used: {', '.join(used_embedding_tokens) if used_embedding_tokens else 'None'}
+GPU used: {gpu_name}
 Scheduler: {scheduler}"""
 
             png_info = PIL.PngImagePlugin.PngInfo()
@@ -1365,7 +1366,7 @@ Scheduler: {scheduler}"""
                 torch.cuda.empty_cache()
                 hires_preview_width = max(8, int(round((width * hires_upscale_by) / 8) * 8))
                 hires_preview_height = max(8, int(round((height * hires_upscale_by) / 8) * 8))
-                print(f"\nRunning Hires Fix pass and upscaling by {hires_upscale_by}x for a final image output resolution of {hires_preview_width}x{hires_preview_height}...\n")
+                print(f"\nRunning Hires Fix pass and upscaling the image by {hires_upscale_by}x to a final output resolution of {hires_preview_width}x{hires_preview_height}...\n")
                 progress(
                     0.0,
                     desc=f"Hires Fix: upscaling image {i + 1} of {num_outputs}"
