@@ -332,12 +332,13 @@ def load_checkpoint_model_xl(
     vae = pipe.vae
     tokenizers = [pipe.tokenizer, pipe.tokenizer_2]
     text_encoders = [pipe.text_encoder, pipe.text_encoder_2]
+    scheduler_config = dict(pipe.scheduler.config)
     if len(text_encoders) == 2:
         text_encoders[1].pad_token_id = 0
 
     del pipe
 
-    return tokenizers, text_encoders, unet, vae
+    return tokenizers, text_encoders, unet, vae, scheduler_config
 
 
 def load_models_xl(
@@ -351,10 +352,11 @@ def load_models_xl(
     UNet2DConditionModel,
     SchedulerMixin,
 ]:
+    checkpoint_scheduler_config = None
     if pretrained_model_name_or_path.endswith(
         ".ckpt"
     ) or pretrained_model_name_or_path.endswith(".safetensors"):
-        (tokenizers, text_encoders, unet, vae) = load_checkpoint_model_xl(
+        (tokenizers, text_encoders, unet, vae, checkpoint_scheduler_config) = load_checkpoint_model_xl(
             pretrained_model_name_or_path, weight_dtype
         )
     else:  # diffusers
@@ -364,7 +366,7 @@ def load_models_xl(
     if scheduler_name:
         scheduler = create_noise_scheduler(scheduler_name, noise_scheduler_kwargs)
     else:
-        scheduler = None
+        scheduler = checkpoint_scheduler_config
 
     return tokenizers, text_encoders, unet, scheduler, vae
 
