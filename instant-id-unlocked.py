@@ -42,7 +42,7 @@ logger = logging.getLogger("diffusers.configuration_utils")
 logger.addFilter(lambda record: "were passed to LCMScheduler" not in record.getMessage())
 
 os.environ["NO_ALBUMENTATIONS_UPDATE"] = "1"
-os.environ["TRANSFORMERS_OFFLINE"] = "1"
+# os.environ["TRANSFORMERS_OFFLINE"] = "1"
 os.environ["HF_HUB_CACHE"] = "models"
 os.environ["HF_HUB_CACHE_OFFLINE"] = "true"
 os.environ["GRADIO_ANALYTICS_ENABLED"] = "False"
