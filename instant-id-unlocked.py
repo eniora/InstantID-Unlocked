@@ -5,6 +5,7 @@ from typing import Tuple
 
 import os
 import re
+import json
 import cv2
 import math
 import torch
@@ -37,6 +38,7 @@ logger = logging.getLogger("transformers.tokenization_utils_base")
 logger.addFilter(lambda record: "Token indices sequence length is longer" not in record.getMessage())
 logger = logging.getLogger("transformers.modeling_utils")
 logger.addFilter(lambda record: "mean_resizing" not in record.getMessage())
+logger.addFilter(lambda record: "text_model.embeddings.position_ids" not in record.getMessage())
 logger = logging.getLogger("diffusers.configuration_utils")
 logger.addFilter(lambda record: "were passed to LCMScheduler" not in record.getMessage())
 
@@ -204,6 +206,19 @@ EXCLUDED_MODELS = {
     "xinsir/controlnet-openpose-sdxl-1.0"
 }
 EXCLUDED_MODELS_LOWER = {m.lower() for m in EXCLUDED_MODELS}
+SAFETENSOR_CHECKPOINTS_DIR = "./models/Safetensor_checkpoints"
+
+def get_available_safetensor_checkpoints():
+    if not os.path.exists(SAFETENSOR_CHECKPOINTS_DIR):
+        return []
+    checkpoint_files = []
+    for file in sorted(os.listdir(SAFETENSOR_CHECKPOINTS_DIR)):
+        if file.lower().endswith((".safetensors", ".ckpt")):
+            checkpoint_files.append(
+                os.path.join(SAFETENSOR_CHECKPOINTS_DIR, file).replace("\\", "/")
+            )
+    return checkpoint_files
+
 def get_available_models():
     models_dir = "models"
     model_folders = []
@@ -214,6 +229,7 @@ def get_available_models():
                 if model_name.lower() in EXCLUDED_MODELS_LOWER:
                     continue
                 model_folders.append(model_name)
+    model_folders.extend(get_available_safetensor_checkpoints())
     return model_folders
 
 AVAILABLE_MODELS = get_available_models()
@@ -454,6 +470,8 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 subfolder="scheduler",
                 filename="scheduler_config.json",
             )
+            with open(scheduler_kwargs, "r") as f:
+                scheduler_kwargs = json.load(f)
 
             (tokenizers, text_encoders, unet, _, vae) = load_models_xl(
                 pretrained_model_name_or_path=pretrained_model_name_or_path,
@@ -777,6 +795,8 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 subfolder="scheduler",
                 filename="scheduler_config.json",
             )
+            with open(scheduler_kwargs, "r") as f:
+                scheduler_kwargs = json.load(f)
             tokenizers, text_encoders, unet, _, vae = load_models_xl(
                 pretrained_model_name_or_path=model_name,
                 scheduler_name=None,
@@ -891,6 +911,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             or (enable_img2img and not is_img2img_pipe)
             or (not enable_img2img and is_img2img_pipe)
         ):
+            print(f"Loading model: {model_name}\n")
             pipe = load_model_and_update_pipe(model_name, enable_img2img)
             pipe._current_model = model_name
             embedding_state["loaded"] = False
