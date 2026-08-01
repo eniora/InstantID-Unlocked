@@ -39,6 +39,8 @@ logger = logging.getLogger("transformers.modeling_utils")
 logger.addFilter(lambda record: "mean_resizing" not in record.getMessage())
 logger = logging.getLogger("diffusers.loaders.single_file_utils")
 logger.addFilter(lambda record: "text_model.embeddings.position_ids" not in record.getMessage())
+logger = logging.getLogger("diffusers.pipelines.pipeline_utils")
+logger.addFilter(lambda record: "please unset the `HF_HUB_OFFLINE` environment" not in record.getMessage())
 logger = logging.getLogger("diffusers.configuration_utils")
 logger.addFilter(lambda record: "were passed to LCMScheduler" not in record.getMessage())
 
