@@ -2923,19 +2923,23 @@ Scheduler: {scheduler}"""
                     hires_denoising_strength,
                     controlnet_accordion,
                     style_settings_accordion
-                ]
+                ],
+                queue=False
             ).then(
                 fn=toggle_lora_ui,
                 inputs=[enable_lora],
-                outputs=LORA_OUTPUTS
+                outputs=LORA_OUTPUTS,
+                queue=False
             ).then(
                 fn=toggle_embeddings_ui,
                 inputs=[enable_embeddings],
-                outputs=EMBEDDINGS_OUTPUTS
+                outputs=EMBEDDINGS_OUTPUTS,
+                queue=False
             ).then(
                 fn=toggle_hires_fix_ui,
                 inputs=[enable_hires_fix],
-                outputs=[hires_upscaler, refresh_hires_upscalers, hires_fix_row, save_hires_original]
+                outputs=[hires_upscaler, refresh_hires_upscalers, hires_fix_row, save_hires_original],
+                queue=False
             )
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
