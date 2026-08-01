@@ -206,16 +206,16 @@ EXCLUDED_MODELS = {
     "xinsir/controlnet-openpose-sdxl-1.0"
 }
 EXCLUDED_MODELS_LOWER = {m.lower() for m in EXCLUDED_MODELS}
-SAFETENSOR_CHECKPOINTS_DIR = "./models/Safetensor_checkpoints"
+SAFETENSORS_CHECKPOINTS_DIR = "./models/Safetensors_checkpoints"
 
-def get_available_safetensor_checkpoints():
-    if not os.path.exists(SAFETENSOR_CHECKPOINTS_DIR):
+def get_available_safetensors_checkpoints():
+    if not os.path.exists(SAFETENSORS_CHECKPOINTS_DIR):
         return []
     checkpoint_files = []
-    for file in sorted(os.listdir(SAFETENSOR_CHECKPOINTS_DIR)):
+    for file in sorted(os.listdir(SAFETENSORS_CHECKPOINTS_DIR)):
         if file.lower().endswith((".safetensors", ".ckpt")):
             checkpoint_files.append(
-                os.path.join(SAFETENSOR_CHECKPOINTS_DIR, file).replace("\\", "/")
+                os.path.join(SAFETENSORS_CHECKPOINTS_DIR, file).replace("\\", "/")
             )
     return checkpoint_files
 
@@ -229,7 +229,7 @@ def get_available_models():
                 if model_name.lower() in EXCLUDED_MODELS_LOWER:
                     continue
                 model_folders.append(model_name)
-    model_folders.extend(get_available_safetensor_checkpoints())
+    model_folders.extend(get_available_safetensors_checkpoints())
     return model_folders
 
 AVAILABLE_MODELS = get_available_models()
@@ -2955,7 +2955,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v6.3.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v6.4.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
