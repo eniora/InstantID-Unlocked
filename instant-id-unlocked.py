@@ -38,12 +38,11 @@ logger = logging.getLogger("transformers.tokenization_utils_base")
 logger.addFilter(lambda record: "Token indices sequence length is longer" not in record.getMessage())
 logger = logging.getLogger("transformers.modeling_utils")
 logger.addFilter(lambda record: "mean_resizing" not in record.getMessage())
-logger.addFilter(lambda record: "text_model.embeddings.position_ids" not in record.getMessage())
 logger = logging.getLogger("diffusers.configuration_utils")
 logger.addFilter(lambda record: "were passed to LCMScheduler" not in record.getMessage())
 
 os.environ["NO_ALBUMENTATIONS_UPDATE"] = "1"
-# os.environ["TRANSFORMERS_OFFLINE"] = "1"
+os.environ["TRANSFORMERS_OFFLINE"] = "1"
 os.environ["HF_HUB_CACHE"] = "models"
 os.environ["HF_HUB_CACHE_OFFLINE"] = "true"
 os.environ["GRADIO_ANALYTICS_ENABLED"] = "False"
@@ -206,7 +205,7 @@ EXCLUDED_MODELS = {
     "xinsir/controlnet-openpose-sdxl-1.0"
 }
 EXCLUDED_MODELS_LOWER = {m.lower() for m in EXCLUDED_MODELS}
-SAFETENSORS_CHECKPOINTS_DIR = "./models/Safetensors_checkpoints"
+SAFETENSORS_CHECKPOINTS_DIR = "models"
 
 def get_available_safetensors_checkpoints():
     if not os.path.exists(SAFETENSORS_CHECKPOINTS_DIR):
