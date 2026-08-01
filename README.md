@@ -20,7 +20,7 @@ The code barely follows any DRY principles as it started as a personal modificat
 - New default model: eniora/RealVisXL_V5.0 (better than YamerMIX). Other good tested models: John6666/albedobase-xl-v31large-sdxl/, ProtoVision XL 6.6, misri/juggernautXL_juggXIByRundiffusion, John6666/cyberrealistic-xl-v58-sdxl.
 - Added over 1100 styles, including many from Fooocus and StyleSelectorXL.
 - New CN pose model by xinsir, found it a bit better than the original with better colors.
-- In addition to diffusers format support for loading checkpoints, I added the ability to load single SDXL, Pony and Illustrious .safetensors files. They will automatically appear in the model dropdown selection menu when placed in the /models folder.
+- In addition to the default diffusers format support for loading checkpoints, I added the ability to load single SDXL, Pony and Illustrious .safetensors files. They will automatically appear in the model dropdown selection menu when placed in the /models folder.
 
 🧠 Control & Generation
 - img2img mode integrated directly (no need to run a separate pipeline).
