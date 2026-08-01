@@ -37,6 +37,8 @@ logger = logging.getLogger("transformers.tokenization_utils_base")
 logger.addFilter(lambda record: "Token indices sequence length is longer" not in record.getMessage())
 logger = logging.getLogger("transformers.modeling_utils")
 logger.addFilter(lambda record: "mean_resizing" not in record.getMessage())
+logger = logging.getLogger("diffusers.loaders.single_file_utils")
+logger.addFilter(lambda record: "text_model.embeddings.position_ids" not in record.getMessage())
 logger = logging.getLogger("diffusers.configuration_utils")
 logger.addFilter(lambda record: "were passed to LCMScheduler" not in record.getMessage())
 
@@ -893,7 +895,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             or (enable_img2img and not is_img2img_pipe)
             or (not enable_img2img and is_img2img_pipe)
         ):
-            print(f"Loading model: {model_name}\n")
+            print(f"\nLoading model: {model_name}\n")
             pipe = load_model_and_update_pipe(model_name, enable_img2img)
             pipe._current_model = model_name
             embedding_state["loaded"] = False
