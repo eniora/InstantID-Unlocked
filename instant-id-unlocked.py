@@ -774,10 +774,16 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
 
     def load_model_and_update_pipe(model_name, enable_img2img):
         nonlocal pipe
+        global controlnet_identitynet
         if vram_gb >= 15 and pipe is not None:
             del pipe
             torch.cuda.empty_cache()
             gc.collect()
+
+        if controlnet_identitynet is None:
+            controlnet_identitynet = ControlNetModel.from_pretrained(
+                controlnet_path, torch_dtype=dtype
+            )
 
         PipeClass = StableDiffusionXLInstantIDImg2ImgPipeline if enable_img2img else StableDiffusionXLInstantIDPipeline
 
@@ -3092,9 +3098,12 @@ Scheduler: {scheduler}"""
                         del hires_sibling_pipe
                         hires_sibling_pipe = None
 
-                    global cached_controlnet_models
+                    global cached_controlnet_models, controlnet_identitynet
                     for k in list(cached_controlnet_models.keys()):
                         del cached_controlnet_models[k]
+                    if controlnet_identitynet is not None:
+                        del controlnet_identitynet
+                        controlnet_identitynet = None
 
                     torch.cuda.empty_cache()
                     gc.collect()
