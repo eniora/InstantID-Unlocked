@@ -2028,6 +2028,11 @@ Scheduler: {scheduler}"""
                             if hires_sibling_pipe is not None:
                                 del hires_sibling_pipe
                                 hires_sibling_pipe = None
+
+                            global cached_controlnet_models
+                            for k in list(cached_controlnet_models.keys()):
+                                del cached_controlnet_models[k]
+
                             torch.cuda.empty_cache()
                             gc.collect()
 
@@ -3086,6 +3091,11 @@ Scheduler: {scheduler}"""
                     if hires_sibling_pipe is not None:
                         del hires_sibling_pipe
                         hires_sibling_pipe = None
+
+                    global cached_controlnet_models
+                    for k in list(cached_controlnet_models.keys()):
+                        del cached_controlnet_models[k]
+
                     torch.cuda.empty_cache()
                     gc.collect()
                     print("\nSuccessfully released all models and pipelines from memory.\n")
