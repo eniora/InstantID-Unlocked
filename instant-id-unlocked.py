@@ -1708,32 +1708,31 @@ Scheduler: {scheduler}"""
                         outputs=[prompt, negative_prompt, style],
                         queue=False
                     )
-                    with gr.Accordion("Negative Prompt Profiles", open=False):
-                        with gr.Group():
-                            negative_prompt_preset = gr.Dropdown(
-                                choices=list(NEGATIVE_PROMPT_PRESETS.keys()),
-                                value="Default Negative Profile",
-                                show_label=False,
-                                container=False
-                            )
-                            apply_negative_profile_btn = gr.Button(
-                                "Apply selected negative prompt profile", 
-                                size="sm",
-                                min_width=200
-                            )
-                            negative_prompt_preset.change(
-                                fn=lambda x: NEGATIVE_PROMPT_PRESETS[x],
-                                inputs=negative_prompt_preset,
-                                outputs=negative_prompt,
-                            )
-                            def apply_selected_negative_profile(selected_negative_profile):
-                                return NEGATIVE_PROMPT_PRESETS[selected_negative_profile]
+                    with gr.Group():
+                        negative_prompt_preset = gr.Dropdown(
+                            choices=list(NEGATIVE_PROMPT_PRESETS.keys()),
+                            value="Default Negative Profile",
+                            show_label=False,
+                            container=False
+                        )
+                        apply_negative_profile_btn = gr.Button(
+                            "Apply selected negative prompt profile", 
+                            size="sm",
+                            min_width=200
+                        )
+                        negative_prompt_preset.change(
+                            fn=lambda x: NEGATIVE_PROMPT_PRESETS[x],
+                            inputs=negative_prompt_preset,
+                            outputs=negative_prompt,
+                        )
+                        def apply_selected_negative_profile(selected_negative_profile):
+                            return NEGATIVE_PROMPT_PRESETS[selected_negative_profile]
 
-                            apply_negative_profile_btn.click(
-                                fn=apply_selected_negative_profile,
-                                inputs=negative_prompt_preset,
-                                outputs=negative_prompt,
-                            )
+                        apply_negative_profile_btn.click(
+                            fn=apply_selected_negative_profile,
+                            inputs=negative_prompt_preset,
+                            outputs=negative_prompt,
+                        )
                     with gr.Row():
                         generate_alt_2 = gr.Button("Generate (Extra Settings Section Button)", variant="primary", elem_id="generate_btn_settings")
                         stop_btn_2 = gr.Button("⏹", scale=0, min_width=60, variant="stop")
@@ -2027,8 +2026,8 @@ Scheduler: {scheduler}"""
                             minimum=0.1,
                             maximum=1.0,
                             step=0.05,
-                            value=0.4,
-                            info="Lower preserves more of the upscaled image. 0.4 is a good balance.",
+                            value=0.35,
+                            info="Lower preserves more of the upscaled image. 0.35 is a good balance.",
                             scale=3
                         )
 
@@ -2593,7 +2592,7 @@ Scheduler: {scheduler}"""
                     "hires_upscaler": DEFAULT_UPSCALER,
                     "hires_upscale_by": 1.5,
                     "hires_steps": 0,
-                    "hires_denoising_strength": 0.4
+                    "hires_denoising_strength": 0.35
                 }
                 if metadata_text:
                     lines = metadata_text.split('\n')
