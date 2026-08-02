@@ -1947,6 +1947,118 @@ Scheduler: {scheduler}"""
                         value="640x640 (default)",
                         info="Only change this if you get 'No face detected'. Use low values for very close-up portraits. High values for small, distant faces."
                     )
+                with gr.Accordion("🔍 Standalone Image Upscaler (don't use while an image is being generated)", open=False) as standalone_upscaler_accordion:
+                    with gr.Row():
+                        standalone_upscale_input = gr.Image(
+                            label="Image to Upscale",
+                            type="filepath",
+                            height=300,
+                            scale=1
+                        )
+                        standalone_upscale_output = gr.Image(
+                            label="Upscaled Result",
+                            type="filepath",
+                            height=300,
+                            interactive=False,
+                            scale=1
+                        )
+                    with gr.Row():
+                        standalone_upscaler_model = gr.Dropdown(
+                            label="Upscaler Model",
+                            choices=get_available_upscalers() or [DEFAULT_UPSCALER],
+                            value=DEFAULT_UPSCALER if DEFAULT_UPSCALER in get_available_upscalers() else (get_available_upscalers()[0] if get_available_upscalers() else DEFAULT_UPSCALER),
+                            allow_custom_value=True,
+                            info=f"Place in /models/Upscalers",
+                            scale=4
+                        )
+                        refresh_standalone_upscalers = gr.Button("🔄", scale=0, min_width=40)
+                    with gr.Row():
+                        standalone_upscale_by = gr.Slider(
+                            label="Upscale By",
+                            minimum=1.0,
+                            maximum=8.0,
+                            step=0.1,
+                            value=2.0,
+                            info="Final image size = original size * this factor. This is a standlone upscaler and has nothing to do with any other InstantID functions.",
+                            scale=4
+                        )
+                    with gr.Row():
+                        run_standalone_upscale_btn = gr.Button("Upscale Image", variant="secondary")
+                    standalone_upscale_status = gr.Markdown("")
+
+                    with gr.Row():
+                        delete_pipe_checkbox = gr.Checkbox(
+                            label="When 'Upscale Image' is clicked, unload the main pipeline (models) from VRAM for faster upscaling.",
+                            value=True
+                        )
+                    def refresh_standalone_upscaler_list():
+                        choices = get_available_upscalers() or [DEFAULT_UPSCALER]
+                        return gr.update(choices=choices)
+
+                    refresh_standalone_upscalers.click(
+                        fn=refresh_standalone_upscaler_list,
+                        outputs=standalone_upscaler_model
+                    )
+
+                    standalone_upscale_input.upload(
+                        fn=lambda x: update_img_resolution(x, "Image to Upscale"),
+                        inputs=standalone_upscale_input,
+                        outputs=standalone_upscale_input,
+                        queue=False
+                    )
+                    standalone_upscale_input.clear(
+                        fn=lambda: gr.update(label="Image to Upscale"),
+                        inputs=None,
+                        outputs=standalone_upscale_input,
+                        queue=False
+                    )
+
+                    def run_standalone_upscale(input_image_path, upscaler_name, upscale_by, delete_pipe_checkbox, progress=gr.Progress(track_tqdm=True)):
+                        nonlocal pipe
+
+                        if not input_image_path:
+                            raise gr.Error("Please provide an image to upscale first.")
+                        if not upscaler_name:
+                            raise gr.Error("Please select an upscaler model.")
+
+                        if delete_pipe_checkbox:
+                            if pipe is not None:
+                                del pipe
+                                pipe = None
+                                torch.cuda.empty_cache()
+                                gc.collect()
+
+                        progress(0, desc="Loading upscaler model...")
+                        model = load_upscaler_model(upscaler_name)
+
+                        progress(0.2, desc="Upscaling image...")
+                        input_image = load_image(input_image_path)
+                        orig_width, orig_height = input_image.size
+                        target_width = max(1, round(orig_width * upscale_by))
+                        target_height = max(1, round(orig_height * upscale_by))
+
+                        torch.cuda.empty_cache()
+                        print(f"\nStandalone Image Upscaler: upscaling image by {upscale_by}x from {orig_width}x{orig_height} to {target_width}x{target_height} using '{upscaler_name}'...\n")
+
+                        upscaled = run_upscaler_model(model, input_image)
+
+                        if upscaled.size != (target_width, target_height):
+                            progress(0.8, desc="Resizing to target scale...")
+                            upscaled = upscaled.resize((target_width, target_height), PIL.Image.LANCZOS)
+
+                        progress(0.9, desc="Saving result...")
+                        saved_paths = save_images([upscaled], prefix="InstantID_Upscaled_")
+
+                        torch.cuda.empty_cache()
+                        print(f"Finished upscaling image ({orig_width}x{orig_height} -> {target_width}x{target_height}). Saved to {saved_paths[0]}\n")
+
+                        return gr.update(value=saved_paths[0], label=f"Upscaled Result ({target_width}x{target_height})"), f"✅ Saved to `{saved_paths[0]}` ({target_width}x{target_height})"
+
+                    run_standalone_upscale_btn.click(
+                        fn=run_standalone_upscale,
+                        inputs=[standalone_upscale_input, standalone_upscaler_model, standalone_upscale_by, delete_pipe_checkbox],
+                        outputs=[standalone_upscale_output, standalone_upscale_status]
+                    )
                 with gr.Row():
                     generate_alt_3 = gr.Button("Generate (Extra Bottom Section Button)", variant="primary")
                     stop_btn_3 = gr.Button("⏹", scale=0, min_width=60, variant="stop")
@@ -2943,7 +3055,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v6.4.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v6.5.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
