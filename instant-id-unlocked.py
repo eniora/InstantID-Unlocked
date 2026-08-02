@@ -2013,7 +2013,7 @@ Scheduler: {scheduler}"""
                         queue=False
                     )
 
-                    def run_standalone_upscale(input_image_path, upscaler_name, upscale_by, delete_pipe_checkbox, progress=gr.Progress(track_tqdm=True)):
+                    def run_standalone_upscale(input_image_path, upscaler_name, upscale_by, delete_pipe_checkbox, progress=gr.Progress()):
                         nonlocal pipe
 
                         if not input_image_path:
