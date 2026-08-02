@@ -1988,7 +1988,7 @@ Scheduler: {scheduler}"""
 
                     with gr.Row():
                         delete_pipe_checkbox = gr.Checkbox(
-                            label="When 'Upscale Image' is clicked, unload the main pipeline (models) from VRAM for faster upscaling.",
+                            label="When 'Upscale Image' is clicked, unload the main pipelines (models) from VRAM for faster upscaling.",
                             value=True
                         )
                     def refresh_standalone_upscaler_list():
@@ -2014,7 +2014,7 @@ Scheduler: {scheduler}"""
                     )
 
                     def run_standalone_upscale(input_image_path, upscaler_name, upscale_by, delete_pipe_checkbox, progress=gr.Progress()):
-                        nonlocal pipe
+                        nonlocal pipe, hires_sibling_pipe
 
                         if not input_image_path:
                             raise gr.Error("Please provide an image to upscale first.")
@@ -2025,8 +2025,11 @@ Scheduler: {scheduler}"""
                             if pipe is not None:
                                 del pipe
                                 pipe = None
-                                torch.cuda.empty_cache()
-                                gc.collect()
+                            if hires_sibling_pipe is not None:
+                                del hires_sibling_pipe
+                                hires_sibling_pipe = None
+                            torch.cuda.empty_cache()
+                            gc.collect()
 
                         progress(0, desc="Loading upscaler model...")
                         model = load_upscaler_model(upscaler_name)
