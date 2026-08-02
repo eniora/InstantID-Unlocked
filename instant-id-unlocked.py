@@ -3075,6 +3075,28 @@ Scheduler: {scheduler}"""
                     queue=False,
                 )
 
+        with gr.Row():
+            with gr.Column():
+                delete_all_pipelines = gr.Button("Delete all models & pipelines from memory and VRAM - This can be helpful after a long session. (Don't click during image generation!)", variant="stop", scale=1)
+                def delete_all_pipelines_fn():
+                    nonlocal pipe, hires_sibling_pipe
+                    if pipe is not None:
+                        del pipe
+                        pipe = None
+                    if hires_sibling_pipe is not None:
+                        del hires_sibling_pipe
+                        hires_sibling_pipe = None
+                    torch.cuda.empty_cache()
+                    gc.collect()
+                    print("\nSuccessfully released all models and pipelines from memory.\n")
+
+                delete_all_pipelines.click(
+                    fn=delete_all_pipelines_fn,
+                    inputs=None,
+                    outputs=None,
+                    queue=False,
+                )
+
     gui.launch(inbrowser=os.environ.get("IN_BROWSER", "1") == "1")
 
 main()
