@@ -721,7 +721,7 @@ class LongPromptWeight(object):
                 - "ForgeUI global rescale": same direct per-token scaling, but rescaled using a
                   single mean over the whole concatenated CLIP-L + CLIP-G tensor instead of
                   rescaling each encoder separately. See `apply_prompt_weights_forge_style`.
-                - "Original InstantID per token": InstantID's original method - interpolates each
+                - "Original InstantID per-token": InstantID's original method - interpolates each
                   token's embedding toward the chunk's EOS embedding.
         Returns:
             prompt_embeds (torch.Tensor)
@@ -816,7 +816,7 @@ class LongPromptWeight(object):
             prompt_embeds_list = [prompt_embeds_1_hidden_states, prompt_embeds_2_hidden_states]
             token_embedding = torch.concat(prompt_embeds_list, dim=-1).squeeze(0)
 
-            if weight_application_method == "Original InstantID per token":
+            if weight_application_method == "Original InstantID per-token":
                 for j in range(len(weight_tensor)):
                     if weight_tensor[j] != 1.0:
                         token_embedding[j] = (
@@ -848,7 +848,7 @@ class LongPromptWeight(object):
             neg_prompt_embeds_list = [neg_prompt_embeds_1_hidden_states, neg_prompt_embeds_2_hidden_states]
             neg_token_embedding = torch.concat(neg_prompt_embeds_list, dim=-1).squeeze(0)
 
-            if weight_application_method == "Original InstantID per token":
+            if weight_application_method == "Original InstantID per-token":
                 for z in range(len(neg_weight_tensor)):
                     if neg_weight_tensor[z] != 1.0:
                         neg_token_embedding[z] = (
