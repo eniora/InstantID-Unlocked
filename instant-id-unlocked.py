@@ -1489,7 +1489,7 @@ Scheduler: {scheduler}"""
     - Upscale and use Enable Hires Fix to generate images with a resolution of what SDXL is best at (usually 1280 max side) to prevent anatomy errors like long necks while still producing good quality images. Hires Fix uses img2img pipeline and uses a lot of VRAM.
     - Select a model to use for generation from the upper left corner dropdown. Only use SDXL and Pony. Illustrious can be loaded but isn't well supported.
     - You can select a scheduler from the upper right corner dropdown. DPMSolver, KDPM2 and Euler are usually the best.
-    - The "Use ForgeUI/A1111-style prompt weighting" option when enabled scales each token's embedding by its weight, then rescales each text encoder's output to preserve its own overall strength. When unchecked, it uses InstantID's original method (interpolates each token toward the chunk's end-of-text embedding).
+    - The "Use ForgeUI/A1111-style prompt weighting" option scales each token's embedding by its weight, then rescales each text encoder's output to preserve its own overall strength. When unchecked, it uses InstantID's original method (interpolates each token toward the chunk's end-of-text embedding).
     
     Other usage tips of InstantID:
     - If you're not satisfied with the similarity, try increasing the weight of "IdentityNet Strength" and "Image adapter strength".
@@ -1680,7 +1680,7 @@ Scheduler: {scheduler}"""
                 )
                 use_forge_weighting = gr.Checkbox(
                     label="Use ForgeUI/A1111-style prompt weighting",
-                    value=False,
+                    value=True,
                     info="Per-encoder rescale ForgeUI/A1111-style weighting (word:weight). Uncheck to use InstantID's method (local, per-token).",
                 )
                 with gr.Accordion("⚙️ Style templates and other settings including custom resolution", open=False) as style_settings_accordion:
@@ -2515,7 +2515,7 @@ Scheduler: {scheduler}"""
                     )
                     embeddings_weight = gr.Slider(
                         label="Embedding Weight",
-                        minimum=0.1,
+                        minimum=0.5,
                         maximum=3.0,
                         value=1.0,
                         step=0.1,
@@ -2674,7 +2674,7 @@ Scheduler: {scheduler}"""
                 settings = {
                     "prompt": "",
                     "negative_prompt": DEFAULT_NEGATIVE_PROFILE,
-                    "use_forge_weighting": False,
+                    "use_forge_weighting": True,
                     "resize_max_side": 1280,
                     "seed": 12345,
                     "num_steps": 20,
