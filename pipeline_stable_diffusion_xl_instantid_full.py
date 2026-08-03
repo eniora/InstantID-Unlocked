@@ -323,7 +323,7 @@ class LongPromptWeight(object):
         "interpolate toward EOS" trick this pipeline uses by default.
 
         Forge/A1111's `sd_hijack_clip.py` scales each token's embedding directly by its attention
-        weight, then rescales the whole chunk so its mean matches the pre-weighting mean:
+        weight, then rescales the chunk so its mean matches the pre-weighting mean:
 
             original_mean = z.mean()
             z = z * weights
@@ -333,11 +333,19 @@ class LongPromptWeight(object):
         This keeps the overall conditioning magnitude stable (so weighting doesn't just look like a
         global CFG change) while still giving each token real, direct control over its own
         contribution - unlike the EOS-interpolation method, whose effective strength for a given
-        numeric weight doesn't match Forge's at all. Matching this formula makes weight values you're
-        used to from Forge behave much more similarly here.
+        numeric weight doesn't match Forge's at all.
+
+        By the time this runs, `token_embedding` is the concatenation of CLIP-L (text_encoder,
+        hidden_size 768) and OpenCLIP-G (text_encoder_2, hidden_size 1280) hidden states into one
+        (seq_len, 2048) tensor. CLIP-L and CLIP-G have different typical activation magnitudes, so
+        this rescales each encoder's slice against its own mean rather than computing one combined
+        mean over the full 2048-dim tensor - that keeps one encoder's magnitude from skewing the
+        other's rescale factor. This is a reasonable-effort match to Forge/A1111's per-encoder
+        conditioning setup, not a verified line-for-line reproduction of its internals.
 
         Args:
-            token_embedding (torch.Tensor): shape (seq_len, dim) - one 77-token chunk's hidden states
+            token_embedding (torch.Tensor): shape (seq_len, dim) - one 77-token chunk's hidden
+                states, concatenated across both SDXL text encoders along the last dim
             weight_tensor (torch.Tensor): shape (seq_len,) - per-token attention weights
         Returns:
             torch.Tensor: reweighted token_embedding, same shape as input
@@ -345,17 +353,26 @@ class LongPromptWeight(object):
         if torch.all(weight_tensor == 1.0):
             return token_embedding
 
-        original_mean = token_embedding.mean()
-        weighted = token_embedding * weight_tensor.unsqueeze(-1)
-        new_mean = weighted.mean()
+        # CLIP ViT-L/14 (text_encoder) hidden_size - fixed for every SDXL checkpoint, since the
+        # dual text-encoder architecture (CLIP-L + OpenCLIP-G) is part of the SDXL spec itself.
+        clip_l_hidden_size = 768
 
-        # guard against a (rare) near-zero mean after weighting, which would blow up the rescale
-        eps = torch.finfo(weighted.dtype).eps
-        if new_mean.abs() < eps:
-            return weighted
+        def _rescale(chunk: torch.Tensor) -> torch.Tensor:
+            original_mean = chunk.mean()
+            weighted = chunk * weight_tensor.unsqueeze(-1)
+            new_mean = weighted.mean()
 
-        weighted = weighted * (original_mean / new_mean)
-        return weighted
+            # guard against a (rare) near-zero mean after weighting, which would blow up the rescale
+            eps = torch.finfo(weighted.dtype).eps
+            if new_mean.abs() < eps:
+                return weighted
+
+            return weighted * (original_mean / new_mean)
+
+        clip_l_embedding = _rescale(token_embedding[..., :clip_l_hidden_size])
+        clip_g_embedding = _rescale(token_embedding[..., clip_l_hidden_size:])
+
+        return torch.cat([clip_l_embedding, clip_g_embedding], dim=-1)
 
     def get_weighted_text_embeddings_sdxl(
         self,
