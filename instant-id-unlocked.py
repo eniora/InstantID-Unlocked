@@ -825,7 +825,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         pose_image_path,
         prompt,
         negative_prompt,
-        use_forge_weighting,
+        weight_application_method,
         style_name,
         prompt_replacement_value,
         num_steps,
@@ -1220,7 +1220,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
 
         print(f"Scheduler: {scheduler}")
         print(f"Exact aspect ratio: {'Enabled' if exact_ratio else 'Disabled'}")
-        print(f"Use ForgeUI-style prompt weighting: {use_forge_weighting}")
+        print(f"Weight application method: {weight_application_method}")
         print(f"Max resize side: {resize_max_side}")
         print(f"Image size: {width}x{height}\n")
 
@@ -1273,7 +1273,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             common_kwargs = dict(
                 prompt=prompt_for_generation,
                 negative_prompt=negative_prompt_for_generation,
-                use_forge_weighting=use_forge_weighting,
+                weight_application_method=weight_application_method,
                 image_embeds=face_emb,
                 controlnet_conditioning_scale=control_scales,
                 num_inference_steps=num_steps,
@@ -1365,7 +1365,7 @@ LoRA 8 scale: {'Disabled' if disable_lora_8 or not (enable_lora and lora_selecti
 Embeddings Enabled: {enable_embeddings}
 Embeddings Used: {', '.join(used_embedding_tokens) if used_embedding_tokens else 'None'}
 GPU used: {gpu_name}
-ForgeUI-style prompt weighting: {use_forge_weighting}
+Weight application method: {weight_application_method}
 Scheduler: {scheduler}"""
 
             png_info = PIL.PngImagePlugin.PngInfo()
@@ -1423,7 +1423,7 @@ Scheduler: {scheduler}"""
                     hires_result = hires_pipe(
                         prompt=prompt_for_generation,
                         negative_prompt=negative_prompt_for_generation,
-                        use_forge_weighting=use_forge_weighting,
+                        weight_application_method=weight_application_method,
                         image_embeds=face_emb,
                         image=upscaled_image,
                         control_image=hires_control_images,
@@ -1489,7 +1489,7 @@ Scheduler: {scheduler}"""
     - Upscale and use Enable Hires Fix to generate images with a resolution of what SDXL is best at (usually 1280 max side) to prevent anatomy errors like long necks while still producing good quality images. Hires Fix uses img2img pipeline and uses a lot of VRAM.
     - Select a model to use for generation from the upper left corner dropdown. Only use SDXL and Pony. Illustrious can be loaded but isn't well supported.
     - You can select a scheduler from the upper right corner dropdown. DPMSolver, KDPM2 and Euler are usually the best.
-    - The "Use ForgeUI/A1111-style prompt weighting" option scales each token's embedding by its weight, then rescales each text encoder's output to preserve its own overall strength. When unchecked, it uses InstantID's original method (interpolates each token toward the chunk's end-of-text embedding).
+    - The "Weight application method" option controls how (word:weight) prompt weighting is applied: "ForgeUI per-encoder rescale" (default) and "ForgeUI global rescale" both scale each token's embedding directly by its weight, then rescale to preserve the original mean - either per text encoder (CLIP-L and CLIP-G separately) or globally (one combined mean across both). "Original InstantID per token" uses InstantID's own method instead (interpolates each token toward the chunk's end-of-text embedding).
     
     Other usage tips of InstantID:
     - If you're not satisfied with the similarity, try increasing the weight of "IdentityNet Strength" and "Image adapter strength".
@@ -1678,10 +1678,15 @@ Scheduler: {scheduler}"""
                     value=NEGATIVE_PROMPT_PRESETS["Default Negative Profile"],
                     elem_id="negative_prompt_textbox",
                 )
-                use_forge_weighting = gr.Checkbox(
-                    label="Use ForgeUI/A1111-style prompt weighting",
-                    value=True,
-                    info="Per-encoder rescale ForgeUI/A1111-style weighting (word:weight). Uncheck to use InstantID's method (local, per-token).",
+                weight_application_method = gr.Radio(
+                    label="Weight application method (doesn't affect image generation when the prompt has no weights)",
+                    choices=[
+                        "ForgeUI per-encoder rescale",
+                        "ForgeUI global rescale",
+                        "Original InstantID per token",
+                    ],
+                    value="ForgeUI per-encoder rescale",
+                    info="How (word:weight) prompt weighting is applied: ForgeUI-style direct scaling (per-encoder or global rescale) vs. InstantID's original per-token.",
                 )
                 with gr.Accordion("⚙️ Style templates and other settings including custom resolution", open=False) as style_settings_accordion:
                     with gr.Group():
@@ -2570,7 +2575,7 @@ Scheduler: {scheduler}"""
                 pose_file,
                 prompt,
                 negative_prompt,
-                use_forge_weighting,
+                weight_application_method,
                 style,
                 prompt_replacement,
                 num_steps,
@@ -2674,7 +2679,7 @@ Scheduler: {scheduler}"""
                 settings = {
                     "prompt": "",
                     "negative_prompt": DEFAULT_NEGATIVE_PROFILE,
-                    "use_forge_weighting": True,
+                    "weight_application_method": "ForgeUI per-encoder rescale",
                     "resize_max_side": 1280,
                     "seed": 12345,
                     "num_steps": 20,
@@ -2867,8 +2872,15 @@ Scheduler: {scheduler}"""
                                 pass
                         elif line.startswith("IdentityNet strength:"):
                             settings["identitynet_strength_ratio"] = float(line.replace("IdentityNet strength:", "").strip())
-                        elif line.startswith("ForgeUI-style prompt weighting:"):
-                            settings["use_forge_weighting"] = "true" in line.lower()
+                        elif line.startswith("Weight application method:"):
+                            method_text = line.replace("Weight application method:", "").strip()
+                            valid_methods = [
+                                "ForgeUI per-encoder rescale",
+                                "ForgeUI global rescale",
+                                "Original InstantID per token",
+                            ]
+                            if method_text in valid_methods:
+                                settings["weight_application_method"] = method_text
                         elif line.startswith("Scheduler:"):
                             scheduler_text = line.replace("Scheduler:", "").strip()
                             if "scheduling_" in scheduler_text:
@@ -2937,7 +2949,7 @@ Scheduler: {scheduler}"""
                 return [
                     settings["prompt"],
                     settings["negative_prompt"],
-                    settings["use_forge_weighting"],
+                    settings["weight_application_method"],
                     settings["style"],
                     settings["num_steps"],
                     settings["enable_img2img"],
@@ -3005,7 +3017,7 @@ Scheduler: {scheduler}"""
                 outputs=[
                     prompt,
                     negative_prompt,
-                    use_forge_weighting,
+                    weight_application_method,
                     style,
                     num_steps,
                     enable_img2img,
@@ -3086,7 +3098,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v6.6.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v6.7.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
