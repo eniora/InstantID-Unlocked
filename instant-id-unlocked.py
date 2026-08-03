@@ -1489,6 +1489,7 @@ Scheduler: {scheduler}"""
     - Upscale and use Enable Hires Fix to generate images with a resolution of what SDXL is best at (usually 1280 max side) to prevent anatomy errors like long necks while still producing good quality images. Hires Fix uses img2img pipeline and uses a lot of VRAM.
     - Select a model to use for generation from the upper left corner dropdown. Only use SDXL and Pony. Illustrious can be loaded but isn't well supported.
     - You can select a scheduler from the upper right corner dropdown. DPMSolver, KDPM2 and Euler are usually the best.
+    - The "Use ForgeUI/A1111-style prompt weighting" option when enabled scales each token's embedding by its weight, then rescales the whole prompt to preserve overall strength. When unchecked, it uses InstantID's original method (interpolates each token toward the chunk's end-of-text embedding).
     
     Other usage tips of InstantID:
     - If you're not satisfied with the similarity, try increasing the weight of "IdentityNet Strength" and "Image adapter strength".
@@ -1888,21 +1889,21 @@ Scheduler: {scheduler}"""
                         minimum=0,
                         maximum=1.5,
                         step=0.05,
-                        value=0.40,
+                        value=0.30,
                     )
                     canny_strength = gr.Slider(
                         label="Canny strength",
                         minimum=0,
                         maximum=1.5,
                         step=0.05,
-                        value=0.40,
+                        value=0.30,
                     )
                     depth_strength = gr.Slider(
                         label="Depth strength",
                         minimum=0,
                         maximum=1.5,
                         step=0.05,
-                        value=0.40,
+                        value=0.30,
                     )
                 with gr.Row():
                     guidance_scale = gr.Slider(
@@ -2682,9 +2683,9 @@ Scheduler: {scheduler}"""
                     "strength": 0.95,
                     "identitynet_strength_ratio": 0.7,
                     "adapter_strength_ratio": 0.6,
-                    "pose_strength": 0.40,
-                    "canny_strength": 0.40,
-                    "depth_strength": 0.40,
+                    "pose_strength": 0.30,
+                    "canny_strength": 0.30,
+                    "depth_strength": 0.30,
                     "scheduler": "DPMSolverMultistepScheduler",
                     "exact_ratio": True,
                     "enable_lora": False,
