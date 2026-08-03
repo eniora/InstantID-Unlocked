@@ -1678,9 +1678,9 @@ Scheduler: {scheduler}"""
                     elem_id="negative_prompt_textbox",
                 )
                 use_forge_weighting = gr.Checkbox(
-                    label="Use ForgeUI-style prompt weighting",
+                    label="Use ForgeUI/A1111-style prompt weighting",
                     value=False,
-                    info="Mimics how ForgeUI/A1111 applies (word:weight). Leave unchecked to use InstantID's original weighting method.",
+                    info="Global rescale ForgeUI/A1111-style weighting (word:weight). Uncheck to use InstantID's original method (local, per-token).",
                 )
                 with gr.Accordion("⚙️ Style templates and other settings including custom resolution", open=False) as style_settings_accordion:
                     with gr.Group():
@@ -1881,7 +1881,7 @@ Scheduler: {scheduler}"""
                 with gr.Accordion("🎚️ Controlnet", open=False) as controlnet_accordion:
                     controlnet_selection = gr.CheckboxGroup(
                         ["pose", "canny", "depth"], value=[], show_label=False,
-                        info="Use pose for skeleton inference, canny for edge detection, and depth for depth map estimation. You can try all three to control the generation process"
+                        info="Use pose for skeleton inference, canny for edge detection, and depth for depth map estimation. You can try all three to control the generation process."
                     )
                     pose_strength = gr.Slider(
                         label="Pose strength",
@@ -2210,7 +2210,7 @@ Scheduler: {scheduler}"""
                     )
                 with gr.Column():
                     enable_lora = gr.Checkbox(
-                        label="Enable LoRA(s) from your Models\Loras folder",
+                        label="Enable LoRA(s) from your Models\\Loras folder",
                         value=False,
                     )
                     lora_info = gr.Markdown(
@@ -3085,7 +3085,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v6.5.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v6.6.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
