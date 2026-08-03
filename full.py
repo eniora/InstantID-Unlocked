@@ -266,7 +266,7 @@ class LongPromptWeight(object):
             text_weights = [*text_weights, *chunk_weights]
         return text_tokens, text_weights
 
-    def group_tokens_and_weights(self, token_ids: list, weights: list, pad_last_block=False):
+    def group_tokens_and_weights(self, token_ids: list, weights: list, pad_last_block=False, bos=49406, eos=49407):
         """
         Produce tokens and weights in groups and pad the missing tokens
 
@@ -277,6 +277,12 @@ class LongPromptWeight(object):
                 The weights list from function get_prompts_tokens_with_weights
             pad_last_block (bool)
                 Control if fill the last token list to 75 tokens with eos
+            bos (int)
+                The tokenizer's BOS token id. Defaults to CLIP-L's id (49406), which for the base
+                SDXL model matches tokenizer_2 as well, but is now overridable so callers can pass
+                the correct id explicitly instead of relying on that coincidence.
+            eos (int)
+                The tokenizer's EOS token id, same caveat as `bos` above.
         Returns:
             new_token_ids (2d list)
             new_weights (2d list)
@@ -287,7 +293,6 @@ class LongPromptWeight(object):
                 , weights = token_weight_list
             )
         """
-        bos, eos = 49406, 49407
 
         # this will be a 2d list
         new_token_ids = []
@@ -316,6 +321,46 @@ class LongPromptWeight(object):
             new_weights.append(temp_77_weights)
 
         return new_token_ids, new_weights
+
+    def apply_prompt_weights_forge_style(self, token_embedding: torch.Tensor, weight_tensor: torch.Tensor) -> torch.Tensor:
+        """
+        Reweight a chunk of token embeddings the way Automatic1111/Forge does it, instead of the
+        "interpolate toward EOS" trick this pipeline used previously.
+
+        Forge/A1111's `sd_hijack_clip.py` scales each token's embedding directly by its attention
+        weight, then rescales the whole chunk so its mean matches the pre-weighting mean:
+
+            original_mean = z.mean()
+            z = z * weights
+            new_mean = z.mean()
+            z = z * (original_mean / new_mean)
+
+        This keeps the overall conditioning magnitude stable (so weighting doesn't just look like a
+        global CFG change) while still giving each token real, direct control over its own
+        contribution - unlike the EOS-interpolation method, whose effective strength for a given
+        numeric weight doesn't match Forge's at all. Matching this formula makes weight values you're
+        used to from Forge behave much more similarly here.
+
+        Args:
+            token_embedding (torch.Tensor): shape (seq_len, dim) - one 77-token chunk's hidden states
+            weight_tensor (torch.Tensor): shape (seq_len,) - per-token attention weights
+        Returns:
+            torch.Tensor: reweighted token_embedding, same shape as input
+        """
+        if torch.all(weight_tensor == 1.0):
+            return token_embedding
+
+        original_mean = token_embedding.mean()
+        weighted = token_embedding * weight_tensor.unsqueeze(-1)
+        new_mean = weighted.mean()
+
+        # guard against a (rare) near-zero mean after weighting, which would blow up the rescale
+        eps = torch.finfo(weighted.dtype).eps
+        if new_mean.abs() < eps:
+            return weighted
+
+        weighted = weighted * (original_mean / new_mean)
+        return weighted
 
     def get_weighted_text_embeddings_sdxl(
         self,
@@ -359,17 +404,19 @@ class LongPromptWeight(object):
             neg_prompt = f"{neg_prompt} {neg_prompt_2}"
 
         eos = pipe.tokenizer.eos_token_id
+        eos_2 = pipe.tokenizer_2.eos_token_id
 
-        # tokenizer 1
+        # tokenizer 1 (CLIP-L)
         prompt_tokens, prompt_weights = self.get_prompts_tokens_with_weights(pipe.tokenizer, prompt)
         neg_prompt_tokens, neg_prompt_weights = self.get_prompts_tokens_with_weights(pipe.tokenizer, neg_prompt)
 
-        # tokenizer 2
-        # prompt_tokens_2, prompt_weights_2 = self.get_prompts_tokens_with_weights(pipe.tokenizer_2, prompt)
-        # neg_prompt_tokens_2, neg_prompt_weights_2 = self.get_prompts_tokens_with_weights(pipe.tokenizer_2, neg_prompt)
-        # tokenizer 2 遇到 !! !!!! 等多感叹号和tokenizer 1的效果不一致
-        prompt_tokens_2, prompt_weights_2 = self.get_prompts_tokens_with_weights(pipe.tokenizer, prompt)
-        neg_prompt_tokens_2, neg_prompt_weights_2 = self.get_prompts_tokens_with_weights(pipe.tokenizer, neg_prompt)
+        # tokenizer 2 (CLIP-G) - previously this incorrectly reused pipe.tokenizer's output and fed
+        # CLIP-L token ids into text_encoder_2. That "worked" for plain vocabulary (SDXL's base
+        # tokenizer/tokenizer_2 share the same BPE vocab) but silently broke for custom tokens added
+        # at runtime (e.g. textual-inversion trigger words), whose ids in tokenizer vs tokenizer_2 are
+        # only coincidentally aligned. Using tokenizer_2 directly is the correct behavior.
+        prompt_tokens_2, prompt_weights_2 = self.get_prompts_tokens_with_weights(pipe.tokenizer_2, prompt)
+        neg_prompt_tokens_2, neg_prompt_weights_2 = self.get_prompts_tokens_with_weights(pipe.tokenizer_2, neg_prompt)
 
         # padding the shorter one for prompt set 1
         prompt_token_len = len(prompt_tokens)
@@ -390,28 +437,36 @@ class LongPromptWeight(object):
 
         if prompt_token_len_2 > neg_prompt_token_len_2:
             # padding the neg_prompt with eos token
-            neg_prompt_tokens_2 = neg_prompt_tokens_2 + [eos] * abs(prompt_token_len_2 - neg_prompt_token_len_2)
+            neg_prompt_tokens_2 = neg_prompt_tokens_2 + [eos_2] * abs(prompt_token_len_2 - neg_prompt_token_len_2)
             neg_prompt_weights_2 = neg_prompt_weights_2 + [1.0] * abs(prompt_token_len_2 - neg_prompt_token_len_2)
         else:
             # padding the prompt
-            prompt_tokens_2 = prompt_tokens_2 + [eos] * abs(prompt_token_len_2 - neg_prompt_token_len_2)
-            prompt_weights_2 = prompt_weights + [1.0] * abs(prompt_token_len_2 - neg_prompt_token_len_2)
+            # NOTE: previously this padded with the tokenizer-1 `eos` id and copied `prompt_weights`
+            # (set 1) instead of `prompt_weights_2` (set 2) - a copy/paste bug that only stayed
+            # invisible because set 1 and set 2 used to be identical (see fix above).
+            prompt_tokens_2 = prompt_tokens_2 + [eos_2] * abs(prompt_token_len_2 - neg_prompt_token_len_2)
+            prompt_weights_2 = prompt_weights_2 + [1.0] * abs(prompt_token_len_2 - neg_prompt_token_len_2)
 
         embeds = []
         neg_embeds = []
 
-        prompt_token_groups, prompt_weight_groups = self.group_tokens_and_weights(prompt_tokens.copy(), prompt_weights.copy())
+        bos_1, eos_1 = pipe.tokenizer.bos_token_id, pipe.tokenizer.eos_token_id
+        bos_2, eos_2_group = pipe.tokenizer_2.bos_token_id, pipe.tokenizer_2.eos_token_id
+
+        prompt_token_groups, prompt_weight_groups = self.group_tokens_and_weights(
+            prompt_tokens.copy(), prompt_weights.copy(), bos=bos_1, eos=eos_1
+        )
 
         neg_prompt_token_groups, neg_prompt_weight_groups = self.group_tokens_and_weights(
-            neg_prompt_tokens.copy(), neg_prompt_weights.copy()
+            neg_prompt_tokens.copy(), neg_prompt_weights.copy(), bos=bos_1, eos=eos_1
         )
 
         prompt_token_groups_2, prompt_weight_groups_2 = self.group_tokens_and_weights(
-            prompt_tokens_2.copy(), prompt_weights_2.copy()
+            prompt_tokens_2.copy(), prompt_weights_2.copy(), bos=bos_2, eos=eos_2_group
         )
 
         neg_prompt_token_groups_2, neg_prompt_weight_groups_2 = self.group_tokens_and_weights(
-            neg_prompt_tokens_2.copy(), neg_prompt_weights_2.copy()
+            neg_prompt_tokens_2.copy(), neg_prompt_weights_2.copy(), bos=bos_2, eos=eos_2_group
         )
 
         # get prompt embeddings one by one is not working.
@@ -434,11 +489,7 @@ class LongPromptWeight(object):
             prompt_embeds_list = [prompt_embeds_1_hidden_states, prompt_embeds_2_hidden_states]
             token_embedding = torch.concat(prompt_embeds_list, dim=-1).squeeze(0)
 
-            for j in range(len(weight_tensor)):
-                if weight_tensor[j] != 1.0:
-                    token_embedding[j] = (
-                        token_embedding[-1] + (token_embedding[j] - token_embedding[-1]) * weight_tensor[j]
-                    )
+            token_embedding = self.apply_prompt_weights_forge_style(token_embedding, weight_tensor)
 
             token_embedding = token_embedding.unsqueeze(0)
             embeds.append(token_embedding)
@@ -460,11 +511,7 @@ class LongPromptWeight(object):
             neg_prompt_embeds_list = [neg_prompt_embeds_1_hidden_states, neg_prompt_embeds_2_hidden_states]
             neg_token_embedding = torch.concat(neg_prompt_embeds_list, dim=-1).squeeze(0)
 
-            for z in range(len(neg_weight_tensor)):
-                if neg_weight_tensor[z] != 1.0:
-                    neg_token_embedding[z] = (
-                        neg_token_embedding[-1] + (neg_token_embedding[z] - neg_token_embedding[-1]) * neg_weight_tensor[z]
-                    )
+            neg_token_embedding = self.apply_prompt_weights_forge_style(neg_token_embedding, neg_weight_tensor)
 
             neg_token_embedding = neg_token_embedding.unsqueeze(0)
             neg_embeds.append(neg_token_embedding)
