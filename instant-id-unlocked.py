@@ -825,7 +825,6 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         pose_image_path,
         prompt,
         negative_prompt,
-        use_forge_weighting,
         style_name,
         prompt_replacement_value,
         num_steps,
@@ -1220,7 +1219,6 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
 
         print(f"Scheduler: {scheduler}")
         print(f"Exact aspect ratio: {'Enabled' if exact_ratio else 'Disabled'}")
-        print(f"Use ForgeUI-style prompt weighting: {use_forge_weighting}")
         print(f"Max resize side: {resize_max_side}")
         print(f"Image size: {width}x{height}\n")
 
@@ -1273,7 +1271,6 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             common_kwargs = dict(
                 prompt=prompt_for_generation,
                 negative_prompt=negative_prompt_for_generation,
-                use_forge_weighting=use_forge_weighting,
                 image_embeds=face_emb,
                 controlnet_conditioning_scale=control_scales,
                 num_inference_steps=num_steps,
@@ -1365,7 +1362,6 @@ LoRA 8 scale: {'Disabled' if disable_lora_8 or not (enable_lora and lora_selecti
 Embeddings Enabled: {enable_embeddings}
 Embeddings Used: {', '.join(used_embedding_tokens) if used_embedding_tokens else 'None'}
 GPU used: {gpu_name}
-ForgeUI-style prompt weighting: {use_forge_weighting}
 Scheduler: {scheduler}"""
 
             png_info = PIL.PngImagePlugin.PngInfo()
@@ -1423,7 +1419,6 @@ Scheduler: {scheduler}"""
                     hires_result = hires_pipe(
                         prompt=prompt_for_generation,
                         negative_prompt=negative_prompt_for_generation,
-                        use_forge_weighting=use_forge_weighting,
                         image_embeds=face_emb,
                         image=upscaled_image,
                         control_image=hires_control_images,
@@ -1676,11 +1671,6 @@ Scheduler: {scheduler}"""
                     placeholder="You can select a negative prompt profile from the settings tab below.",
                     value=NEGATIVE_PROMPT_PRESETS["Default Negative Profile"],
                     elem_id="negative_prompt_textbox",
-                )
-                use_forge_weighting = gr.Checkbox(
-                    label="Use ForgeUI-style prompt weighting",
-                    value=False,
-                    info="Mimics how ForgeUI/A1111 applies (word:weight). Leave unchecked to use InstantID's original weighting method.",
                 )
                 with gr.Accordion("⚙️ Style templates and other settings including custom resolution", open=False) as style_settings_accordion:
                     with gr.Group():
@@ -2569,7 +2559,6 @@ Scheduler: {scheduler}"""
                 pose_file,
                 prompt,
                 negative_prompt,
-                use_forge_weighting,
                 style,
                 prompt_replacement,
                 num_steps,
@@ -2673,7 +2662,6 @@ Scheduler: {scheduler}"""
                 settings = {
                     "prompt": "",
                     "negative_prompt": DEFAULT_NEGATIVE_PROFILE,
-                    "use_forge_weighting": False,
                     "resize_max_side": 1280,
                     "seed": 12345,
                     "num_steps": 20,
@@ -2757,13 +2745,11 @@ Scheduler: {scheduler}"""
                             continue_idx = idx + 1
                             while continue_idx < len(lines):
                                 next_line = lines[continue_idx]
-                                if next_line.strip().startswith(("Input Face Image:", "Detection size:", "ForgeUI-style prompt weighting:")):
+                                if next_line.strip().startswith(("Input Face Image:", "Detection size:")):
                                     break
                                 negative_lines.append(next_line)
                                 continue_idx += 1
                             settings["negative_prompt"] = "\n".join(negative_lines)
-                        elif line.startswith("ForgeUI-style prompt weighting:"):
-                            settings["use_forge_weighting"] = "true" in line.lower()
                         elif line.startswith("Seed:"):
                             settings["seed"] = int(line.replace("Seed:", "").strip())
                         elif line.startswith("Steps:"):
@@ -2936,7 +2922,6 @@ Scheduler: {scheduler}"""
                 return [
                     settings["prompt"],
                     settings["negative_prompt"],
-                    settings["use_forge_weighting"],
                     settings["style"],
                     settings["num_steps"],
                     settings["enable_img2img"],
@@ -3004,7 +2989,6 @@ Scheduler: {scheduler}"""
                 outputs=[
                     prompt,
                     negative_prompt,
-                    use_forge_weighting,
                     style,
                     num_steps,
                     enable_img2img,
