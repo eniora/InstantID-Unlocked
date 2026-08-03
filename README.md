@@ -30,6 +30,7 @@ The code barely follows any DRY principles as it started as a personal modificat
 - Multiple schedulers available (beyond the original EulerDiscrete).
 - VAE tiling option to improve VRAM efficiency.
 - Resolution slider up to 4096px.
+- Weight application method, now mimicking how ForgeUI/A1111 deal with (word:weight), in addition to select the original InstantID per-token method.
 - Generate multiple images in one run, each with a random seed.
 - Stop button.
 
