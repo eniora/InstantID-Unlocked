@@ -741,38 +741,26 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             return [img.resize(size, PIL.Image.LANCZOS) if hasattr(img, "resize") else img for img in control_images]
         return control_images.resize(size, PIL.Image.LANCZOS) if hasattr(control_images, "resize") else control_images
 
-    def get_sibling_pipe(base_pipe, target_class):
-        """Return a pipeline of `target_class` that reuses base_pipe's already-loaded
-        weights (unet/vae/text encoders/controlnet/etc.) instead of reloading the model
-        from disk. Works in either direction (txt2img<->img2img) and caches the result
-        on both pipe objects, so switching back and forth is free after the first build."""
-        if isinstance(base_pipe, target_class):
-            return base_pipe
-
-        cached = getattr(base_pipe, "_sibling_pipe", None)
-        if cached is not None and isinstance(cached, target_class):
-            return cached
-
-        try:
-            sibling_pipe = target_class(**base_pipe.components).to(device)
-            sibling_pipe.image_proj_model = base_pipe.image_proj_model
-            sibling_pipe.image_proj_model_in_features = base_pipe.image_proj_model_in_features
-            sibling_pipe._current_model = getattr(base_pipe, "_current_model", None)
-        except Exception as e:
-            print(f"Could not build a lightweight sibling pipeline ({e}); "
-                  f"falling back to a full reload instead.")
-            sibling_pipe = load_model_and_update_pipe(
-                getattr(base_pipe, "_current_model", DEFAULT_MODEL),
-                target_class is StableDiffusionXLInstantIDImg2ImgPipeline,
-            )
-
-        sibling_pipe._sibling_pipe = base_pipe
-        base_pipe._sibling_pipe = sibling_pipe
-        return sibling_pipe
-
     def get_img2img_sibling_pipe(base_pipe):
         nonlocal hires_sibling_pipe
-        hires_sibling_pipe = get_sibling_pipe(base_pipe, StableDiffusionXLInstantIDImg2ImgPipeline)
+        if isinstance(base_pipe, StableDiffusionXLInstantIDImg2ImgPipeline):
+            return base_pipe
+
+        if hires_sibling_pipe is not None and getattr(hires_sibling_pipe, "_base_pipe_id", None) == id(base_pipe):
+            return hires_sibling_pipe
+
+        try:
+            hires_sibling_pipe = StableDiffusionXLInstantIDImg2ImgPipeline(**base_pipe.components).to(device)
+            hires_sibling_pipe.image_proj_model = base_pipe.image_proj_model
+            hires_sibling_pipe.image_proj_model_in_features = base_pipe.image_proj_model_in_features
+            hires_sibling_pipe._base_pipe_id = id(base_pipe)
+            hires_sibling_pipe._current_model = getattr(base_pipe, "_current_model", None)
+        except Exception as e:
+            print(f"Could not build a lightweight img2img sibling pipeline for Hires Fix ({e}); "
+                  f"falling back to a full reload instead.")
+            hires_sibling_pipe = load_model_and_update_pipe(getattr(base_pipe, "_current_model", DEFAULT_MODEL), True)
+            hires_sibling_pipe._base_pipe_id = id(base_pipe)
+
         return hires_sibling_pipe
 
     def apply_style(
@@ -908,10 +896,13 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         
         update_det_size(det_size_name)
         
-        target_pipe_class = StableDiffusionXLInstantIDImg2ImgPipeline if enable_img2img else StableDiffusionXLInstantIDPipeline
-        needs_full_reload = pipe is None or model_name != getattr(pipe, "_current_model", None)
-
-        if needs_full_reload:
+        is_img2img_pipe = isinstance(pipe, StableDiffusionXLInstantIDImg2ImgPipeline)
+        if (
+            pipe is None
+            or model_name != getattr(pipe, "_current_model", None)
+            or (enable_img2img and not is_img2img_pipe)
+            or (not enable_img2img and is_img2img_pipe)
+        ):
             print(f"\nLoading model: {model_name}\n")
             pipe = load_model_and_update_pipe(model_name, enable_img2img)
             pipe._current_model = model_name
@@ -919,10 +910,6 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             embedding_state["tokens"] = []
 
             hires_sibling_pipe = get_img2img_sibling_pipe(pipe)
-        elif not isinstance(pipe, target_pipe_class):
-            print(f"\nSwitching to {'img2img' if enable_img2img else 'txt2img'} pipeline mode (reusing already-loaded weights, no reload)\n")
-            pipe = get_sibling_pipe(pipe, target_pipe_class)
-            pipe._current_model = model_name
 
         if enable_vae_tiling:
             pipe.enable_vae_tiling()
@@ -1299,17 +1286,12 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             torch.cuda.empty_cache()
             try:
                 if enable_img2img:
-                    saved_region_conditioning = region_control.prompt_image_conditioning
-                    region_control.prompt_image_conditioning = []
-                    try:
-                        result = pipe(
-                            **common_kwargs,
-                            image=face_image,
-                            control_image=control_images,
-                            strength=strength,
-                        )
-                    finally:
-                        region_control.prompt_image_conditioning = saved_region_conditioning
+                    result = pipe(
+                        **common_kwargs,
+                        image=face_image,
+                        control_image=control_images,
+                        strength=strength,
+                    )
                 else:
                     result = pipe(
                         **common_kwargs,
