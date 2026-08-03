@@ -688,7 +688,7 @@ class LongPromptWeight(object):
         negative_pooled_prompt_embeds=None,
         extra_emb=None,
         extra_emb_alpha=0.6,
-        use_forge_weighting=False,
+        use_forge_weighting=True,
     ):
         """
         This function can process long prompt with weights, no length limitation
@@ -1031,7 +1031,7 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
         callback_on_step_end_tensor_inputs: List[str] = ["latents"],
 
         # Prompt weighting behavior
-        use_forge_weighting: bool = False,
+        use_forge_weighting: bool = True,
 
         **kwargs,
     ):
