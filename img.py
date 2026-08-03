@@ -623,46 +623,6 @@ class LongPromptWeight(object):
 
         return new_token_ids, new_weights
 
-    def apply_prompt_weights_forge_style(self, token_embedding: torch.Tensor, weight_tensor: torch.Tensor) -> torch.Tensor:
-        """
-        Reweight a chunk of token embeddings the way Automatic1111/Forge does it, instead of the
-        "interpolate toward EOS" trick this pipeline used previously.
-
-        Forge/A1111's `sd_hijack_clip.py` scales each token's embedding directly by its attention
-        weight, then rescales the whole chunk so its mean matches the pre-weighting mean:
-
-            original_mean = z.mean()
-            z = z * weights
-            new_mean = z.mean()
-            z = z * (original_mean / new_mean)
-
-        This keeps the overall conditioning magnitude stable (so weighting doesn't just look like a
-        global CFG change) while still giving each token real, direct control over its own
-        contribution - unlike the EOS-interpolation method, whose effective strength for a given
-        numeric weight doesn't match Forge's at all. Matching this formula makes weight values you're
-        used to from Forge behave much more similarly here.
-
-        Args:
-            token_embedding (torch.Tensor): shape (seq_len, dim) - one 77-token chunk's hidden states
-            weight_tensor (torch.Tensor): shape (seq_len,) - per-token attention weights
-        Returns:
-            torch.Tensor: reweighted token_embedding, same shape as input
-        """
-        if torch.all(weight_tensor == 1.0):
-            return token_embedding
-
-        original_mean = token_embedding.mean()
-        weighted = token_embedding * weight_tensor.unsqueeze(-1)
-        new_mean = weighted.mean()
-
-        # guard against a (rare) near-zero mean after weighting, which would blow up the rescale
-        eps = torch.finfo(weighted.dtype).eps
-        if new_mean.abs() < eps:
-            return weighted
-
-        weighted = weighted * (original_mean / new_mean)
-        return weighted
-
     def get_weighted_text_embeddings_sdxl(
         self,
         pipe: StableDiffusionXLPipeline,
@@ -790,7 +750,11 @@ class LongPromptWeight(object):
             prompt_embeds_list = [prompt_embeds_1_hidden_states, prompt_embeds_2_hidden_states]
             token_embedding = torch.concat(prompt_embeds_list, dim=-1).squeeze(0)
 
-            token_embedding = self.apply_prompt_weights_forge_style(token_embedding, weight_tensor)
+            for j in range(len(weight_tensor)):
+                if weight_tensor[j] != 1.0:
+                    token_embedding[j] = (
+                        token_embedding[-1] + (token_embedding[j] - token_embedding[-1]) * weight_tensor[j]
+                    )
 
             token_embedding = token_embedding.unsqueeze(0)
             embeds.append(token_embedding)
@@ -812,7 +776,11 @@ class LongPromptWeight(object):
             neg_prompt_embeds_list = [neg_prompt_embeds_1_hidden_states, neg_prompt_embeds_2_hidden_states]
             neg_token_embedding = torch.concat(neg_prompt_embeds_list, dim=-1).squeeze(0)
 
-            neg_token_embedding = self.apply_prompt_weights_forge_style(neg_token_embedding, neg_weight_tensor)
+            for z in range(len(neg_weight_tensor)):
+                if neg_weight_tensor[z] != 1.0:
+                    neg_token_embedding[z] = (
+                        neg_token_embedding[-1] + (neg_token_embedding[z] - neg_token_embedding[-1]) * neg_weight_tensor[z]
+                    )
 
             neg_token_embedding = neg_token_embedding.unsqueeze(0)
             neg_embeds.append(neg_token_embedding)
