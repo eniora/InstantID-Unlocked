@@ -2515,7 +2515,7 @@ Scheduler: {scheduler}"""
                     )
                     embeddings_weight = gr.Slider(
                         label="Embedding Weight",
-                        minimum=0.5,
+                        minimum=0.1,
                         maximum=3.0,
                         value=1.0,
                         step=0.1,
