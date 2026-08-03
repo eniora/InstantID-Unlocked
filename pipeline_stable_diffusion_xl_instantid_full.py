@@ -317,7 +317,9 @@ class LongPromptWeight(object):
 
         return new_token_ids, new_weights
 
-    def apply_prompt_weights_forge_style(self, token_embedding: torch.Tensor, weight_tensor: torch.Tensor) -> torch.Tensor:
+    def apply_prompt_weights_forge_style(
+        self, token_embedding: torch.Tensor, weight_tensor: torch.Tensor, global_rescale: bool = False
+    ) -> torch.Tensor:
         """
         Reweight a chunk of token embeddings the way Automatic1111/Forge does it, instead of the
         "interpolate toward EOS" trick this pipeline uses by default.
@@ -338,24 +340,27 @@ class LongPromptWeight(object):
         By the time this runs, `token_embedding` is the concatenation of CLIP-L (text_encoder,
         hidden_size 768) and OpenCLIP-G (text_encoder_2, hidden_size 1280) hidden states into one
         (seq_len, 2048) tensor. CLIP-L and CLIP-G have different typical activation magnitudes, so
-        this rescales each encoder's slice against its own mean rather than computing one combined
-        mean over the full 2048-dim tensor - that keeps one encoder's magnitude from skewing the
-        other's rescale factor. This is a reasonable-effort match to Forge/A1111's per-encoder
-        conditioning setup, not a verified line-for-line reproduction of its internals.
+        by default (global_rescale=False) this rescales each encoder's slice against its own mean
+        rather than computing one combined mean over the full 2048-dim tensor - that keeps one
+        encoder's magnitude from skewing the other's rescale factor. This is a reasonable-effort
+        match to Forge/A1111's per-encoder conditioning setup, not a verified line-for-line
+        reproduction of its internals.
+
+        If global_rescale is True, a single mean is instead computed over the whole concatenated
+        (seq_len, 2048) tensor and used to rescale both encoders' slices together in one pass - a
+        simpler, less conservative alternative to the per-encoder rescale above.
 
         Args:
             token_embedding (torch.Tensor): shape (seq_len, dim) - one 77-token chunk's hidden
                 states, concatenated across both SDXL text encoders along the last dim
             weight_tensor (torch.Tensor): shape (seq_len,) - per-token attention weights
+            global_rescale (bool): if True, rescale using one mean over the full concatenated
+                tensor instead of rescaling CLIP-L and CLIP-G separately against their own means.
         Returns:
             torch.Tensor: reweighted token_embedding, same shape as input
         """
         if torch.all(weight_tensor == 1.0):
             return token_embedding
-
-        # CLIP ViT-L/14 (text_encoder) hidden_size - fixed for every SDXL checkpoint, since the
-        # dual text-encoder architecture (CLIP-L + OpenCLIP-G) is part of the SDXL spec itself.
-        clip_l_hidden_size = 768
 
         def _rescale(chunk: torch.Tensor) -> torch.Tensor:
             original_mean = chunk.mean()
@@ -368,6 +373,13 @@ class LongPromptWeight(object):
                 return weighted
 
             return weighted * (original_mean / new_mean)
+
+        if global_rescale:
+            return _rescale(token_embedding)
+
+        # CLIP ViT-L/14 (text_encoder) hidden_size - fixed for every SDXL checkpoint, since the
+        # dual text-encoder architecture (CLIP-L + OpenCLIP-G) is part of the SDXL spec itself.
+        clip_l_hidden_size = 768
 
         clip_l_embedding = _rescale(token_embedding[..., :clip_l_hidden_size])
         clip_g_embedding = _rescale(token_embedding[..., clip_l_hidden_size:])
@@ -387,7 +399,7 @@ class LongPromptWeight(object):
         negative_pooled_prompt_embeds=None,
         extra_emb=None,
         extra_emb_alpha=0.6,
-        use_forge_weighting=True,
+        weight_application_method="ForgeUI per-encoder rescale",
     ):
         """
         This function can process long prompt with weights, no length limitation
@@ -399,12 +411,17 @@ class LongPromptWeight(object):
             prompt_2 (str)
             neg_prompt (str)
             neg_prompt_2 (str)
-            use_forge_weighting (bool)
-                If False (default), unchanged original behavior: prompt weights are applied by
-                interpolating each token's embedding toward the chunk's EOS embedding.
-                If True, weights are applied the way Automatic1111/Forge does it instead - scaling
-                each token embedding directly by its weight, then rescaling the chunk to preserve its
-                mean. See `apply_prompt_weights_forge_style` for details.
+            weight_application_method (str)
+                One of:
+                - "ForgeUI per-encoder rescale" (default): weights are applied the way
+                  Automatic1111/Forge does it - scaling each token embedding directly by its weight,
+                  then rescaling CLIP-L and CLIP-G separately, each against its own mean. See
+                  `apply_prompt_weights_forge_style` for details.
+                - "ForgeUI global rescale": same direct per-token scaling, but rescaled using a
+                  single mean over the whole concatenated CLIP-L + CLIP-G tensor instead of
+                  rescaling each encoder separately. See `apply_prompt_weights_forge_style`.
+                - "Original InstantID per token": InstantID's original method - interpolates each
+                  token's embedding toward the chunk's EOS embedding.
         Returns:
             prompt_embeds (torch.Tensor)
             neg_prompt_embeds (torch.Tensor)
@@ -498,14 +515,17 @@ class LongPromptWeight(object):
             prompt_embeds_list = [prompt_embeds_1_hidden_states, prompt_embeds_2_hidden_states]
             token_embedding = torch.concat(prompt_embeds_list, dim=-1).squeeze(0)
 
-            if use_forge_weighting:
-                token_embedding = self.apply_prompt_weights_forge_style(token_embedding, weight_tensor)
-            else:
+            if weight_application_method == "Original InstantID per token":
                 for j in range(len(weight_tensor)):
                     if weight_tensor[j] != 1.0:
                         token_embedding[j] = (
                             token_embedding[-1] + (token_embedding[j] - token_embedding[-1]) * weight_tensor[j]
                         )
+            else:
+                token_embedding = self.apply_prompt_weights_forge_style(
+                    token_embedding, weight_tensor,
+                    global_rescale=(weight_application_method == "ForgeUI global rescale"),
+                )
 
             token_embedding = token_embedding.unsqueeze(0)
             embeds.append(token_embedding)
@@ -527,14 +547,17 @@ class LongPromptWeight(object):
             neg_prompt_embeds_list = [neg_prompt_embeds_1_hidden_states, neg_prompt_embeds_2_hidden_states]
             neg_token_embedding = torch.concat(neg_prompt_embeds_list, dim=-1).squeeze(0)
 
-            if use_forge_weighting:
-                neg_token_embedding = self.apply_prompt_weights_forge_style(neg_token_embedding, neg_weight_tensor)
-            else:
+            if weight_application_method == "Original InstantID per token":
                 for z in range(len(neg_weight_tensor)):
                     if neg_weight_tensor[z] != 1.0:
                         neg_token_embedding[z] = (
                             neg_token_embedding[-1] + (neg_token_embedding[z] - neg_token_embedding[-1]) * neg_weight_tensor[z]
                         )
+            else:
+                neg_token_embedding = self.apply_prompt_weights_forge_style(
+                    neg_token_embedding, neg_weight_tensor,
+                    global_rescale=(weight_application_method == "ForgeUI global rescale"),
+                )
 
             neg_token_embedding = neg_token_embedding.unsqueeze(0)
             neg_embeds.append(neg_token_embedding)
@@ -738,7 +761,7 @@ class StableDiffusionXLInstantIDPipeline(StableDiffusionXLControlNetPipeline):
         control_mask = None,
 
         # Prompt weighting behavior
-        use_forge_weighting: bool = True,
+        weight_application_method: str = "ForgeUI per-encoder rescale",
 
         **kwargs,
     ):
@@ -967,7 +990,7 @@ class StableDiffusionXLInstantIDPipeline(StableDiffusionXLControlNetPipeline):
             negative_prompt_embeds=negative_prompt_embeds,
             pooled_prompt_embeds=pooled_prompt_embeds,
             negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
-            use_forge_weighting=use_forge_weighting,
+            weight_application_method=weight_application_method,
         )
         
         # 3.2 Encode image prompt
