@@ -893,17 +893,23 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
 
         if needs_full_reload:
             if pipe is not None:
-                del pipe
-                pipe = None
+                pipe._sibling_pipe = None
             if hires_sibling_pipe is not None:
-                del hires_sibling_pipe
-                hires_sibling_pipe = None
-            global cached_controlnet_models
-            for k in list(cached_controlnet_models.keys()):
-                del cached_controlnet_models[k]
+                hires_sibling_pipe._sibling_pipe = None
 
-            gc.collect()
-            torch.cuda.empty_cache()
+            if vram_gb >= 15:
+                if pipe is not None:
+                    del pipe
+                    pipe = None
+                if hires_sibling_pipe is not None:
+                    del hires_sibling_pipe
+                    hires_sibling_pipe = None
+                global cached_controlnet_models
+                for k in list(cached_controlnet_models.keys()):
+                    del cached_controlnet_models[k]
+
+                gc.collect()
+                torch.cuda.empty_cache()
 
             print(f"\nLoading model: {model_name}\n")
             pipe = load_model_and_update_pipe(model_name, enable_img2img)
@@ -3115,7 +3121,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v6.7.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v6.7.2</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
