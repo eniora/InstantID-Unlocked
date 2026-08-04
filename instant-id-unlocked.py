@@ -785,8 +785,8 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         global controlnet_identitynet
         if vram_gb >= 15 and pipe is not None:
             del pipe
-            torch.cuda.empty_cache()
             gc.collect()
+            torch.cuda.empty_cache()
 
         if controlnet_identitynet is None:
             controlnet_identitynet = ControlNetModel.from_pretrained(
@@ -908,6 +908,19 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         needs_full_reload = pipe is None or model_name != getattr(pipe, "_current_model", None)
 
         if needs_full_reload:
+            if pipe is not None:
+                del pipe
+                pipe = None
+            if hires_sibling_pipe is not None:
+                del hires_sibling_pipe
+                hires_sibling_pipe = None
+            global cached_controlnet_models
+            for k in list(cached_controlnet_models.keys()):
+                del cached_controlnet_models[k]
+
+            gc.collect()
+            torch.cuda.empty_cache()
+
             print(f"\nLoading model: {model_name}\n")
             pipe = load_model_and_update_pipe(model_name, enable_img2img)
             pipe._current_model = model_name
@@ -1124,12 +1137,11 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             control_mask = None
 
         if len(controlnet_selection) > 0:
-            global cached_controlnet_models
             for k in list(cached_controlnet_models.keys()):
                 if k not in controlnet_selection:
                     del cached_controlnet_models[k]
-                    torch.cuda.empty_cache()
                     gc.collect()
+                    torch.cuda.empty_cache()
             controlnet_scales = {
                 "pose": pose_strength,
                 "canny": canny_strength,
@@ -1148,11 +1160,15 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             if cached_controlnet_models:
                 for key in list(cached_controlnet_models.keys()):
                     del cached_controlnet_models[key]
-                    torch.cuda.empty_cache()
                     gc.collect()
+                    torch.cuda.empty_cache()
             pipe.controlnet = controlnet_identitynet
             control_scales = float(identitynet_strength_ratio)
             control_images = face_kps
+
+        sibling_pipe = getattr(pipe, "_sibling_pipe", None)
+        if sibling_pipe is not None:
+            sibling_pipe.controlnet = pipe.controlnet
 
         generator = torch.Generator(device=device).manual_seed(seed)
 
@@ -1321,8 +1337,8 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 print(f"\nGeneration failed on image {i + 1}: forcing a full model reload on next generation since this crash can leave the pipeline in a corrupted state.\n")
                 pipe._current_model = None
                 hires_sibling_pipe = None
-                torch.cuda.empty_cache()
                 gc.collect()
+                torch.cuda.empty_cache()
                 raise
 
             image = result.images[0]
@@ -1460,8 +1476,8 @@ Scheduler: {scheduler}"""
                     print(f"\nHires Fix pass failed on image {i + 1}: forcing a full model reload on next generation since this crash can leave the pipeline in a corrupted state.\n")
                     pipe._current_model = None
                     hires_sibling_pipe = None
-                    torch.cuda.empty_cache()
                     gc.collect()
+                    torch.cuda.empty_cache()
                     raise
                 finally:
                     region_control.prompt_image_conditioning = saved_region_conditioning
@@ -1484,6 +1500,8 @@ Scheduler: {scheduler}"""
             gr.Warning(f"Generation stopped by user. {len(images)} of {num_outputs} image(s) were completed.")
 
         gc.collect()
+        torch.cuda.empty_cache()
+
         overall_elapsed_time = time.time() - overall_start_time
         if overall_elapsed_time >= 60:
             minutes = int(overall_elapsed_time // 60)
@@ -2070,8 +2088,8 @@ Scheduler: {scheduler}"""
                             for k in list(cached_controlnet_models.keys()):
                                 del cached_controlnet_models[k]
 
-                            torch.cuda.empty_cache()
                             gc.collect()
+                            torch.cuda.empty_cache()
 
                         progress(0, desc="Loading upscaler model...")
                         model = load_upscaler_model(upscaler_name)
@@ -3113,7 +3131,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v6.7.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v6.7.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
@@ -3149,8 +3167,8 @@ Scheduler: {scheduler}"""
                         del controlnet_identitynet
                         controlnet_identitynet = None
 
-                    torch.cuda.empty_cache()
                     gc.collect()
+                    torch.cuda.empty_cache()
                     print("\nSuccessfully released all models and pipelines from memory.\n")
 
                 delete_all_pipelines.click(
