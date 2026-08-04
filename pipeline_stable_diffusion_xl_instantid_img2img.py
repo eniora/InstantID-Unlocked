@@ -700,7 +700,7 @@ class LongPromptWeight(object):
         negative_pooled_prompt_embeds=None,
         extra_emb=None,
         extra_emb_alpha=0.6,
-        weight_application_method="ForgeUI per-encoder rescale",
+        weight_application_method="Original InstantID per-token",
     ):
         """
         This function can process long prompt with weights, no length limitation
@@ -714,6 +714,8 @@ class LongPromptWeight(object):
             neg_prompt_2 (str)
             weight_application_method (str)
                 One of:
+                - "Original InstantID per-token": InstantID's original method - interpolates each
+                  token's embedding toward the chunk's EOS embedding.
                 - "ForgeUI per-encoder rescale" (default): weights are applied the way
                   Automatic1111/Forge does it - scaling each token embedding directly by its weight,
                   then rescaling CLIP-L and CLIP-G separately, each against its own mean. See
@@ -721,8 +723,6 @@ class LongPromptWeight(object):
                 - "ForgeUI global rescale": same direct per-token scaling, but rescaled using a
                   single mean over the whole concatenated CLIP-L + CLIP-G tensor instead of
                   rescaling each encoder separately. See `apply_prompt_weights_forge_style`.
-                - "Original InstantID per-token": InstantID's original method - interpolates each
-                  token's embedding toward the chunk's EOS embedding.
         Returns:
             prompt_embeds (torch.Tensor)
             neg_prompt_embeds (torch.Tensor)
@@ -1054,7 +1054,7 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
         callback_on_step_end_tensor_inputs: List[str] = ["latents"],
 
         # Prompt weighting behavior
-        weight_application_method: str = "ForgeUI per-encoder rescale",
+        weight_application_method: str = "Original InstantID per-token",
 
         **kwargs,
     ):
