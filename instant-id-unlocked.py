@@ -419,22 +419,6 @@ def insert_token_into_text(current_text, token, weight=1.0):
         return f"{stripped} {insertion}"
     return f"{stripped}, {insertion}"
 
-def restart_server(open_browser):
-    python = sys.executable
-    script = os.path.abspath(sys.argv[0])
-    args = sys.argv[1:]
-
-    os.environ["IN_BROWSER"] = "1" if open_browser else "0"
-
-    torch.cuda.empty_cache()
-
-    if sys.platform == "win32":
-        subprocess.Popen([python, script] + args, creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP)
-    else:
-        subprocess.Popen([python, script] + args, preexec_fn=os.setsid)
-
-    os._exit(0)
-
 def update_det_size(det_size_name):
     global app, current_det_size
     
@@ -3135,21 +3119,6 @@ Scheduler: {scheduler}"""
 
         with gr.Row():
             with gr.Column():
-                restart_browser_checkbox = gr.Checkbox(
-                    label="Automatically open a new InstantID browser tab after the Restart Server button is clicked",
-                    value=False
-                )
-                restart_btn = gr.Button("Restart Server", variant="stop", scale=1)
-                restart_btn.click(
-                    js="(open_browser) => { if (confirm('Are you sure you want to restart the server?')) return open_browser; else return null; }",
-                    fn=lambda open_browser: restart_server(open_browser) if open_browser is not None else None,
-                    inputs=restart_browser_checkbox,
-                    outputs=None,
-                    queue=False,
-                )
-
-        with gr.Row():
-            with gr.Column():
                 delete_all_pipelines = gr.Button("Delete all models & pipelines from memory and VRAM - This can be helpful after a long session. (Don't click during image generation!)", variant="stop", scale=1)
                 def delete_all_pipelines_fn():
                     nonlocal pipe, hires_sibling_pipe
@@ -3172,6 +3141,7 @@ Scheduler: {scheduler}"""
                     print("\nSuccessfully released all models and pipelines from memory.\n")
 
                 delete_all_pipelines.click(
+                    js="() => { if (!confirm('Are you sure you want to delete and release all models from memory?')) { throw new Error('Cancelled'); } }",
                     fn=delete_all_pipelines_fn,
                     inputs=None,
                     outputs=None,
