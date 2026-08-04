@@ -1511,7 +1511,7 @@ Scheduler: {scheduler}"""
     - Upscale and use Enable Hires Fix to generate images with a resolution of what SDXL is best at (usually 1280 max side) to prevent anatomy errors like long necks while still producing good quality images. Hires Fix uses img2img pipeline and uses a lot of VRAM.
     - Select a model to use for generation from the upper left corner dropdown. Only use SDXL and Pony. Illustrious can be loaded but isn't well supported.
     - You can select a scheduler from the upper right corner dropdown. DPMSolver, KDPM2 and Euler are usually the best.
-    - The "Weight application method" option controls how (word:weight) prompt weighting is applied: "ForgeUI per-encoder rescale" (it's how ForgeUI/A1111 work with weights) and "ForgeUI global rescale" both scale each token's embedding directly by its weight, then rescale to preserve the original mean - either per text encoder (CLIP-L and CLIP-G separately) or globally (one combined mean across both). "Original InstantID per-token" uses InstantID's own method instead, which is EOS-interpolation loop (interpolates each token toward the chunk's end-of-text embedding). This weight application method has no effect at all if your prompt/negative prompt fields don't have any weights in them, such as "(anime style:1.5)" for example.
+    - The "Weight application method" option controls how (word:weight) prompt weighting is applied: "Original InstantID per-token" uses InstantID's own method, which is EOS-interpolation loop (interpolates each token toward the chunk's end-of-text embedding). "ForgeUI per-encoder rescale" (it's how ForgeUI/A1111 work with weights) and "ForgeUI global rescale" both scale each token's embedding directly by its weight, then rescale to preserve the original mean - either per text encoder (CLIP-L and CLIP-G separately) or globally (one combined mean across both). This weight application method has no effect at all if your prompt/negative prompt fields don't have any weights in them, such as "(anime style:1.5)" for example.
     
     Other usage tips of InstantID:
     - If you're not satisfied with the similarity, try increasing the weight of "IdentityNet Strength" and "Image adapter strength".
@@ -1703,11 +1703,11 @@ Scheduler: {scheduler}"""
                 weight_application_method = gr.Radio(
                     label="Weight application method for (word:weight). You can read about it in the usage tips below.",
                     choices=[
+                        "Original InstantID per-token",
                         "ForgeUI per-encoder rescale",
                         "ForgeUI global rescale",
-                        "Original InstantID per-token",
                     ],
-                    value="ForgeUI per-encoder rescale",
+                    value="Original InstantID per-token",
                 )
                 with gr.Accordion("⚙️ Style templates and other settings including custom resolution", open=False) as style_settings_accordion:
                     with gr.Group():
@@ -2700,7 +2700,7 @@ Scheduler: {scheduler}"""
                 settings = {
                     "prompt": "",
                     "negative_prompt": DEFAULT_NEGATIVE_PROFILE,
-                    "weight_application_method": "ForgeUI per-encoder rescale",
+                    "weight_application_method": "Original InstantID per-token",
                     "resize_max_side": 1280,
                     "seed": 12345,
                     "num_steps": 20,
@@ -2896,9 +2896,9 @@ Scheduler: {scheduler}"""
                         elif line.startswith("Weight application method:"):
                             method_text = line.replace("Weight application method:", "").strip()
                             valid_methods = [
+                                "Original InstantID per-token",
                                 "ForgeUI per-encoder rescale",
                                 "ForgeUI global rescale",
-                                "Original InstantID per-token",
                             ]
                             if method_text in valid_methods:
                                 settings["weight_application_method"] = method_text
