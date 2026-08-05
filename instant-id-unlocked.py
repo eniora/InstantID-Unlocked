@@ -1720,7 +1720,8 @@ Scheduler: {scheduler}"""
                         style.change(
                             fn=on_style_change,
                             inputs=style,
-                            outputs=[prompt, negative_prompt]
+                            outputs=[prompt, negative_prompt],
+                            queue=False
                         )
                     feeling_lucky_btn = gr.Button("🎰 Insert a random style from the style templates into prompt & negative prompt fields.", size="md", variant="secondary")
                     prompt_replacement = gr.Radio(
@@ -1762,6 +1763,7 @@ Scheduler: {scheduler}"""
                             fn=lambda x: NEGATIVE_PROMPT_PRESETS[x],
                             inputs=negative_prompt_preset,
                             outputs=negative_prompt,
+                            queue=False,
                         )
                         def apply_selected_negative_profile(selected_negative_profile):
                             return NEGATIVE_PROMPT_PRESETS[selected_negative_profile]
@@ -1770,6 +1772,7 @@ Scheduler: {scheduler}"""
                             fn=apply_selected_negative_profile,
                             inputs=negative_prompt_preset,
                             outputs=negative_prompt,
+                            queue=False,
                         )
                     with gr.Row():
                         generate_alt_2 = gr.Button("Generate (Extra Settings Section Button)", variant="primary", elem_id="generate_btn_settings")
@@ -1856,7 +1859,8 @@ Scheduler: {scheduler}"""
                         resize_max_side_slider,
                         pad_to_max_checkbox,
                         exact_ratio
-                    ]
+                    ],
+                    queue=False
                 )
                 def toggle_resize_step(exact_ratio):
                     new_step = 32 if exact_ratio else 64
@@ -1865,7 +1869,8 @@ Scheduler: {scheduler}"""
                 exact_ratio.change(
                     fn=toggle_resize_step,
                     inputs=exact_ratio,
-                    outputs=[resize_max_side_slider]
+                    outputs=[resize_max_side_slider],
+                    queue=False
                 )
                 with gr.Row():
                     generate = gr.Button("Generate (Control + Enter)", scale=8, variant="primary")
@@ -1987,7 +1992,8 @@ Scheduler: {scheduler}"""
                     enhance_strength.change(
                         fn=toggle_custom_padding_dropdown,
                         inputs=enhance_strength,
-                        outputs=custom_enhance_padding
+                        outputs=custom_enhance_padding,
+                        queue=False
                     )
                 with gr.Row():
                     det_size_name = gr.Dropdown(
@@ -2150,7 +2156,7 @@ Scheduler: {scheduler}"""
                 def toggle_img2img(enable):
                     return gr.update(visible=enable)
 
-                enable_img2img.change(toggle_img2img, inputs=enable_img2img, outputs=strength)
+                enable_img2img.change(toggle_img2img, inputs=enable_img2img, outputs=strength, queue=False)
 
                 with gr.Group():
                     with gr.Row():
@@ -2206,7 +2212,8 @@ Scheduler: {scheduler}"""
                     enable_hires_fix.change(
                         fn=toggle_hires_fix_ui,
                         inputs=enable_hires_fix,
-                        outputs=[hires_upscaler, refresh_hires_upscalers, hires_fix_row, save_hires_original]
+                        outputs=[hires_upscaler, refresh_hires_upscalers, hires_fix_row, save_hires_original],
+                        queue=False
                     )
 
                     def refresh_hires_upscaler_list():
@@ -2253,7 +2260,8 @@ Scheduler: {scheduler}"""
                     enable_lora.change(
                         fn=lambda x: gr.Markdown(visible=x),
                         inputs=enable_lora,
-                        outputs=lora_info
+                        outputs=lora_info,
+                        queue=False
                     )
                     with gr.Row():
                         refresh_loras = gr.Button("🔄 Refresh LoRAs Lists", scale=2, elem_classes="toolbutton", visible=False)
@@ -2500,7 +2508,8 @@ Scheduler: {scheduler}"""
                     
                     refresh_loras.click(
                         fn=refresh_lora_list,
-                        outputs=[lora_selection, lora_selection_2, lora_selection_3, lora_selection_4, lora_selection_5, lora_selection_6, lora_selection_7, lora_selection_8]
+                        outputs=[lora_selection, lora_selection_2, lora_selection_3, lora_selection_4, lora_selection_5, lora_selection_6, lora_selection_7, lora_selection_8],
+                        queue=False,
                     )
 
                     def clear_lora_list():
@@ -2528,7 +2537,8 @@ Scheduler: {scheduler}"""
                         outputs=[
                             lora_selection, lora_selection_2, lora_selection_3, lora_selection_4, lora_selection_5, lora_selection_6, lora_selection_7, lora_selection_8,
                             disable_lora_1, disable_lora_2, disable_lora_3, disable_lora_4, disable_lora_5, disable_lora_6, disable_lora_7, disable_lora_8
-                        ]
+                        ],
+                        queue=False
                     )
 
                     enable_embeddings = gr.Checkbox(
@@ -2562,7 +2572,8 @@ Scheduler: {scheduler}"""
                     enable_embeddings.change(
                         fn=lambda x: gr.Markdown(visible=x),
                         inputs=enable_embeddings,
-                        outputs=embeddings_info
+                        outputs=embeddings_info,
+                        queue=False
                     )
 
                     def refresh_embeddings_list():
@@ -2572,19 +2583,22 @@ Scheduler: {scheduler}"""
 
                     refresh_embeddings.click(
                         fn=refresh_embeddings_list,
-                        outputs=[embeddings_info, embeddings_dropdown]
+                        outputs=[embeddings_info, embeddings_dropdown],
+                        queue=False
                     )
 
                     insert_embedding_prompt.click(
                         fn=insert_token_into_text,
                         inputs=[prompt, embeddings_dropdown, embeddings_weight],
-                        outputs=[prompt]
+                        outputs=[prompt],
+                        queue=False
                     )
 
                     insert_embedding_negative.click(
                         fn=insert_token_into_text,
                         inputs=[negative_prompt, embeddings_dropdown, embeddings_weight],
-                        outputs=[negative_prompt]
+                        outputs=[negative_prompt],
+                        queue=False
                     )
 
                     EMBEDDINGS_OUTPUTS = [embeddings_info, embeddings_dropdown, embeddings_weight, insert_embedding_prompt, insert_embedding_negative, refresh_embeddings]
