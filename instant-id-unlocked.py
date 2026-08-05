@@ -2053,7 +2053,8 @@ Scheduler: {scheduler}"""
 
                     refresh_standalone_upscalers.click(
                         fn=refresh_standalone_upscaler_list,
-                        outputs=standalone_upscaler_model
+                        outputs=standalone_upscaler_model,
+                        queue=False
                     )
 
                     standalone_upscale_input.upload(
@@ -2223,7 +2224,8 @@ Scheduler: {scheduler}"""
 
                     refresh_hires_upscalers.click(
                         fn=refresh_hires_upscaler_list,
-                        outputs=hires_upscaler
+                        outputs=hires_upscaler,
+                        queue=False
                     )
                 with gr.Accordion("PNG Metadata Reader", open=True):
                     with gr.Row():
