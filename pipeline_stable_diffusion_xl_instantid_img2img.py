@@ -687,90 +687,6 @@ class LongPromptWeight(object):
 
         return torch.cat([clip_l_embedding, clip_g_embedding], dim=-1)
 
-    def encode_empty_chunk_comfyui_style(
-        self, pipe: StableDiffusionXLPipeline, chunk_length: int, device, cache: dict
-    ) -> torch.Tensor:
-        """
-        Encode a "blank" chunk - [BOS] followed by [EOS] repeated for the rest of the chunk - through
-        both SDXL text encoders, and concatenate their hidden states the same way real token chunks
-        are concatenated elsewhere in this file.
-
-        This exists to support `apply_prompt_weights_comfyui_style` below, which reproduces ComfyUI's
-        default prompt-weight interpretation. ComfyUI's `encode_token_weights` (in
-        `sd1_clip.py`) doesn't touch a weighted token's own embedding directly at all - instead it runs
-        one all-blank chunk of the same length through the encoder(s) separately, then for every
-        weighted token interpolates between that blank chunk's embedding at the same position and the
-        token's real embedding. This method produces that blank chunk's embedding.
-
-        ComfyUI builds its blank chunk as [BOS, EOS, pad, pad, ...] where pad == EOS for CLIP's
-        tokenizers, which collapses to [BOS] + [EOS] * (chunk_length - 1) - that's what's tokenized and
-        encoded here.
-
-        Args:
-            pipe (StableDiffusionXLPipeline)
-            chunk_length (int): length of the chunk to match (almost always 77)
-            device: device to place the token tensor on
-            cache (dict): keyed by chunk_length, passed in by the caller so repeated chunks of the
-                same length (the common case) reuse one encoding instead of re-running both text
-                encoders again for every chunk.
-        Returns:
-            torch.Tensor: shape (chunk_length, 2048) - the blank chunk's concatenated hidden states
-        """
-        if chunk_length in cache:
-            return cache[chunk_length]
-
-        # same BOS/EOS ids used elsewhere in this file (group_tokens_and_weights)
-        bos, eos = 49406, 49407
-        empty_tokens = [bos] + [eos] * (chunk_length - 1)
-        token_tensor = torch.tensor([empty_tokens], dtype=torch.long, device=device)
-
-        empty_embeds_1 = pipe.text_encoder(token_tensor, output_hidden_states=True)
-        empty_embeds_1_hidden_states = empty_embeds_1.hidden_states[-2]
-
-        empty_embeds_2 = pipe.text_encoder_2(token_tensor, output_hidden_states=True)
-        empty_embeds_2_hidden_states = empty_embeds_2.hidden_states[-2]
-
-        empty_embedding = torch.concat(
-            [empty_embeds_1_hidden_states, empty_embeds_2_hidden_states], dim=-1
-        ).squeeze(0)
-        cache[chunk_length] = empty_embedding
-        return empty_embedding
-
-    def apply_prompt_weights_comfyui_style(
-        self, token_embedding: torch.Tensor, empty_token_embedding: torch.Tensor, weight_tensor: torch.Tensor
-    ) -> torch.Tensor:
-        """
-        Reweight a chunk of token embeddings the way ComfyUI does it by default, unlike this pipeline or Forge/A1111 which offer more than one.
-
-        For every token, ComfyUI interpolates between the blank-chunk embedding at that position (see
-        `encode_empty_chunk_comfyui_style`) and the token's real embedding, scaled by its weight:
-
-            z[j] = empty[j] + (real[j] - empty[j]) * weight[j]
-
-        A weight of 1.0 leaves the token untouched (the interpolation collapses to `real`); a weight of
-        0.0 replaces the token entirely with what a blank prompt would have produced at that position;
-        weights above 1.0 extrapolate past the token's own embedding, away from the blank one.
-
-        This is a different mechanism from both this pipeline's own default ("Original InstantID
-        per-token", which interpolates a weighted token toward the *same chunk's own EOS token*, not a
-        separately-encoded blank chunk) and from Forge/A1111's direct scale-then-rescale-mean approach -
-        so a given numeric weight will not look identical across all four methods.
-
-        Args:
-            token_embedding (torch.Tensor): shape (seq_len, dim) - one chunk's real hidden states
-            empty_token_embedding (torch.Tensor): shape (seq_len, dim) - the matching blank chunk's
-                hidden states, from `encode_empty_chunk_comfyui_style`
-            weight_tensor (torch.Tensor): shape (seq_len,) - per-token attention weights
-        Returns:
-            torch.Tensor: reweighted token_embedding, same shape as input
-        """
-        if torch.all(weight_tensor == 1.0):
-            return token_embedding
-
-        weight_tensor = weight_tensor.unsqueeze(-1).to(token_embedding.dtype)
-        empty_token_embedding = empty_token_embedding.to(token_embedding.dtype)
-        return empty_token_embedding + (token_embedding - empty_token_embedding) * weight_tensor
-
     def get_weighted_text_embeddings_sdxl(
         self,
         pipe: StableDiffusionXLPipeline,
@@ -807,11 +723,6 @@ class LongPromptWeight(object):
                 - "ForgeUI global rescale": same direct per-token scaling, but rescaled using a
                   single mean over the whole concatenated CLIP-L + CLIP-G tensor instead of
                   rescaling each encoder separately. See `apply_prompt_weights_forge_style`.
-                - "ComfyUI (blank prompt interpolation)": ComfyUI's default
-                  method - separately encodes an all-blank chunk of the same length, then
-                  interpolates each token's real embedding toward that blank chunk's embedding at
-                  the same position, scaled by the token's weight. See
-                  `apply_prompt_weights_comfyui_style` and `encode_empty_chunk_comfyui_style`.
         Returns:
             prompt_embeds (torch.Tensor)
             neg_prompt_embeds (torch.Tensor)
@@ -871,10 +782,6 @@ class LongPromptWeight(object):
         embeds = []
         neg_embeds = []
 
-        # only populated/used when weight_application_method is the ComfyUI-style one; caches the
-        # blank-chunk encoding by chunk length so it isn't re-run for every single chunk
-        comfyui_empty_embedding_cache = {}
-
         prompt_token_groups, prompt_weight_groups = self.group_tokens_and_weights(prompt_tokens.copy(), prompt_weights.copy())
 
         neg_prompt_token_groups, neg_prompt_weight_groups = self.group_tokens_and_weights(
@@ -915,13 +822,6 @@ class LongPromptWeight(object):
                         token_embedding[j] = (
                             token_embedding[-1] + (token_embedding[j] - token_embedding[-1]) * weight_tensor[j]
                         )
-            elif weight_application_method == "ComfyUI (blank prompt interpolation)":
-                empty_embedding = self.encode_empty_chunk_comfyui_style(
-                    pipe, token_embedding.shape[0], pipe.device, comfyui_empty_embedding_cache
-                )
-                token_embedding = self.apply_prompt_weights_comfyui_style(
-                    token_embedding, empty_embedding, weight_tensor
-                )
             else:
                 token_embedding = self.apply_prompt_weights_forge_style(
                     token_embedding, weight_tensor,
@@ -954,13 +854,6 @@ class LongPromptWeight(object):
                         neg_token_embedding[z] = (
                             neg_token_embedding[-1] + (neg_token_embedding[z] - neg_token_embedding[-1]) * neg_weight_tensor[z]
                         )
-            elif weight_application_method == "ComfyUI (blank prompt interpolation)":
-                neg_empty_embedding = self.encode_empty_chunk_comfyui_style(
-                    pipe, neg_token_embedding.shape[0], pipe.device, comfyui_empty_embedding_cache
-                )
-                neg_token_embedding = self.apply_prompt_weights_comfyui_style(
-                    neg_token_embedding, neg_empty_embedding, neg_weight_tensor
-                )
             else:
                 neg_token_embedding = self.apply_prompt_weights_forge_style(
                     neg_token_embedding, neg_weight_tensor,
