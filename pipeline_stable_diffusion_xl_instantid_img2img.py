@@ -696,7 +696,7 @@ class LongPromptWeight(object):
         are concatenated elsewhere in this file.
 
         This exists to support `apply_prompt_weights_comfyui_style` below, which reproduces ComfyUI's
-        default (and only) prompt-weight interpretation. ComfyUI's `encode_token_weights` (in
+        default prompt-weight interpretation. ComfyUI's `encode_token_weights` (in
         `sd1_clip.py`) doesn't touch a weighted token's own embedding directly at all - instead it runs
         one all-blank chunk of the same length through the encoder(s) separately, then for every
         weighted token interpolates between that blank chunk's embedding at the same position and the
@@ -740,8 +740,7 @@ class LongPromptWeight(object):
         self, token_embedding: torch.Tensor, empty_token_embedding: torch.Tensor, weight_tensor: torch.Tensor
     ) -> torch.Tensor:
         """
-        Reweight a chunk of token embeddings the way ComfyUI does it by default - the only method it
-        ships, unlike this pipeline or Forge/A1111 which offer more than one.
+        Reweight a chunk of token embeddings the way ComfyUI does it by default, unlike this pipeline or Forge/A1111 which offer more than one.
 
         For every token, ComfyUI interpolates between the blank-chunk embedding at that position (see
         `encode_empty_chunk_comfyui_style`) and the token's real embedding, scaled by its weight:
