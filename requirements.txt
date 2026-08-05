@@ -24,3 +24,4 @@ torchsde==0.2.6
 pillow==11.3.0
 Brotli==1.1.0
 spandrel==0.4.2
+psutil==5.9.8
