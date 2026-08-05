@@ -51,9 +51,12 @@ os.environ["HF_HUB_CACHE_OFFLINE"] = "true"
 os.environ["GRADIO_ANALYTICS_ENABLED"] = "False"
 os.environ["GRADIO_DISABLE_TELEMETRY"] = "1"
 
+import psutil
+ram_bytes = psutil.virtual_memory().total
+ram_gb = ram_bytes / (1024**3)
 vram_bytes = torch.cuda.get_device_properties(0).total_memory
 vram_gb = vram_bytes / (1024**3)
-default_vae_tiling = vram_gb >= 15
+default_vae_tiling = vram_gb >= 15 or ram_gb <= 25
 gpu_name = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU"
 
 class GenerationStopped(Exception):
@@ -443,7 +446,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
         stop_event.set()
         gr.Info("A request to stop all currently running tasks has been initiated. Generation will stop when the current task or step has finished processing.")
 
-    if vram_gb >= 15:
+    if vram_gb >= 15 or ram_gb <= 25:
         pipe = None
 
     else:
@@ -480,7 +483,8 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
                 pipe.scheduler.config
             )
 
-    print(f"\nDetected GPU: {gpu_name} with {vram_gb:.2f} GB VRAM → VAE Tiling: {'Enabled' if default_vae_tiling else 'Disabled'} (you can change it manually in the UI)\n")
+    print(f"\nDetected GPU: {gpu_name} with {vram_gb:.2f} GB VRAM | Detected total system memory: {ram_gb:.2f} GB of RAM")
+    print(f"VAE Tiling: {'Enabled' if default_vae_tiling else 'Disabled'} (you can change it manually in the UI)\n")
 
     def load_and_cache_controlnet_model(controlnet_type):
         if controlnet_type not in cached_controlnet_models:
@@ -767,7 +771,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
     def load_model_and_update_pipe(model_name, enable_img2img):
         nonlocal pipe
         global controlnet_identitynet
-        if vram_gb >= 15 and pipe is not None:
+        if (vram_gb >= 15 or ram_gb <= 25) and pipe is not None:
             del pipe
             gc.collect()
             torch.cuda.empty_cache()
@@ -806,7 +810,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             pipe.scheduler = diffusers.DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
 
         pipe.load_ip_adapter_instantid(face_adapter)
-        if vram_gb >= 15:
+        if vram_gb >= 15 or ram_gb <= 25:
             pipe._current_model = model_name
 
         return pipe
@@ -897,7 +901,7 @@ def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
             if hires_sibling_pipe is not None:
                 hires_sibling_pipe._sibling_pipe = None
 
-            if vram_gb >= 15:
+            if vram_gb >= 15 or ram_gb <= 25:
                 if pipe is not None:
                     del pipe
                     pipe = None
@@ -1511,7 +1515,7 @@ Scheduler: {scheduler}"""
     - Upscale and use Enable Hires Fix to generate images with a resolution of what SDXL is best at (usually 1280 max side) to prevent anatomy errors like long necks while still producing good quality images. Hires Fix uses img2img pipeline and uses a lot of VRAM.
     - Select a model to use for generation from the upper left corner dropdown. Only use SDXL and Pony. Illustrious can be loaded but isn't well supported.
     - You can select a scheduler from the upper right corner dropdown. DPMSolver, KDPM2 and Euler are usually the best.
-    - The "Weight application method" option controls how (word:weight) prompt weighting is applied: "Original InstantID per-token" uses InstantID's own method, which is EOS-interpolation loop (interpolates each token toward the chunk's end-of-text embedding). "ForgeUI per-encoder rescale" (it's how ForgeUI/A1111 work with weights) and "ForgeUI global rescale" both scale each token's embedding directly by its weight, then rescale to preserve the original mean - either per text encoder (CLIP-L and CLIP-G separately) or globally (one combined mean across both). "ComfyUI (blank prompt interpolation)" reproduces ComfyUI's own default method: it separately encodes a completely blank prompt of the same length, then interpolates each weighted token toward that blank prompt's embedding at the same position rather than toward its own chunk's EOS embedding or a rescaled mean - so it's not close to either of the other approaches. This weight application method has no effect at all if your prompt/negative prompt fields don't have any weights in them, such as "(anime style:1.5)" for example.
+    - The "Weight application method" option controls how (word:weight) prompt weighting is applied: "Original InstantID per-token" uses InstantID's own method, which is EOS-interpolation loop (interpolates each token toward the chunk's end-of-text embedding). "ForgeUI per-encoder rescale" (it's how ForgeUI/A1111 work with weights) and "ForgeUI global rescale" both scale each token's embedding directly by its weight, then rescale to preserve the original mean - either per text encoder (CLIP-L and CLIP-G separately) or globally (one combined mean across both). "ComfyUI (blank prompt interpolation)" reproduces ComfyUI's default method: it separately encodes a completely blank prompt of the same length, then interpolates each weighted token toward that blank prompt's embedding at the same position rather than toward its own chunk's EOS embedding or a rescaled mean. This entire "Weight application method" has no effect at all if your prompt/negative prompt fields don't have any weights in them, such as "(anime style:1.5)" for example.
     
     Other usage tips of InstantID:
     - If you're not satisfied with the similarity, try increasing the weight of "IdentityNet Strength" and "Image adapter strength".
@@ -3122,7 +3126,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v6.8.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v6.8.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
