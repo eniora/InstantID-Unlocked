@@ -2584,10 +2584,8 @@ Scheduler: {scheduler}"""
 
                     refresh_embeddings.click(
                         fn=refresh_embeddings_list,
-                        outputs=[embeddings_info, embeddings_dropdown],
-                        queue=False
+                        outputs=[embeddings_info, embeddings_dropdown]
                     )
-
                     insert_embedding_prompt.click(
                         fn=insert_token_into_text,
                         inputs=[prompt, embeddings_dropdown, embeddings_weight],
