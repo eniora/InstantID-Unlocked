@@ -1644,7 +1644,8 @@ Scheduler: {scheduler}"""
 
             refresh_models.click(
                 fn=refresh_model_list,
-                outputs=model_name
+                outputs=model_name,
+                queue=False
             )
 
         with gr.Row():
