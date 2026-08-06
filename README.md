@@ -41,7 +41,7 @@ The code barely follows any DRY principles as it started as a personal modificat
 - Tweaks to improve VRAM usage compared to the original repo. Runs good on 12GB VRAM but 16GB+ is recommended.
 - Works on 8GB GPUs, but expect slow generations (~5-10 minutes for 1280×960).
 
-And many many more improvements.
+And many many more improvements such as a Standalone Image Upscaler with GFPGAN option.
 
 I tried the most popular forgeui and comfyui implementations including the popular cubiq/ComfyUI_InstantID and it's really bad compared to my gradio fork of InstantID. cubiq/ComfyUI_InstantID (which was the best from the comfy implementations I tried) tends to screw up the faces and similarity sometimes no matter what options and workflows I tried, and the multi ID feature doesn't work well anyway and is overly complicated (even the author admits this). Try this and judge for yourself. I agree that comfyui instantid is faster but the quality isn't so good really. The good thing about cubiq/ComfyUI_InstantID is the stylization with "IP-Adapter plus VIT", I've been trying to make it work with this fork but I always failed, guess I am not skilled enough for this. :>
 
