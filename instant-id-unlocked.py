@@ -8,6 +8,7 @@ import re
 import cv2
 import math
 import torch
+import torch.nn.functional as F
 import random
 import numpy as np
 import gc
@@ -29,6 +30,8 @@ warning_messages = [
     ".*Should have .*<=t1 but got .*",
     ".*unable to parse version details from package URL.*",
     ".*cache-system uses symlinks by default.*",
+    ".*The parameter 'pretrained' is deprecated*",
+    ".*Arguments other than a weight enum or `None` for 'weights' are deprecated*",
 ]
 for msg in warning_messages:
     warnings.filterwarnings("ignore", message=msg)
@@ -373,6 +376,171 @@ def run_upscaler_model(model, image, tile_size=512, tile_overlap=32):
 
     output = output.clamp(0, 1).squeeze(0).permute(1, 2, 0).cpu().numpy()
     return Image.fromarray((output * 255.0).round().astype(np.uint8))
+
+GFPGAN_DIR = "./models/GFPGAN"
+GFPGAN_MODEL_NAME = "GFPGANv1.4.pth"
+GFPGAN_MODEL_URL = "https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.4.pth"
+
+_gfpgan_model_cache = {}
+
+def _patch_basicsr_torchvision_compat():
+    import importlib
+    try:
+        importlib.import_module("torchvision.transforms.functional_tensor")
+        return
+    except ModuleNotFoundError:
+        pass
+    import types
+    import torchvision.transforms.functional as _tv_functional
+    shim = types.ModuleType("torchvision.transforms.functional_tensor")
+    shim.rgb_to_grayscale = _tv_functional.rgb_to_grayscale
+    sys.modules["torchvision.transforms.functional_tensor"] = shim
+
+def _patch_facexlib_weights_dir():
+    import importlib
+    try:
+        import facexlib.utils.misc as _facexlib_misc
+    except ImportError:
+        return
+
+    if getattr(_facexlib_misc.load_file_from_url, "_instantid_patched", False):
+        return
+
+    _original_load_file_from_url = _facexlib_misc.load_file_from_url
+
+    def _patched_load_file_from_url(*args, **kwargs):
+        kwargs["model_dir"] = GFPGAN_DIR
+        kwargs["save_dir"] = GFPGAN_DIR
+        return _original_load_file_from_url(*args, **kwargs)
+    _patched_load_file_from_url._instantid_patched = True
+
+    _facexlib_misc.load_file_from_url = _patched_load_file_from_url
+    for _mod_name in ("facexlib.detection", "facexlib.parsing", "facexlib.utils"):
+        try:
+            _mod = importlib.import_module(_mod_name)
+            if hasattr(_mod, "load_file_from_url"):
+                _mod.load_file_from_url = _patched_load_file_from_url
+        except ImportError:
+            pass
+
+def load_gfpgan_model(upscale=1):
+    cache_key = upscale
+    if cache_key in _gfpgan_model_cache:
+        return _gfpgan_model_cache[cache_key]
+
+    _patch_basicsr_torchvision_compat()
+    try:
+        from gfpgan.utils import GFPGANer
+    except ImportError:
+        raise gr.Error(
+            "The 'gfpgan' package is required for face restoration. "
+            "Install it with: pip install gfpgan"
+        )
+    _patch_facexlib_weights_dir()
+    from basicsr.utils.download_util import load_file_from_url
+
+    os.makedirs(GFPGAN_DIR, exist_ok=True)
+    model_path = os.path.join(GFPGAN_DIR, GFPGAN_MODEL_NAME)
+    if not os.path.isfile(model_path):
+        print(f"\nGFPGAN model not found, downloading to {GFPGAN_DIR}...\n")
+        model_path = load_file_from_url(
+            url=GFPGAN_MODEL_URL,
+            model_dir=GFPGAN_DIR,
+            progress=True,
+            file_name=GFPGAN_MODEL_NAME,
+        )
+
+    restorer = GFPGANer(
+        model_path=model_path,
+        upscale=upscale,
+        arch="clean",
+        channel_multiplier=2,
+        bg_upsampler=None,
+        device=device,
+    )
+    _gfpgan_model_cache[cache_key] = restorer
+    return restorer
+
+def unload_gfpgan_model():
+    for restorer in list(_gfpgan_model_cache.values()):
+        try:
+            if hasattr(restorer, "gfpgan"):
+                del restorer.gfpgan
+            face_helper = getattr(restorer, "face_helper", None)
+            if face_helper is not None:
+                if hasattr(face_helper, "face_det"):
+                    del face_helper.face_det
+                if hasattr(face_helper, "face_parse"):
+                    del face_helper.face_parse
+        except Exception:
+            pass
+    _gfpgan_model_cache.clear()
+    gc.collect()
+    torch.cuda.empty_cache()
+
+@torch.no_grad()
+def restore_faces_gfpgan(pil_image, weight=0.5):
+    try:
+        restorer = load_gfpgan_model(upscale=1)
+        img_bgr = cv2.cvtColor(np.array(pil_image.convert("RGB")), cv2.COLOR_RGB2BGR)
+        _, _, restored_img = restorer.enhance(
+            img_bgr,
+            has_aligned=False,
+            only_center_face=False,
+            paste_back=True,
+            weight=weight,
+        )
+        if restored_img.shape != img_bgr.shape:
+            img_bgr = cv2.resize(img_bgr, (restored_img.shape[1], restored_img.shape[0]))
+        blended = cv2.addWeighted(restored_img, weight, img_bgr, 1 - weight, 0)
+        return Image.fromarray(cv2.cvtColor(blended, cv2.COLOR_BGR2RGB))
+    finally:
+        unload_gfpgan_model()
+
+@torch.no_grad()
+def encode_image_to_latents(vae_pipe, pil_image, generator=None):
+    vae = vae_pipe.vae
+    image_processor = vae_pipe.image_processor
+    exec_device = getattr(vae_pipe, "_execution_device", None) or vae.device
+
+    image_tensor = image_processor.preprocess(pil_image).to(device=exec_device, dtype=torch.float32)
+
+    latents_mean = latents_std = None
+    if hasattr(vae.config, "latents_mean") and vae.config.latents_mean is not None:
+        latents_mean = torch.tensor(vae.config.latents_mean).view(1, 4, 1, 1)
+    if hasattr(vae.config, "latents_std") and vae.config.latents_std is not None:
+        latents_std = torch.tensor(vae.config.latents_std).view(1, 4, 1, 1)
+
+    needs_upcasting = vae.dtype == torch.float16 and bool(getattr(vae.config, "force_upcast", False))
+    original_vae_dtype = vae.dtype
+    try:
+        if needs_upcasting:
+            image_tensor = image_tensor.float()
+            vae.to(dtype=torch.float32)
+
+        latents = vae.encode(image_tensor).latent_dist.sample(generator=generator)
+    finally:
+        if needs_upcasting:
+            vae.to(dtype=original_vae_dtype)
+    latents = latents.to(original_vae_dtype)
+
+    if latents_mean is not None and latents_std is not None:
+        latents_mean = latents_mean.to(device=exec_device, dtype=original_vae_dtype)
+        latents_std = latents_std.to(device=exec_device, dtype=original_vae_dtype)
+        latents = (latents - latents_mean) * vae.config.scaling_factor / latents_std
+    else:
+        latents = vae.config.scaling_factor * latents
+
+    return latents
+
+def latent_space_upscale(latents, target_pixel_height, target_pixel_width, mode="bicubic"):
+    target_h = max(1, round(target_pixel_height / 8))
+    target_w = max(1, round(target_pixel_width / 8))
+    kwargs = {"mode": mode}
+    if mode in ("bicubic", "bilinear"):
+        kwargs["align_corners"] = False
+        kwargs["antialias"] = True
+    return F.interpolate(latents, size=(target_h, target_w), **kwargs)
 
 EMBEDDINGS_DIR = "./models/Embeddings"
 
@@ -1411,12 +1579,19 @@ Scheduler: {scheduler}"""
                     0.0,
                     desc=f"Hires Fix: upscaling image {i + 1} of {num_outputs}"
                 )
-                upscaler_model = load_upscaler_model(hires_upscaler)
-                upscaled_image = run_upscaler_model(upscaler_model, image)
-
                 hires_width = max(8, int(round((width * hires_upscale_by) / 8) * 8))
                 hires_height = max(8, int(round((height * hires_upscale_by) / 8) * 8))
-                upscaled_image = upscaled_image.resize((hires_width, hires_height), PIL.Image.LANCZOS)
+
+                use_pixel_resize_latent = (hires_upscaler == "Latent (pixel resize)")
+                use_true_latent_upscale = (hires_upscaler == "Latent (latent-space resize)")
+                use_any_latent_option = use_pixel_resize_latent or use_true_latent_upscale
+
+                if not use_any_latent_option:
+                    upscaler_model = load_upscaler_model(hires_upscaler)
+                    upscaled_image = run_upscaler_model(upscaler_model, image)
+                    upscaled_image = upscaled_image.resize((hires_width, hires_height), PIL.Image.LANCZOS)
+                elif use_pixel_resize_latent:
+                    upscaled_image = image.resize((hires_width, hires_height), PIL.Image.LANCZOS)
 
                 hires_pipe = get_img2img_sibling_pipe(pipe)
                 hires_pipe.controlnet = pipe.controlnet
@@ -1432,6 +1607,13 @@ Scheduler: {scheduler}"""
                     effective_hires_steps = num_steps
                     display_hires_steps = max(1, int(round(num_steps * hires_denoising_strength)))
                 hires_generator = torch.Generator(device=device).manual_seed(seed + i)
+
+                if use_true_latent_upscale:
+                    base_latents = encode_image_to_latents(hires_pipe, image, generator=hires_generator)
+                    hires_pass_image = latent_space_upscale(base_latents, hires_height, hires_width)
+                else:
+                    hires_pass_image = upscaled_image
+
                 def hires_gradio_callback_lambda(pipe_obj, step, timestep, callback_kwargs):
                     if stop_event.is_set():
                         raise GenerationStopped()
@@ -1449,7 +1631,7 @@ Scheduler: {scheduler}"""
                         negative_prompt=negative_prompt_for_generation,
                         weight_application_method=weight_application_method,
                         image_embeds=face_emb,
-                        image=upscaled_image,
+                        image=hires_pass_image,
                         control_image=hires_control_images,
                         controlnet_conditioning_scale=control_scales,
                         strength=hires_denoising_strength,
@@ -2003,7 +2185,7 @@ Scheduler: {scheduler}"""
                         value="640x640 (default)",
                         info="Only change this if you get 'No face detected'. Use low values for very close-up portraits. High values for small, distant faces."
                     )
-                with gr.Accordion("🔍 Standalone Image Upscaler (don't use while an image is being generated)", open=False) as standalone_upscaler_accordion:
+                with gr.Accordion("🔍 Standalone Image Upscaler with GFPGAN (don't use while an image is being generated)", open=False) as standalone_upscaler_accordion:
                     with gr.Row():
                         standalone_upscale_input = gr.Image(
                             label="Image to Upscale",
@@ -2024,7 +2206,7 @@ Scheduler: {scheduler}"""
                             choices=get_available_upscalers() or [DEFAULT_UPSCALER],
                             value=DEFAULT_UPSCALER if DEFAULT_UPSCALER in get_available_upscalers() else (get_available_upscalers()[0] if get_available_upscalers() else DEFAULT_UPSCALER),
                             allow_custom_value=True,
-                            info=f"Place in /models/Upscalers",
+                            info=f"Place in models/Upscalers",
                             scale=4
                         )
                         refresh_standalone_upscalers = gr.Button("🔄", scale=0, min_width=40)
@@ -2037,6 +2219,21 @@ Scheduler: {scheduler}"""
                             value=2.0,
                             info="Final image size = original size * this factor. This is a standlone upscaler and has nothing to do with any other InstantID functions.",
                             scale=4
+                        )
+                    with gr.Row():
+                        standalone_restore_faces = gr.Checkbox(
+                            label="Restore Faces with GFPGAN",
+                            value=True,
+                            scale=1
+                        )
+                        standalone_gfpgan_weight = gr.Slider(
+                            label="GFPGAN Strength",
+                            minimum=0.0,
+                            maximum=1.0,
+                            step=0.05,
+                            value=0.5,
+                            info="Higher values can make the face look less like the original.",
+                            scale=2
                         )
                     with gr.Row():
                         run_standalone_upscale_btn = gr.Button("Upscale Image", variant="secondary")
@@ -2070,7 +2267,7 @@ Scheduler: {scheduler}"""
                         queue=False
                     )
 
-                    def run_standalone_upscale(input_image_path, upscaler_name, upscale_by, delete_pipe_checkbox, progress=gr.Progress()):
+                    def run_standalone_upscale(input_image_path, upscaler_name, upscale_by, delete_pipe_checkbox, restore_faces, gfpgan_weight, progress=gr.Progress()):
                         nonlocal pipe, hires_sibling_pipe
 
                         if not input_image_path:
@@ -2111,6 +2308,12 @@ Scheduler: {scheduler}"""
                             progress(0.8, desc="Resizing to target scale...")
                             upscaled = upscaled.resize((target_width, target_height), PIL.Image.LANCZOS)
 
+                        if restore_faces:
+                            progress(0.85, desc="Restoring faces with GFPGAN...")
+                            print("Running GFPGAN face restoration...")
+                            upscaled = restore_faces_gfpgan(upscaled, weight=gfpgan_weight)
+                            torch.cuda.empty_cache()
+
                         progress(0.9, desc="Saving result...")
                         saved_paths = save_images([upscaled], prefix="InstantID_Upscaled_")
 
@@ -2121,7 +2324,7 @@ Scheduler: {scheduler}"""
 
                     run_standalone_upscale_btn.click(
                         fn=run_standalone_upscale,
-                        inputs=[standalone_upscale_input, standalone_upscaler_model, standalone_upscale_by, delete_pipe_checkbox],
+                        inputs=[standalone_upscale_input, standalone_upscaler_model, standalone_upscale_by, delete_pipe_checkbox, standalone_restore_faces, standalone_gfpgan_weight],
                         outputs=[standalone_upscale_output, standalone_upscale_status]
                     )
                 with gr.Row():
@@ -2165,10 +2368,10 @@ Scheduler: {scheduler}"""
                         enable_hires_fix = gr.Checkbox(label="Enable Hires Fix", value=False, scale=1)
                         hires_upscaler = gr.Dropdown(
                             label="Upscaler Model",
-                            choices=get_available_upscalers() or [DEFAULT_UPSCALER],
+                            choices=["Latent (pixel resize)", "Latent (latent-space resize)"] + (get_available_upscalers() or [DEFAULT_UPSCALER]),
                             value=DEFAULT_UPSCALER if DEFAULT_UPSCALER in get_available_upscalers() else (get_available_upscalers()[0] if get_available_upscalers() else DEFAULT_UPSCALER),
                             allow_custom_value=True,
-                            info=f"Place in /models/Upscalers",
+                            info=f"Place in models/Upscalers",
                             visible=False,
                             scale=4
                         )
@@ -2219,7 +2422,7 @@ Scheduler: {scheduler}"""
                     )
 
                     def refresh_hires_upscaler_list():
-                        choices = get_available_upscalers() or [DEFAULT_UPSCALER]
+                        choices = ["Latent (pixel resize)", "Latent (latent-space resize)"] + (get_available_upscalers() or [DEFAULT_UPSCALER])
                         return gr.update(choices=choices)
 
                     refresh_hires_upscalers.click(
@@ -3141,7 +3344,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v6.8.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v6.9.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
