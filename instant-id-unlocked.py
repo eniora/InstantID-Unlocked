@@ -1690,10 +1690,10 @@ Scheduler: {scheduler}"""
     article = r"""
     - Upload an image with a face. For images with multiple faces, only the largest face will be detected. Ensure the face is not too small and is clearly visible without significant obstructions or blurring.
     - (Optional) You can upload another image as a reference for the face pose. If you don't, the first detected face image will be used to extract facial landmarks. If you used a cropped face as main photo, it is recommended to upload a reference photo to define a new face pose.
-    - (Optional) You can select multiple ControlNet models to control the generation process. The default is to use the IdentityNet only. The ControlNet models include pose skeleton, canny, and depth. You can adjust the strength of each ControlNet model to control the generation process.
-    - Enter a text prompt, as done in normal text-to-image models.
+    - (Optional) You can select multiple ControlNet models to control the generation process. The default is to use the IdentityNet only. The ControlNet models include pose skeleton, canny, and depth. You can adjust the strength of each ControlNet model to control the generation process, 0.3 for each is the recommended value.
+    - Enter a text prompt, as done in normal text-to-image AI tools such as ComfuUI or A1111/ForgeUI.
     - Click the Generate button to begin image generation.
-    - img2img mode imports the "pipeline_stable_diffusion_xl_instantid_img2img" pipeline, it's good to experiment with it and I got quite good results using it. It uses a lot of VRAM though (~16-20GB). Enhance non-face region (control_mask) has no effect on this mode and that's by design.
+    - img2img mode imports the "pipeline_stable_diffusion_xl_instantid_img2img" pipeline. It uses a lot of VRAM though (~16-20GB depending on resolution). Enhance non-face region (control_mask) has no effect on this mode and that's by design.
     - Upscale and use Enable Hires Fix to generate images with a resolution of what SDXL is best at (usually 1280 max side) to prevent anatomy errors like long necks while still producing good quality images. Hires Fix uses img2img pipeline and uses a lot of VRAM.
     - Select a model to use for generation from the upper left corner dropdown. Only use SDXL and Pony. Illustrious can be loaded but isn't well supported.
     - You can select a scheduler from the upper right corner dropdown. DPMSolver, KDPM2 and Euler are usually the best.
@@ -2217,7 +2217,7 @@ Scheduler: {scheduler}"""
                             maximum=8.0,
                             step=0.1,
                             value=2.0,
-                            info="Final image size = original size * this factor. This is a standlone upscaler and has nothing to do with any other InstantID functions.",
+                            info="Final image size = original size * this factor.",
                             scale=4
                         )
                     with gr.Row():
@@ -2232,7 +2232,7 @@ Scheduler: {scheduler}"""
                             maximum=1.0,
                             step=0.05,
                             value=0.5,
-                            info="Higher values can make the face look less like the original.",
+                            info="Higher values can distort face features.",
                             scale=2
                         )
                     with gr.Row():
