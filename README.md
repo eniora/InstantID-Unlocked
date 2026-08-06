@@ -17,7 +17,7 @@ The code barely follows any DRY principles as it started as a personal modificat
 - Model selector dropdown (choose your base SDXL model easily).
 - Multiple LoRA loader. Load and combine up to 8 LoRAs with different weights.
 - Embeddings loader with a dropdown menu to insert to prompt or negative prompt.
-- New default model: eniora/RealVisXL_V5.0 (better than YamerMIX). Other good tested models: John6666/albedobase-xl-v31large-sdxl/, ProtoVision XL 6.6, misri/juggernautXL_juggXIByRundiffusion, John6666/cyberrealistic-xl-v58-sdxl.
+- New default model: eniora/Juggernaut_XL_Ragnarok (better than YamerMIX). Other good tested models: John6666/albedobase-xl-v31large-sdxl/, eniora/RealVisXL_V5.0, ProtoVision XL 6.6, misri/juggernautXL_juggXIByRundiffusion, John6666/cyberrealistic-xl-v58-sdxl.
 - Added over 1100 styles, including many from Fooocus and StyleSelectorXL.
 - New CN pose model by xinsir, found it a bit better than the original with better colors.
 - In addition to the default diffusers format support for loading checkpoints, I added the ability to load single SDXL, Pony and Illustrious .safetensors files. They will automatically appear in the model dropdown selection menu when placed in the /models folder.
