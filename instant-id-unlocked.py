@@ -240,7 +240,7 @@ def get_available_models():
     return model_folders
 
 AVAILABLE_MODELS = get_available_models()
-DEFAULT_MODEL = "eniora/RealVisXL_V5.0"
+DEFAULT_MODEL = "eniora/Juggernaut_XL_Ragnarok"
 
 DET_SIZE_OPTIONS = {
     "160x160 (for very lowres portrait photos)": (160, 160),
@@ -605,7 +605,7 @@ def update_det_size(det_size_name):
     
     return f"Detection size set to {current_det_size}"
 
-def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
+def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
     stop_event = threading.Event()
     embedding_state = {"loaded": False, "tokens": []}
     hires_sibling_pipe = None
