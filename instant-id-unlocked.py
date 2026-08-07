@@ -240,7 +240,7 @@ def get_available_models():
     return model_folders
 
 AVAILABLE_MODELS = get_available_models()
-DEFAULT_MODEL = "eniora/RealVisXL_V5.0"
+DEFAULT_MODEL = "eniora/Juggernaut_XL_Ragnarok"
 
 DET_SIZE_OPTIONS = {
     "160x160 (for very lowres portrait photos)": (160, 160),
@@ -605,7 +605,7 @@ def update_det_size(det_size_name):
     
     return f"Detection size set to {current_det_size}"
 
-def main(pretrained_model_name_or_path="eniora/RealVisXL_V5.0"):
+def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
     stop_event = threading.Event()
     embedding_state = {"loaded": False, "tokens": []}
     hires_sibling_pipe = None
@@ -1968,6 +1968,12 @@ Scheduler: {scheduler}"""
                             queue=False
                         )
                     with gr.Row():
+                        apply_lcm_profile_btn = gr.Button(
+                            "⚡ Apply LCM profile (LCMScheduler, CFG 1.0, 10 steps, and 'dmd2_sdxl_4step_lora_fp16' in LoRA slot 1)",
+                            size="sm",
+                            variant="secondary"
+                        )
+                    with gr.Row():
                         file_prefix = gr.Textbox(
                             label="Saved file name prefix.",
                             value=DEFAULT_FILE_PREFIX,
@@ -2918,7 +2924,27 @@ Scheduler: {scheduler}"""
                 outputs=LORA_OUTPUTS,
                 queue=False,
             )
-
+            def apply_lcm_profile():
+                return (
+                    gr.update(value="LCMScheduler"),
+                    gr.update(value=1),
+                    gr.update(value=10),
+                    gr.update(value=True),
+                    gr.update(value="dmd2_sdxl_4step_lora_fp16.safetensors"),
+                    gr.update(value=1),
+                    gr.update(value=False),
+                )
+            apply_lcm_profile_btn.click(
+                fn=apply_lcm_profile,
+                inputs=[],
+                outputs=[scheduler, guidance_scale, num_steps, enable_lora, lora_selection, lora_scale, disable_lora_1],
+                queue=False
+            ).then(
+                fn=toggle_lora_ui,
+                inputs=[enable_lora],
+                outputs=LORA_OUTPUTS,
+                queue=False
+            )
             def extract_all_settings(metadata_text):
                 accordion_update = gr.update(open=False)
                 settings = {
@@ -3344,7 +3370,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v6.9.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v7.0.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
