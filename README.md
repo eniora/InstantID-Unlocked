@@ -74,7 +74,7 @@ Tested only on Windows and Python 3.10.6 and Nvidia GPUs, you may need to do ext
 
 Here's a quick preview of the fork: (This is one of hundreds ways to generate different images with this fork, for example you can add a LoRA or multiple loras with different weights, or try without img2img, or try different styles, or try different models, or etc.)
 
-<img src='Preview/InstantID-Gradio-Unlocked_Previe.png'>
+<img src='Preview/InstantID-Gradio-Unlocked_Preview.png'>
 
 
 _______________________________________________
