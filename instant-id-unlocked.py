@@ -1417,6 +1417,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         pipe.set_ip_adapter_scale(adapter_strength_ratio)
         images = []
         generation_infos = []
+        saved_output_paths = []
         stopped_early = False
         for i in range(num_outputs):
             if stop_event.is_set():
@@ -1571,8 +1572,9 @@ Scheduler: {scheduler}"""
                     original_info_text = info_text.replace("Hires Fix Enabled: True", "Hires Fix Enabled: False")
                     original_png_info = PIL.PngImagePlugin.PngInfo()
                     original_png_info.add_text("Generation Parameters", original_info_text)
-                    save_images([image], generation_info=[original_png_info], prefix=file_prefix)
+                    original_saved_paths = save_images([image], generation_info=[original_png_info], prefix=file_prefix)
                     images.append(image)
+                    saved_output_paths.append(original_saved_paths[0])
                     print("\nOriginal non-upscaled image saved.")
                 torch.cuda.empty_cache()
                 hires_preview_width = max(8, int(round((width * hires_upscale_by) / 8) * 8))
@@ -1665,7 +1667,8 @@ Scheduler: {scheduler}"""
             images.append(image)
 
             generation_infos.append(png_info)
-            save_images([image], generation_info=[png_info], prefix=file_prefix)
+            final_saved_paths = save_images([image], generation_info=[png_info], prefix=file_prefix)
+            saved_output_paths.append(final_saved_paths[0])
             print(f"(√) Finished generating image {i + 1} of {num_outputs}\n")
 
             torch.cuda.empty_cache()
@@ -1688,7 +1691,7 @@ Scheduler: {scheduler}"""
             print(f"Total generation time: {overall_elapsed_time:.2f} seconds ({minutes} minutes and {seconds} seconds)\n")
         else:
             print(f"Total generation time: {overall_elapsed_time:.2f} seconds\n")
-        return images
+        return saved_output_paths
 
     article = r"""
     - Upload an image with a face. For images with multiple faces, only the largest face will be detected. Ensure the face is not too small and is clearly visible without significant obstructions or blurring.
@@ -3406,6 +3409,7 @@ Scheduler: {scheduler}"""
                     queue=False,
                 )
 
+    gr.set_static_paths(paths=[os.path.abspath("output")])
     gui.launch(inbrowser=os.environ.get("IN_BROWSER", "1") == "1")
 
 main()
