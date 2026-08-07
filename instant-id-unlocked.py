@@ -46,6 +46,9 @@ logger = logging.getLogger("diffusers.pipelines.pipeline_utils")
 logger.addFilter(lambda record: "please unset the `HF_HUB_OFFLINE` environment" not in record.getMessage())
 logger = logging.getLogger("diffusers.configuration_utils")
 logger.addFilter(lambda record: "were passed to LCMScheduler" not in record.getMessage())
+logger = logging.getLogger("diffusers.schedulers.scheduling_dpmsolver_singlestep")
+logger.addFilter(lambda record: "`last_sigmas_type='zero'` is not supported" not in record.getMessage())
+logger.addFilter(lambda record: "Please make sure to always use an even number" not in record.getMessage())
 
 os.environ["NO_ALBUMENTATIONS_UPDATE"] = "1"
 # os.environ["TRANSFORMERS_OFFLINE"] = "1"
