@@ -14,8 +14,8 @@ huggingface-hub==0.34.3
 hf_xet==1.1.7
 opencv-python==4.11.0.86
 insightface==0.7.3
-gradio==6.17.3
-gradio-client==2.5.0
+gradio==5.39.0
+gradio-client==1.11.0
 controlnet_aux==0.0.10
 gdown==5.2.0
 peft==0.15.2
