@@ -1457,8 +1457,10 @@ def main(pretrained_model_name_or_path="eniora/juggernaut_XL_Ragnarok"):
                     return callback_kwargs
 
             print(f"Seed: {seed + i}\n")
+            hires_preview_width = max(8, int(round((width * hires_upscale_by) / 8) * 8))
+            hires_preview_height = max(8, int(round((height * hires_upscale_by) / 8) * 8))
             if enable_hires_fix:
-                print(f"Running the first main pass before proceeding to the Hires Fix pass...\n")
+                print(f"Running the first main pass of {width}x{height} before proceeding to the Hires Fix pass ({hires_upscale_by}x for {hires_preview_width}x{hires_preview_height})...\n")
 
             generator = torch.Generator(device=device).manual_seed(seed + i)
             common_kwargs = dict(
@@ -1577,9 +1579,7 @@ Scheduler: {scheduler}"""
                     saved_output_paths.append(original_saved_paths[0])
                     print("\nOriginal non-upscaled image saved.")
                 torch.cuda.empty_cache()
-                hires_preview_width = max(8, int(round((width * hires_upscale_by) / 8) * 8))
-                hires_preview_height = max(8, int(round((height * hires_upscale_by) / 8) * 8))
-                print(f"\nRunning Hires Fix pass and upscaling the image by {hires_upscale_by}x to a final output resolution of {hires_preview_width}x{hires_preview_height}...\n")
+                print(f"\nRunning the Hires Fix pass and upscaling the image by {hires_upscale_by}x to a final output resolution of {hires_preview_width}x{hires_preview_height}...\n")
                 progress(
                     0.0,
                     desc=f"Hires Fix: upscaling image {i + 1} of {num_outputs}"
