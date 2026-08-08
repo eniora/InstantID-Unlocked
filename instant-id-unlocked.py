@@ -1784,15 +1784,15 @@ Scheduler: {scheduler}"""
     }
     """
     with gr.Blocks(js=ctrl_enter_js, css="""
-    #gen_gallery {
+    #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
-    #gen_gallery .grid-wrap {
+    #gen_gallery:not(.fullscreen) .grid-wrap {
         max-height: 400px !important;
         overflow-y: auto !important;
         box-sizing: border-box !important;
     }
-    #gen_gallery .grid-wrap > .grid-container > * {
+    #gen_gallery:not(.fullscreen) .grid-container > * {
         height: 384px !important;
     }
     """) as gui:
