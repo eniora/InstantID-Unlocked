@@ -32,7 +32,6 @@ warning_messages = [
     ".*cache-system uses symlinks by default.*",
     ".*The parameter 'pretrained' is deprecated*",
     ".*Arguments other than a weight enum or `None` for 'weights' are deprecated*",
-    ".*'HTTP_422_UNPROCESSABLE_ENTITY' is deprecated*",
 ]
 for msg in warning_messages:
     warnings.filterwarnings("ignore", message=msg)
@@ -52,7 +51,7 @@ logger.addFilter(lambda record: "`last_sigmas_type='zero'` is not supported" not
 logger.addFilter(lambda record: "Please make sure to always use an even number" not in record.getMessage())
 
 os.environ["NO_ALBUMENTATIONS_UPDATE"] = "1"
-os.environ["TRANSFORMERS_OFFLINE"] = "1"
+# os.environ["TRANSFORMERS_OFFLINE"] = "1"
 os.environ["HF_HUB_CACHE"] = "models"
 os.environ["HF_HUB_CACHE_OFFLINE"] = "true"
 os.environ["GRADIO_ANALYTICS_ENABLED"] = "False"
@@ -244,7 +243,7 @@ def get_available_models():
     return model_folders
 
 AVAILABLE_MODELS = get_available_models()
-DEFAULT_MODEL = "eniora/juggernaut_XL_Ragnarok"
+DEFAULT_MODEL = "eniora/Juggernaut_XL_Ragnarok"
 
 DET_SIZE_OPTIONS = {
     "160x160 (for very lowres portrait photos)": (160, 160),
@@ -609,7 +608,7 @@ def update_det_size(det_size_name):
     
     return f"Detection size set to {current_det_size}"
 
-def main(pretrained_model_name_or_path="eniora/juggernaut_XL_Ragnarok"):
+def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
     stop_event = threading.Event()
     embedding_state = {"loaded": False, "tokens": []}
     hires_sibling_pipe = None
@@ -1718,7 +1717,7 @@ Scheduler: {scheduler}"""
         document.addEventListener("keydown", (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
                 e.preventDefault();
-                const btn = document.querySelector("#generate_alt_3 button, button#generate_alt_3");
+                const btn = document.querySelector("#generate_btn_settings button, button#generate_btn_settings");
                 if (btn) {
                     btn.click();
                 }
@@ -1784,67 +1783,7 @@ Scheduler: {scheduler}"""
         });
     }
     """
-
-    dragdrop_fix_js = """
-    () => {
-        function isValidImageList(files) {
-            return files && files.length === 1 &&
-                ['image/png', 'image/gif', 'image/jpeg', 'image/webp', 'image/bmp'].includes(files[0].type);
-        }
-        function dropReplaceImage(imgWrap, files) {
-            if (!isValidImageList(files)) return;
-            const tmpFile = files[0];
-            const clearBtn = imgWrap.querySelector('button[aria-label="Clear"], .modify-upload button + button');
-            if (clearBtn) clearBtn.click();
-            const assign = () => {
-                const fileInput = imgWrap.querySelector('input[type="file"]');
-                if (!fileInput) return;
-                const dt = new DataTransfer();
-                dt.items.add(tmpFile);
-                fileInput.files = dt.files;
-                fileInput.dispatchEvent(new Event('change', { bubbles: true }));
-            };
-            requestAnimationFrame(() => requestAnimationFrame(assign));
-        }
-        function eventHasFiles(e) {
-            if (!e.dataTransfer) return false;
-            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) return true;
-            if (e.dataTransfer.items && e.dataTransfer.items.length > 0 && e.dataTransfer.items[0].kind === "file") return true;
-            return false;
-        }
-        function clearDragHighlight(imgWrap) {
-            const nodes = [imgWrap, ...imgWrap.querySelectorAll('*')];
-            nodes.forEach(el => {
-                el.dispatchEvent(new DragEvent('dragleave', { bubbles: true }));
-            });
-            document.dispatchEvent(new DragEvent('dragend', { bubbles: true }));
-            nodes.forEach(el => {
-                el.classList.forEach(c => {
-                    if (/drag/i.test(c)) el.classList.remove(c);
-                });
-            });
-        }
-        document.addEventListener("dragover", (e) => {
-            if (!eventHasFiles(e)) return;
-            const imgWrap = e.composedPath()[0]?.closest?.('[data-testid="image"]');
-            if (!imgWrap) return;
-            e.preventDefault();
-            e.dataTransfer.dropEffect = "copy";
-        }, true);
-        document.addEventListener("drop", (e) => {
-            if (!eventHasFiles(e)) return;
-            const imgWrap = e.composedPath()[0]?.closest?.('[data-testid="image"]');
-            if (!imgWrap) return;
-            e.preventDefault();
-            e.stopPropagation();
-            dropReplaceImage(imgWrap, e.dataTransfer.files);
-            clearDragHighlight(imgWrap);
-        }, true);
-    }
-    """
-    with gr.Blocks() as gui:
-        gui.load(None, None, None, js=ctrl_enter_js)
-        gui.load(None, None, None, js=dragdrop_fix_js)
+    with gr.Blocks(js=ctrl_enter_js) as gui:
         with gr.Row():
             with gr.Column(scale=1):
                 with gr.Row():
@@ -2025,7 +1964,7 @@ Scheduler: {scheduler}"""
                             queue=False,
                         )
                     with gr.Row():
-                        generate_alt_2 = gr.Button("Generate (Extra Settings Section Button)", variant="primary")
+                        generate_alt_2 = gr.Button("Generate (Extra Settings Section Button)", variant="primary", elem_id="generate_btn_settings")
                         stop_btn_2 = gr.Button("⏹", scale=0, min_width=60, variant="stop")
                         open_folder_btn = gr.Button("📁", min_width=60, scale=0)
                         open_folder_btn.click(
@@ -2224,12 +2163,12 @@ Scheduler: {scheduler}"""
                         value="Original InstantID per-token",
                     )
                 with gr.Row():
-                    enhance_face_region = gr.Checkbox(label="Enhance non-face region", scale=3, value=True)
+                    enhance_face_region = gr.Checkbox(label="Enhance non-face region", scale=2, value=True)
                     enhance_strength = gr.Dropdown(
                         label="Non-Face Region Mask Size",
                         choices=["Default", "Balanced", "High", "Custom"],
                         value="Balanced",
-                        scale=2,
+                        scale=4,
                         info="Larger values retain more from the input image around the face (e.g., hairstyle)."
                     )
                     custom_enhance_padding = gr.Slider(
@@ -2239,7 +2178,7 @@ Scheduler: {scheduler}"""
                         step=0.05,
                         value=0.15,
                         visible=False,
-                        scale=2,
+                        scale=3,
                         interactive=True
                     )
                     def toggle_custom_padding_dropdown(value):
@@ -2401,7 +2340,7 @@ Scheduler: {scheduler}"""
                         outputs=[standalone_upscale_output, standalone_upscale_status]
                     )
                 with gr.Row():
-                    generate_alt_3 = gr.Button("Generate (Extra Bottom Section Button)", variant="primary", elem_id="generate_alt_3")
+                    generate_alt_3 = gr.Button("Generate (Extra Bottom Section Button)", variant="primary")
                     stop_btn_3 = gr.Button("⏹", scale=0, min_width=60, variant="stop")
                     open_folder_btn = gr.Button("📁", min_width=60, scale=0)
                     open_folder_btn.click(
@@ -3437,7 +3376,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v7.1.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v7.0.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
