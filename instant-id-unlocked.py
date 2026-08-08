@@ -1457,9 +1457,9 @@ def main(pretrained_model_name_or_path="eniora/juggernaut_XL_Ragnarok"):
                     return callback_kwargs
 
             print(f"Seed: {seed + i}\n")
-            hires_preview_width = max(8, int(round((width * hires_upscale_by) / 8) * 8))
-            hires_preview_height = max(8, int(round((height * hires_upscale_by) / 8) * 8))
             if enable_hires_fix:
+                hires_preview_width = max(8, int(round((width * hires_upscale_by) / 8) * 8))
+                hires_preview_height = max(8, int(round((height * hires_upscale_by) / 8) * 8))
                 print(f"Running the first main pass of {width}x{height} before proceeding to the Hires Fix pass ({hires_upscale_by}x for {hires_preview_width}x{hires_preview_height})...\n")
 
             generator = torch.Generator(device=device).manual_seed(seed + i)
@@ -3215,11 +3215,12 @@ Scheduler: {scheduler}"""
                                     pass
                         elif line.startswith("Model:"):
                             model_name = line.replace("Model:", "").strip()
-                            if model_name in AVAILABLE_MODELS:
+                            current_models = get_available_models()
+                            if model_name in current_models:
                                 settings["model_name"] = model_name
                             else:
-                                gr.Warning(
-                                    f"Model '{model_name}' used for this image can't be found in your models folder. Falling back to the default model."
+                                print(
+                                    f"\nModel '{model_name}' used for this image can't be found in your models folder. Falling back to the default model.\n"
                                 )
                         elif line.startswith("Detection size:"):
                             size = line.replace("Detection size:", "").strip()
