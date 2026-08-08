@@ -1783,7 +1783,19 @@ Scheduler: {scheduler}"""
         });
     }
     """
-    with gr.Blocks(js=ctrl_enter_js) as gui:
+    with gr.Blocks(js=ctrl_enter_js, css="""
+    #gen_gallery {
+        max-height: 400px !important;
+    }
+    #gen_gallery .grid-wrap {
+        max-height: 400px !important;
+        overflow-y: auto !important;
+        box-sizing: border-box !important;
+    }
+    #gen_gallery .grid-wrap > .grid-container > * {
+        height: 384px !important;
+    }
+    """) as gui:
         with gr.Row():
             with gr.Column(scale=1):
                 with gr.Row():
@@ -2350,7 +2362,7 @@ Scheduler: {scheduler}"""
                         queue=False
                     )
             with gr.Column(scale=1):
-                gallery = gr.Gallery(label="Generated image(s) preview. Open the output folder for full view.", height=400, object_fit="contain")
+                gallery = gr.Gallery(label="Generation preview", height=400, object_fit="contain", elem_id="gen_gallery")
                 with gr.Row():
                     generate_alt = gr.Button("Generate (Extra Right Side Button)", variant="primary")
                     stop_btn_alt = gr.Button("⏹", scale=0, min_width=60, variant="stop")
