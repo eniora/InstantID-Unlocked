@@ -1795,6 +1795,19 @@ Scheduler: {scheduler}"""
     #gen_gallery:not(.fullscreen) .grid-container > * {
         height: 384px !important;
     }
+    #gen_gallery .icon-wrap,
+    #gen_gallery .wrap svg {
+        display: none !important;
+    }
+    #gen_gallery .wrap.default:not(:has(.progress-level-inner))::before,
+    #gen_gallery .wrap.generating:not(:has(.progress-level-inner))::before {
+        content: "Loading, please wait...";
+        display: block;
+        text-align: center;
+        font-size: 16px;
+        color: var(--body-text-color);
+        padding: 16px;
+    }
     """) as gui:
         with gr.Row():
             with gr.Column(scale=1):
