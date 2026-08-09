@@ -1999,12 +1999,6 @@ Scheduler: {scheduler}"""
                             queue=False
                         )
                     with gr.Row():
-                        apply_lcm_profile_btn = gr.Button(
-                            "⚡ Apply LCM profile (LCMScheduler, CFG 1.0, 10 steps, and 'dmd2_sdxl_4step_lora_fp16' in LoRA slot 1)",
-                            size="sm",
-                            variant="secondary"
-                        )
-                    with gr.Row():
                         file_prefix = gr.Textbox(
                             label="Saved file name prefix.",
                             value=DEFAULT_FILE_PREFIX,
@@ -2467,7 +2461,7 @@ Scheduler: {scheduler}"""
                         outputs=hires_upscaler,
                         queue=False
                     )
-                with gr.Accordion("PNG Metadata Reader", open=True):
+                with gr.Accordion("PNG Metadata Reader & Loader", open=True):
                     with gr.Row():
                         metadata_input = gr.Image(
                             label="Drop PNG file here to read generation metadata",
@@ -2481,10 +2475,13 @@ Scheduler: {scheduler}"""
                             lines=22,
                             max_lines=22
                         )
-
                     with gr.Row():
                         apply_metadata_btn = gr.Button("Apply to all fields (resets all fields if no generation metadata)", variant="secondary")
-            
+                    apply_lcm_profile_btn = gr.Button(
+                        "⚡ Apply LCM profile (LCMScheduler, CFG 1, 10 steps, and dmd2 sdxl lora)",
+                        size="sm",
+                        variant="secondary"
+                    )
                     metadata_input.upload(
                         fn=lambda x: (x, read_png_metadata(x) if x is not None else ""),
                         inputs=metadata_input,
