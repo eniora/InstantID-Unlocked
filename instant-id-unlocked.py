@@ -3432,7 +3432,6 @@ Scheduler: {scheduler}"""
                     queue=False,
                 )
 
-    gr.set_static_paths(paths=[os.path.abspath("output")])
     gui.launch(inbrowser=os.environ.get("IN_BROWSER", "1") == "1")
 
 main()
