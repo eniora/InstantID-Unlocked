@@ -259,7 +259,7 @@ current_det_size = (640, 640)
 app = FaceAnalysis(
     name="antelopev2",
     root="./",
-    providers=["CUDAExecutionProvider", "CPUExecutionProvider"],
+    providers=["CPUExecutionProvider"],
 )
 app.prepare(ctx_id=0, det_size=current_det_size)
 
@@ -602,7 +602,7 @@ def update_det_size(det_size_name):
         app = FaceAnalysis(
             name="antelopev2",
             root="./",
-            providers=["CUDAExecutionProvider", "CPUExecutionProvider"],
+            providers=["CPUExecutionProvider"],
         )
         app.prepare(ctx_id=0, det_size=current_det_size)
     
@@ -3399,7 +3399,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v7.1.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v7.2.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
