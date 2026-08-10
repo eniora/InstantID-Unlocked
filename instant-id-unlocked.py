@@ -2202,7 +2202,7 @@ Scheduler: {scheduler}"""
                     custom_enhance_padding = gr.Slider(
                         label="Custom enhancement padding (%)",
                         minimum=0.0,
-                        maximum=0.9,
+                        maximum=0.6,
                         step=0.05,
                         value=0.15,
                         visible=False,
