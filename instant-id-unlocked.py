@@ -246,13 +246,13 @@ AVAILABLE_MODELS = get_available_models()
 DEFAULT_MODEL = "eniora/Juggernaut_XL_Ragnarok"
 
 DET_SIZE_OPTIONS = {
-    "160x160 (for very lowres portrait photos)": (160, 160),
+    "160x160": (160, 160),
     "320x320": (320, 320),
     "640x640 (default)": (640, 640),
     "800x800": (800, 800),
     "1024x1024": (1024, 1024),
     "1280x1280": (1280, 1280),
-    "2560x2560 (Input/Reference image size should be larger than 2560x2560)": (2560, 2560)
+    "2560x2560": (2560, 2560)
 }
 
 current_det_size = (640, 640)
@@ -2227,17 +2227,17 @@ Scheduler: {scheduler}"""
                         label="Face Detection Size",
                         choices=list(DET_SIZE_OPTIONS.keys()),
                         value="640x640 (default)",
-                        info="Only change this if you get 'No face detected'. Use low values for very close-up portraits. High values for small, distant faces."
+                        info="Only change this if you get 'No face detected'.",
+                        scale=2
                     )
-                with gr.Row():
                     kps_brightness_slider = gr.Slider(
-                        label="Pose Skeleton (KPS) Brightness (default value of 0.6 is usually the best)",
+                        label="Pose Skeleton (KPS) Brightness",
                         minimum=0.0,
                         maximum=1.0,
                         step=0.05,
                         value=0.6,
-                        info="Brightness of the face-landmark guide image InstantID uses to position face features.",
-                        interactive=True
+                        info="Brightness of the face-landmark guide image InstantID uses to position face features. Leave default if unsure.",
+                        scale=3
                     )
                 with gr.Accordion("🔍 Standalone Image Upscaler with GFPGAN (don't use while an image is being generated)", open=False) as standalone_upscaler_accordion:
                     with gr.Row():
