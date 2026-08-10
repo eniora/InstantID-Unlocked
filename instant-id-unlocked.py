@@ -1609,7 +1609,7 @@ Scheduler: {scheduler}"""
                     effective_hires_steps = max(1, int(round(hires_steps / max(hires_denoising_strength, 1e-4))))
                     display_hires_steps = int(hires_steps)
                 else:
-                    effective_hires_steps = max(1, int(round(num_steps * 1.5)))
+                    effective_hires_steps = max(1, int(round(num_steps * 1.4)))
                     display_hires_steps = max(1, int(round(effective_hires_steps * hires_denoising_strength)))
                 hires_generator = torch.Generator(device=device).manual_seed(seed + i)
 
@@ -2429,7 +2429,7 @@ Scheduler: {scheduler}"""
                             maximum=100,
                             step=1,
                             value=0,
-                            info="Steps for the second (hires) pass. 0 = Auto (original steps * 1.5 * Hires strength value).",
+                            info="Steps for the second (hires) pass. 0 = Auto (original steps * 1.4 * Hires strength value).",
                             scale=3
                         )
                         hires_denoising_strength = gr.Slider(
