@@ -1609,8 +1609,8 @@ Scheduler: {scheduler}"""
                     effective_hires_steps = max(1, int(round(hires_steps / max(hires_denoising_strength, 1e-4))))
                     display_hires_steps = int(hires_steps)
                 else:
-                    effective_hires_steps = num_steps
-                    display_hires_steps = max(1, int(round(num_steps * hires_denoising_strength)))
+                    effective_hires_steps = max(1, int(round(num_steps * 1.5)))
+                    display_hires_steps = max(1, int(round(effective_hires_steps * hires_denoising_strength)))
                 hires_generator = torch.Generator(device=device).manual_seed(seed + i)
 
                 if use_true_latent_upscale:
@@ -1622,7 +1622,7 @@ Scheduler: {scheduler}"""
                 def hires_gradio_callback_lambda(pipe_obj, step, timestep, callback_kwargs):
                     if stop_event.is_set():
                         raise GenerationStopped()
-                    divisor = 2 if (enable_img2img and is_slow_scheduler) else 1
+                    divisor = 2 if is_slow_scheduler else 1
                     current_step = min((step + 1) // divisor, display_hires_steps)
                     progress(
                         (current_step / display_hires_steps),
@@ -2429,7 +2429,7 @@ Scheduler: {scheduler}"""
                             maximum=100,
                             step=1,
                             value=0,
-                            info="Steps for the second (hires) pass. 0 = Auto (same as Steps below * Hires strength value).",
+                            info="Steps for the second (hires) pass. 0 = Auto (original steps * 1.5 * Hires strength value).",
                             scale=3
                         )
                         hires_denoising_strength = gr.Slider(
