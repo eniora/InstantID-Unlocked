@@ -13,6 +13,7 @@
 # limitations under the License.
 
 
+import inspect
 import math
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
@@ -1439,7 +1440,21 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
             assert False
 
         # 5. Prepare timesteps
-        self.scheduler.set_timesteps(num_inference_steps, device=device)
+        try:
+            self.scheduler.set_timesteps(num_inference_steps, device=device)
+        except ValueError as e:
+            if "original_steps x strength" not in str(e):
+                raise
+            print("LCMScheduler override: requested steps exceed the scheduler's default step budget. Dynamically raising 'original_inference_steps' to compensate...\n")
+            set_timesteps_kwargs = {}
+            set_timesteps_params = inspect.signature(self.scheduler.set_timesteps).parameters
+            if "original_inference_steps" in set_timesteps_params:
+                needed_original_steps = num_inference_steps
+                max_original_steps = getattr(self.scheduler.config, "num_train_timesteps", None)
+                if max_original_steps is not None:
+                    needed_original_steps = min(needed_original_steps, max_original_steps)
+                set_timesteps_kwargs["original_inference_steps"] = needed_original_steps
+            self.scheduler.set_timesteps(num_inference_steps, device=device, **set_timesteps_kwargs)
         timesteps, num_inference_steps = self.get_timesteps(num_inference_steps, strength, device)
         latent_timestep = timesteps[:1].repeat(batch_size * num_images_per_prompt)
         self._num_timesteps = len(timesteps)
