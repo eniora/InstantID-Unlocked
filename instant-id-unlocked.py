@@ -243,7 +243,7 @@ def get_available_models():
     return model_folders
 
 AVAILABLE_MODELS = get_available_models()
-DEFAULT_MODEL = "eniora/juggernaut_XL_Ragnarok"
+DEFAULT_MODEL = "eniora/Juggernaut_XL_Ragnarok"
 
 DET_SIZE_OPTIONS = {
     "160x160 (for very lowres portrait photos)": (160, 160),
@@ -608,7 +608,7 @@ def update_det_size(det_size_name):
     
     return f"Detection size set to {current_det_size}"
 
-def main(pretrained_model_name_or_path="eniora/juggernaut_XL_Ragnarok"):
+def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
     stop_event = threading.Event()
     embedding_state = {"loaded": False, "tokens": []}
     hires_sibling_pipe = None
@@ -1611,6 +1611,15 @@ Scheduler: {scheduler}"""
                 else:
                     effective_hires_steps = max(1, int(round(num_steps * 1.4)))
                     display_hires_steps = max(1, int(round(effective_hires_steps * hires_denoising_strength)))
+
+                if hires_steps == 0:
+                    info_text = info_text.replace(
+                        "Hires Steps: 0",
+                        f"Hires Steps: 0 (Auto) ~ {display_hires_steps} used for the pass",
+                    )
+                    png_info = PIL.PngImagePlugin.PngInfo()
+                    png_info.add_text("Generation Parameters", info_text)
+
                 hires_generator = torch.Generator(device=device).manual_seed(seed + i)
 
                 if use_true_latent_upscale:
@@ -3152,7 +3161,7 @@ Scheduler: {scheduler}"""
                                 pass
                         elif line.startswith("Hires Steps:"):
                             try:
-                                settings["hires_steps"] = int(line.replace("Hires Steps:", "").strip())
+                                settings["hires_steps"] = int(line.replace("Hires Steps:", "").strip().split()[0])
                             except ValueError:
                                 pass
                         elif line.startswith("Hires Denoising Strength:"):
@@ -3213,7 +3222,7 @@ Scheduler: {scheduler}"""
                         elif line.startswith("Model:"):
                             model_name = line.replace("Model:", "").strip()
                             current_models = get_available_models()
-                            if model_name in current_models:
+                            if model_name.lower() in [m.lower() for m in current_models]:
                                 settings["model_name"] = model_name
                             else:
                                 print(
@@ -3399,7 +3408,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v7.2.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v7.3.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
