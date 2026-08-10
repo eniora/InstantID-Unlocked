@@ -800,6 +800,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
     def draw_kps(
         image_pil,
         kps,
+        kps_brightness=0.6,
         color_list=[
             (255, 0, 0),
             (0, 255, 0),
@@ -832,7 +833,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 1,
             )
             out_img = cv2.fillConvexPoly(out_img.copy(), polygon, color)
-        out_img = (out_img * 0.6).astype(np.uint8)
+        out_img = (out_img * kps_brightness).astype(np.uint8)
 
         for idx_kp, kp in enumerate(kps):
             color = color_list[idx_kp]
@@ -1041,6 +1042,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         enable_vae_tiling,
         resize_mode,
         pad_to_max_side,
+        kps_brightness,
         enable_custom_resize,
         custom_resize_width,
         custom_resize_height,
@@ -1251,7 +1253,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
 
         face_info = sorted(face_info, key=lambda x:(x['bbox'][2]-x['bbox'][0])*(x['bbox'][3]-x['bbox'][1]))[-1]
         face_emb = face_info["embedding"]
-        face_kps = draw_kps(convert_from_cv2_to_image(face_image_cv2), face_info["kps"])
+        face_kps = draw_kps(convert_from_cv2_to_image(face_image_cv2), face_info["kps"], kps_brightness)
         img_controlnet = face_image
         if pose_image_path is not None:
             pose_image = load_image(pose_image_path)
@@ -1270,7 +1272,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 )
 
             face_info = face_info[-1]
-            face_kps = draw_kps(pose_image, face_info["kps"])
+            face_kps = draw_kps(pose_image, face_info["kps"], kps_brightness)
 
             width, height = face_kps.size
 
@@ -1357,6 +1359,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         print(f"Model: {model_name}")
         print(f"Resize mode: {resize_mode}")
         print(f"Pad to max side: {pad_to_max_side}")
+        print(f"KPS Brightness: {kps_brightness}")
         print(f"Use custom resize: {enable_custom_resize}")
         if enable_custom_resize:
             print(f"Custom resize size: {custom_resize_width}x{custom_resize_height}")
@@ -1529,6 +1532,7 @@ Enhance region profile: {enhance_strength}
 Enhance padding ratio: {custom_enhance_padding}
 Resize mode: {resize_mode}
 Pad to max side: {pad_to_max_side}
+KPS Brightness: {kps_brightness}
 Use custom resize: {enable_custom_resize}
 Custom resize size: {custom_resize_width}x{custom_resize_height}
 img2img Strength: {strength}
@@ -2225,6 +2229,16 @@ Scheduler: {scheduler}"""
                         value="640x640 (default)",
                         info="Only change this if you get 'No face detected'. Use low values for very close-up portraits. High values for small, distant faces."
                     )
+                with gr.Row():
+                    kps_brightness_slider = gr.Slider(
+                        label="Pose Skeleton (KPS) Brightness (default value of 0.6 is usually the best)",
+                        minimum=0.0,
+                        maximum=1.0,
+                        step=0.05,
+                        value=0.6,
+                        info="Brightness of the face-landmark guide image InstantID uses to position face features.",
+                        interactive=True
+                    )
                 with gr.Accordion("🔍 Standalone Image Upscaler with GFPGAN (don't use while an image is being generated)", open=False) as standalone_upscaler_accordion:
                     with gr.Row():
                         standalone_upscale_input = gr.Image(
@@ -2912,6 +2926,7 @@ Scheduler: {scheduler}"""
                 enable_vae_tiling,
                 resize_mode_dropdown,
                 pad_to_max_checkbox,
+                kps_brightness_slider,
                 enable_custom_resize,
                 custom_resize_width,
                 custom_resize_height,
@@ -3022,6 +3037,7 @@ Scheduler: {scheduler}"""
                     "enhance_face_region": True,
                     "enhance_strength": "Balanced",
                     "custom_enhance_padding": 0.15,
+                    "kps_brightness": 0.6,
                     "style": DEFAULT_STYLE_NAME,
                     "randomize_seed": True,
                     "controlnet_selection": [],
@@ -3178,6 +3194,11 @@ Scheduler: {scheduler}"""
                                 settings["custom_enhance_padding"] = float(line.replace("Enhance padding ratio:", "").strip())
                             except:
                                 pass
+                        elif line.startswith("KPS Brightness:"):
+                            try:
+                                settings["kps_brightness"] = float(line.replace("KPS Brightness:", "").strip())
+                            except ValueError:
+                                pass
                         elif line.startswith("IdentityNet strength:"):
                             settings["identitynet_strength_ratio"] = float(line.replace("IdentityNet strength:", "").strip())
                         elif line.startswith("Weight application method:"):
@@ -3308,6 +3329,7 @@ Scheduler: {scheduler}"""
                     settings["disable_lora_8"],
                     settings["resize_mode"],
                     settings["pad_to_max_side"],
+                    settings["kps_brightness"],
                     settings["enable_custom_resize"],
                     settings["custom_resize_width"],
                     settings["custom_resize_height"],
@@ -3376,6 +3398,7 @@ Scheduler: {scheduler}"""
                     disable_lora_8,
                     resize_mode_dropdown,
                     pad_to_max_checkbox,
+                    kps_brightness_slider,
                     enable_custom_resize,
                     custom_resize_width,
                     custom_resize_height,
