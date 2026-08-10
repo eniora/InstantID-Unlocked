@@ -3222,8 +3222,9 @@ Scheduler: {scheduler}"""
                         elif line.startswith("Model:"):
                             model_name = line.replace("Model:", "").strip()
                             current_models = get_available_models()
-                            if model_name.lower() in [m.lower() for m in current_models]:
-                                settings["model_name"] = model_name
+                            match = next((m for m in current_models if m.lower() == model_name.lower()), None)
+                            if match:
+                                settings["model_name"] = match
                             else:
                                 print(
                                     f"\nModel '{model_name}' used for this image can't be found in your models folder. Falling back to the default model.\n"
