@@ -16,7 +16,6 @@
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import cv2
-import inspect
 import math
 
 import numpy as np
@@ -1165,21 +1164,7 @@ class StableDiffusionXLInstantIDPipeline(StableDiffusionXLControlNetPipeline):
             region_control.prompt_image_conditioning = [dict(region_mask=None)]
 
         # 5. Prepare timesteps
-        try:
-            self.scheduler.set_timesteps(num_inference_steps, device=device)
-        except ValueError as e:
-            if "original_steps x strength" not in str(e):
-                raise
-            print(f"LCMScheduler override: The steps value exceeds LCM's 'original_inference_steps' maximum. Dynamically overriding it...\n")
-            set_timesteps_kwargs = {}
-            set_timesteps_params = inspect.signature(self.scheduler.set_timesteps).parameters
-            if "original_inference_steps" in set_timesteps_params:
-                needed_original_steps = num_inference_steps
-                max_original_steps = getattr(self.scheduler.config, "num_train_timesteps", None)
-                if max_original_steps is not None:
-                    needed_original_steps = min(needed_original_steps, max_original_steps)
-                set_timesteps_kwargs["original_inference_steps"] = needed_original_steps
-            self.scheduler.set_timesteps(num_inference_steps, device=device, **set_timesteps_kwargs)
+        self.scheduler.set_timesteps(num_inference_steps, device=device)
         timesteps = self.scheduler.timesteps
         self._num_timesteps = len(timesteps)
 
