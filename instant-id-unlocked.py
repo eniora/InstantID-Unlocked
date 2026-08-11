@@ -2440,28 +2440,28 @@ Scheduler: {scheduler}"""
                         hires_upscale_by = gr.Slider(
                             label="Hires Upscale By",
                             minimum=1.0,
-                            maximum=8.0,
+                            maximum=4.0,
                             step=0.05,
                             value=1.5,
-                            info="Target resolution = base resolution on the left (max_side) * this factor.",
+                            info="Target resolution = base resolution * this value.",
                             scale=3
                         )
                         hires_steps = gr.Slider(
-                            label="Hires Steps (0 = Auto)",
+                            label="Hires Steps",
                             minimum=0,
                             maximum=100,
                             step=1,
                             value=0,
-                            info="Steps for the second (hires) pass. 0 = Auto (original steps * 1.4 * Hires strength value).",
+                            info="0 = Auto (original steps * 1.4 * denoising strength).",
                             scale=3
                         )
                         hires_denoising_strength = gr.Slider(
-                            label="Hires Denoising Strength",
+                            label="Denoising Strength",
                             minimum=0.1,
                             maximum=1.0,
                             step=0.05,
                             value=0.35,
-                            info="Lower preserves more of the upscaled image. 0.35 is a good balance.",
+                            info="Lower preserves more of the upscaled image.",
                             scale=3
                         )
 
