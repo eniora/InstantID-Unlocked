@@ -70,6 +70,8 @@ You can download the 4x_NMKD-Superscale-SP_178000_G.pth default "hires fix" upsc
 - If you want my "site-packages" folder for the venv, here it is: https://drive.google.com/file/d/1-ZTmZ_wYNay_tD4BMAeCAJqpIgyUg1Aq/view?usp=sharing
 Create a venv ("python -m venv venv") and then just copy the "site-packages" folder from the archive to "\venv\Lib\". If you do this and use my "site-packages" folder, you don't need to install the requirements.txt or torch/nvidia cuda or anything.
 
+You can safely delete "genderage.onnx", "2d106det.onnx", and "1k3d68.onnx" from the models/antelopev2 folder since they're not used in the app and only eat a bit of your RAM. Only necessary files are "glintr100.onnx" and "scrfd_10g_bnkps.onnx".
+
 Tested only on Windows and Python 3.10.6 and Nvidia GPUs, you may need to do extra steps to run the gradio interface successfully on MacOS/Linux or if you have an AMD GPU.
 
 Here's a quick preview of the fork: (This is one of hundreds ways to generate different images with this fork, for example you can add a LoRA or multiple loras with different weights, or try without img2img, or try different styles, or try different models, or etc.)
