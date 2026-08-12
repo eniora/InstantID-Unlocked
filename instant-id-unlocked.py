@@ -859,17 +859,20 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 w_resize_new, h_resize_new = size
             else:
                 ratio = max_side / max(w, h)
-                w_resize = round(w * ratio)
-                h_resize = round(h * ratio)
-                w_resize_new = (w_resize // base_pixel_number) * base_pixel_number
-                h_resize_new = (h_resize // base_pixel_number) * base_pixel_number
+                w_scaled = w * ratio
+                h_scaled = h * ratio
 
-                if w_resize_new > h_resize_new:
+                if w >= h:
+                    w_resize_new = (round(w_scaled) // base_pixel_number) * base_pixel_number
                     aspect_ratio = h / w
                     h_resize_new = int(round(w_resize_new * aspect_ratio / base_pixel_number) * base_pixel_number)
                 else:
+                    h_resize_new = (round(h_scaled) // base_pixel_number) * base_pixel_number
                     aspect_ratio = w / h
                     w_resize_new = int(round(h_resize_new * aspect_ratio / base_pixel_number) * base_pixel_number)
+
+                w_resize_new = max(w_resize_new, base_pixel_number)
+                h_resize_new = max(h_resize_new, base_pixel_number)
 
         else:
             base_pixel_number = 64
@@ -2071,12 +2074,12 @@ Scheduler: {scheduler}"""
                         interactive=True
                     )
                 resize_max_side_slider = gr.Slider(
-                    label="Max image width/height resizing in pixels. This is for the final output resolution.",
+                    label="Max image width/height resizing in pixels. This is for the output resolution.",
                     minimum=256,
                     maximum=4096,
                     step=32,
                     value=1280,
-                    info="Controls the max_side for input image resizing. Up to 1920 can be good. Above 2000 is for ultra wide/vertical images.",
+                    info="Controls the max_side for input image resizing. Using Hires Fix is preferable to raising this too high.",
                 )
                 def toggle_custom_resize_controls(value):
                     return (
