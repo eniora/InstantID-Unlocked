@@ -1039,6 +1039,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         model_name,
         det_size_name,
         file_prefix,
+        rng_source,
         enable_vae_tiling,
         resize_mode,
         pad_to_max_side,
@@ -1059,6 +1060,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
     ):
         file_prefix = file_prefix.strip().translate(FILENAME_SAFE_TRANS)
         file_prefix = DEFAULT_FILE_PREFIX if not file_prefix else (f"{file_prefix}_" if not file_prefix.endswith('_') else file_prefix)
+        generator_device = "cpu" if rng_source == "CPU" else device
         nonlocal pipe, hires_sibling_pipe
         stop_event.clear()
         overall_start_time = time.time()
@@ -1337,7 +1339,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         if sibling_pipe is not None:
             sibling_pipe.controlnet = pipe.controlnet
 
-        generator = torch.Generator(device=device).manual_seed(seed)
+        generator = torch.Generator(device=generator_device).manual_seed(seed)
 
         print("Starting image generation...")
         print(f"Prompt: {prompt}\nNegative Prompt: {negative_prompt}")
@@ -1412,6 +1414,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             print("Embeddings: Enabled but none found in prompt or negative prompt")
 
         print(f"Scheduler: {scheduler}")
+        print(f"Noise RNG device: {rng_source}")
         print(f"Exact aspect ratio: {'Enabled' if exact_ratio else 'Disabled'}")
         print(f"Weight application method: {weight_application_method}")
         print(f"Max resize side: {resize_max_side}")
@@ -1465,7 +1468,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 hires_preview_height = max(8, int(round((height * hires_upscale_by) / 8) * 8))
                 print(f"Running the first main pass of {width}x{height} before proceeding to the Hires Fix pass ({hires_upscale_by}x for {hires_preview_width}x{hires_preview_height})...\n")
 
-            generator = torch.Generator(device=device).manual_seed(seed + i)
+            generator = torch.Generator(device=generator_device).manual_seed(seed + i)
             common_kwargs = dict(
                 prompt=prompt_for_generation,
                 negative_prompt=negative_prompt_for_generation,
@@ -1547,6 +1550,7 @@ Adapter strength: {adapter_strength_ratio}
 Pose strength: {pose_strength}
 Canny strength: {canny_strength}
 Depth strength: {depth_strength}
+Noise RNG device: {rng_source}
 LoRA Enabled: {enable_lora}
 LoRA 1 selection: {'None' if disable_lora_1 or not (enable_lora and lora_selection and os.path.exists(os.path.join('./models/Loras', lora_selection))) else lora_selection}
 LoRA 1 scale: {'Disabled' if disable_lora_1 or not (enable_lora and lora_selection and os.path.exists(os.path.join('./models/Loras', lora_selection))) else lora_scale}
@@ -1624,7 +1628,7 @@ Scheduler: {scheduler}"""
                     png_info = PIL.PngImagePlugin.PngInfo()
                     png_info.add_text("Generation Parameters", info_text)
 
-                hires_generator = torch.Generator(device=device).manual_seed(seed + i)
+                hires_generator = torch.Generator(device=generator_device).manual_seed(seed + i)
 
                 if use_true_latent_upscale:
                     base_latents = encode_image_to_latents(hires_pipe, image, generator=hires_generator)
@@ -2016,6 +2020,11 @@ Scheduler: {scheduler}"""
                             label="Saved file name prefix.",
                             value=DEFAULT_FILE_PREFIX,
                             placeholder="Enter your custom prefix (e.g., 'myprefix' becomes myprefix_0.png) etc."
+                        )
+                        rng_source = gr.Radio(
+                            label="Noise RNG device",
+                            choices=["GPU", "CPU"],
+                            value="GPU",
                         )
                     with gr.Row():
                         enable_vae_tiling = gr.Checkbox(
@@ -2923,6 +2932,7 @@ Scheduler: {scheduler}"""
                 model_name,
                 det_size_name,
                 file_prefix,
+                rng_source,
                 enable_vae_tiling,
                 resize_mode_dropdown,
                 pad_to_max_checkbox,
@@ -3016,6 +3026,7 @@ Scheduler: {scheduler}"""
                     "depth_strength": 0.30,
                     "scheduler": "DPMSolverMultistepScheduler",
                     "exact_ratio": True,
+                    "rng_source": "GPU",
                     "enable_lora": False,
                     "lora_scale": 1.0,
                     "lora_selection": None,
@@ -3263,6 +3274,10 @@ Scheduler: {scheduler}"""
                             settings["resize_mode"] = line.replace("Resize mode:", "").strip().upper()
                         elif line.startswith("Pad to max side:"):
                             settings["pad_to_max_side"] = "true" in line.lower()
+                        elif line.startswith("Noise RNG device:"):
+                            rng_value = line.replace("Noise RNG device:", "").strip()
+                            if rng_value in ("GPU", "CPU"):
+                                settings["rng_source"] = rng_value
                         elif line.startswith("Use custom resize:"):
                             settings["enable_custom_resize"] = "true" in line.lower()
                         elif line.startswith("Custom resize size:"):
@@ -3275,7 +3290,7 @@ Scheduler: {scheduler}"""
 
                 open_settings_accordion = False
 
-                if settings["enable_custom_resize"] or settings["pad_to_max_side"] or not settings["exact_ratio"]:
+                if settings["enable_custom_resize"] or settings["pad_to_max_side"] or not settings["exact_ratio"] or settings["rng_source"] == "CPU":
                     open_settings_accordion = True
 
                 return [
@@ -3294,6 +3309,7 @@ Scheduler: {scheduler}"""
                     settings["guidance_scale"],
                     settings["seed"],
                     settings["scheduler"],
+                    settings["rng_source"],
                     settings["enable_lora"],
                     settings["enhance_face_region"],
                     settings["enhance_strength"],
@@ -3363,6 +3379,7 @@ Scheduler: {scheduler}"""
                     guidance_scale,
                     seed,
                     scheduler,
+                    rng_source,
                     enable_lora,
                     enhance_face_region,
                     enhance_strength,
@@ -3432,7 +3449,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v7.3.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v7.4.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
