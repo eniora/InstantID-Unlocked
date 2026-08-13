@@ -1617,10 +1617,13 @@ Scheduler: {scheduler}"""
                 region_control.prompt_image_conditioning = []
                 hires_control_images = resize_control_images(control_images, (hires_width, hires_height))
                 if hires_steps and hires_steps > 0:
-                    effective_hires_steps = max(1, int(round(hires_steps / max(hires_denoising_strength, 1e-4))))
+                    effective_hires_steps = max(1, math.ceil(hires_steps / max(hires_denoising_strength, 1e-4)))
                     display_hires_steps = int(hires_steps)
                 else:
                     effective_hires_steps = max(1, int(round(num_steps * 1.4)))
+                    if int(effective_hires_steps * hires_denoising_strength) < 1:
+                        print("Auto Hires Steps combined with your denoising strength results in 0 actual steps. Hires Steps has been temporarily set to 4 to compensate...\n")
+                        effective_hires_steps = math.ceil(4 / max(hires_denoising_strength, 1e-4))
                     display_hires_steps = max(1, int(round(effective_hires_steps * hires_denoising_strength)))
 
                 if hires_steps == 0:
@@ -2469,9 +2472,9 @@ Scheduler: {scheduler}"""
                         )
                         hires_denoising_strength = gr.Slider(
                             label="Denoising Strength",
-                            minimum=0.1,
+                            minimum=0.01,
                             maximum=1.0,
-                            step=0.05,
+                            step=0.01,
                             value=0.35,
                             info="Lower preserves more of the upscaled image.",
                             scale=3
@@ -3452,7 +3455,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v7.4.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v7.5.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
