@@ -1620,16 +1620,16 @@ Scheduler: {scheduler}"""
                     effective_hires_steps = max(1, math.ceil(hires_steps / max(hires_denoising_strength, 1e-4)))
                     display_hires_steps = int(hires_steps)
                 else:
-                    effective_hires_steps = max(1, int(round(num_steps * 1.4)))
+                    effective_hires_steps = max(1, math.ceil(num_steps * 1.4))
                     if int(effective_hires_steps * hires_denoising_strength) < 1:
-                        print("Auto Hires Steps combined with your denoising strength results in 0 actual steps. Hires Steps has been temporarily set to 4 to compensate...\n")
+                        print("Auto Hires Steps combined with your denoising strength results in 0 actual steps. Hires Steps value has been temporarily set to 4 to compensate...\n")
                         effective_hires_steps = math.ceil(4 / max(hires_denoising_strength, 1e-4))
-                    display_hires_steps = max(1, int(round(effective_hires_steps * hires_denoising_strength)))
+                    display_hires_steps = max(1, int(effective_hires_steps * hires_denoising_strength))
 
                 if hires_steps == 0:
                     info_text = info_text.replace(
                         "Hires Steps: 0",
-                        f"Hires Steps: 0 (Auto) ~ {display_hires_steps} used for the pass",
+                        f"Hires Steps: 0 (Auto) | {display_hires_steps} used for the pass",
                     )
                     png_info = PIL.PngImagePlugin.PngInfo()
                     png_info.add_text("Generation Parameters", info_text)
