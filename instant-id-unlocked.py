@@ -3077,7 +3077,7 @@ Scheduler: {scheduler}"""
                     "hires_upscaler": DEFAULT_UPSCALER,
                     "hires_upscale_by": 1.5,
                     "hires_steps": 0,
-                    "hires_denoising_strength": 0.40
+                    "hires_denoising_strength": 0.35
                 }
                 if metadata_text:
                     lines = metadata_text.split('\n')
