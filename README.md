@@ -68,7 +68,7 @@ This is my whole models and checkpoints folder except for the SDXL model(s).
 Just download the file, extract it and copy the folders into your root InstantID folder. Then you will only need an SDXL model to start generating. It will be downloaded automatically from huggingface when you start InstantID.
 You can download the 4x_NMKD-Superscale-SP_178000_G.pth default "hires fix" upscaler model from: https://drive.google.com/file/d/1VaHcS7NLC1Ys5mL5UF5XWyKMZdF5bOwL/view?usp=sharing
 - If you want my "site-packages" folder for the venv, here it is: https://drive.google.com/file/d/1-ZTmZ_wYNay_tD4BMAeCAJqpIgyUg1Aq/view?usp=sharing
-Create a venv ("python -m venv venv") and then just copy the "site-packages" folder from the archive to "\venv\Lib\". If you do this and use my "site-packages" folder, you don't need to install the requirements.txt or torch/nvidia cuda or anything.
+Create a venv ("python -m venv venv") and then just copy the "site-packages" folder from the archive to "\venv\Lib\". If you do this and use my "site-packages" folder, you don't need to install the requirements.txt or torch/nvidia cuda or anything. You need python 3.10.6 installed (or point to a 3.10.6 python folder in the cfg) as this venv folder was created with this version.
 
 You can safely delete "genderage.onnx", "2d106det.onnx", and "1k3d68.onnx" from the models/antelopev2 folder since they're not used in the app and only eat a bit of your RAM. Only necessary files are "glintr100.onnx" and "scrfd_10g_bnkps.onnx".
 
