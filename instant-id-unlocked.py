@@ -1622,14 +1622,14 @@ Scheduler: {scheduler}"""
                 else:
                     effective_hires_steps = max(1, math.ceil(num_steps * 1.4))
                     if int(effective_hires_steps * hires_denoising_strength) < 1:
-                        print("Auto Hires Steps combined with your denoising strength results in 0 actual steps. Hires Steps value has been temporarily set to 4 to compensate...\n")
-                        effective_hires_steps = math.ceil(4 / max(hires_denoising_strength, 1e-4))
+                        print("Auto Hires Steps * Hires denoising strength results in 0 actual steps. Hires Steps value has been temporarily set to 2 to compensate...\n")
+                        effective_hires_steps = math.ceil(2 / max(hires_denoising_strength, 1e-4))
                     display_hires_steps = max(1, int(effective_hires_steps * hires_denoising_strength))
 
                 if hires_steps == 0:
                     info_text = info_text.replace(
                         "Hires Steps: 0",
-                        f"Hires Steps: 0 (Auto) | {display_hires_steps} used for the pass",
+                        f"Hires Steps: 0 - Auto ({display_hires_steps} used for the pass)",
                     )
                     png_info = PIL.PngImagePlugin.PngInfo()
                     png_info.add_text("Generation Parameters", info_text)
@@ -1722,7 +1722,7 @@ Scheduler: {scheduler}"""
     - (Optional) You can select multiple ControlNet models to control the generation process. The default is to use the IdentityNet only. The ControlNet models include pose skeleton, canny, and depth. You can adjust the strength of each ControlNet model to control the generation process, 0.3 for each is the recommended value.
     - Enter a text prompt, as done in normal text-to-image AI tools such as ComfuUI or A1111/ForgeUI.
     - Click the Generate button to begin image generation.
-    - img2img mode imports the "pipeline_stable_diffusion_xl_instantid_img2img" pipeline. Enhance non-face region (control_mask) has no effect on this mode and that's by design.
+    - img2img mode imports the "pipeline_stable_diffusion_xl_instantid_img2img" pipeline. Enhance non-face region (control_mask) has no effect on this mode and that's by design. This img2img pipeline (which is used by Hires Fix too) can sometimes use ~5GB more VRAM than the normal pipeline.
     - Upscale and use Enable Hires Fix to generate images with a resolution of what SDXL is best at (usually 1280 max side) to prevent anatomy errors like long necks while still producing good quality images.
     - Select a model to use for generation from the upper left corner dropdown. Only use SDXL and Pony. Illustrious can be loaded but isn't well supported.
     - You can select a scheduler from the upper right corner dropdown. DPMSolver, KDPM2 and Euler are usually the best.
@@ -2475,7 +2475,7 @@ Scheduler: {scheduler}"""
                             minimum=0.1,
                             maximum=1.0,
                             step=0.05,
-                            value=0.40,
+                            value=0.35,
                             info="Lower preserves more of the upscaled image.",
                             scale=3
                         )
