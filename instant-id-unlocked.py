@@ -1722,8 +1722,8 @@ Scheduler: {scheduler}"""
     - (Optional) You can select multiple ControlNet models to control the generation process. The default is to use the IdentityNet only. The ControlNet models include pose skeleton, canny, and depth. You can adjust the strength of each ControlNet model to control the generation process, 0.3 for each is the recommended value.
     - Enter a text prompt, as done in normal text-to-image AI tools such as ComfuUI or A1111/ForgeUI.
     - Click the Generate button to begin image generation.
-    - img2img mode imports the "pipeline_stable_diffusion_xl_instantid_img2img" pipeline. It uses a lot of VRAM though (~16-20GB depending on resolution). Enhance non-face region (control_mask) has no effect on this mode and that's by design.
-    - Upscale and use Enable Hires Fix to generate images with a resolution of what SDXL is best at (usually 1280 max side) to prevent anatomy errors like long necks while still producing good quality images. Hires Fix uses img2img pipeline and uses a lot of VRAM.
+    - img2img mode imports the "pipeline_stable_diffusion_xl_instantid_img2img" pipeline. Enhance non-face region (control_mask) has no effect on this mode and that's by design.
+    - Upscale and use Enable Hires Fix to generate images with a resolution of what SDXL is best at (usually 1280 max side) to prevent anatomy errors like long necks while still producing good quality images.
     - Select a model to use for generation from the upper left corner dropdown. Only use SDXL and Pony. Illustrious can be loaded but isn't well supported.
     - You can select a scheduler from the upper right corner dropdown. DPMSolver, KDPM2 and Euler are usually the best.
     - The "Weight application method" option controls how (word:weight) prompt weighting is applied: "Original InstantID per-token" uses InstantID's own method, which is EOS-interpolation loop (interpolates each token toward the chunk's end-of-text embedding). "ForgeUI per-encoder rescale" (it's how ForgeUI/A1111 work with weights) and "ForgeUI global rescale" both scale each token's embedding directly by its weight, then rescale to preserve the original mean - either per text encoder (CLIP-L and CLIP-G separately) or globally (one combined mean across both). "ComfyUI (blank prompt interpolation)" reproduces ComfyUI's default method: it separately encodes a completely blank prompt of the same length, then interpolates each weighted token toward that blank prompt's embedding at the same position rather than toward its own chunk's EOS embedding or a rescaled mean. This entire "Weight application method" has no effect at all if your prompt/negative prompt fields don't have any weights in them, such as "(anime style:1.5)" for example.
@@ -2472,10 +2472,10 @@ Scheduler: {scheduler}"""
                         )
                         hires_denoising_strength = gr.Slider(
                             label="Denoising Strength",
-                            minimum=0.01,
+                            minimum=0.1,
                             maximum=1.0,
-                            step=0.01,
-                            value=0.35,
+                            step=0.05,
+                            value=0.40,
                             info="Lower preserves more of the upscaled image.",
                             scale=3
                         )
@@ -3077,7 +3077,7 @@ Scheduler: {scheduler}"""
                     "hires_upscaler": DEFAULT_UPSCALER,
                     "hires_upscale_by": 1.5,
                     "hires_steps": 0,
-                    "hires_denoising_strength": 0.35
+                    "hires_denoising_strength": 0.40
                 }
                 if metadata_text:
                     lines = metadata_text.split('\n')
