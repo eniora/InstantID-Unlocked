@@ -1445,7 +1445,7 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
         except ValueError as e:
             if "original_steps x strength" not in str(e):
                 raise
-            print("LCMScheduler override: requested steps exceed the scheduler's default step budget. Dynamically raising 'original_inference_steps' to compensate...\n")
+            # print("LCMScheduler override: requested steps exceed the scheduler's default step budget. Dynamically raising 'original_inference_steps' to compensate...\n")
             set_timesteps_kwargs = {}
             set_timesteps_params = inspect.signature(self.scheduler.set_timesteps).parameters
             if "original_inference_steps" in set_timesteps_params:
