@@ -1152,16 +1152,10 @@ class StableDiffusionXLInstantIDPipeline(StableDiffusionXLControlNetPipeline):
             mask_weight_image_tensor = torch.from_numpy(mask_weight_image).to(device=device, dtype=prompt_embeds.dtype)
             mask_weight_image_tensor = mask_weight_image_tensor[:, :, 0] / 255.
             mask_weight_image_tensor = mask_weight_image_tensor[None, None]
-            h, w = mask_weight_image_tensor.shape[-2:]
-            control_mask_wight_image_list = []
-            for scale in [8, 8, 8, 16, 16, 16, 32, 32, 32]:
-                scale_mask_weight_image_tensor = F.interpolate(
-                    mask_weight_image_tensor,(h // scale, w // scale), mode='bilinear')
-                control_mask_wight_image_list.append(scale_mask_weight_image_tensor)
             region_mask = torch.from_numpy(np.array(control_mask)[:, :, 0]).to(self.unet.device, dtype=self.unet.dtype) / 255.
             region_control.prompt_image_conditioning = [dict(region_mask=region_mask)]
         else:
-            control_mask_wight_image_list = None
+            mask_weight_image_tensor = None
             region_control.prompt_image_conditioning = [dict(region_mask=None)]
 
         # 5. Prepare timesteps
@@ -1318,12 +1312,14 @@ class StableDiffusionXLInstantIDPipeline(StableDiffusionXLControlNetPipeline):
                                                                                   return_dict=False)
 
                         # controlnet mask
-                        if control_index == 0 and control_mask_wight_image_list is not None:
+                        if control_index == 0 and mask_weight_image_tensor is not None:
                             down_block_res_samples = [
-                                down_block_res_sample * mask_weight
-                                for down_block_res_sample, mask_weight in zip(down_block_res_samples, control_mask_wight_image_list)
+                                down_block_res_sample * F.interpolate(
+                                    mask_weight_image_tensor, size=down_block_res_sample.shape[-2:], mode='bilinear')
+                                for down_block_res_sample in down_block_res_samples
                             ]
-                            mid_block_res_sample *= control_mask_wight_image_list[-1]
+                            mid_block_res_sample = mid_block_res_sample * F.interpolate(
+                                mask_weight_image_tensor, size=mid_block_res_sample.shape[-2:], mode='bilinear')
 
                         down_block_res_samples_list.append(down_block_res_samples)
                         mid_block_res_sample_list.append(mid_block_res_sample)
@@ -1344,12 +1340,14 @@ class StableDiffusionXLInstantIDPipeline(StableDiffusionXLControlNetPipeline):
                     )
 
                     # controlnet mask
-                    if control_mask_wight_image_list is not None:
+                    if mask_weight_image_tensor is not None:
                         down_block_res_samples = [
-                            down_block_res_sample * mask_weight
-                            for down_block_res_sample, mask_weight in zip(down_block_res_samples, control_mask_wight_image_list)
+                            down_block_res_sample * F.interpolate(
+                                mask_weight_image_tensor, size=down_block_res_sample.shape[-2:], mode='bilinear')
+                            for down_block_res_sample in down_block_res_samples
                         ]
-                        mid_block_res_sample *= control_mask_wight_image_list[-1]
+                        mid_block_res_sample = mid_block_res_sample * F.interpolate(
+                            mask_weight_image_tensor, size=mid_block_res_sample.shape[-2:], mode='bilinear')
 
                 if guess_mode and self.do_classifier_free_guidance:
                     # Infered ControlNet only for the conditional batch.
