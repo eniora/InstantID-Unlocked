@@ -62,7 +62,7 @@ pip install torch==2.13.0+cu132 torchvision==0.28.0+cu132 --index-url https://do
 python instant-id-unlocked.py
 
 _______________________________________________
-- Python and PIP packages are a pain in the ***, and a lot of stuff can go wrong with dependencies, installations, etc. So, if you want my whole InstantID-Unlocked folder with the venv and all the models, loras, embeddings, upscalers and everything you need to get it running without any headaches, here it is in 3 parts: (~26GB)
+Python and PIP packages are a pain in the ***, and a lot of stuff can go wrong with dependencies, installations, etc. So, if you want my whole InstantID-Unlocked folder with the venv and all the models, loras, embeddings, upscalers and everything you need to get it running without any headaches, here it is in 3 parts: (~26GB)
 
 Part 1: https://drive.google.com/file/d/1MRIgwvHuopDxCZLiuXRFf6hDYzKwCeM8/view?usp=sharing
 Part 2: https://drive.google.com/file/d/1HAob1D6ynIwWjG4HyXi7paTWRtxqz647/view?usp=sharing
