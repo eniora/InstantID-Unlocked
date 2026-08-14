@@ -64,9 +64,9 @@ python instant-id-unlocked.py
 _______________________________________________
 Python and PIP packages are a pain in the ***, and a lot of stuff can go wrong with dependencies, installations, etc. So, if you want my whole InstantID-Unlocked folder with the venv and all the models, loras, embeddings, upscalers and everything you need to get it running without any headaches, here it is in 3 parts: (~26GB)
 
-Part 1: https://drive.google.com/file/d/1MRIgwvHuopDxCZLiuXRFf6hDYzKwCeM8/view?usp=sharing
-Part 2: https://drive.google.com/file/d/1HAob1D6ynIwWjG4HyXi7paTWRtxqz647/view?usp=sharing
-Part 3: https://drive.google.com/file/d/1Nysf6mJ9BrWP8MIt9nsRcT5k1Km2fb98/view?usp=sharing
+- Part 1: https://drive.google.com/file/d/1MRIgwvHuopDxCZLiuXRFf6hDYzKwCeM8/view?usp=sharing
+- Part 2: https://drive.google.com/file/d/1HAob1D6ynIwWjG4HyXi7paTWRtxqz647/view?usp=sharing
+- Part 3: https://drive.google.com/file/d/1Nysf6mJ9BrWP8MIt9nsRcT5k1Km2fb98/view?usp=sharing
 
 Just download the files and extract with the latest 7zip, instructions are inside. You basically need to enter the folder with CMD/terminal and create a new venv using python 3.10.6 with "python -m venv venv" and copy over the included site-packages folder, overwriting the newly created one inside.
 If you do this and use this folder, you don't need to install the requirements.txt or torch/nvidia cuda or anything. You need python 3.10.6 installed (or point to a 3.10.6 python folder in the cfg after creating the venv) as the venv folder inside was created with 3.10.6. Note that the "instant-id-unlocked.py" file inside won't be up to date obviously (currently at v7.5.0 in the folder), you'd need to replace it (and other .py files if necessary) in case I update the repo with new files. Model files won't need to be updated and you can use any SDXL/Pony checkpoint in .safetensors format and place directly inside the models folder. Illustrious can be loaded but not all of them work good with InstantID.
