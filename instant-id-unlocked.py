@@ -850,41 +850,28 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         size=None,
         pad_to_max_side=False,
         mode=PIL.Image.LANCZOS,
-        base_pixel_number=32,
-        exact_ratio=True
+        base_pixel_number=8,
     ):
         w, h = input_image.size
-        if exact_ratio:
-            if size is not None:
-                w_resize_new, h_resize_new = size
-            else:
-                ratio = max_side / max(w, h)
-                w_scaled = w * ratio
-                h_scaled = h * ratio
-
-                if w >= h:
-                    w_resize_new = (round(w_scaled) // base_pixel_number) * base_pixel_number
-                    aspect_ratio = h / w
-                    h_resize_new = int(round(w_resize_new * aspect_ratio / base_pixel_number) * base_pixel_number)
-                else:
-                    h_resize_new = (round(h_scaled) // base_pixel_number) * base_pixel_number
-                    aspect_ratio = w / h
-                    w_resize_new = int(round(h_resize_new * aspect_ratio / base_pixel_number) * base_pixel_number)
-
-                w_resize_new = max(w_resize_new, base_pixel_number)
-                h_resize_new = max(h_resize_new, base_pixel_number)
-
+        if size is not None:
+            w_resize_new, h_resize_new = size
         else:
-            base_pixel_number = 64
-            if size is not None:
-                w_resize_new, h_resize_new = size
+            ratio = max_side / max(w, h)
+            w_scaled = w * ratio
+            h_scaled = h * ratio
+
+            if w >= h:
+                w_resize_new = (round(w_scaled) // base_pixel_number) * base_pixel_number
+                aspect_ratio = h / w
+                h_resize_new = int(round(w_resize_new * aspect_ratio / base_pixel_number) * base_pixel_number)
             else:
-                ratio = min_side / min(h, w)
-                w, h = round(ratio * w), round(ratio * h)
-                ratio = max_side / max(h, w)
-                input_image = input_image.resize([round(ratio * w), round(ratio * h)], mode)
-                w_resize_new = (round(ratio * w) // base_pixel_number) * base_pixel_number
-                h_resize_new = (round(ratio * h) // base_pixel_number) * base_pixel_number
+                h_resize_new = (round(h_scaled) // base_pixel_number) * base_pixel_number
+                aspect_ratio = w / h
+                w_resize_new = int(round(h_resize_new * aspect_ratio / base_pixel_number) * base_pixel_number)
+
+            w_resize_new = max(w_resize_new, base_pixel_number)
+            h_resize_new = max(h_resize_new, base_pixel_number)
+
         input_image = input_image.resize([w_resize_new, h_resize_new], mode)
 
         if pad_to_max_side and size is None:
@@ -1052,7 +1039,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         custom_resize_height,
         enable_img2img,
         strength,
-        exact_ratio,
+        ratio_base_pixel_number,
         enable_hires_fix,
         hires_upscaler,
         hires_upscale_by,
@@ -1242,7 +1229,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         if enable_custom_resize:
             custom_size = (int(custom_resize_width), int(custom_resize_height))
         resize_mode_enum = getattr(PIL.Image, resize_mode)
-        face_image = resize_img(face_image, size=custom_size, max_side=resize_max_side, mode=resize_mode_enum, pad_to_max_side=pad_to_max_side, exact_ratio=exact_ratio)
+        face_image = resize_img(face_image, size=custom_size, max_side=resize_max_side, mode=resize_mode_enum, pad_to_max_side=pad_to_max_side, base_pixel_number=ratio_base_pixel_number)
         face_image_cv2 = convert_from_image_to_cv2(face_image)
         height, width, _ = face_image_cv2.shape
 
@@ -1262,7 +1249,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         img_controlnet = face_image
         if pose_image_path is not None:
             pose_image = load_image(pose_image_path)
-            pose_image = resize_img(pose_image, size=custom_size, max_side=resize_max_side, mode=resize_mode_enum, pad_to_max_side=pad_to_max_side, exact_ratio=exact_ratio)
+            pose_image = resize_img(pose_image, size=custom_size, max_side=resize_max_side, mode=resize_mode_enum, pad_to_max_side=pad_to_max_side, base_pixel_number=ratio_base_pixel_number)
             img_controlnet = pose_image
             pose_image_cv2 = convert_from_image_to_cv2(pose_image)
 
@@ -1418,7 +1405,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
 
         print(f"Scheduler: {scheduler}")
         print(f"Noise RNG device: {rng_source}")
-        print(f"Exact aspect ratio: {'Enabled' if exact_ratio else 'Disabled'}")
+        print(f"Ratio base pixel number: {ratio_base_pixel_number}")
         print(f"Weight application method: {weight_application_method}")
         print(f"Max resize side: {resize_max_side}")
         print(f"Image size: {width}x{height}\n")
@@ -1532,7 +1519,7 @@ Model: {model_name}
 ControlNet selection: {controlnet_selection}
 Max resize side: {resize_max_side}
 Image size: {width}x{height}
-Exact aspect ratio: {exact_ratio}
+Ratio base pixel number: {ratio_base_pixel_number}
 Enhance non-face region: {enhance_face_region}
 Enhance region profile: {enhance_strength}
 Enhance padding ratio: {custom_enhance_padding}
@@ -2046,9 +2033,10 @@ Scheduler: {scheduler}"""
                             value="LANCZOS"
                         )
                     with gr.Row():
-                        exact_ratio = gr.Checkbox(
-                            label="Maintain the exact aspect ratio of input photos.",
-                            value=True
+                        ratio_base_pixel_number = gr.Radio(
+                            label="Resize step in pixels for aspect ratio (8 = most accurate)",
+                            choices=[8, 16, 32, 64],
+                            value=8,
                         )
                         pad_to_max_checkbox = gr.Checkbox(
                             label="Square padding (keeps subject proportions intact)",
@@ -2062,7 +2050,7 @@ Scheduler: {scheduler}"""
                         label="Custom Width ↔️",
                         minimum=256,
                         maximum=4096,
-                        step=32,
+                        step=8,
                         value=960,
                         visible=False,
                         interactive=True
@@ -2071,7 +2059,7 @@ Scheduler: {scheduler}"""
                         label="Custom Height ↕️",
                         minimum=256,
                         maximum=4096,
-                        step=32,
+                        step=8,
                         value=1280,
                         visible=False,
                         interactive=True
@@ -2080,7 +2068,7 @@ Scheduler: {scheduler}"""
                     label="Max image width/height resizing in pixels. This is for the output resolution.",
                     minimum=256,
                     maximum=4096,
-                    step=32,
+                    step=8,
                     value=1280,
                     info="Controls the max_side for input image resizing. Using Hires Fix is preferable to raising this too high.",
                 )
@@ -2100,17 +2088,16 @@ Scheduler: {scheduler}"""
                         custom_resize_height,
                         resize_max_side_slider,
                         pad_to_max_checkbox,
-                        exact_ratio
+                        ratio_base_pixel_number
                     ],
                     queue=False
                 )
-                def toggle_resize_step(exact_ratio):
-                    new_step = 32 if exact_ratio else 64
-                    return gr.update(step=new_step)
+                def toggle_resize_step(ratio_base_pixel_number):
+                    return gr.update(step=ratio_base_pixel_number)
 
-                exact_ratio.change(
+                ratio_base_pixel_number.change(
                     fn=toggle_resize_step,
-                    inputs=exact_ratio,
+                    inputs=ratio_base_pixel_number,
                     outputs=[resize_max_side_slider],
                     queue=False
                 )
@@ -2948,7 +2935,7 @@ Scheduler: {scheduler}"""
                 custom_resize_height,
                 enable_img2img,
                 strength,
-                exact_ratio,
+                ratio_base_pixel_number,
                 enable_hires_fix,
                 hires_upscaler,
                 hires_upscale_by,
@@ -3031,7 +3018,7 @@ Scheduler: {scheduler}"""
                     "canny_strength": 0.30,
                     "depth_strength": 0.30,
                     "scheduler": "DPMSolverMultistepScheduler",
-                    "exact_ratio": True,
+                    "ratio_base_pixel_number": 8,
                     "rng_source": "GPU",
                     "enable_lora": False,
                     "lora_scale": 1.0,
@@ -3115,8 +3102,11 @@ Scheduler: {scheduler}"""
                             settings["num_steps"] = int(line.replace("Steps:", "").strip())
                         elif line.startswith("Guidance scale:"):
                             settings["guidance_scale"] = float(line.replace("Guidance scale:", "").strip())
-                        elif line.startswith("Exact aspect ratio:"):
-                            settings["exact_ratio"] = "true" in line.lower()
+                        elif line.startswith("Ratio base pixel number:"):
+                            try:
+                                settings["ratio_base_pixel_number"] = int(line.replace("Ratio base pixel number:", "").strip())
+                            except ValueError:
+                                pass
                         elif line.startswith("LoRA Enabled:"):
                             settings["enable_lora"] = "true" in line.lower()
                         elif line.startswith("Embeddings Enabled:"):
@@ -3296,7 +3286,7 @@ Scheduler: {scheduler}"""
 
                 open_settings_accordion = False
 
-                if settings["enable_custom_resize"] or settings["pad_to_max_side"] or not settings["exact_ratio"] or settings["rng_source"] == "CPU":
+                if settings["enable_custom_resize"] or settings["pad_to_max_side"] or settings["ratio_base_pixel_number"] != 8 or settings["rng_source"] == "CPU":
                     open_settings_accordion = True
 
                 return [
@@ -3355,7 +3345,7 @@ Scheduler: {scheduler}"""
                     settings["enable_custom_resize"],
                     settings["custom_resize_width"],
                     settings["custom_resize_height"],
-                    settings["exact_ratio"],
+                    settings["ratio_base_pixel_number"],
                     settings["enable_embeddings"],
                     settings["enable_hires_fix"],
                     settings["hires_upscaler"],
@@ -3425,7 +3415,7 @@ Scheduler: {scheduler}"""
                     enable_custom_resize,
                     custom_resize_width,
                     custom_resize_height,
-                    exact_ratio,
+                    ratio_base_pixel_number,
                     enable_embeddings,
                     enable_hires_fix,
                     hires_upscaler,
@@ -3455,7 +3445,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v7.5.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v7.6.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
