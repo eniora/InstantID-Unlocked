@@ -62,19 +62,18 @@ pip install torch==2.13.0+cu132 torchvision==0.28.0+cu132 --index-url https://do
 python instant-id-unlocked.py
 
 _______________________________________________
-- For downloading the necessary models: face encoder models, controlnet models and IPAdatper etc. I uploaded all the necesseray files here:
-https://drive.google.com/file/d/1NhEAXql1kuekE8GGOUvQSsHgm_twvQYq/view?usp=sharing
-This is my whole models and checkpoints folder except for the SDXL model(s).
-Just download the file, extract it and copy the folders into your root InstantID folder. Then you will only need an SDXL model to start generating. It will be downloaded automatically from huggingface when you start InstantID.
-You can download the 4x_NMKD-Superscale-SP_178000_G.pth default "hires fix" upscaler model from: https://drive.google.com/file/d/1VaHcS7NLC1Ys5mL5UF5XWyKMZdF5bOwL/view?usp=sharing
-- If you want my "site-packages" folder for the venv, here it is: https://drive.google.com/file/d/1-ZTmZ_wYNay_tD4BMAeCAJqpIgyUg1Aq/view?usp=sharing
-Create a venv ("python -m venv venv") and then just copy the "site-packages" folder from the archive to "\venv\Lib\". If you do this and use my "site-packages" folder, you don't need to install the requirements.txt or torch/nvidia cuda or anything. You need python 3.10.6 installed (or point to a 3.10.6 python folder in the cfg) as this venv folder was created with this version.
+- Python and PIP packages are a pain in the ***, and a lot of stuff can go wrong with dependencies, installations, etc. So, if you want my whole InstantID-Unlocked folder with the venv and all the models, loras, embeddings, upscalers and everything you need to get it running without any headaches, here it is in 3 parts: (~26GB)
 
-You can safely delete "genderage.onnx", "2d106det.onnx", and "1k3d68.onnx" from the models/antelopev2 folder since they're not used in the app and only eat a bit of your RAM. Only necessary files are "glintr100.onnx" and "scrfd_10g_bnkps.onnx".
+Part 1: https://drive.google.com/file/d/1MRIgwvHuopDxCZLiuXRFf6hDYzKwCeM8/view?usp=sharing
+Part 2: https://drive.google.com/file/d/1HAob1D6ynIwWjG4HyXi7paTWRtxqz647/view?usp=sharing
+Part 3: https://drive.google.com/file/d/1Nysf6mJ9BrWP8MIt9nsRcT5k1Km2fb98/view?usp=sharing
 
-Tested only on Windows and Python 3.10.6 and Nvidia GPUs, you may need to do extra steps to run the gradio interface successfully on MacOS/Linux or if you have an AMD GPU.
+Just download the files and extract with the latest 7zip, instructions are inside. You basically need to enter the folder with CMD/terminal and create a new venv using python 3.10.6 with "python -m venv venv" and copy over the included site-packages folder, overwriting the newly created one inside.
+If you do this and use this folder, you don't need to install the requirements.txt or torch/nvidia cuda or anything. You need python 3.10.6 installed (or point to a 3.10.6 python folder in the cfg after creating the venv) as the venv folder inside was created with 3.10.6. Note that the "instant-id-unlocked.py" file inside won't be up to date obviously (currently at v7.5.0 in the folder), you'd need to replace it (and other .py files if necessary) in case I update the repo with new files. Model files won't need to be updated and you can use any SDXL/Pony checkpoint in .safetensors format and place directly inside the models folder. Illustrious can be loaded but not all of them work good with InstantID.
 
-Here's a quick preview of the fork: (This is one of hundreds ways to generate different images with this fork, for example you can add a LoRA or multiple loras with different weights, or try without img2img, or try different styles, or try different models, or etc.)
+- Tested only on Windows 10/11 and Python 3.10.6 and Nvidia GPUs, you may need to do extra steps to run successfully on MacOS/Linux or if you have an AMD GPU.
+
+Here's a quick preview of the fork: (This is one of hundreds ways to generate different images with this fork, for example you can add a LoRA or multiple loras with different weights, or try with and without img2img, or try different styles, or try different models, or try with embeddings, etc.)
 
 <img src='Preview/InstantID-Gradio-Unlocked_Preview_New_Features.png'>
 
@@ -100,52 +99,3 @@ Huaxia Li<sup>2</sup> · Xu Tang<sup>2</sup> · Yao Hu<sup>2</sup>
 [![Open in OpenXLab](https://cdn-static.openxlab.org.cn/app-center/openxlab_app.svg)](https://openxlab.org.cn/apps/detail/InstantX/InstantID)
 
 InstantID is a new state-of-the-art tuning-free method to achieve ID-Preserving generation with only single image, supporting various downstream tasks.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
