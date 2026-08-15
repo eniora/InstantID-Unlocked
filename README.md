@@ -35,7 +35,7 @@ The code barely follows any DRY principles as it started as a personal modificat
 - Stop button.
 
 👤 Face Enhancement
-- Enhance Non-Face Region with adjustable padding with profiles: Default, Balanced, High, or Custom padding amount.
+- Enhance Non-Face Region with adjustable padding with profiles: Default, Balanced, High, or Custom padding amount. Now also works with the img2img pipeline.
 
 ⚡ Performance
 - Tweaks to improve VRAM usage compared to the original repo. Runs good on 12GB VRAM but 16GB+ is recommended.
