@@ -64,7 +64,7 @@ ram_bytes = psutil.virtual_memory().total
 ram_gb = ram_bytes / (1024**3)
 vram_bytes = torch.cuda.get_device_properties(0).total_memory
 vram_gb = vram_bytes / (1024**3)
-default_vae_tiling = vram_gb >= 15 or ram_gb <= 30
+default_vae_tiling = vram_gb >= 15 or ram_gb <= 60
 gpu_name = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU"
 
 class GenerationStopped(Exception):
