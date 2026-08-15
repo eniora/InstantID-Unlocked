@@ -15,6 +15,30 @@ class RegionControler(object):
         self.prompt_image_conditioning = []
 region_control = RegionControler()
 
+def _region_mask_stage_shapes(h, w):
+    latent_h, latent_w = h // 8, w // 8
+
+    def real_downsample(x):
+        return (x - 1) // 2 + 1
+
+    stage1_h, stage1_w = real_downsample(latent_h), real_downsample(latent_w)
+    stage2_h, stage2_w = real_downsample(stage1_h), real_downsample(stage1_w)
+    return [(latent_h, latent_w), (stage1_h, stage1_w), (stage2_h, stage2_w)]
+
+def _resize_region_mask(region_mask, seq_len):
+    h, w = region_mask.shape[:2]
+    for stage_h, stage_w in _region_mask_stage_shapes(h, w):
+        if stage_h > 0 and stage_w > 0 and stage_h * stage_w == seq_len:
+            return F.interpolate(region_mask[None, None], size=(stage_h, stage_w), mode='nearest').reshape([1, -1, 1])
+    # Should never happen, but this is the last-resort fallback in case of no exact UNet stage matched:
+    ratio = (h * w / seq_len) ** 0.5
+    mask = F.interpolate(region_mask[None, None], scale_factor=1 / ratio, mode='nearest').reshape([1, -1, 1])
+    if mask.shape[1] > seq_len:
+        mask = mask[:, :seq_len]
+    elif mask.shape[1] < seq_len:
+        mask = F.pad(mask, (0, 0, 0, seq_len - mask.shape[1]), value=1.0)
+    return mask
+
 class AttnProcessor(nn.Module):
     r"""
     Default processor for performing attention-related computations.
@@ -182,9 +206,7 @@ class IPAttnProcessor(nn.Module):
         if len(region_control.prompt_image_conditioning) == 1:
             region_mask = region_control.prompt_image_conditioning[0].get('region_mask', None)
             if region_mask is not None:
-                h, w = region_mask.shape[:2]
-                ratio = (h * w / query.shape[1]) ** 0.5
-                mask = F.interpolate(region_mask[None, None], scale_factor=1/ratio, mode='nearest').reshape([1, -1, 1])
+                mask = _resize_region_mask(region_mask, query.shape[1])
             else:
                 mask = torch.ones_like(ip_hidden_states)
             ip_hidden_states = ip_hidden_states * mask     
@@ -422,9 +444,7 @@ class IPAttnProcessor2_0(torch.nn.Module):
             region_mask = region_control.prompt_image_conditioning[0].get('region_mask', None)
             if region_mask is not None:
                 query = query.reshape([-1, query.shape[-2], query.shape[-1]])
-                h, w = region_mask.shape[:2]
-                ratio = (h * w / query.shape[1]) ** 0.5
-                mask = F.interpolate(region_mask[None, None], scale_factor=1/ratio, mode='nearest').reshape([1, -1, 1])
+                mask = _resize_region_mask(region_mask, query.shape[1])
             else:
                 mask = torch.ones_like(ip_hidden_states)
             ip_hidden_states = ip_hidden_states * mask
