@@ -1484,17 +1484,13 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             torch.cuda.empty_cache()
             try:
                 if enable_img2img:
-                    saved_region_conditioning = region_control.prompt_image_conditioning
-                    region_control.prompt_image_conditioning = []
-                    try:
-                        result = pipe(
-                            **common_kwargs,
-                            image=face_image,
-                            control_image=control_images,
-                            strength=strength,
-                        )
-                    finally:
-                        region_control.prompt_image_conditioning = saved_region_conditioning
+                    result = pipe(
+                        **common_kwargs,
+                        image=face_image,
+                        control_image=control_images,
+                        strength=strength,
+                        control_mask=control_mask,
+                    )
                 else:
                     result = pipe(
                         **common_kwargs,
@@ -1609,9 +1605,8 @@ Scheduler: {scheduler}"""
                 hires_pipe.controlnet = pipe.controlnet
                 hires_pipe.scheduler = pipe.scheduler
                 hires_pipe.set_ip_adapter_scale(adapter_strength_ratio)
-                saved_region_conditioning = region_control.prompt_image_conditioning
-                region_control.prompt_image_conditioning = []
                 hires_control_images = resize_control_images(control_images, (hires_width, hires_height))
+                hires_control_mask = resize_control_images(control_mask, (hires_width, hires_height))
                 if hires_steps and hires_steps > 0:
                     effective_hires_steps = max(1, math.ceil(hires_steps / max(hires_denoising_strength, 1e-4)))
                     display_hires_steps = int(hires_steps)
@@ -1665,6 +1660,7 @@ Scheduler: {scheduler}"""
                         width=hires_width,
                         generator=hires_generator,
                         callback_on_step_end=hires_gradio_callback_lambda,
+                        control_mask=hires_control_mask,
                     )
                     image = hires_result.images[0]
                 except GenerationStopped:
@@ -1679,8 +1675,6 @@ Scheduler: {scheduler}"""
                     gc.collect()
                     torch.cuda.empty_cache()
                     raise
-                finally:
-                    region_control.prompt_image_conditioning = saved_region_conditioning
                 torch.cuda.empty_cache()
 
             images.append(image)
@@ -1718,7 +1712,7 @@ Scheduler: {scheduler}"""
     - (Optional) You can select multiple ControlNet models to control the generation process. The default is to use the IdentityNet only. The ControlNet models include pose skeleton, canny, and depth. You can adjust the strength of each ControlNet model to control the generation process, 0.3 for each is the recommended value.
     - Enter a text prompt, as done in normal text-to-image AI tools such as ComfuUI or A1111/ForgeUI.
     - Click the Generate button to begin image generation.
-    - img2img mode imports the "pipeline_stable_diffusion_xl_instantid_img2img" pipeline. Enhance non-face region (control_mask) has no effect on this mode and that's by design. This img2img pipeline (which is used by Hires Fix too) can sometimes use ~5GB more VRAM than the normal pipeline.
+    - img2img mode imports the "pipeline_stable_diffusion_xl_instantid_img2img" pipeline. This img2img pipeline (which is used by Hires Fix too) can sometimes use ~5GB more VRAM than the normal pipeline.
     - Upscale and use Enable Hires Fix to generate images with a resolution of what SDXL is best at (usually 1280 max side) to prevent anatomy errors like long necks while still producing good quality images.
     - Select a model to use for generation from the upper left corner dropdown. Only use SDXL and Pony. Illustrious can be loaded but isn't well supported.
     - You can select a scheduler from the upper right corner dropdown. DPMSolver, KDPM2 and Euler are usually the best.
@@ -3454,7 +3448,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v7.6.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v7.7.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
