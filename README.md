@@ -39,7 +39,8 @@ The code barely follows any DRY principles as it started as a personal modificat
 
 ⚡ Performance
 - Tweaks to improve VRAM usage compared to the original repo. Runs good on 12GB VRAM but 16GB+ is recommended.
-- Works on 8GB GPUs, but expect slow generations (~5-10 minutes for 1280×960).
+- Works on 8GB GPUs, but expect slow generations (~5 minutes for 1280×960). Using LCM with dmd2 lora is highly recommended and I actually find myself using it often even with a beast GPU.
+- The minimum requirements for acceptable experience from what I tested is: Any Nvidia RTX with 12GB VRAM and 32GB system memory (RAM). For a very good experience you need 16GB+ VRAM with 64GB RAM.
 
 And many many more improvements such as a Standalone Image Upscaler with GFPGAN option.
 
