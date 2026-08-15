@@ -22,6 +22,7 @@ import numpy as np
 import PIL.Image
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from diffusers import StableDiffusionXLControlNetImg2ImgPipeline
 from diffusers.image_processor import PipelineImageInput
@@ -43,6 +44,7 @@ if is_torch2_available():
     from ip_adapter.attention_processor import IPAttnProcessor2_0 as IPAttnProcessor, AttnProcessor2_0 as AttnProcessor
 else:
     from ip_adapter.attention_processor import IPAttnProcessor, AttnProcessor
+from ip_adapter.attention_processor import region_control
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
 
@@ -854,6 +856,9 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
         callback_on_step_end: Optional[Callable[[int, int, Dict], None]] = None,
         callback_on_step_end_tensor_inputs: List[str] = ["latents"],
 
+        # Enhance Face Region
+        control_mask = None,
+
         # Prompt weighting behavior
         weight_application_method: str = "Original InstantID per-token",
 
@@ -1132,6 +1137,19 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
         else:
             assert False
 
+        # 4.1 Region control
+        if control_mask is not None:
+            mask_weight_image = control_mask
+            mask_weight_image = np.array(mask_weight_image)
+            mask_weight_image_tensor = torch.from_numpy(mask_weight_image).to(device=device, dtype=prompt_embeds.dtype)
+            mask_weight_image_tensor = mask_weight_image_tensor[:, :, 0] / 255.
+            mask_weight_image_tensor = mask_weight_image_tensor[None, None]
+            region_mask = torch.from_numpy(np.array(control_mask)[:, :, 0]).to(self.unet.device, dtype=self.unet.dtype) / 255.
+            region_control.prompt_image_conditioning = [dict(region_mask=region_mask)]
+        else:
+            mask_weight_image_tensor = None
+            region_control.prompt_image_conditioning = [dict(region_mask=None)]
+
         # 5. Prepare timesteps
         set_timesteps_params = inspect.signature(self.scheduler.set_timesteps).parameters
         initial_kwargs = {}
@@ -1283,6 +1301,16 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
                     added_cond_kwargs=controlnet_added_cond_kwargs,
                     return_dict=False,
                 )
+
+                # controlnet mask
+                if mask_weight_image_tensor is not None:
+                    down_block_res_samples = [
+                        down_block_res_sample * F.interpolate(
+                            mask_weight_image_tensor, size=down_block_res_sample.shape[-2:], mode='bilinear')
+                        for down_block_res_sample in down_block_res_samples
+                    ]
+                    mid_block_res_sample = mid_block_res_sample * F.interpolate(
+                        mask_weight_image_tensor, size=mid_block_res_sample.shape[-2:], mode='bilinear')
 
                 if guess_mode and self.do_classifier_free_guidance:
                     # Infered ControlNet only for the conditional batch.
