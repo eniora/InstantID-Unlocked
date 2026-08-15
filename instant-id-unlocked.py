@@ -64,7 +64,7 @@ ram_bytes = psutil.virtual_memory().total
 ram_gb = ram_bytes / (1024**3)
 vram_bytes = torch.cuda.get_device_properties(0).total_memory
 vram_gb = vram_bytes / (1024**3)
-default_vae_tiling = vram_gb >= 15 or ram_gb <= 25
+default_vae_tiling = vram_gb >= 15 or ram_gb <= 30
 gpu_name = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU"
 
 class GenerationStopped(Exception):
@@ -619,7 +619,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         stop_event.set()
         gr.Info("A request to stop all currently running tasks has been initiated. Generation will stop when the current task or step has finished processing.")
 
-    if vram_gb >= 15 or ram_gb <= 25:
+    if vram_gb >= 15 or ram_gb <= 30:
         pipe = None
 
     else:
@@ -857,6 +857,13 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         w, h = input_image.size
         if size is not None:
             w_resize_new, h_resize_new = size
+        elif base_pixel_number == 64:
+            ratio = min_side / min(h, w)
+            w, h = round(ratio * w), round(ratio * h)
+            ratio = max_side / max(h, w)
+            input_image = input_image.resize([round(ratio * w), round(ratio * h)], mode)
+            w_resize_new = (round(ratio * w) // base_pixel_number) * base_pixel_number
+            h_resize_new = (round(ratio * h) // base_pixel_number) * base_pixel_number
         else:
             ratio = max_side / max(w, h)
             w_scaled = w * ratio
@@ -935,7 +942,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
     def load_model_and_update_pipe(model_name, enable_img2img):
         nonlocal pipe
         global controlnet_identitynet
-        if (vram_gb >= 15 or ram_gb <= 25) and pipe is not None:
+        if (vram_gb >= 15 or ram_gb <= 30) and pipe is not None:
             del pipe
             gc.collect()
             torch.cuda.empty_cache()
@@ -974,7 +981,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             pipe.scheduler = diffusers.DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
 
         pipe.load_ip_adapter_instantid(face_adapter)
-        if vram_gb >= 15 or ram_gb <= 25:
+        if vram_gb >= 15 or ram_gb <= 30:
             pipe._current_model = model_name
 
         return pipe
@@ -1068,7 +1075,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             if hires_sibling_pipe is not None:
                 hires_sibling_pipe._sibling_pipe = None
 
-            if vram_gb >= 15 or ram_gb <= 25:
+            if vram_gb >= 15 or ram_gb <= 30:
                 if pipe is not None:
                     del pipe
                     pipe = None
