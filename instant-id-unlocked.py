@@ -2506,7 +2506,7 @@ Scheduler: {scheduler}"""
                     with gr.Row():
                         apply_metadata_btn = gr.Button("Apply to all fields (resets all fields if no generation metadata)", variant="secondary")
                     apply_lcm_profile_btn = gr.Button(
-                        "⚡ Apply LCM profile (LCMScheduler, CFG 1, 10 steps, and dmd2 sdxl lora)",
+                        "⚡ Apply LCM profile (LCMScheduler, CFG 1, 10 steps, and dmd2 sdxl lora in the first empty slot)",
                         size="sm",
                         variant="secondary"
                     )
@@ -2982,20 +2982,48 @@ Scheduler: {scheduler}"""
                 outputs=LORA_OUTPUTS,
                 queue=False,
             )
-            def apply_lcm_profile():
+            def apply_lcm_profile(ls1, ls2, ls3, ls4, ls5, ls6, ls7, ls8):
+                slot_values = [ls1, ls2, ls3, ls4, ls5, ls6, ls7, ls8]
+                dmd2_lora = "dmd2_sdxl_4step_lora_fp16.safetensors"
+                if dmd2_lora in slot_values:
+                    target = slot_values.index(dmd2_lora)
+                else:
+                    target = next((i for i, v in enumerate(slot_values) if not v), 0)
+                lora_updates = []
+                for i in range(8):
+                    if i == target:
+                        lora_updates.extend([
+                            gr.update(value=dmd2_lora),
+                            gr.update(value=1),
+                            gr.update(value=False),
+                        ])
+                    else:
+                        lora_updates.extend([gr.update(), gr.update(), gr.update()])
+
                 return (
                     gr.update(value="LCMScheduler"),
                     gr.update(value=1),
                     gr.update(value=10),
                     gr.update(value=True),
-                    gr.update(value="dmd2_sdxl_4step_lora_fp16.safetensors"),
-                    gr.update(value=1),
-                    gr.update(value=False),
+                    *lora_updates,
                 )
             apply_lcm_profile_btn.click(
                 fn=apply_lcm_profile,
-                inputs=[],
-                outputs=[scheduler, guidance_scale, num_steps, enable_lora, lora_selection, lora_scale, disable_lora_1],
+                inputs=[
+                    lora_selection, lora_selection_2, lora_selection_3, lora_selection_4,
+                    lora_selection_5, lora_selection_6, lora_selection_7, lora_selection_8,
+                ],
+                outputs=[
+                    scheduler, guidance_scale, num_steps, enable_lora,
+                    lora_selection, lora_scale, disable_lora_1,
+                    lora_selection_2, lora_scale_2, disable_lora_2,
+                    lora_selection_3, lora_scale_3, disable_lora_3,
+                    lora_selection_4, lora_scale_4, disable_lora_4,
+                    lora_selection_5, lora_scale_5, disable_lora_5,
+                    lora_selection_6, lora_scale_6, disable_lora_6,
+                    lora_selection_7, lora_scale_7, disable_lora_7,
+                    lora_selection_8, lora_scale_8, disable_lora_8,
+                ],
                 queue=False
             ).then(
                 fn=toggle_lora_ui,
