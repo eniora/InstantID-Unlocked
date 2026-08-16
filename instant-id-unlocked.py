@@ -2985,8 +2985,10 @@ Scheduler: {scheduler}"""
             def apply_lcm_profile(ls1, ls2, ls3, ls4, ls5, ls6, ls7, ls8):
                 slot_values = [ls1, ls2, ls3, ls4, ls5, ls6, ls7, ls8]
                 dmd2_lora = "dmd2_sdxl_4step_lora_fp16.safetensors"
-                if dmd2_lora in slot_values:
-                    target = slot_values.index(dmd2_lora)
+                dmd2_variants = {"dmd2_sdxl_4step_lora_fp16.safetensors", "dmd2_sdxl_4step_lora.safetensors"}
+                existing = next((v for v in slot_values if v in dmd2_variants), None)
+                if existing is not None:
+                    target = slot_values.index(existing)
                 else:
                     target = next((i for i, v in enumerate(slot_values) if not v), 0)
                 lora_updates = []
@@ -2999,7 +3001,6 @@ Scheduler: {scheduler}"""
                         ])
                     else:
                         lora_updates.extend([gr.update(), gr.update(), gr.update()])
-
                 return (
                     gr.update(value="LCMScheduler"),
                     gr.update(value=1),
