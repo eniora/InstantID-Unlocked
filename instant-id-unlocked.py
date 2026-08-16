@@ -2506,7 +2506,7 @@ Scheduler: {scheduler}"""
                     with gr.Row():
                         apply_metadata_btn = gr.Button("Apply to all fields (resets all fields if no generation metadata)", variant="secondary")
                     apply_lcm_profile_btn = gr.Button(
-                        "⚡ Apply LCM profile (LCMScheduler, CFG 1, 10 steps, and dmd2 sdxl lora in the first empty slot)",
+                        "⚡ Apply DMD2 LCM profile (LCMScheduler, CFG 1, 10 steps, and dmd2 sdxl lora in the first empty slot)",
                         size="sm",
                         variant="secondary"
                     )
@@ -2982,22 +2982,42 @@ Scheduler: {scheduler}"""
                 outputs=LORA_OUTPUTS,
                 queue=False,
             )
-            def apply_lcm_profile(ls1, ls2, ls3, ls4, ls5, ls6, ls7, ls8):
+            def apply_lcm_profile(ls1, ls2, ls3, ls4, ls5, ls6, ls7, ls8,
+                                   dl1, dl2, dl3, dl4, dl5, dl6, dl7, dl8):
                 slot_values = [ls1, ls2, ls3, ls4, ls5, ls6, ls7, ls8]
+                disable_values = [dl1, dl2, dl3, dl4, dl5, dl6, dl7, dl8]
                 dmd2_lora = "dmd2_sdxl_4step_lora_fp16.safetensors"
                 dmd2_variants = {"dmd2_sdxl_4step_lora_fp16.safetensors", "dmd2_sdxl_4step_lora.safetensors"}
+                dmd2_indices = [i for i, v in enumerate(slot_values) if v in dmd2_variants]
+                duplicate_idx = dmd2_indices[-1] if len(dmd2_indices) > 1 else None
+                if duplicate_idx is not None:
+                    slot_values[duplicate_idx] = None
                 existing = next((v for v in slot_values if v in dmd2_variants), None)
                 if existing is not None:
                     target = slot_values.index(existing)
+                    lora_value = existing
                 else:
                     target = next((i for i, v in enumerate(slot_values) if not v), 0)
+                    lora_value = dmd2_lora
+                other_loras_present = any(
+                    v and not disable_values[i]
+                    for i, v in enumerate(slot_values)
+                    if i != target
+                )
+                scale = 0.8 if other_loras_present else 1
                 lora_updates = []
                 for i in range(8):
                     if i == target:
                         lora_updates.extend([
-                            gr.update(value=dmd2_lora),
-                            gr.update(value=1),
+                            gr.update(value=lora_value),
+                            gr.update(value=scale),
                             gr.update(value=False),
+                        ])
+                    elif i == duplicate_idx:
+                        lora_updates.extend([
+                            gr.update(value=None),
+                            gr.update(),
+                            gr.update(),
                         ])
                     else:
                         lora_updates.extend([gr.update(), gr.update(), gr.update()])
@@ -3013,6 +3033,8 @@ Scheduler: {scheduler}"""
                 inputs=[
                     lora_selection, lora_selection_2, lora_selection_3, lora_selection_4,
                     lora_selection_5, lora_selection_6, lora_selection_7, lora_selection_8,
+                    disable_lora_1, disable_lora_2, disable_lora_3, disable_lora_4,
+                    disable_lora_5, disable_lora_6, disable_lora_7, disable_lora_8,
                 ],
                 outputs=[
                     scheduler, guidance_scale, num_steps, enable_lora,
