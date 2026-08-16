@@ -2448,8 +2448,25 @@ Scheduler: {scheduler}"""
                             maximum=4.0,
                             step=0.05,
                             value=1.5,
-                            info="Target resolution = base resolution * this value.",
+                            info="Target = max_side * this value.",
                             scale=3
+                        )
+                        def update_hires_upscale(max_side, upscale_by):
+                            target_px = max(8, int(round((max_side * upscale_by) / 8) * 8))
+                            return gr.update(
+                                info=f"Target = max_side * this value = {target_px}px."
+                            )
+                        resize_max_side_slider.change(
+                            fn=update_hires_upscale,
+                            inputs=[resize_max_side_slider, hires_upscale_by],
+                            outputs=[hires_upscale_by],
+                            queue=False
+                        )
+                        hires_upscale_by.change(
+                            fn=update_hires_upscale,
+                            inputs=[resize_max_side_slider, hires_upscale_by],
+                            outputs=[hires_upscale_by],
+                            queue=False
                         )
                         hires_steps = gr.Slider(
                             label="Hires Steps",
@@ -3499,7 +3516,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v7.7.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v7.7.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
