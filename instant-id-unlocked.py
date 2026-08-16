@@ -3516,11 +3516,21 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v7.7.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v7.8.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
-                delete_all_pipelines = gr.Button("Delete all models & pipelines from memory and VRAM - This can be helpful after a long session. (Don't click during image generation!)", variant="stop", scale=1)
+                force_cuda_empty_cache = gr.Button("Empty CUDA Cache (helpful during Hires Fix/img2img passes on low VRAM GPUs)", variant="stop", scale=1)
+                def force_cuda_empty_cache_fn():
+                    torch.cuda.empty_cache()
+                force_cuda_empty_cache.click(
+                    fn=force_cuda_empty_cache_fn,
+                    inputs=None,
+                    outputs=None,
+                    queue=False,
+                )
+            with gr.Column():
+                delete_all_pipelines = gr.Button("Delete all models from memory and VRAM - (don't click during image generation!)", variant="stop", scale=1)
                 def delete_all_pipelines_fn():
                     nonlocal pipe, hires_sibling_pipe
                     if pipe is not None:
