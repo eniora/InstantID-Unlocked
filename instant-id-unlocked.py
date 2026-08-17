@@ -2194,7 +2194,7 @@ Scheduler: {scheduler}"""
                         show_label=False
                     )
                     clip_skip = gr.Slider(
-                        label="Clip Skip (usually 0-2 is best)",
+                        label="Clip Skip (-14 to +11 = both encoders)",
                         minimum=-34,
                         maximum=31,
                         step=1,
