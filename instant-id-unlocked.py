@@ -2195,8 +2195,8 @@ Scheduler: {scheduler}"""
                     )
                     clip_skip = gr.Slider(
                         label="Clip Skip (usually 0-2 is best)",
-                        minimum=-24,
-                        maximum=24,
+                        minimum=-34,
+                        maximum=31,
                         step=1,
                         scale=2,
                         value=0,
@@ -3538,7 +3538,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v7.8.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v7.9.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
