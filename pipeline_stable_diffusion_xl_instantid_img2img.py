@@ -22,6 +22,7 @@ import numpy as np
 import PIL.Image
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from diffusers import StableDiffusionXLControlNetImg2ImgPipeline
 from diffusers.image_processor import PipelineImageInput
@@ -36,127 +37,16 @@ from diffusers.utils import (
 from diffusers.utils.import_utils import is_xformers_available
 from diffusers.utils.torch_utils import is_compiled_module, is_torch_version
 
+from ip_adapter.resampler import Resampler
 from ip_adapter.utils import is_torch2_available
 
 if is_torch2_available():
     from ip_adapter.attention_processor import IPAttnProcessor2_0 as IPAttnProcessor, AttnProcessor2_0 as AttnProcessor
 else:
     from ip_adapter.attention_processor import IPAttnProcessor, AttnProcessor
+from ip_adapter.attention_processor import region_control
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
-
-
-def FeedForward(dim, mult=4):
-    inner_dim = int(dim * mult)
-    return nn.Sequential(
-        nn.LayerNorm(dim),
-        nn.Linear(dim, inner_dim, bias=False),
-        nn.GELU(),
-        nn.Linear(inner_dim, dim, bias=False),
-    )
-
-
-def reshape_tensor(x, heads):
-    bs, length, width = x.shape
-    # (bs, length, width) --> (bs, length, n_heads, dim_per_head)
-    x = x.view(bs, length, heads, -1)
-    # (bs, length, n_heads, dim_per_head) --> (bs, n_heads, length, dim_per_head)
-    x = x.transpose(1, 2)
-    # (bs, n_heads, length, dim_per_head) --> (bs*n_heads, length, dim_per_head)
-    x = x.reshape(bs, heads, length, -1)
-    return x
-
-
-class PerceiverAttention(nn.Module):
-    def __init__(self, *, dim, dim_head=64, heads=8):
-        super().__init__()
-        self.scale = dim_head**-0.5
-        self.dim_head = dim_head
-        self.heads = heads
-        inner_dim = dim_head * heads
-
-        self.norm1 = nn.LayerNorm(dim)
-        self.norm2 = nn.LayerNorm(dim)
-
-        self.to_q = nn.Linear(dim, inner_dim, bias=False)
-        self.to_kv = nn.Linear(dim, inner_dim * 2, bias=False)
-        self.to_out = nn.Linear(inner_dim, dim, bias=False)
-
-    def forward(self, x, latents):
-        """
-        Args:
-            x (torch.Tensor): image features
-                shape (b, n1, D)
-            latent (torch.Tensor): latent features
-                shape (b, n2, D)
-        """
-        x = self.norm1(x)
-        latents = self.norm2(latents)
-
-        b, l, _ = latents.shape
-
-        q = self.to_q(latents)
-        kv_input = torch.cat((x, latents), dim=-2)
-        k, v = self.to_kv(kv_input).chunk(2, dim=-1)
-
-        q = reshape_tensor(q, self.heads)
-        k = reshape_tensor(k, self.heads)
-        v = reshape_tensor(v, self.heads)
-
-        # attention
-        scale = 1 / math.sqrt(math.sqrt(self.dim_head))
-        weight = (q * scale) @ (k * scale).transpose(-2, -1)  # More stable with f16 than dividing afterwards
-        weight = torch.softmax(weight.float(), dim=-1).type(weight.dtype)
-        out = weight @ v
-
-        out = out.permute(0, 2, 1, 3).reshape(b, l, -1)
-
-        return self.to_out(out)
-
-
-class Resampler(nn.Module):
-    def __init__(
-        self,
-        dim=1024,
-        depth=8,
-        dim_head=64,
-        heads=16,
-        num_queries=8,
-        embedding_dim=768,
-        output_dim=1024,
-        ff_mult=4,
-    ):
-        super().__init__()
-
-        self.latents = nn.Parameter(torch.randn(1, num_queries, dim) / dim**0.5)
-
-        self.proj_in = nn.Linear(embedding_dim, dim)
-
-        self.proj_out = nn.Linear(dim, output_dim)
-        self.norm_out = nn.LayerNorm(output_dim)
-
-        self.layers = nn.ModuleList([])
-        for _ in range(depth):
-            self.layers.append(
-                nn.ModuleList(
-                    [
-                        PerceiverAttention(dim=dim, dim_head=dim_head, heads=heads),
-                        FeedForward(dim=dim, mult=ff_mult),
-                    ]
-                )
-            )
-
-    def forward(self, x):
-        latents = self.latents.repeat(x.size(0), 1, 1)
-        x = self.proj_in(x)
-
-        for attn, ff in self.layers:
-            latents = attn(x, latents) + latents
-            latents = ff(latents) + latents
-
-        latents = self.proj_out(latents)
-        return self.norm_out(latents)
-
 
 EXAMPLE_DOC_STRING = """
     Examples:
@@ -494,7 +384,8 @@ class LongPromptWeight(object):
         return torch.cat([clip_l_embedding, clip_g_embedding], dim=-1)
 
     def encode_empty_chunk_comfyui_style(
-        self, pipe: StableDiffusionXLPipeline, chunk_length: int, device, cache: dict
+        self, pipe: StableDiffusionXLPipeline, chunk_length: int, device, cache: dict,
+        hidden_states_index_1: int = -2, hidden_states_index_2: int = -2,
     ) -> torch.Tensor:
         """
         Encode a "blank" chunk - [BOS] followed by [EOS] repeated for the rest of the chunk - through
@@ -519,6 +410,12 @@ class LongPromptWeight(object):
             cache (dict): keyed by chunk_length, passed in by the caller so repeated chunks of the
                 same length (the common case) reuse one encoding instead of re-running both text
                 encoders again for every chunk.
+            hidden_states_index_1 (int): which hidden_states layer to read from text_encoder
+                (CLIP-L), e.g. -2 for the default (clip_skip=0/None) - must match whatever index
+                the caller used for the real prompt chunks, or the two won't be comparable.
+            hidden_states_index_2 (int): same as hidden_states_index_1, but for text_encoder_2
+                (OpenCLIP-G), which has a different depth and so may resolve to a different index
+                for the same clip_skip value.
         Returns:
             torch.Tensor: shape (chunk_length, 2048) - the blank chunk's concatenated hidden states
         """
@@ -531,16 +428,38 @@ class LongPromptWeight(object):
         token_tensor = torch.tensor([empty_tokens], dtype=torch.long, device=device)
 
         empty_embeds_1 = pipe.text_encoder(token_tensor, output_hidden_states=True)
-        empty_embeds_1_hidden_states = empty_embeds_1.hidden_states[-2]
+        empty_embeds_1_hidden_states = empty_embeds_1.hidden_states[hidden_states_index_1]
 
         empty_embeds_2 = pipe.text_encoder_2(token_tensor, output_hidden_states=True)
-        empty_embeds_2_hidden_states = empty_embeds_2.hidden_states[-2]
+        empty_embeds_2_hidden_states = empty_embeds_2.hidden_states[hidden_states_index_2]
 
         empty_embedding = torch.concat(
             [empty_embeds_1_hidden_states, empty_embeds_2_hidden_states], dim=-1
         ).squeeze(0)
         cache[chunk_length] = empty_embedding
         return empty_embedding
+
+    def _resolve_hidden_states_index(self, clip_skip, num_hidden_layers: int) -> int:
+        """
+        Convert a clip_skip value into a hidden_states index for one specific text encoder,
+        clamped to that encoder's actual depth instead of raising an IndexError.
+
+        hidden_states has (num_hidden_layers + 1) entries: index 0 is the input embeddings,
+        and each following entry is the output of one more transformer layer. This pipeline's
+        default (clip_skip=None/0) reads hidden_states[-2] - the standard SD/SDXL "penultimate
+        layer" behavior. Each additional clip_skip steps one layer further back
+        (hidden_states[-3], hidden_states[-4], ...).
+
+        SDXL's two text encoders have different depths (CLIP-L is typically 12 layers,
+        OpenCLIP-G is typically 32), so the same clip_skip value is resolved separately
+        against each encoder's own num_hidden_layers - a value that would be in range for
+        one encoder can still be out of range for the other.
+        """
+        index = -2 if not clip_skip else -(clip_skip + 2)
+        deepest_valid_index = -(num_hidden_layers + 1)
+        if index < deepest_valid_index:
+            index = deepest_valid_index
+        return index
 
     def apply_prompt_weights_comfyui_style(
         self, token_embedding: torch.Tensor, empty_token_embedding: torch.Tensor, weight_tensor: torch.Tensor
@@ -591,6 +510,7 @@ class LongPromptWeight(object):
         extra_emb=None,
         extra_emb_alpha=0.6,
         weight_application_method="Original InstantID per-token",
+        clip_skip=None,
     ):
         """
         This function can process long prompt with weights, no length limitation
@@ -618,10 +538,21 @@ class LongPromptWeight(object):
                   interpolates each token's real embedding toward that blank chunk's embedding at
                   the same position, scaled by the token's weight. See
                   `apply_prompt_weights_comfyui_style` and `encode_empty_chunk_comfyui_style`.
+            clip_skip (`int`, *optional*):
+                Number of layers to skip from the end of the text encoders' hidden states, on top of the
+                one layer this pipeline already skips by default (it uses the penultimate hidden state,
+                `hidden_states[-2]`, matching standard SD/SDXL behavior). `None` or `0` reproduces that
+                default. `clip_skip=1` steps back one further layer (`hidden_states[-3]`), and so on -
+                same convention as `StableDiffusionXLPipeline`'s built-in `clip_skip` argument.
         Returns:
             prompt_embeds (torch.Tensor)
             neg_prompt_embeds (torch.Tensor)
         """
+        # matches diffusers' own clip_skip convention (see StableDiffusionXLPipeline.encode_prompt),
+        # resolved separately per encoder since CLIP-L and OpenCLIP-G have different depths
+        hidden_states_index_1 = self._resolve_hidden_states_index(clip_skip, pipe.text_encoder.config.num_hidden_layers)
+        hidden_states_index_2 = self._resolve_hidden_states_index(clip_skip, pipe.text_encoder_2.config.num_hidden_layers)
+
         # 
         if prompt_embeds is not None and \
             negative_prompt_embeds is not None and \
@@ -705,11 +636,11 @@ class LongPromptWeight(object):
 
             # use first text encoder
             prompt_embeds_1 = pipe.text_encoder(token_tensor.to(pipe.device), output_hidden_states=True)
-            prompt_embeds_1_hidden_states = prompt_embeds_1.hidden_states[-2]
+            prompt_embeds_1_hidden_states = prompt_embeds_1.hidden_states[hidden_states_index_1]
 
             # use second text encoder
             prompt_embeds_2 = pipe.text_encoder_2(token_tensor_2.to(pipe.device), output_hidden_states=True)
-            prompt_embeds_2_hidden_states = prompt_embeds_2.hidden_states[-2]
+            prompt_embeds_2_hidden_states = prompt_embeds_2.hidden_states[hidden_states_index_2]
             pooled_prompt_embeds = prompt_embeds_2[0]
 
             prompt_embeds_list = [prompt_embeds_1_hidden_states, prompt_embeds_2_hidden_states]
@@ -723,7 +654,8 @@ class LongPromptWeight(object):
                         )
             elif weight_application_method == "ComfyUI (blank prompt interpolation)":
                 empty_embedding = self.encode_empty_chunk_comfyui_style(
-                    pipe, token_embedding.shape[0], pipe.device, comfyui_empty_embedding_cache
+                    pipe, token_embedding.shape[0], pipe.device, comfyui_empty_embedding_cache,
+                    hidden_states_index_1, hidden_states_index_2,
                 )
                 token_embedding = self.apply_prompt_weights_comfyui_style(
                     token_embedding, empty_embedding, weight_tensor
@@ -744,11 +676,11 @@ class LongPromptWeight(object):
 
             # use first text encoder
             neg_prompt_embeds_1 = pipe.text_encoder(neg_token_tensor.to(pipe.device), output_hidden_states=True)
-            neg_prompt_embeds_1_hidden_states = neg_prompt_embeds_1.hidden_states[-2]
+            neg_prompt_embeds_1_hidden_states = neg_prompt_embeds_1.hidden_states[hidden_states_index_1]
 
             # use second text encoder
             neg_prompt_embeds_2 = pipe.text_encoder_2(neg_token_tensor_2.to(pipe.device), output_hidden_states=True)
-            neg_prompt_embeds_2_hidden_states = neg_prompt_embeds_2.hidden_states[-2]
+            neg_prompt_embeds_2_hidden_states = neg_prompt_embeds_2.hidden_states[hidden_states_index_2]
             negative_pooled_prompt_embeds = neg_prompt_embeds_2[0]
 
             neg_prompt_embeds_list = [neg_prompt_embeds_1_hidden_states, neg_prompt_embeds_2_hidden_states]
@@ -762,7 +694,8 @@ class LongPromptWeight(object):
                         )
             elif weight_application_method == "ComfyUI (blank prompt interpolation)":
                 neg_empty_embedding = self.encode_empty_chunk_comfyui_style(
-                    pipe, neg_token_embedding.shape[0], pipe.device, comfyui_empty_embedding_cache
+                    pipe, neg_token_embedding.shape[0], pipe.device, comfyui_empty_embedding_cache,
+                    hidden_states_index_1, hidden_states_index_2,
                 )
                 neg_token_embedding = self.apply_prompt_weights_comfyui_style(
                     neg_token_embedding, neg_empty_embedding, neg_weight_tensor
@@ -965,6 +898,9 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
         clip_skip: Optional[int] = None,
         callback_on_step_end: Optional[Callable[[int, int, Dict], None]] = None,
         callback_on_step_end_tensor_inputs: List[str] = ["latents"],
+
+        # Enhance Face Region
+        control_mask = None,
 
         # Prompt weighting behavior
         weight_application_method: str = "Original InstantID per-token",
@@ -1195,6 +1131,7 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
             pooled_prompt_embeds=pooled_prompt_embeds,
             negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
             weight_application_method=weight_application_method,
+            clip_skip=self._clip_skip,
         )
 
         # 3.2 Encode image prompt
@@ -1243,6 +1180,19 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
             height, width = control_image[0].shape[-2:]
         else:
             assert False
+
+        # 4.1 Region control
+        if control_mask is not None:
+            mask_weight_image = control_mask
+            mask_weight_image = np.array(mask_weight_image)
+            mask_weight_image_tensor = torch.from_numpy(mask_weight_image).to(device=device, dtype=prompt_embeds.dtype)
+            mask_weight_image_tensor = mask_weight_image_tensor[:, :, 0] / 255.
+            mask_weight_image_tensor = mask_weight_image_tensor[None, None]
+            region_mask = torch.from_numpy(np.array(control_mask)[:, :, 0]).to(self.unet.device, dtype=self.unet.dtype) / 255.
+            region_control.prompt_image_conditioning = [dict(region_mask=region_mask)]
+        else:
+            mask_weight_image_tensor = None
+            region_control.prompt_image_conditioning = [dict(region_mask=None)]
 
         # 5. Prepare timesteps
         set_timesteps_params = inspect.signature(self.scheduler.set_timesteps).parameters
@@ -1385,16 +1335,62 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
                         controlnet_cond_scale = controlnet_cond_scale[0]
                     cond_scale = controlnet_cond_scale * controlnet_keep[i]
 
-                down_block_res_samples, mid_block_res_sample = self.controlnet(
-                    control_model_input,
-                    t,
-                    encoder_hidden_states=prompt_image_emb,
-                    controlnet_cond=control_image,
-                    conditioning_scale=cond_scale,
-                    guess_mode=guess_mode,
-                    added_cond_kwargs=controlnet_added_cond_kwargs,
-                    return_dict=False,
-                )
+                if isinstance(self.controlnet, MultiControlNetModel):
+                    down_block_res_samples_list, mid_block_res_sample_list = [], []
+                    for control_index in range(len(self.controlnet.nets)):
+                        controlnet_net = self.controlnet.nets[control_index]
+                        if control_index == 0:
+                            controlnet_prompt_embeds = prompt_image_emb
+                        else:
+                            controlnet_prompt_embeds = prompt_embeds
+                        net_cond_scale = cond_scale[control_index] if isinstance(cond_scale, list) else cond_scale
+                        down_block_res_samples, mid_block_res_sample = controlnet_net(
+                            control_model_input,
+                            t,
+                            encoder_hidden_states=controlnet_prompt_embeds,
+                            controlnet_cond=control_image[control_index],
+                            conditioning_scale=net_cond_scale,
+                            guess_mode=guess_mode,
+                            added_cond_kwargs=controlnet_added_cond_kwargs,
+                            return_dict=False,
+                        )
+
+                        # controlnet mask
+                        if control_index == 0 and mask_weight_image_tensor is not None:
+                            down_block_res_samples = [
+                                down_block_res_sample * F.interpolate(
+                                    mask_weight_image_tensor, size=down_block_res_sample.shape[-2:], mode='bilinear')
+                                for down_block_res_sample in down_block_res_samples
+                            ]
+                            mid_block_res_sample = mid_block_res_sample * F.interpolate(
+                                mask_weight_image_tensor, size=mid_block_res_sample.shape[-2:], mode='bilinear')
+
+                        down_block_res_samples_list.append(down_block_res_samples)
+                        mid_block_res_sample_list.append(mid_block_res_sample)
+
+                    mid_block_res_sample = torch.stack(mid_block_res_sample_list).sum(dim=0)
+                    down_block_res_samples = [torch.stack(down_block_res_samples).sum(dim=0) for down_block_res_samples in
+                                              zip(*down_block_res_samples_list)]
+                else:
+                    down_block_res_samples, mid_block_res_sample = self.controlnet(
+                        control_model_input,
+                        t,
+                        encoder_hidden_states=prompt_image_emb,
+                        controlnet_cond=control_image,
+                        conditioning_scale=cond_scale,
+                        guess_mode=guess_mode,
+                        added_cond_kwargs=controlnet_added_cond_kwargs,
+                        return_dict=False,
+                    )
+
+                    if mask_weight_image_tensor is not None:
+                        down_block_res_samples = [
+                            down_block_res_sample * F.interpolate(
+                                mask_weight_image_tensor, size=down_block_res_sample.shape[-2:], mode='bilinear')
+                            for down_block_res_sample in down_block_res_samples
+                        ]
+                        mid_block_res_sample = mid_block_res_sample * F.interpolate(
+                            mask_weight_image_tensor, size=mid_block_res_sample.shape[-2:], mode='bilinear')
 
                 if guess_mode and self.do_classifier_free_guidance:
                     # Infered ControlNet only for the conditional batch.
