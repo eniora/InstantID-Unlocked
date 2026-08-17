@@ -993,6 +993,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         prompt,
         negative_prompt,
         weight_application_method,
+        clip_skip,
         style_name,
         prompt_replacement_value,
         num_steps,
@@ -1416,6 +1417,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         print(f"Noise RNG device: {rng_source}")
         print(f"Ratio base pixel number: {ratio_base_pixel_number}")
         print(f"Weight application method: {weight_application_method}")
+        print(f"Clip skip: {clip_skip}")
         print(f"Max resize side: {resize_max_side}")
         print(f"Image size: {width}x{height}\n")
 
@@ -1472,6 +1474,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 prompt=prompt_for_generation,
                 negative_prompt=negative_prompt_for_generation,
                 weight_application_method=weight_application_method,
+                clip_skip=clip_skip if clip_skip else None,
                 image_embeds=face_emb,
                 controlnet_conditioning_scale=control_scales,
                 num_inference_steps=num_steps,
@@ -1567,6 +1570,7 @@ Embeddings Enabled: {enable_embeddings}
 Embeddings Used: {', '.join(used_embedding_tokens) if used_embedding_tokens else 'None'}
 GPU used: {gpu_name}
 Weight application method: {weight_application_method}
+Clip skip: {clip_skip}
 Scheduler: {scheduler}"""
 
             png_info = PIL.PngImagePlugin.PngInfo()
@@ -1649,6 +1653,7 @@ Scheduler: {scheduler}"""
                         prompt=prompt_for_generation,
                         negative_prompt=negative_prompt_for_generation,
                         weight_application_method=weight_application_method,
+                        clip_skip=clip_skip if clip_skip else None,
                         image_embeds=face_emb,
                         image=hires_pass_image,
                         control_image=hires_control_images,
@@ -2184,9 +2189,17 @@ Scheduler: {scheduler}"""
                         minimum=0,
                         maximum=MAX_SEED,
                         step=1,
-                        scale=4,
+                        scale=1,
                         value=12345,
                         show_label=False
+                    )
+                    clip_skip = gr.Slider(
+                        label="Clip Skip (usually 0-2 is best)",
+                        minimum=-12,
+                        maximum=24,
+                        step=1,
+                        scale=2,
+                        value=0,
                     )
                 with gr.Row():
                     weight_application_method = gr.Radio(
@@ -2900,6 +2913,7 @@ Scheduler: {scheduler}"""
                 prompt,
                 negative_prompt,
                 weight_application_method,
+                clip_skip,
                 style,
                 prompt_replacement,
                 num_steps,
@@ -3077,6 +3091,7 @@ Scheduler: {scheduler}"""
                     "prompt": "",
                     "negative_prompt": DEFAULT_NEGATIVE_PROFILE,
                     "weight_application_method": "Original InstantID per-token",
+                    "clip_skip": 0,
                     "resize_max_side": 1280,
                     "seed": 12345,
                     "num_steps": 20,
@@ -3289,6 +3304,11 @@ Scheduler: {scheduler}"""
                             ]
                             if method_text in valid_methods:
                                 settings["weight_application_method"] = method_text
+                        elif line.startswith("Clip skip:"):
+                            try:
+                                settings["clip_skip"] = int(line.replace("Clip skip:", "").strip())
+                            except ValueError:
+                                pass
                         elif line.startswith("Scheduler:"):
                             scheduler_text = line.replace("Scheduler:", "").strip()
                             if "scheduling_" in scheduler_text:
@@ -3364,6 +3384,7 @@ Scheduler: {scheduler}"""
                     settings["prompt"],
                     settings["negative_prompt"],
                     settings["weight_application_method"],
+                    settings["clip_skip"],
                     settings["style"],
                     settings["num_steps"],
                     settings["enable_img2img"],
@@ -3434,6 +3455,7 @@ Scheduler: {scheduler}"""
                     prompt,
                     negative_prompt,
                     weight_application_method,
+                    clip_skip,
                     style,
                     num_steps,
                     enable_img2img,
