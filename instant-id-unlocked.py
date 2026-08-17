@@ -1722,6 +1722,7 @@ Scheduler: {scheduler}"""
     - Select a model to use for generation from the upper left corner dropdown. Only use SDXL and Pony. Illustrious can be loaded but isn't well supported.
     - You can select a scheduler from the upper right corner dropdown. DPMSolver, KDPM2 and Euler are usually the best.
     - The "Weight application method" option controls how (word:weight) prompt weighting is applied: "Original InstantID per-token" uses InstantID's own method, which is EOS-interpolation loop (interpolates each token toward the chunk's end-of-text embedding). "ForgeUI per-encoder rescale" (it's how ForgeUI/A1111 work with weights) and "ForgeUI global rescale" both scale each token's embedding directly by its weight, then rescale to preserve the original mean - either per text encoder (CLIP-L and CLIP-G separately) or globally (one combined mean across both). "ComfyUI (blank prompt interpolation)" reproduces ComfyUI's default method: it separately encodes a completely blank prompt of the same length, then interpolates each weighted token toward that blank prompt's embedding at the same position rather than toward its own chunk's EOS embedding or a rescaled mean. This entire "Weight application method" has no effect at all if your prompt/negative prompt fields don't have any weights in them, such as "(anime style:1.5)" for example.
+    - Clip Skip option: it picks which text-encoder layer generates your prompt embeddings, instead of always using the final one. Earlier layers give a more literal, less-refined read on the prompt — some checkpoints (especially anime ones) like this. 0 is default, one layer back from the end. -1 is the true final layer, fully processed, zero skip. Positive values (1, 2, 3...) skip progressively further back toward the raw embedding layer, with 1-2 being the common useful range. Going below -1 jumps straight to that same raw layer at -2, then walks back toward the final layer again as you keep decreasing — it isn't extending further into "raw," it's retracing the positive range in reverse. This app uses two text encoders, CLIP-L and CLIP-G, and they retrace at different points: CLIP-L loops back on itself by -14/+11, while CLIP-G keeps producing new results all the way to -34/+31. So past ±11-14, only CLIP-G is still shifting the result — CLIP-L has started repeating a layer it already showed you closer to zero.
     
     Other usage tips of InstantID:
     - If you're not satisfied with the similarity, try increasing the weight of "IdentityNet Strength" and "Image adapter strength".
@@ -2194,7 +2195,7 @@ Scheduler: {scheduler}"""
                         show_label=False
                     )
                     clip_skip = gr.Slider(
-                        label="Clip Skip (-14 to +11 = both encoders)",
+                        label="Clip Skip. Read about it in the usage tips.",
                         minimum=-34,
                         maximum=31,
                         step=1,
