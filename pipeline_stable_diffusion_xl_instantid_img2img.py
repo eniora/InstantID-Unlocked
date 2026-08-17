@@ -437,7 +437,7 @@ class LongPromptWeight(object):
     def _resolve_hidden_states_index(self, clip_skip, num_hidden_layers: int) -> int:
         index = -2 if not clip_skip else -(clip_skip + 2)
         deepest_valid_index = -(num_hidden_layers + 1)
-        shallowest_valid_index = -1
+        shallowest_valid_index = num_hidden_layers
         if index < deepest_valid_index:
             index = deepest_valid_index
         elif index > shallowest_valid_index:
