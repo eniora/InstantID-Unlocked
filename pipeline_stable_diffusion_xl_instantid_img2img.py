@@ -384,7 +384,8 @@ class LongPromptWeight(object):
         return torch.cat([clip_l_embedding, clip_g_embedding], dim=-1)
 
     def encode_empty_chunk_comfyui_style(
-        self, pipe: StableDiffusionXLPipeline, chunk_length: int, device, cache: dict
+        self, pipe: StableDiffusionXLPipeline, chunk_length: int, device, cache: dict,
+        hidden_states_index_1: int = -2, hidden_states_index_2: int = -2,
     ) -> torch.Tensor:
         """
         Encode a "blank" chunk - [BOS] followed by [EOS] repeated for the rest of the chunk - through
@@ -409,6 +410,7 @@ class LongPromptWeight(object):
             cache (dict): keyed by chunk_length, passed in by the caller so repeated chunks of the
                 same length (the common case) reuse one encoding instead of re-running both text
                 encoders again for every chunk.
+
         Returns:
             torch.Tensor: shape (chunk_length, 2048) - the blank chunk's concatenated hidden states
         """
@@ -421,16 +423,26 @@ class LongPromptWeight(object):
         token_tensor = torch.tensor([empty_tokens], dtype=torch.long, device=device)
 
         empty_embeds_1 = pipe.text_encoder(token_tensor, output_hidden_states=True)
-        empty_embeds_1_hidden_states = empty_embeds_1.hidden_states[-2]
+        empty_embeds_1_hidden_states = empty_embeds_1.hidden_states[hidden_states_index_1]
 
         empty_embeds_2 = pipe.text_encoder_2(token_tensor, output_hidden_states=True)
-        empty_embeds_2_hidden_states = empty_embeds_2.hidden_states[-2]
+        empty_embeds_2_hidden_states = empty_embeds_2.hidden_states[hidden_states_index_2]
 
         empty_embedding = torch.concat(
             [empty_embeds_1_hidden_states, empty_embeds_2_hidden_states], dim=-1
         ).squeeze(0)
         cache[chunk_length] = empty_embedding
         return empty_embedding
+
+    def _resolve_hidden_states_index(self, clip_skip, num_hidden_layers: int) -> int:
+        index = -2 if not clip_skip else -(clip_skip + 2)
+        deepest_valid_index = -(num_hidden_layers + 1)
+        shallowest_valid_index = -1
+        if index < deepest_valid_index:
+            index = deepest_valid_index
+        elif index > shallowest_valid_index:
+            index = shallowest_valid_index
+        return index
 
     def apply_prompt_weights_comfyui_style(
         self, token_embedding: torch.Tensor, empty_token_embedding: torch.Tensor, weight_tensor: torch.Tensor
@@ -481,6 +493,7 @@ class LongPromptWeight(object):
         extra_emb=None,
         extra_emb_alpha=0.6,
         weight_application_method="Original InstantID per-token",
+        clip_skip=None,
     ):
         """
         This function can process long prompt with weights, no length limitation
@@ -512,6 +525,9 @@ class LongPromptWeight(object):
             prompt_embeds (torch.Tensor)
             neg_prompt_embeds (torch.Tensor)
         """
+        hidden_states_index_1 = self._resolve_hidden_states_index(clip_skip, pipe.text_encoder.config.num_hidden_layers)
+        hidden_states_index_2 = self._resolve_hidden_states_index(clip_skip, pipe.text_encoder_2.config.num_hidden_layers)
+
         # 
         if prompt_embeds is not None and \
             negative_prompt_embeds is not None and \
@@ -595,11 +611,11 @@ class LongPromptWeight(object):
 
             # use first text encoder
             prompt_embeds_1 = pipe.text_encoder(token_tensor.to(pipe.device), output_hidden_states=True)
-            prompt_embeds_1_hidden_states = prompt_embeds_1.hidden_states[-2]
+            prompt_embeds_1_hidden_states = prompt_embeds_1.hidden_states[hidden_states_index_1]
 
             # use second text encoder
             prompt_embeds_2 = pipe.text_encoder_2(token_tensor_2.to(pipe.device), output_hidden_states=True)
-            prompt_embeds_2_hidden_states = prompt_embeds_2.hidden_states[-2]
+            prompt_embeds_2_hidden_states = prompt_embeds_2.hidden_states[hidden_states_index_2]
             pooled_prompt_embeds = prompt_embeds_2[0]
 
             prompt_embeds_list = [prompt_embeds_1_hidden_states, prompt_embeds_2_hidden_states]
@@ -613,7 +629,8 @@ class LongPromptWeight(object):
                         )
             elif weight_application_method == "ComfyUI (blank prompt interpolation)":
                 empty_embedding = self.encode_empty_chunk_comfyui_style(
-                    pipe, token_embedding.shape[0], pipe.device, comfyui_empty_embedding_cache
+                    pipe, token_embedding.shape[0], pipe.device, comfyui_empty_embedding_cache,
+                    hidden_states_index_1, hidden_states_index_2,
                 )
                 token_embedding = self.apply_prompt_weights_comfyui_style(
                     token_embedding, empty_embedding, weight_tensor
@@ -634,11 +651,11 @@ class LongPromptWeight(object):
 
             # use first text encoder
             neg_prompt_embeds_1 = pipe.text_encoder(neg_token_tensor.to(pipe.device), output_hidden_states=True)
-            neg_prompt_embeds_1_hidden_states = neg_prompt_embeds_1.hidden_states[-2]
+            neg_prompt_embeds_1_hidden_states = neg_prompt_embeds_1.hidden_states[hidden_states_index_1]
 
             # use second text encoder
             neg_prompt_embeds_2 = pipe.text_encoder_2(neg_token_tensor_2.to(pipe.device), output_hidden_states=True)
-            neg_prompt_embeds_2_hidden_states = neg_prompt_embeds_2.hidden_states[-2]
+            neg_prompt_embeds_2_hidden_states = neg_prompt_embeds_2.hidden_states[hidden_states_index_2]
             negative_pooled_prompt_embeds = neg_prompt_embeds_2[0]
 
             neg_prompt_embeds_list = [neg_prompt_embeds_1_hidden_states, neg_prompt_embeds_2_hidden_states]
@@ -652,7 +669,8 @@ class LongPromptWeight(object):
                         )
             elif weight_application_method == "ComfyUI (blank prompt interpolation)":
                 neg_empty_embedding = self.encode_empty_chunk_comfyui_style(
-                    pipe, neg_token_embedding.shape[0], pipe.device, comfyui_empty_embedding_cache
+                    pipe, neg_token_embedding.shape[0], pipe.device, comfyui_empty_embedding_cache,
+                    hidden_states_index_1, hidden_states_index_2,
                 )
                 neg_token_embedding = self.apply_prompt_weights_comfyui_style(
                     neg_token_embedding, neg_empty_embedding, neg_weight_tensor
@@ -1088,6 +1106,7 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
             pooled_prompt_embeds=pooled_prompt_embeds,
             negative_pooled_prompt_embeds=negative_pooled_prompt_embeds,
             weight_application_method=weight_application_method,
+            clip_skip=self._clip_skip,
         )
 
         # 3.2 Encode image prompt
