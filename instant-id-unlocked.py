@@ -38,19 +38,16 @@ try:
 except ImportError:
     SAGE_ATTENTION_AVAILABLE = False
     _sdpa_sage = None
-    print("[InstantID] SageAttention not installed - the Sage Attention checkbox will have no effect.")
 def apply_sage_attention(enabled: bool):
     if enabled and SAGE_ATTENTION_AVAILABLE:
         F.scaled_dot_product_attention = _sdpa_sage
         torch.nn.functional.scaled_dot_product_attention = _sdpa_sage
-        print("[InstantID] SageAttention enabled for SDPA.")
     else:
+        if enabled and not SAGE_ATTENTION_AVAILABLE:
+            gr.Warning("SageAttention is not available. Falling back to default the SDPA attention. See console message for more info.")
+            print("\nSageAttention enabled in the UI but wasn't found. You can install it by doing 'pip install sageattention==1.0.6' and 'pip install triton-windows==3.7.1'. Falling back to the default SDPA.\n")
         F.scaled_dot_product_attention = _original_sdpa
         torch.nn.functional.scaled_dot_product_attention = _original_sdpa
-        if enabled and not SAGE_ATTENTION_AVAILABLE:
-            print("[InstantID] SageAttention requested but not installed - staying on default SDPA.")
-        else:
-            print("[InstantID] SageAttention disabled - using default SDPA.")
 
 warning_messages = [
     ".*timm.models.layers.*",
@@ -1141,6 +1138,8 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         else:
             pipe.disable_vae_tiling()
 
+        apply_sage_attention(enable_sage_attention)
+
         if enable_lora:
             pipe.unload_lora_weights()
 
@@ -1759,7 +1758,7 @@ Scheduler: {scheduler}"""
     - You can select a scheduler from the upper right corner dropdown. DPMSolver, KDPM2 and Euler are usually the best.
     - The "Weight application method" option controls how (word:weight) prompt weighting is applied: "Original InstantID per-token" uses InstantID's own method, which is EOS-interpolation loop (interpolates each token toward the chunk's end-of-text embedding). "ForgeUI per-encoder rescale" (it's how ForgeUI/A1111 work with weights) and "ForgeUI global rescale" both scale each token's embedding directly by its weight, then rescale to preserve the original mean - either per text encoder (CLIP-L and CLIP-G separately) or globally (one combined mean across both). "ComfyUI (blank prompt interpolation)" reproduces ComfyUI's default method: it separately encodes a completely blank prompt of the same length, then interpolates each weighted token toward that blank prompt's embedding at the same position rather than toward its own chunk's EOS embedding or a rescaled mean. This entire "Weight application method" has no effect at all if your prompt/negative prompt fields don't have any weights in them, such as "(anime style:1.5)" for example.
     - Clip Skip option: it picks which text-encoder layer generates your prompt embeddings, instead of always using the final one. Earlier layers give a more literal, less-refined read on the prompt — some checkpoints (especially anime ones) like this. 0 is default, one layer back from the end. -1 is the true final layer, fully processed, zero skip. Positive values (1, 2, 3...) skip progressively further back toward the raw embedding layer, with 1-2 being the common useful range. Going below -1 jumps straight to that same raw layer at -2, then walks back toward the final layer again as you keep decreasing — it isn't extending further into "raw," it's retracing the positive range in reverse. This app uses two text encoders, CLIP-L and CLIP-G, and they retrace at different points: CLIP-L loops back on itself by -14/+11, while CLIP-G keeps producing new results all the way to -34/+31. So past ±11-14, only CLIP-G is still shifting the result — CLIP-L has started repeating a layer it already showed you closer to zero.
-    - SageAttention speeds up generation by quantizing part of the attention math to lower precision (int8/fp8) instead of running it in full fp16/bf16. In practice this means noticeably faster steps with lower VRAM overhead, especially on newer NVIDIA GPUs. SageAttention produces noticeably different results from standard SDPA, even with the same seed. That's why its value is added to PNG info, unlike VAE tiling for example.
+    - SageAttention speeds up generation by quantizing part of the attention math to lower precision (int8/fp8) instead of running it in full fp16/bf16. In practice this means noticeably faster steps with lower VRAM overhead, especially on newer NVIDIA GPUs. SageAttention produces slightly different results compared to standard SDPA, even with the same seed. That's why its value is added to PNG info, unlike VAE tiling for example.
     
     Other usage tips of InstantID:
     - If you're not satisfied with the similarity, try increasing the weight of "IdentityNet Strength" and "Image adapter strength".
@@ -2071,14 +2070,8 @@ Scheduler: {scheduler}"""
                             value=default_vae_tiling
                         )
                         enable_sage_attention = gr.Checkbox(
-                            label="Enable SageAttention (faster generation)",
+                            label="Enable SageAttention Optimization",
                             value=False
-                        )
-                        enable_sage_attention.change(
-                            fn=apply_sage_attention,
-                            inputs=[enable_sage_attention],
-                            outputs=None,
-                            queue=False
                         )
                     with gr.Row():
                         resize_mode_dropdown = gr.Dropdown(
