@@ -1486,6 +1486,8 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                         desc=f"Generating image {i + 1} of {num_outputs} "
                              f"(Step {min(step_tracker['total'] // 2, steps)}/{steps})"
                     )
+                    if vram_gb <= 18 and enable_img2img and step == 0:
+                        torch.cuda.empty_cache()
                     return callback_kwargs
             else:
                 def gradio_callback_lambda(pipe_obj, step, timestep, callback_kwargs):
@@ -1495,6 +1497,8 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                         ((i / num_outputs) + (((step + 1) / steps) / num_outputs)),
                         desc=f"Generating image {i + 1} of {num_outputs} (Step {step + 1}/{steps})"
                     )
+                    if vram_gb <= 18 and enable_img2img and step == 0:
+                        torch.cuda.empty_cache()
                     return callback_kwargs
 
             print(f"Seed: {seed + i}\n")
@@ -1681,6 +1685,8 @@ Scheduler: {scheduler}"""
                         (current_step / display_hires_steps),
                         desc=f"Hires Fix: denoising image {i + 1} of {num_outputs} (Step {current_step}/{display_hires_steps})"
                     )
+                    if vram_gb <= 18 and step == 0:
+                        torch.cuda.empty_cache()
                     return callback_kwargs
 
                 try:
