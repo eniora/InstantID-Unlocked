@@ -19,36 +19,6 @@ import PIL.PngImagePlugin
 import time
 from safetensors.torch import load_file as load_safetensors_file
 
-_original_sdpa = F.scaled_dot_product_attention
-try:
-    from sageattention import sageattn
-    _SAGE_SUPPORTED_HEADDIM = {64, 96, 128}
-    SAGE_ATTENTION_AVAILABLE = True
-    def _sdpa_sage(query, key, value, attn_mask=None, dropout_p=0.0, is_causal=False, scale=None):
-        head_dim = query.shape[-1]
-        if (
-            attn_mask is not None
-            or dropout_p > 0.0
-            or head_dim not in _SAGE_SUPPORTED_HEADDIM
-            or query.dtype not in (torch.float16, torch.bfloat16)
-        ):
-            return _original_sdpa(query, key, value, attn_mask=attn_mask,
-                                   dropout_p=dropout_p, is_causal=is_causal, scale=scale)
-        return sageattn(query, key, value, is_causal=is_causal)
-except ImportError:
-    SAGE_ATTENTION_AVAILABLE = False
-    _sdpa_sage = None
-def apply_sage_attention(enabled: bool):
-    if enabled and SAGE_ATTENTION_AVAILABLE:
-        F.scaled_dot_product_attention = _sdpa_sage
-        torch.nn.functional.scaled_dot_product_attention = _sdpa_sage
-    else:
-        if enabled and not SAGE_ATTENTION_AVAILABLE:
-            gr.Warning("SageAttention is not available. Falling back to default the SDPA attention. See console message for more info.")
-            print("\nSageAttention enabled in the UI but wasn't found. You can install it by doing 'pip install sageattention==1.0.6' and 'pip install triton-windows==3.7.1'. Falling back to the default SDPA.\n")
-        F.scaled_dot_product_attention = _original_sdpa
-        torch.nn.functional.scaled_dot_product_attention = _original_sdpa
-
 warning_messages = [
     ".*timm.models.layers.*",
     ".*timm.models.registry.*",
@@ -1071,7 +1041,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         file_prefix,
         rng_source,
         enable_vae_tiling,
-        enable_sage_attention,
         resize_mode,
         pad_to_max_side,
         kps_brightness,
@@ -1137,8 +1106,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             pipe.enable_vae_tiling()
         else:
             pipe.disable_vae_tiling()
-
-        apply_sage_attention(enable_sage_attention)
 
         if enable_lora:
             pipe.unload_lora_weights()
@@ -1394,7 +1361,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         print(f"Model: {model_name}")
         print(f"Resize mode: {resize_mode}")
         print(f"Pad to max side: {pad_to_max_side}")
-        print(f"Sage Attention: {enable_sage_attention}")
         print(f"KPS Brightness: {kps_brightness}")
         print(f"Use custom resize: {enable_custom_resize}")
         if enable_custom_resize:
@@ -1605,7 +1571,6 @@ Embeddings Used: {', '.join(used_embedding_tokens) if used_embedding_tokens else
 GPU used: {gpu_name}
 Weight application method: {weight_application_method}
 Clip skip: {clip_skip}
-Sage Attention: {enable_sage_attention}
 Scheduler: {scheduler}"""
 
             png_info = PIL.PngImagePlugin.PngInfo()
@@ -1758,7 +1723,6 @@ Scheduler: {scheduler}"""
     - You can select a scheduler from the upper right corner dropdown. DPMSolver, KDPM2 and Euler are usually the best.
     - The "Weight application method" option controls how (word:weight) prompt weighting is applied: "Original InstantID per-token" uses InstantID's own method, which is EOS-interpolation loop (interpolates each token toward the chunk's end-of-text embedding). "ForgeUI per-encoder rescale" (it's how ForgeUI/A1111 work with weights) and "ForgeUI global rescale" both scale each token's embedding directly by its weight, then rescale to preserve the original mean - either per text encoder (CLIP-L and CLIP-G separately) or globally (one combined mean across both). "ComfyUI (blank prompt interpolation)" reproduces ComfyUI's default method: it separately encodes a completely blank prompt of the same length, then interpolates each weighted token toward that blank prompt's embedding at the same position rather than toward its own chunk's EOS embedding or a rescaled mean. This entire "Weight application method" has no effect at all if your prompt/negative prompt fields don't have any weights in them, such as "(anime style:1.5)" for example.
     - Clip Skip option: it picks which text-encoder layer generates your prompt embeddings, instead of always using the final one. Earlier layers give a more literal, less-refined read on the prompt — some checkpoints (especially anime ones) like this. 0 is default, one layer back from the end. -1 is the true final layer, fully processed, zero skip. Positive values (1, 2, 3...) skip progressively further back toward the raw embedding layer, with 1-2 being the common useful range. Going below -1 jumps straight to that same raw layer at -2, then walks back toward the final layer again as you keep decreasing — it isn't extending further into "raw," it's retracing the positive range in reverse. This app uses two text encoders, CLIP-L and CLIP-G, and they retrace at different points: CLIP-L loops back on itself by -14/+11, while CLIP-G keeps producing new results all the way to -34/+31. So past ±11-14, only CLIP-G is still shifting the result — CLIP-L has started repeating a layer it already showed you closer to zero.
-    - SageAttention speeds up generation by quantizing part of the attention math to lower precision (int8/fp8) instead of running it in full fp16/bf16. In practice this means noticeably faster steps with lower VRAM overhead, especially on newer NVIDIA GPUs. SageAttention produces slightly different results compared to standard SDPA, even with the same seed. That's why its value is added to PNG info, unlike VAE tiling for example.
     
     Other usage tips of InstantID:
     - If you're not satisfied with the similarity, try increasing the weight of "IdentityNet Strength" and "Image adapter strength".
@@ -2066,12 +2030,8 @@ Scheduler: {scheduler}"""
                         )
                     with gr.Row():
                         enable_vae_tiling = gr.Checkbox(
-                            label="Enable VAE Tiling (faster VAE decoding)",
+                            label="Enable VAE Tiling (splits images into tiles to reduce VRAM usage during VAE decoding)",
                             value=default_vae_tiling
-                        )
-                        enable_sage_attention = gr.Checkbox(
-                            label="Enable SageAttention Optimization",
-                            value=False
                         )
                     with gr.Row():
                         resize_mode_dropdown = gr.Dropdown(
@@ -3002,7 +2962,6 @@ Scheduler: {scheduler}"""
                 file_prefix,
                 rng_source,
                 enable_vae_tiling,
-                enable_sage_attention,
                 resize_mode_dropdown,
                 pad_to_max_checkbox,
                 kps_brightness_slider,
@@ -3185,7 +3144,6 @@ Scheduler: {scheduler}"""
                     "disable_lora_8": False,
                     "resize_mode": "LANCZOS",
                     "pad_to_max_side": False,
-                    "enable_sage_attention": False,
                     "enable_custom_resize": False,
                     "custom_resize_width": 960,
                     "custom_resize_height": 1280,
@@ -3404,8 +3362,6 @@ Scheduler: {scheduler}"""
                             settings["resize_mode"] = line.replace("Resize mode:", "").strip().upper()
                         elif line.startswith("Pad to max side:"):
                             settings["pad_to_max_side"] = "true" in line.lower()
-                        elif line.startswith("Sage Attention:"):
-                            settings["enable_sage_attention"] = "true" in line.lower()
                         elif line.startswith("Noise RNG device:"):
                             rng_value = line.replace("Noise RNG device:", "").strip()
                             if rng_value in ("GPU", "CPU"):
@@ -3422,7 +3378,7 @@ Scheduler: {scheduler}"""
 
                 open_settings_accordion = False
 
-                if settings["enable_custom_resize"] or settings["pad_to_max_side"] or settings["ratio_base_pixel_number"] != 8 or settings["rng_source"] == "CPU" or settings["enable_sage_attention"]:
+                if settings["enable_custom_resize"] or settings["pad_to_max_side"] or settings["ratio_base_pixel_number"] != 8 or settings["rng_source"] == "CPU":
                     open_settings_accordion = True
 
                 return [
@@ -3478,7 +3434,6 @@ Scheduler: {scheduler}"""
                     settings["disable_lora_8"],
                     settings["resize_mode"],
                     settings["pad_to_max_side"],
-                    settings["enable_sage_attention"],
                     settings["kps_brightness"],
                     settings["enable_custom_resize"],
                     settings["custom_resize_width"],
@@ -3550,7 +3505,6 @@ Scheduler: {scheduler}"""
                     disable_lora_8,
                     resize_mode_dropdown,
                     pad_to_max_checkbox,
-                    enable_sage_attention,
                     kps_brightness_slider,
                     enable_custom_resize,
                     custom_resize_width,
@@ -3585,7 +3539,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v8.0.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v7.9.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
