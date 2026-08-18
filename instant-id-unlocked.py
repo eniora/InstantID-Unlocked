@@ -19,35 +19,35 @@ import PIL.PngImagePlugin
 import time
 from safetensors.torch import load_file as load_safetensors_file
 
-_original_sdpa = F.scaled_dot_product_attention
+original_sdpa = F.scaled_dot_product_attention
 try:
     from sageattention import sageattn
-    _SAGE_SUPPORTED_HEADDIM = {64, 96, 128}
+    SAGE_SUPPORTED_HEADDIM = {64, 96, 128}
     SAGE_ATTENTION_AVAILABLE = True
-    def _sdpa_sage(query, key, value, attn_mask=None, dropout_p=0.0, is_causal=False, scale=None):
+    def sdpa_sage(query, key, value, attn_mask=None, dropout_p=0.0, is_causal=False, scale=None):
         head_dim = query.shape[-1]
         if (
             attn_mask is not None
             or dropout_p > 0.0
-            or head_dim not in _SAGE_SUPPORTED_HEADDIM
+            or head_dim not in SAGE_SUPPORTED_HEADDIM
             or query.dtype not in (torch.float16, torch.bfloat16)
         ):
-            return _original_sdpa(query, key, value, attn_mask=attn_mask,
+            return original_sdpa(query, key, value, attn_mask=attn_mask,
                                    dropout_p=dropout_p, is_causal=is_causal, scale=scale)
         return sageattn(query, key, value, is_causal=is_causal)
 except ImportError:
     SAGE_ATTENTION_AVAILABLE = False
-    _sdpa_sage = None
+    sdpa_sage = None
 def apply_sage_attention(enabled: bool):
     if enabled and SAGE_ATTENTION_AVAILABLE:
-        F.scaled_dot_product_attention = _sdpa_sage
-        torch.nn.functional.scaled_dot_product_attention = _sdpa_sage
+        F.scaled_dot_product_attention = sdpa_sage
+        torch.nn.functional.scaled_dot_product_attention = sdpa_sage
     else:
         if enabled and not SAGE_ATTENTION_AVAILABLE:
             gr.Warning("SageAttention is not available. Falling back to the default SDPA. See console message for more info.")
             print("\nSageAttention enabled in the UI but wasn't found. You can install it with 'pip install sageattention==1.0.6' and 'pip install triton-windows==3.7.1'. Falling back to the default SDPA.\n")
-        F.scaled_dot_product_attention = _original_sdpa
-        torch.nn.functional.scaled_dot_product_attention = _original_sdpa
+        F.scaled_dot_product_attention = original_sdpa
+        torch.nn.functional.scaled_dot_product_attention = original_sdpa
 
 warning_messages = [
     ".*timm.models.layers.*",
@@ -2241,7 +2241,7 @@ Scheduler: {scheduler}"""
                         show_label=False
                     )
                     clip_skip = gr.Slider(
-                        label="Clip Skip. Read about it in the usage tips.",
+                        label="Clip Skip (see about it in the usage tips)",
                         minimum=-34,
                         maximum=31,
                         step=1,
