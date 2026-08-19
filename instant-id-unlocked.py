@@ -1129,7 +1129,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
 
             hires_sibling_pipe = get_img2img_sibling_pipe(pipe)
         elif not isinstance(pipe, target_pipe_class):
-            print(f"\nSwitching to {'img2img' if enable_img2img else 'txt2img'} pipeline mode\n")
             pipe = get_sibling_pipe(pipe, target_pipe_class)
             pipe._current_model = model_name
 
