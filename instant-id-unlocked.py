@@ -1212,30 +1212,52 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         face_image_filename = os.path.basename(face_image_path) if face_image_path else "None"
         pose_image_filename = os.path.basename(pose_image_path) if pose_image_path else "None"
 
-        with torch.no_grad():
-            scheduler_config = dict(pipe.scheduler.config.items())
+        if not controlnet_selection:
+            torch.cuda.empty_cache()
 
-            if not controlnet_selection:
-                torch.cuda.empty_cache()
+        scheduler_config = dict(pipe.scheduler.config.items())
+        parts = scheduler.split("-")
+        scheduler_split = parts[0]
+        suffixes = parts[1:]
+        use_karras = "Karras" in suffixes
+        use_exponential = "Exponential" in suffixes
+        use_beta = "Beta" in suffixes
+        use_sde = "SDE" in suffixes
+        scheduler_class = getattr(diffusers, scheduler_split)
 
-            use_karras = "Karras" in scheduler
-            use_sde = "SDE" in scheduler
-            scheduler_split = scheduler.split("-")[0]
-            scheduler_class = getattr(diffusers, scheduler_split)
-    
-            if "DPMSolver" in scheduler_split:
-                pipe.scheduler = scheduler_class.from_config(
-                    scheduler_config,
-                    use_karras_sigmas=use_karras,
-                    algorithm_type="sde-dpmsolver++" if use_sde else "dpmsolver++"
-                )
-            elif scheduler_split in ["KDPM2AncestralDiscreteScheduler", "KDPM2DiscreteScheduler"]:
-                pipe.scheduler = scheduler_class.from_config(
-                    scheduler_config,
-                    use_karras_sigmas=use_karras
-                )
-            else:
-                pipe.scheduler = scheduler_class.from_config(scheduler_config)
+        if scheduler_split in ["DPMSolverMultistepScheduler", "DPMSolverSinglestepScheduler"]:
+            pipe.scheduler = scheduler_class.from_config(
+                scheduler_config,
+                use_karras_sigmas=use_karras,
+                use_exponential_sigmas=use_exponential,
+                use_beta_sigmas=use_beta,
+                algorithm_type="sde-dpmsolver++" if use_sde else "dpmsolver++"
+            )
+        elif scheduler_split == "DEISMultistepScheduler":
+            pipe.scheduler = scheduler_class.from_config(
+                scheduler_config,
+                use_karras_sigmas=use_karras,
+                use_exponential_sigmas=use_exponential,
+                use_beta_sigmas=use_beta,
+                algorithm_type="deis"
+            )
+        elif scheduler_split in [
+            "KDPM2AncestralDiscreteScheduler",
+            "KDPM2DiscreteScheduler",
+            "DPMSolverSDEScheduler",
+            "EulerDiscreteScheduler",
+            "HeunDiscreteScheduler",
+            "LMSDiscreteScheduler",
+            "UniPCMultistepScheduler",
+        ]:
+            pipe.scheduler = scheduler_class.from_config(
+                scheduler_config,
+                use_karras_sigmas=use_karras,
+                use_exponential_sigmas=use_exponential,
+                use_beta_sigmas=use_beta,
+            )
+        else:
+            pipe.scheduler = scheduler_class.from_config(scheduler_config)
 
         if face_image_path is None:
             if enable_lora:
@@ -1886,21 +1908,53 @@ Scheduler: {scheduler}"""
                     "DPMSolverMultistepScheduler-SDE",
                     "DPMSolverMultistepScheduler-Karras",
                     "DPMSolverMultistepScheduler-Karras-SDE",
-                    "EulerDiscreteScheduler",
-                    "DPMSolverSDEScheduler-Karras",
-                    "DPMSolverSDEScheduler",
-                    "KDPM2DiscreteScheduler",
-                    "KDPM2DiscreteScheduler-Karras",
-                    "KDPM2AncestralDiscreteScheduler-Karras",
+                    "DPMSolverMultistepScheduler-Exponential",
+                    "DPMSolverMultistepScheduler-Exponential-SDE",
+                    "DPMSolverMultistepScheduler-Beta",
+                    "DPMSolverMultistepScheduler-Beta-SDE",
                     "DPMSolverSinglestepScheduler",
+                    "DPMSolverSinglestepScheduler-SDE",
                     "DPMSolverSinglestepScheduler-Karras",
                     "DPMSolverSinglestepScheduler-Karras-SDE",
+                    "DPMSolverSinglestepScheduler-Exponential",
+                    "DPMSolverSinglestepScheduler-Exponential-SDE",
+                    "DPMSolverSinglestepScheduler-Beta",
+                    "DPMSolverSinglestepScheduler-Beta-SDE",
+                    "DPMSolverSDEScheduler",
+                    "DPMSolverSDEScheduler-Karras",
+                    "DPMSolverSDEScheduler-Exponential",
+                    "DPMSolverSDEScheduler-Beta",
+                    "KDPM2DiscreteScheduler",
+                    "KDPM2DiscreteScheduler-Karras",
+                    "KDPM2DiscreteScheduler-Exponential",
+                    "KDPM2DiscreteScheduler-Beta",
+                    "KDPM2AncestralDiscreteScheduler",
+                    "KDPM2AncestralDiscreteScheduler-Karras",
+                    "KDPM2AncestralDiscreteScheduler-Exponential",
+                    "KDPM2AncestralDiscreteScheduler-Beta",
+                    "EulerDiscreteScheduler",
+                    "EulerDiscreteScheduler-Karras",
+                    "EulerDiscreteScheduler-Exponential",
+                    "EulerDiscreteScheduler-Beta",
                     "EulerAncestralDiscreteScheduler",
+                    "HeunDiscreteScheduler",
+                    "HeunDiscreteScheduler-Karras",
+                    "HeunDiscreteScheduler-Exponential",
+                    "HeunDiscreteScheduler-Beta",
+                    "DEISMultistepScheduler",
+                    "DEISMultistepScheduler-Karras",
+                    "DEISMultistepScheduler-Exponential",
+                    "DEISMultistepScheduler-Beta",
+                    "LMSDiscreteScheduler",
+                    "LMSDiscreteScheduler-Karras",
+                    "LMSDiscreteScheduler-Exponential",
+                    "LMSDiscreteScheduler-Beta",
+                    "UniPCMultistepScheduler",
+                    "UniPCMultistepScheduler-Karras",
+                    "UniPCMultistepScheduler-Exponential",
+                    "UniPCMultistepScheduler-Beta",
                     "DDIMScheduler",
                     "DDPMScheduler",
-                    "HeunDiscreteScheduler",
-                    "LMSDiscreteScheduler",
-                    "UniPCMultistepScheduler",
                     "LCMScheduler",
                     ]
                 with gr.Row():
@@ -3589,7 +3643,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v8.0.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v8.1.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
