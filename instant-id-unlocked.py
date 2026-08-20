@@ -1889,6 +1889,14 @@ Scheduler: {scheduler}"""
         color: var(--body-text-color);
         padding: 16px;
     }
+    .apply-fields-custom {
+        background: #1d4ed8 !important;
+        color: white !important;
+        border: none !important;
+    }
+    .apply-fields-custom:hover {
+        background: #1e40af !important;
+    }
     """) as gui:
         with gr.Row():
             with gr.Column(scale=1):
@@ -2027,7 +2035,7 @@ Scheduler: {scheduler}"""
                 )
                 negative_prompt = gr.Textbox(
                     label="Negative Prompt",
-                    placeholder="You can select a negative prompt profile from the settings tab below.",
+                    placeholder="You can select a negative prompt profile from the settings accordion below.",
                     value=NEGATIVE_PROMPT_PRESETS["Default Negative Profile"],
                     elem_id="negative_prompt_textbox",
                 )
@@ -2116,28 +2124,6 @@ Scheduler: {scheduler}"""
                             label="Saved file name prefix.",
                             value=DEFAULT_FILE_PREFIX,
                             placeholder="Enter your custom prefix (e.g., 'myprefix' becomes myprefix_0.png) etc."
-                        )
-                        rng_source = gr.Radio(
-                            label="Noise RNG device",
-                            choices=["GPU", "CPU"],
-                            value="GPU",
-                        )
-                    with gr.Row():
-                        enable_vae_tiling = gr.Checkbox(
-                            label="Enable VAE Tiling (faster VAE decoding)",
-                            value=default_vae_tiling
-                        )
-                        enable_sage_attention = gr.Checkbox(
-                            label="Enable SageAttention Optimization",
-                            value=False
-                        )
-                    with gr.Row():
-                        resize_mode_dropdown = gr.Dropdown(
-                            label="Resize Interpolation Mode (LANCZOS, BILINEAR and HAMMING are usually the best)",
-                            choices=[
-                                "LANCZOS", "BILINEAR", "HAMMING", "BICUBIC", "BOX", "NEAREST"
-                            ],
-                            value="LANCZOS"
                         )
                     with gr.Row():
                         ratio_base_pixel_number = gr.Radio(
@@ -2241,6 +2227,60 @@ Scheduler: {scheduler}"""
                     step=0.05,
                     value=0.6,
                 )
+                with gr.Accordion("🛠️ Advanced Options", open=False) as advanced_settings_accordion:
+                    with gr.Row():
+                        clip_skip = gr.Slider(
+                            label="Clip Skip (adjusts how many CLIP layers are used when reading the prompt). See usage tips.",
+                            minimum=-34,
+                            maximum=31,
+                            step=1,
+                            value=0,
+                        )
+                    with gr.Row():
+                        weight_application_method = gr.Radio(
+                            label="Weight application method for (word:weight). You can read about it in the usage tips below.",
+                            choices=[
+                                "Original InstantID per-token",
+                                "ForgeUI per-encoder rescale",
+                                "ForgeUI global rescale",
+                                "ComfyUI (blank prompt interpolation)",
+                            ],
+                            value="Original InstantID per-token",
+                        )
+                    with gr.Row():
+                        kps_brightness_slider = gr.Slider(
+                            label="Pose Skeleton (KPS) Brightness",
+                            minimum=0.0,
+                            maximum=1.0,
+                            step=0.05,
+                            value=0.6,
+                            info="Brightness of the face-landmark guide image InstantID uses to position face features. Leave default if unsure.",
+                            scale=3
+                        )
+                    with gr.Row():
+                        enable_vae_tiling = gr.Checkbox(
+                            label="Enable VAE Tiling (faster VAE decoding)",
+                            value=default_vae_tiling
+                        )
+                        enable_sage_attention = gr.Checkbox(
+                            label="Enable SageAttention Optimization",
+                            value=False
+                        )
+                    with gr.Row():
+                        resize_mode_dropdown = gr.Dropdown(
+                            label="Resize Interpolation Mode (LANCZOS, BILINEAR and HAMMING are usually the best)",
+                            choices=[
+                                "LANCZOS", "BILINEAR", "HAMMING", "BICUBIC", "BOX", "NEAREST"
+                            ],
+                            value="LANCZOS",
+                            scale=3
+                        )
+                        rng_source = gr.Radio(
+                            label="Noise RNG device:",
+                            choices=["GPU", "CPU"],
+                            value="GPU",
+                            scale=1
+                        )
                 with gr.Accordion("🎚️ Controlnet", open=False) as controlnet_accordion:
                     controlnet_selection = gr.CheckboxGroup(
                         ["pose", "canny", "depth"], value=[], show_label=False,
@@ -2288,28 +2328,17 @@ Scheduler: {scheduler}"""
                         minimum=0,
                         maximum=MAX_SEED,
                         step=1,
-                        scale=1,
                         value=12345,
-                        show_label=False
+                        show_label=False,
+                        scale=2
                     )
-                    clip_skip = gr.Slider(
-                        label="Clip Skip (see about it in the usage tips)",
-                        minimum=-34,
-                        maximum=31,
-                        step=1,
-                        scale=2,
-                        value=0,
-                    )
-                with gr.Row():
-                    weight_application_method = gr.Radio(
-                        label="Weight application method for (word:weight). You can read about it in the usage tips below.",
-                        choices=[
-                            "Original InstantID per-token",
-                            "ForgeUI per-encoder rescale",
-                            "ForgeUI global rescale",
-                            "ComfyUI (blank prompt interpolation)",
-                        ],
-                        value="Original InstantID per-token",
+                    det_size_name = gr.Dropdown(
+                        label="Face Detection Size",
+                        choices=list(DET_SIZE_OPTIONS.keys()),
+                        value="640x640 (default)",
+                        info="Face Detection Size. Only change this if you get 'No face detected'.",
+                        show_label=False,
+                        scale=4
                     )
                 with gr.Row():
                     enhance_face_region = gr.Checkbox(label="Enhance non-face region", scale=2, value=True)
@@ -2338,23 +2367,6 @@ Scheduler: {scheduler}"""
                         inputs=enhance_strength,
                         outputs=custom_enhance_padding,
                         queue=False
-                    )
-                with gr.Row():
-                    det_size_name = gr.Dropdown(
-                        label="Face Detection Size",
-                        choices=list(DET_SIZE_OPTIONS.keys()),
-                        value="640x640 (default)",
-                        info="Only change this if you get 'No face detected'.",
-                        scale=2
-                    )
-                    kps_brightness_slider = gr.Slider(
-                        label="Pose Skeleton (KPS) Brightness",
-                        minimum=0.0,
-                        maximum=1.0,
-                        step=0.05,
-                        value=0.6,
-                        info="Brightness of the face-landmark guide image InstantID uses to position face features. Leave default if unsure.",
-                        scale=3
                     )
                 with gr.Accordion("🔍 Standalone Image Upscaler with GFPGAN (don't use while an image is being generated)", open=False) as standalone_upscaler_accordion:
                     with gr.Row():
@@ -2407,7 +2419,7 @@ Scheduler: {scheduler}"""
                             scale=2
                         )
                     with gr.Row():
-                        run_standalone_upscale_btn = gr.Button("Upscale Image", variant="secondary")
+                        run_standalone_upscale_btn = gr.Button("Upscale Image", variant="primary")
                     standalone_upscale_status = gr.Markdown("")
 
                     with gr.Row():
@@ -2633,7 +2645,7 @@ Scheduler: {scheduler}"""
                             max_lines=22
                         )
                     with gr.Row():
-                        apply_metadata_btn = gr.Button("Apply to all fields (resets all fields if no generation metadata)", variant="secondary")
+                        apply_metadata_btn = gr.Button("Apply to all fields (resets all fields if no generation metadata)", elem_classes="apply-fields-custom")
                     apply_lcm_profile_btn = gr.Button(
                         "⚡ Apply DMD2 LCM profile (LCMScheduler, CFG 1, 10 steps, and dmd2 sdxl lora in the first empty slot)",
                         size="sm",
@@ -3479,9 +3491,12 @@ Scheduler: {scheduler}"""
                                 pass
 
                 open_settings_accordion = False
+                open_advanced_accordion = False
 
-                if settings["enable_custom_resize"] or settings["pad_to_max_side"] or settings["ratio_base_pixel_number"] != 8 or settings["rng_source"] == "CPU" or settings["enable_sage_attention"]:
+                if settings["enable_custom_resize"] or settings["pad_to_max_side"] or settings["ratio_base_pixel_number"] != 8:
                     open_settings_accordion = True
+                if settings["rng_source"] == "CPU" or settings["enable_sage_attention"] or settings["clip_skip"] != 0 or settings["kps_brightness"] != 0.6 or settings["resize_mode"] != "LANCZOS" or settings["weight_application_method"] != "Original InstantID per-token":
+                    open_advanced_accordion = True
 
                 return [
                     settings["prompt"],
@@ -3549,7 +3564,8 @@ Scheduler: {scheduler}"""
                     settings["hires_steps"],
                     settings["hires_denoising_strength"],
                     accordion_update,
-                    gr.update(open=open_settings_accordion)
+                    gr.update(open=open_settings_accordion),
+                    gr.update(open=open_advanced_accordion)
                 ]
 
             apply_metadata_btn.click(
@@ -3621,7 +3637,8 @@ Scheduler: {scheduler}"""
                     hires_steps,
                     hires_denoising_strength,
                     controlnet_accordion,
-                    style_settings_accordion
+                    style_settings_accordion,
+                    advanced_settings_accordion
                 ],
                 queue=False
             ).then(
@@ -3643,7 +3660,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v8.1.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v8.2.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
