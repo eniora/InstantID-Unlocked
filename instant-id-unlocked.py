@@ -803,20 +803,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
 
         return loaded_tokens
 
-    def unload_all_embeddings(pipe, loaded_tokens):
-        if loaded_tokens:
-            try:
-                pipe.unload_textual_inversion(tokenizer=pipe.tokenizer, text_encoder=pipe.text_encoder)
-            except Exception as e:
-                print(f"Failed to unload embeddings from primary text encoder: {e}")
-            if getattr(pipe, "text_encoder_2", None) is not None and getattr(pipe, "tokenizer_2", None) is not None:
-                try:
-                    pipe.unload_textual_inversion(tokenizer=pipe.tokenizer_2, text_encoder=pipe.text_encoder_2)
-                except Exception as e:
-                    print(f"Failed to unload embeddings from secondary text encoder: {e}")
-        embedding_state["loaded"] = False
-        embedding_state["tokens"] = []
-
     def randomize_seed_fn(seed: int, randomize_seed: bool) -> int:
         if randomize_seed:
             seed = random.randint(0, MAX_SEED_RAND)
@@ -2958,12 +2944,14 @@ Scheduler: {scheduler}"""
                         format_embeddings_info(),
                         visible=False
                     )
-                    embeddings_dropdown = gr.Dropdown(
-                        label="Available Embeddings",
-                        choices=get_embedding_choices(),
-                        value=None,
-                        visible=False
-                    )
+                    with gr.Row():
+                        embeddings_dropdown = gr.Dropdown(
+                            label="Available Embeddings",
+                            choices=get_embedding_choices(),
+                            value=None,
+                            visible=False
+                        )
+                        refresh_embeddings = gr.Button("🔄", scale=0, min_width=40, elem_classes="toolbutton", visible=False)
                     embeddings_weight = gr.Slider(
                         label="Embedding Weight",
                         minimum=0.1,
@@ -2975,8 +2963,6 @@ Scheduler: {scheduler}"""
                     with gr.Row():
                         insert_embedding_prompt = gr.Button("➕ Insert into Prompt", scale=1, visible=False)
                         insert_embedding_negative = gr.Button("➕ Insert into Negative Prompt", scale=1, visible=False)
-                    with gr.Row():
-                        refresh_embeddings = gr.Button("🔄 Refresh Embeddings List", scale=1, elem_classes="toolbutton", visible=False)
 
                     enable_embeddings.change(
                         fn=lambda x: gr.Markdown(visible=x),
@@ -2986,13 +2972,12 @@ Scheduler: {scheduler}"""
                     )
 
                     def refresh_embeddings_list():
-                        if embedding_state["loaded"] and pipe is not None:
-                            unload_all_embeddings(pipe, embedding_state["tokens"])
                         return gr.update(value=format_embeddings_info()), gr.update(choices=get_embedding_choices(), value=None)
 
                     refresh_embeddings.click(
                         fn=refresh_embeddings_list,
-                        outputs=[embeddings_info, embeddings_dropdown]
+                        outputs=[embeddings_info, embeddings_dropdown],
+                        queue=False
                     )
                     insert_embedding_prompt.click(
                         fn=insert_token_into_text,
