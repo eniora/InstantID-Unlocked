@@ -2375,7 +2375,8 @@ Scheduler: {scheduler}"""
                             choices=get_available_upscalers() or [DEFAULT_UPSCALER],
                             value=DEFAULT_UPSCALER if DEFAULT_UPSCALER in get_available_upscalers() else (get_available_upscalers()[0] if get_available_upscalers() else DEFAULT_UPSCALER),
                             allow_custom_value=True,
-                            info=f"Place in models/Upscalers",
+                            info=f"Upscaler model. Place in models/Upscalers",
+                            show_label=False,
                             scale=4
                         )
                         refresh_standalone_upscalers = gr.Button("🔄", scale=0, min_width=40)
@@ -2540,8 +2541,9 @@ Scheduler: {scheduler}"""
                             choices=["Latent (pixel resize)", "Latent (latent-space resize)"] + (get_available_upscalers() or [DEFAULT_UPSCALER]),
                             value=DEFAULT_UPSCALER if DEFAULT_UPSCALER in get_available_upscalers() else (get_available_upscalers()[0] if get_available_upscalers() else DEFAULT_UPSCALER),
                             allow_custom_value=True,
-                            info=f"Place in models/Upscalers",
+                            info=f"Upscaler model. Place in models/Upscalers",
                             visible=False,
+                            show_label=False,
                             scale=4
                         )
                         refresh_hires_upscalers = gr.Button("🔄", scale=0, min_width=40, visible=False)
