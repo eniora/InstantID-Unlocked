@@ -2558,7 +2558,7 @@ Scheduler: {scheduler}"""
                             maximum=4.0,
                             step=0.05,
                             value=1.5,
-                            info="Target = max_side * this value.",
+                            info=f"Target = max_side * this value = {max(8, int(round((resize_max_side_slider.value * 1.5) / 8) * 8))}px.",
                             scale=3
                         )
                         def update_hires_upscale(max_side, upscale_by):
@@ -2566,13 +2566,13 @@ Scheduler: {scheduler}"""
                             return gr.update(
                                 info=f"Target = max_side * this value = {target_px}px."
                             )
-                        resize_max_side_slider.change(
+                        resize_max_side_slider.release(
                             fn=update_hires_upscale,
                             inputs=[resize_max_side_slider, hires_upscale_by],
                             outputs=[hires_upscale_by],
                             queue=False
                         )
-                        hires_upscale_by.change(
+                        hires_upscale_by.release(
                             fn=update_hires_upscale,
                             inputs=[resize_max_side_slider, hires_upscale_by],
                             outputs=[hires_upscale_by],
@@ -3641,11 +3641,16 @@ Scheduler: {scheduler}"""
                 inputs=[enable_hires_fix],
                 outputs=[hires_upscaler, refresh_hires_upscalers, hires_fix_row, save_hires_original],
                 queue=False
+            ).then(
+                fn=update_hires_upscale,
+                inputs=[resize_max_side_slider, hires_upscale_by],
+                outputs=[hires_upscale_by],
+                queue=False
             )
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v8.2.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v8.2.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
