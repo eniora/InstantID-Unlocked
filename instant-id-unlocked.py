@@ -142,7 +142,6 @@ from insightface.app import FaceAnalysis
 from style_template import styles
 from pipeline_stable_diffusion_xl_instantid_full import StableDiffusionXLInstantIDPipeline
 from pipeline_stable_diffusion_xl_instantid_img2img import StableDiffusionXLInstantIDImg2ImgPipeline
-from ip_adapter.attention_processor import region_control
 from model_util import load_models_xl, get_torch_device, torch_gc
 
 from controlnet_aux import OpenposeDetector
