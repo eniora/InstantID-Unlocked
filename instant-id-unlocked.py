@@ -1691,7 +1691,7 @@ Scheduler: {scheduler}"""
                         (current_step / display_hires_steps),
                         desc=f"Hires Fix: denoising image {i + 1} of {num_outputs} (Step {current_step}/{display_hires_steps})"
                     )
-                    if vram_gb <= 18 and step == 0:
+                    if vram_gb <= 22 and step == 0:
                         torch.cuda.empty_cache()
                     return callback_kwargs
 
