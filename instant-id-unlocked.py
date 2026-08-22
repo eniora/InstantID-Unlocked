@@ -2736,16 +2736,6 @@ Scheduler: {scheduler}"""
                         label="Enable LoRA(s) from your Models\\Loras folder",
                         value=False,
                     )
-                    lora_info = gr.Markdown(
-                        "Up to ten LoRAs can be loaded. Only SDXL and Pony LoRAs supported. The 'Disable Lora' checkbox is only needed if you have a Lora selected.",
-                        visible=False
-                    )
-                    enable_lora.change(
-                        fn=lambda x: gr.Markdown(visible=x),
-                        inputs=enable_lora,
-                        outputs=lora_info,
-                        queue=False
-                    )
                     with gr.Row():
                         refresh_loras = gr.Button("🔄 Refresh LoRAs Lists", scale=2, elem_classes="toolbutton", visible=False)
                         clear_loras = gr.Button("♻️ Clear all LoRA selections", scale=1, elem_classes="toolbutton", visible=False)
@@ -3871,18 +3861,25 @@ Scheduler: {scheduler}"""
                 def delete_all_pipelines_fn():
                     nonlocal pipe, hires_sibling_pipe
                     if pipe is not None:
+                        try:
+                            pipe.unfuse_lora()
+                            pipe.unload_lora_weights()
+                        except Exception:
+                            pass
                         del pipe
                         pipe = None
                     if hires_sibling_pipe is not None:
                         del hires_sibling_pipe
                         hires_sibling_pipe = None
-
                     global cached_controlnet_models, controlnet_identitynet
                     for k in list(cached_controlnet_models.keys()):
                         del cached_controlnet_models[k]
                     if controlnet_identitynet is not None:
                         del controlnet_identitynet
                         controlnet_identitynet = None
+
+                    lora_state["signature"] = None
+                    lora_state["adapter_ids"] = {}
 
                     gc.collect()
                     torch.cuda.empty_cache()
