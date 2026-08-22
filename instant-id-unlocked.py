@@ -32,6 +32,7 @@ warning_messages = [
     ".*cache-system uses symlinks by default.*",
     ".*The parameter 'pretrained' is deprecated*",
     ".*Arguments other than a weight enum or `None` for 'weights' are deprecated*",
+    ".*Already unmerged. Nothing to do.*",
 ]
 for msg in warning_messages:
     warnings.filterwarnings("ignore", message=msg)
