@@ -641,6 +641,7 @@ def update_det_size(det_size_name):
 def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
     stop_event = threading.Event()
     embedding_state = {"loaded": False, "tokens": []}
+    lora_state = {"signature": None}
     hires_sibling_pipe = None
 
     def request_stop():
@@ -934,6 +935,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 getattr(base_pipe, "_current_model", DEFAULT_MODEL),
                 target_class is StableDiffusionXLInstantIDImg2ImgPipeline,
             )
+            lora_state["signature"] = None
 
         sibling_pipe._sibling_pipe = base_pipe
         base_pipe._sibling_pipe = sibling_pipe
@@ -1110,6 +1112,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             pipe._current_model = model_name
             embedding_state["loaded"] = False
             embedding_state["tokens"] = []
+            lora_state["signature"] = None
 
             hires_sibling_pipe = get_img2img_sibling_pipe(pipe)
         elif not isinstance(pipe, target_pipe_class):
@@ -1124,9 +1127,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         apply_sage_attention(enable_sage_attention)
 
         if enable_lora:
-            pipe.unload_lora_weights()
-
-            loras_to_load = []
             lora_slots = [
                 (lora_selection, disable_lora_1, lora_scale, 1),
                 (lora_selection_2, disable_lora_2, lora_scale_2, 2),
@@ -1137,31 +1137,114 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 (lora_selection_7, disable_lora_7, lora_scale_7, 7),
                 (lora_selection_8, disable_lora_8, lora_scale_8, 8),
             ]
+
+            def slot_adapter_name(slot_idx):
+                return f"lora_slot{slot_idx}"
+
+            loras_to_load = []
+            desired_slot_entries = {}
             for selection, disabled, scale, idx in lora_slots:
                 if selection and not disabled:
                     lora_path = os.path.join("./models/Loras", selection)
                     if os.path.exists(lora_path):
-                        loras_to_load.append({"name": selection, "scale": scale})
+                        loras_to_load.append({"name": selection, "scale": scale, "slot": idx})
+                        desired_slot_entries[idx] = (selection, round(float(scale), 4))
                         print(f"LoRA {idx} selected: {selection} with scale {scale}")
                     else:
                         print(f"LoRA {idx} not found at {lora_path}, skipping load.")
                         gr.Warning(f"LoRA {idx} not found at {lora_path}. Skipping LoRA {idx}.")
-            if loras_to_load:
-                for i, lora_item in enumerate(loras_to_load):
-                    sanitized_lora_name = lora_item['name'].replace('.safetensors', '').replace('.', '_')
-                    adapter_name = f"lora_{i}_{sanitized_lora_name}"
-                    pipe.load_lora_weights("./models/Loras", weight_name=lora_item["name"], adapter_name=adapter_name)
-                
-                adapter_names = [f"lora_{i}_{lora_item['name'].replace('.safetensors', '').replace('.', '_')}" for i, lora_item in enumerate(loras_to_load)]
-                adapter_weights = [lora_item["scale"] for lora_item in loras_to_load]
 
-                pipe.set_adapters(adapter_names, adapter_weights=adapter_weights)
-                pipe.fuse_lora()
-                print(f"Successfully loaded and fused {len(loras_to_load)} LoRAs.")
+            desired_lora_signature = tuple(sorted(desired_slot_entries.items()))
+            previous_slot_entries = dict(lora_state["signature"] or ())
+
+            if desired_lora_signature == lora_state["signature"]:
+                if desired_slot_entries:
+                    pipe.enable_lora()
+                    print(f"\nReusing {len(desired_slot_entries)} already-fused LoRA(s).")
+                else:
+                    pipe.disable_lora()
             else:
-                pipe.disable_lora()
-                print("No LoRAs selected or found, LoRA disabled.")
+                previous_slots = set(previous_slot_entries)
+                desired_slots = set(desired_slot_entries)
+                removed_slots = previous_slots - desired_slots
+                added_slots = desired_slots - previous_slots
+                changed_content_slots = {
+                    slot for slot in (previous_slots & desired_slots)
+                    if desired_slot_entries[slot][0] != previous_slot_entries[slot][0]
+                }
+                reload_slots = added_slots | changed_content_slots
+                delete_slots = removed_slots | changed_content_slots
+
+                try:
+                    if lora_state["signature"]:
+                        pipe.unfuse_lora()
+
+                    if delete_slots:
+                        pipe.delete_adapters([slot_adapter_name(s) for s in delete_slots])
+                        gc.collect()
+                        torch.cuda.empty_cache()
+                        print(f"Unloaded LoRA(s) from slot(s): {', '.join(str(s) for s in sorted(delete_slots))}")
+
+                    for item in loras_to_load:
+                        if item["slot"] in reload_slots:
+                            pipe.load_lora_weights(
+                                "./models/Loras",
+                                weight_name=item["name"],
+                                adapter_name=slot_adapter_name(item["slot"]),
+                            )
+
+                    if loras_to_load:
+                        adapter_names = [slot_adapter_name(item["slot"]) for item in loras_to_load]
+                        adapter_weights = [item["scale"] for item in loras_to_load]
+                        pipe.enable_lora()
+                        pipe.set_adapters(adapter_names, adapter_weights=adapter_weights)
+                        pipe.fuse_lora()
+                        dropped_count = len(delete_slots - reload_slots)
+                        reused_count = len(loras_to_load) - len(reload_slots)
+                        print(
+                            f"Fused {len(loras_to_load)} LoRA(s): {len(reload_slots)} newly loaded, "
+                            f"{reused_count} reused, {dropped_count} dropped."
+                        )
+                    else:
+                        pipe.disable_lora()
+                        print("No LoRAs selected or found, LoRA disabled.")
+
+                    lora_state["signature"] = desired_lora_signature
+
+                except Exception as e:
+                    print(f"Incremental LoRA update failed ({e}); falling back to a full reload.")
+                    try:
+                        pipe.unload_lora_weights()
+                    except Exception:
+                        pass
+                    gc.collect()
+                    torch.cuda.empty_cache()
+
+                    if loras_to_load:
+                        for item in loras_to_load:
+                            pipe.load_lora_weights(
+                                "./models/Loras",
+                                weight_name=item["name"],
+                                adapter_name=slot_adapter_name(item["slot"]),
+                            )
+                        adapter_names = [slot_adapter_name(item["slot"]) for item in loras_to_load]
+                        adapter_weights = [item["scale"] for item in loras_to_load]
+                        pipe.enable_lora()
+                        pipe.set_adapters(adapter_names, adapter_weights=adapter_weights)
+                        pipe.fuse_lora()
+                        print(f"Successfully loaded and fused {len(loras_to_load)} LoRAs.")
+                    else:
+                        pipe.disable_lora()
+                        print("No LoRAs selected or found, LoRA disabled.")
+
+                    lora_state["signature"] = desired_lora_signature
         else:
+            if lora_state["signature"]:
+                pipe.unfuse_lora()
+                pipe.unload_lora_weights()
+                lora_state["signature"] = None
+                gc.collect()
+                torch.cuda.empty_cache()
             pipe.disable_lora()
 
         if not prompt:
@@ -1245,9 +1328,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             pipe.scheduler = scheduler_class.from_config(scheduler_config)
 
         if face_image_path is None:
-            if enable_lora:
-                pipe.unfuse_lora()
-                pipe.unload_lora_weights()
             raise gr.Error(
                 f"Cannot find any input face image! Please upload the face image"
             )
@@ -1284,9 +1364,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         face_info = app.get(face_image_cv2)
 
         if len(face_info) == 0:
-            if enable_lora:
-                pipe.unfuse_lora()
-                pipe.unload_lora_weights()
             raise gr.Error(
                 f"Unable to detect a face in the image. Please upload a different photo with a clear face."
             )
@@ -1304,9 +1381,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             face_info = app.get(pose_image_cv2)
 
             if len(face_info) == 0:
-                if enable_lora:
-                    pipe.unfuse_lora()
-                    pipe.unload_lora_weights()
                 raise gr.Error(
                     f"Cannot find any face in the reference image! Please upload another person image"
                 )
@@ -1736,10 +1810,6 @@ Scheduler: {scheduler}"""
             print(f"(√) Finished generating image {i + 1} of {num_outputs}\n")
 
             torch.cuda.empty_cache()
-
-        if enable_lora:
-            pipe.unfuse_lora()
-            pipe.unload_lora_weights()
 
         stop_event.clear()
         if stopped_early:
@@ -2947,7 +3017,7 @@ Scheduler: {scheduler}"""
                     )
                     with gr.Row():
                         embeddings_dropdown = gr.Dropdown(
-                            label="Available Embeddings",
+                            label="Available Embeddings. Use with angle brackets, e.g. <embedding>. This is auto added when you insert.",
                             choices=get_embedding_choices(),
                             value=None,
                             visible=False
@@ -3651,7 +3721,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v8.2.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v8.3.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
