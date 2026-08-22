@@ -1048,6 +1048,12 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         disable_lora_8,
         lora_scale_8,
         lora_selection_8,
+        disable_lora_9,
+        lora_scale_9,
+        lora_selection_9,
+        disable_lora_10,
+        lora_scale_10,
+        lora_selection_10,
         enable_embeddings,
         enhance_face_region,
         enhance_strength,
@@ -1137,6 +1143,8 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 (lora_selection_6, disable_lora_6, lora_scale_6, 6),
                 (lora_selection_7, disable_lora_7, lora_scale_7, 7),
                 (lora_selection_8, disable_lora_8, lora_scale_8, 8),
+                (lora_selection_9, disable_lora_9, lora_scale_9, 9),
+                (lora_selection_10, disable_lora_10, lora_scale_10, 10),
             ]
 
             def file_adapter_name(filename):
@@ -1515,6 +1523,8 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 (lora_selection_6, disable_lora_6, lora_scale_6, 6),
                 (lora_selection_7, disable_lora_7, lora_scale_7, 7),
                 (lora_selection_8, disable_lora_8, lora_scale_8, 8),
+                (lora_selection_9, disable_lora_9, lora_scale_9, 9),
+                (lora_selection_10, disable_lora_10, lora_scale_10, 10),
             ]
             for selection, disabled, scale, idx in lora_selections:
                 if selection:
@@ -1693,6 +1703,10 @@ LoRA 7 selection: {'None' if disable_lora_7 or not (enable_lora and lora_selecti
 LoRA 7 scale: {'Disabled' if disable_lora_7 or not (enable_lora and lora_selection_7 and os.path.exists(os.path.join('./models/Loras', lora_selection_7))) else lora_scale_7}
 LoRA 8 selection: {'None' if disable_lora_8 or not (enable_lora and lora_selection_8 and os.path.exists(os.path.join('./models/Loras', lora_selection_8))) else lora_selection_8}
 LoRA 8 scale: {'Disabled' if disable_lora_8 or not (enable_lora and lora_selection_8 and os.path.exists(os.path.join('./models/Loras', lora_selection_8))) else lora_scale_8}
+LoRA 9 selection: {'None' if disable_lora_9 or not (enable_lora and lora_selection_9 and os.path.exists(os.path.join('./models/Loras', lora_selection_9))) else lora_selection_9}
+LoRA 9 scale: {'Disabled' if disable_lora_9 or not (enable_lora and lora_selection_9 and os.path.exists(os.path.join('./models/Loras', lora_selection_9))) else lora_scale_9}
+LoRA 10 selection: {'None' if disable_lora_10 or not (enable_lora and lora_selection_10 and os.path.exists(os.path.join('./models/Loras', lora_selection_10))) else lora_selection_10}
+LoRA 10 scale: {'Disabled' if disable_lora_10 or not (enable_lora and lora_selection_10 and os.path.exists(os.path.join('./models/Loras', lora_selection_10))) else lora_scale_10}
 Embeddings Enabled: {enable_embeddings}
 Embeddings Used: {', '.join(used_embedding_tokens) if used_embedding_tokens else 'None'}
 GPU used: {gpu_name}
@@ -2730,7 +2744,7 @@ Scheduler: {scheduler}"""
                         value=False,
                     )
                     lora_info = gr.Markdown(
-                        "Up to eight LoRAs can be loaded. Only SDXL and Pony LoRAs supported. The 'Disable Lora' checkbox is only needed if you have a Lora selected.",
+                        "Up to ten LoRAs can be loaded. Only SDXL and Pony LoRAs supported. The 'Disable Lora' checkbox is only needed if you have a Lora selected.",
                         visible=False
                     )
                     enable_lora.change(
@@ -2804,7 +2818,7 @@ Scheduler: {scheduler}"""
                             minimum=0.0,
                             maximum=2.0,
                             step=0.05,
-                            value=0.5,
+                            value=0.7,
                             info="Strength of the third LoRA effect.",
                             scale=3
                         )
@@ -2827,7 +2841,7 @@ Scheduler: {scheduler}"""
                             minimum=0.0,
                             maximum=2.0,
                             step=0.05,
-                            value=0.5,
+                            value=0.7,
                             info="Strength of the fourth LoRA effect.",
                             scale=3
                         )
@@ -2850,7 +2864,7 @@ Scheduler: {scheduler}"""
                             minimum=0.0,
                             maximum=2.0,
                             step=0.05,
-                            value=0.5,
+                            value=0.7,
                             info="Strength of the fifth LoRA effect.",
                             scale=3
                         )
@@ -2873,7 +2887,7 @@ Scheduler: {scheduler}"""
                             minimum=0.0,
                             maximum=2.0,
                             step=0.05,
-                            value=0.5,
+                            value=0.7,
                             info="Strength of the sixth LoRA effect.",
                             scale=3
                         )
@@ -2896,7 +2910,7 @@ Scheduler: {scheduler}"""
                             minimum=0.0,
                             maximum=2.0,
                             step=0.05,
-                            value=0.5,
+                            value=0.7,
                             info="Strength of the seventh LoRA effect.",
                             scale=3
                         )
@@ -2919,12 +2933,58 @@ Scheduler: {scheduler}"""
                             minimum=0.0,
                             maximum=2.0,
                             step=0.05,
-                            value=0.5,
+                            value=0.7,
                             info="Strength of the eighth LoRA effect.",
                             scale=3
                         )
                         disable_lora_8 = gr.Checkbox(
                             label="Disable LoRA 8",
+                            value=False,
+                            scale=1
+                        )
+                    with gr.Row(visible=False) as lora_row_9:
+                        lora_selection_9 = gr.Dropdown(
+                            label="Select LoRA 9",
+                            choices=[""] + get_available_loras(),
+                            value=None,
+                            allow_custom_value=True,
+                            info="Select a ninth LoRA.",
+                            scale=3
+                        )
+                        lora_scale_9 = gr.Slider(
+                            label="LoRA 9 Scale",
+                            minimum=0.0,
+                            maximum=2.0,
+                            step=0.05,
+                            value=0.7,
+                            info="Strength of the ninth LoRA effect.",
+                            scale=3
+                        )
+                        disable_lora_9 = gr.Checkbox(
+                            label="Disable LoRA 9",
+                            value=False,
+                            scale=1
+                        )
+                    with gr.Row(visible=False) as lora_row_10:
+                        lora_selection_10 = gr.Dropdown(
+                            label="Select LoRA 10",
+                            choices=[""] + get_available_loras(),
+                            value=None,
+                            allow_custom_value=True,
+                            info="Select a tenth LoRA.",
+                            scale=3
+                        )
+                        lora_scale_10 = gr.Slider(
+                            label="LoRA 10 Scale",
+                            minimum=0.0,
+                            maximum=2.0,
+                            step=0.05,
+                            value=0.7,
+                            info="Strength of the tenth LoRA effect.",
+                            scale=3
+                        )
+                        disable_lora_10 = gr.Checkbox(
+                            label="Disable LoRA 10",
                             value=False,
                             scale=1
                         )
@@ -2977,14 +3037,26 @@ Scheduler: {scheduler}"""
                         outputs=[lora_selection_8, lora_scale_8],
                         queue=False
                     )
+                    disable_lora_9.change(
+                        fn=lambda x: [gr.update(interactive=not x), gr.update(interactive=not x)],
+                        inputs=disable_lora_9,
+                        outputs=[lora_selection_9, lora_scale_9],
+                        queue=False
+                    )
+                    disable_lora_10.change(
+                        fn=lambda x: [gr.update(interactive=not x), gr.update(interactive=not x)],
+                        inputs=disable_lora_10,
+                        outputs=[lora_selection_10, lora_scale_10],
+                        queue=False
+                    )
 
                     def refresh_lora_list():
                         loras = [""] + get_available_loras()
-                        return gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras)
+                        return gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras), gr.update(choices=loras)
                     
                     refresh_loras.click(
                         fn=refresh_lora_list,
-                        outputs=[lora_selection, lora_selection_2, lora_selection_3, lora_selection_4, lora_selection_5, lora_selection_6, lora_selection_7, lora_selection_8],
+                        outputs=[lora_selection, lora_selection_2, lora_selection_3, lora_selection_4, lora_selection_5, lora_selection_6, lora_selection_7, lora_selection_8, lora_selection_9, lora_selection_10],
                         queue=False,
                     )
 
@@ -2998,6 +3070,10 @@ Scheduler: {scheduler}"""
                             gr.update(value=None),
                             gr.update(value=None),
                             gr.update(value=None),
+                            gr.update(value=None),
+                            gr.update(value=None),
+                            gr.update(value=False),
+                            gr.update(value=False),
                             gr.update(value=False),
                             gr.update(value=False),
                             gr.update(value=False),
@@ -3011,8 +3087,8 @@ Scheduler: {scheduler}"""
                     clear_loras.click(
                         fn=clear_lora_list,
                         outputs=[
-                            lora_selection, lora_selection_2, lora_selection_3, lora_selection_4, lora_selection_5, lora_selection_6, lora_selection_7, lora_selection_8,
-                            disable_lora_1, disable_lora_2, disable_lora_3, disable_lora_4, disable_lora_5, disable_lora_6, disable_lora_7, disable_lora_8
+                            lora_selection, lora_selection_2, lora_selection_3, lora_selection_4, lora_selection_5, lora_selection_6, lora_selection_7, lora_selection_8, lora_selection_9, lora_selection_10,
+                            disable_lora_1, disable_lora_2, disable_lora_3, disable_lora_4, disable_lora_5, disable_lora_6, disable_lora_7, disable_lora_8, disable_lora_9, disable_lora_10
                         ],
                         queue=False
                     )
@@ -3128,6 +3204,12 @@ Scheduler: {scheduler}"""
                 disable_lora_8,
                 lora_scale_8,
                 lora_selection_8,
+                disable_lora_9,
+                lora_scale_9,
+                lora_selection_9,
+                disable_lora_10,
+                lora_scale_10,
+                lora_selection_10,
                 enable_embeddings,
                 enhance_face_region,
                 enhance_strength,
@@ -3182,6 +3264,8 @@ Scheduler: {scheduler}"""
                 lora_row_6, lora_selection_6, lora_scale_6,
                 lora_row_7, lora_selection_7, lora_scale_7,
                 lora_row_8, lora_selection_8, lora_scale_8,
+                lora_row_9, lora_selection_9, lora_scale_9,
+                lora_row_10, lora_selection_10, lora_scale_10,
                 refresh_loras, clear_loras
             ]
 
@@ -3191,10 +3275,10 @@ Scheduler: {scheduler}"""
                 outputs=LORA_OUTPUTS,
                 queue=False,
             )
-            def apply_lcm_profile(ls1, ls2, ls3, ls4, ls5, ls6, ls7, ls8,
-                                   dl1, dl2, dl3, dl4, dl5, dl6, dl7, dl8):
-                slot_values = [ls1, ls2, ls3, ls4, ls5, ls6, ls7, ls8]
-                disable_values = [dl1, dl2, dl3, dl4, dl5, dl6, dl7, dl8]
+            def apply_lcm_profile(ls1, ls2, ls3, ls4, ls5, ls6, ls7, ls8, ls9, ls10,
+                                   dl1, dl2, dl3, dl4, dl5, dl6, dl7, dl8, dl9, dl10):
+                slot_values = [ls1, ls2, ls3, ls4, ls5, ls6, ls7, ls8, ls9, ls10]
+                disable_values = [dl1, dl2, dl3, dl4, dl5, dl6, dl7, dl8, dl9, dl10]
                 dmd2_lora = "dmd2_sdxl_4step_lora_fp16.safetensors"
                 dmd2_variants = {"dmd2_sdxl_4step_lora_fp16.safetensors", "dmd2_sdxl_4step_lora.safetensors"}
                 dmd2_indices = [i for i, v in enumerate(slot_values) if v in dmd2_variants]
@@ -3215,7 +3299,7 @@ Scheduler: {scheduler}"""
                 )
                 scale = 0.8 if other_loras_present else 1
                 lora_updates = []
-                for i in range(8):
+                for i in range(10):
                     if i == target:
                         lora_updates.extend([
                             gr.update(value=lora_value),
@@ -3242,8 +3326,10 @@ Scheduler: {scheduler}"""
                 inputs=[
                     lora_selection, lora_selection_2, lora_selection_3, lora_selection_4,
                     lora_selection_5, lora_selection_6, lora_selection_7, lora_selection_8,
+                    lora_selection_9, lora_selection_10,
                     disable_lora_1, disable_lora_2, disable_lora_3, disable_lora_4,
                     disable_lora_5, disable_lora_6, disable_lora_7, disable_lora_8,
+                    disable_lora_9, disable_lora_10,
                 ],
                 outputs=[
                     scheduler, guidance_scale, num_steps, enable_lora,
@@ -3255,6 +3341,8 @@ Scheduler: {scheduler}"""
                     lora_selection_6, lora_scale_6, disable_lora_6,
                     lora_selection_7, lora_scale_7, disable_lora_7,
                     lora_selection_8, lora_scale_8, disable_lora_8,
+                    lora_selection_9, lora_scale_9, disable_lora_9,
+                    lora_selection_10, lora_scale_10, disable_lora_10,
                 ],
                 queue=False
             ).then(
@@ -3289,18 +3377,22 @@ Scheduler: {scheduler}"""
                     "lora_selection": None,
                     "lora_scale_2": 0.7,
                     "lora_selection_2": None,
-                    "lora_scale_3": 0.5,
+                    "lora_scale_3": 0.7,
                     "lora_selection_3": None,
-                    "lora_scale_4": 0.5,
+                    "lora_scale_4": 0.7,
                     "lora_selection_4": None,
-                    "lora_scale_5": 0.5,
+                    "lora_scale_5": 0.7,
                     "lora_selection_5": None,
-                    "lora_scale_6": 0.5,
+                    "lora_scale_6": 0.7,
                     "lora_selection_6": None,
-                    "lora_scale_7": 0.5,
+                    "lora_scale_7": 0.7,
                     "lora_selection_7": None,
-                    "lora_scale_8": 0.5,
+                    "lora_scale_8": 0.7,
                     "lora_selection_8": None,
+                    "lora_scale_9": 0.7,
+                    "lora_selection_9": None,
+                    "lora_scale_10": 0.7,
+                    "lora_selection_10": None,
                     "enable_embeddings": False,
                     "enhance_face_region": True,
                     "enhance_strength": "Balanced",
@@ -3319,6 +3411,8 @@ Scheduler: {scheduler}"""
                     "disable_lora_6": False,
                     "disable_lora_7": False,
                     "disable_lora_8": False,
+                    "disable_lora_9": False,
+                    "disable_lora_10": False,
                     "resize_mode": "LANCZOS",
                     "pad_to_max_side": False,
                     "enable_sage_attention": False,
@@ -3432,6 +3526,20 @@ Scheduler: {scheduler}"""
                             lora_scale_8_str = line.replace("LoRA 8 scale:", "").strip()
                             if lora_scale_8_str != "Disabled":
                                 settings["lora_scale_8"] = float(lora_scale_8_str)
+                        elif line.startswith("LoRA 9 selection:"):
+                            lora_selection_9 = line.replace("LoRA 9 selection:", "").strip()
+                            settings["lora_selection_9"] = lora_selection_9 if lora_selection_9 != "None" else None
+                        elif line.startswith("LoRA 9 scale:"):
+                            lora_scale_9_str = line.replace("LoRA 9 scale:", "").strip()
+                            if lora_scale_9_str != "Disabled":
+                                settings["lora_scale_9"] = float(lora_scale_9_str)
+                        elif line.startswith("LoRA 10 selection:"):
+                            lora_selection_10 = line.replace("LoRA 10 selection:", "").strip()
+                            settings["lora_selection_10"] = lora_selection_10 if lora_selection_10 != "None" else None
+                        elif line.startswith("LoRA 10 scale:"):
+                            lora_scale_10_str = line.replace("LoRA 10 scale:", "").strip()
+                            if lora_scale_10_str != "Disabled":
+                                settings["lora_scale_10"] = float(lora_scale_10_str)
                         elif line.startswith("img2img Mode Enabled:"):
                             settings["enable_img2img"] = "true" in line.lower()
                         elif line.startswith("img2img Strength:"):
@@ -3602,6 +3710,10 @@ Scheduler: {scheduler}"""
                     settings["lora_selection_7"],
                     settings["lora_scale_8"],
                     settings["lora_selection_8"],
+                    settings["lora_scale_9"],
+                    settings["lora_selection_9"],
+                    settings["lora_scale_10"],
+                    settings["lora_selection_10"],
                     settings["randomize_seed"],
                     settings["controlnet_selection"],
                     settings["model_name"],
@@ -3615,6 +3727,8 @@ Scheduler: {scheduler}"""
                     settings["disable_lora_6"],
                     settings["disable_lora_7"],
                     settings["disable_lora_8"],
+                    settings["disable_lora_9"],
+                    settings["disable_lora_10"],
                     settings["resize_mode"],
                     settings["pad_to_max_side"],
                     settings["enable_sage_attention"],
@@ -3675,6 +3789,10 @@ Scheduler: {scheduler}"""
                     lora_selection_7,
                     lora_scale_8,
                     lora_selection_8,
+                    lora_scale_9,
+                    lora_selection_9,
+                    lora_scale_10,
+                    lora_selection_10,
                     randomize_seed,
                     controlnet_selection,
                     model_name,
@@ -3688,6 +3806,8 @@ Scheduler: {scheduler}"""
                     disable_lora_6,
                     disable_lora_7,
                     disable_lora_8,
+                    disable_lora_9,
+                    disable_lora_10,
                     resize_mode_dropdown,
                     pad_to_max_checkbox,
                     enable_sage_attention,
@@ -3731,7 +3851,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v8.3.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v8.4.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
