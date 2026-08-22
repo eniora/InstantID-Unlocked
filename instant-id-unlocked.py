@@ -32,6 +32,7 @@ warning_messages = [
     ".*cache-system uses symlinks by default.*",
     ".*The parameter 'pretrained' is deprecated*",
     ".*Arguments other than a weight enum or `None` for 'weights' are deprecated*",
+    ".*Already unmerged. Nothing to do.*",
 ]
 for msg in warning_messages:
     warnings.filterwarnings("ignore", message=msg)
@@ -641,6 +642,7 @@ def update_det_size(det_size_name):
 def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
     stop_event = threading.Event()
     embedding_state = {"loaded": False, "tokens": []}
+    lora_state = {"signature": None, "adapter_ids": {}}
     hires_sibling_pipe = None
 
     def request_stop():
@@ -934,6 +936,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 getattr(base_pipe, "_current_model", DEFAULT_MODEL),
                 target_class is StableDiffusionXLInstantIDImg2ImgPipeline,
             )
+            lora_state["signature"] = None
 
         sibling_pipe._sibling_pipe = base_pipe
         base_pipe._sibling_pipe = sibling_pipe
@@ -1110,6 +1113,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             pipe._current_model = model_name
             embedding_state["loaded"] = False
             embedding_state["tokens"] = []
+            lora_state["signature"] = None
 
             hires_sibling_pipe = get_img2img_sibling_pipe(pipe)
         elif not isinstance(pipe, target_pipe_class):
@@ -1124,9 +1128,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         apply_sage_attention(enable_sage_attention)
 
         if enable_lora:
-            pipe.unload_lora_weights()
-
-            loras_to_load = []
             lora_slots = [
                 (lora_selection, disable_lora_1, lora_scale, 1),
                 (lora_selection_2, disable_lora_2, lora_scale_2, 2),
@@ -1137,31 +1138,125 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 (lora_selection_7, disable_lora_7, lora_scale_7, 7),
                 (lora_selection_8, disable_lora_8, lora_scale_8, 8),
             ]
+
+            def file_adapter_name(filename):
+                if filename not in lora_state["adapter_ids"]:
+                    lora_state["adapter_ids"][filename] = len(lora_state["adapter_ids"])
+                sanitized = filename.replace('.safetensors', '').replace('.', '_')
+                return f"lora_{lora_state['adapter_ids'][filename]}_{sanitized}"
+
+            desired_by_file = {}
+            slot_usage = {}
             for selection, disabled, scale, idx in lora_slots:
                 if selection and not disabled:
                     lora_path = os.path.join("./models/Loras", selection)
                     if os.path.exists(lora_path):
-                        loras_to_load.append({"name": selection, "scale": scale})
-                        print(f"LoRA {idx} selected: {selection} with scale {scale}")
+                        desired_by_file[selection] = desired_by_file.get(selection, 0.0) + float(scale)
+                        slot_usage.setdefault(selection, []).append(idx)
                     else:
                         print(f"LoRA {idx} not found at {lora_path}, skipping load.")
                         gr.Warning(f"LoRA {idx} not found at {lora_path}. Skipping LoRA {idx}.")
-            if loras_to_load:
-                for i, lora_item in enumerate(loras_to_load):
-                    sanitized_lora_name = lora_item['name'].replace('.safetensors', '').replace('.', '_')
-                    adapter_name = f"lora_{i}_{sanitized_lora_name}"
-                    pipe.load_lora_weights("./models/Loras", weight_name=lora_item["name"], adapter_name=adapter_name)
-                
-                adapter_names = [f"lora_{i}_{lora_item['name'].replace('.safetensors', '').replace('.', '_')}" for i, lora_item in enumerate(loras_to_load)]
-                adapter_weights = [lora_item["scale"] for lora_item in loras_to_load]
 
-                pipe.set_adapters(adapter_names, adapter_weights=adapter_weights)
-                pipe.fuse_lora()
-                print(f"Successfully loaded and fused {len(loras_to_load)} LoRAs.")
+            for name, slots in slot_usage.items():
+                if len(slots) > 1:
+                    print(f"LoRA '{name}' selected in slots {slots} - total combined scale {desired_by_file[name]:.2f} (summed).")
+                else:
+                    print(f"LoRA selected: {name} with scale {desired_by_file[name]:.2f} (slot {slots[0]})")
+
+            desired_lora_signature = tuple(
+                sorted((name, round(scale, 4)) for name, scale in desired_by_file.items())
+            )
+
+            if desired_lora_signature == lora_state["signature"]:
+                if desired_by_file:
+                    pipe.enable_lora()
+                    print(f"\nReusing {len(desired_by_file)} already-fused LoRA(s).\n")
+                else:
+                    pipe.disable_lora()
             else:
-                pipe.disable_lora()
-                print("No LoRAs selected or found, LoRA disabled.")
+                previous_by_file = dict(lora_state["signature"] or ())
+                previous_files = set(previous_by_file)
+                desired_files = set(desired_by_file)
+                removed_files = previous_files - desired_files
+                added_files = desired_files - previous_files
+
+                try:
+                    if lora_state["signature"]:
+                        pipe.unfuse_lora()
+
+                    if removed_files:
+                        pipe.delete_adapters([file_adapter_name(f) for f in removed_files])
+                        gc.collect()
+                        torch.cuda.empty_cache()
+                        print(f"Unloaded LoRA(s): {', '.join(sorted(removed_files))}")
+
+                    for name in added_files:
+                        pipe.load_lora_weights("./models/Loras", weight_name=name, adapter_name=file_adapter_name(name))
+
+                    if desired_by_file:
+                        adapter_names = [file_adapter_name(name) for name in desired_by_file]
+                        adapter_weights = [scale for scale in desired_by_file.values()]
+                        pipe.enable_lora()
+                        pipe.set_adapters(adapter_names, adapter_weights=adapter_weights)
+                        pipe.fuse_lora()
+                        reused_count = len(desired_by_file) - len(added_files)
+                        print(
+                            f"Fused {len(desired_by_file)} LoRA(s): {len(added_files)} newly loaded, "
+                            f"{reused_count} reused, {len(removed_files)} dropped."
+                        )
+                    else:
+                        pipe.disable_lora()
+                        print("No LoRAs selected or found, LoRA disabled.")
+
+                    lora_state["signature"] = desired_lora_signature
+
+                except Exception as e:
+                    print(f"Incremental LoRA update failed ({e}); falling back to a full reload.")
+                    try:
+                        pipe.unload_lora_weights()
+                    except Exception:
+                        pass
+                    gc.collect()
+                    torch.cuda.empty_cache()
+
+                    if desired_by_file:
+                        loaded_files = {}
+                        failed_files = []
+                        for name, scale in desired_by_file.items():
+                            try:
+                                pipe.load_lora_weights("./models/Loras", weight_name=name, adapter_name=file_adapter_name(name))
+                                loaded_files[name] = scale
+                            except Exception as load_err:
+                                failed_files.append(name)
+                                hint = " (likely wrong base architecture, e.g. an SD1.5 LoRA on an SDXL model)" if "size mismatch" in str(load_err) else ""
+                                print(f"Skipping incompatible LoRA '{name}'{hint}: {load_err}".splitlines()[0])
+
+                        if failed_files:
+                            print(f"Skipped {len(failed_files)} incompatible LoRA(s): {', '.join(failed_files)}")
+
+                        if loaded_files:
+                            adapter_names = [file_adapter_name(name) for name in loaded_files]
+                            adapter_weights = [scale for scale in loaded_files.values()]
+                            pipe.enable_lora()
+                            pipe.set_adapters(adapter_names, adapter_weights=adapter_weights)
+                            pipe.fuse_lora()
+                            print(f"Successfully loaded and fused {len(loaded_files)} LoRA(s).")
+                            lora_state["signature"] = tuple(sorted(loaded_files.items()))
+                        else:
+                            pipe.disable_lora()
+                            print("No compatible LoRAs could be loaded; LoRA disabled.")
+                            lora_state["signature"] = None
+                    else:
+                        pipe.disable_lora()
+                        print("No LoRAs selected or found, LoRA disabled.")
+                        lora_state["signature"] = None
         else:
+            if lora_state["signature"]:
+                pipe.unfuse_lora()
+                pipe.unload_lora_weights()
+                lora_state["signature"] = None
+                gc.collect()
+                torch.cuda.empty_cache()
             pipe.disable_lora()
 
         if not prompt:
@@ -1245,9 +1340,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             pipe.scheduler = scheduler_class.from_config(scheduler_config)
 
         if face_image_path is None:
-            if enable_lora:
-                pipe.unfuse_lora()
-                pipe.unload_lora_weights()
             raise gr.Error(
                 f"Cannot find any input face image! Please upload the face image"
             )
@@ -1284,9 +1376,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         face_info = app.get(face_image_cv2)
 
         if len(face_info) == 0:
-            if enable_lora:
-                pipe.unfuse_lora()
-                pipe.unload_lora_weights()
             raise gr.Error(
                 f"Unable to detect a face in the image. Please upload a different photo with a clear face."
             )
@@ -1304,9 +1393,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             face_info = app.get(pose_image_cv2)
 
             if len(face_info) == 0:
-                if enable_lora:
-                    pipe.unfuse_lora()
-                    pipe.unload_lora_weights()
                 raise gr.Error(
                     f"Cannot find any face in the reference image! Please upload another person image"
                 )
@@ -1736,10 +1822,6 @@ Scheduler: {scheduler}"""
             print(f"(√) Finished generating image {i + 1} of {num_outputs}\n")
 
             torch.cuda.empty_cache()
-
-        if enable_lora:
-            pipe.unfuse_lora()
-            pipe.unload_lora_weights()
 
         stop_event.clear()
         if stopped_early:
@@ -2947,7 +3029,7 @@ Scheduler: {scheduler}"""
                     )
                     with gr.Row():
                         embeddings_dropdown = gr.Dropdown(
-                            label="Available Embeddings",
+                            label="Available Embeddings. Use with angle brackets, e.g. <embedding>. This is auto added when you insert.",
                             choices=get_embedding_choices(),
                             value=None,
                             visible=False
@@ -3651,7 +3733,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v8.2.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v8.3.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
