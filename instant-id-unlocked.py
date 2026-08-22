@@ -2733,7 +2733,7 @@ Scheduler: {scheduler}"""
                     )
                 with gr.Column():
                     enable_lora = gr.Checkbox(
-                        label="Enable LoRA(s) from your Models\\Loras folder",
+                        label="Enable LoRA(s) from your Models\\Loras folder (only SDXL/Pony)",
                         value=False,
                     )
                     with gr.Row():
@@ -2746,7 +2746,7 @@ Scheduler: {scheduler}"""
                             choices=[""] + get_available_loras(),
                             value=None,
                             allow_custom_value=True,
-                            info="Select the first LoRA.",
+                            info="1. Select the first LoRA.",
                             show_label=False,
                             scale=3
                         )
@@ -2772,7 +2772,7 @@ Scheduler: {scheduler}"""
                             choices=[""] + get_available_loras(),
                             value=None,
                             allow_custom_value=True,
-                            info="Select a second LoRA.",
+                            info="2. Select a second LoRA.",
                             show_label=False,
                             scale=3
                         )
@@ -2797,7 +2797,7 @@ Scheduler: {scheduler}"""
                             choices=[""] + get_available_loras(),
                             value=None,
                             allow_custom_value=True,
-                            info="Select a third LoRA.",
+                            info="3. Select a third LoRA.",
                             show_label=False,
                             scale=3
                         )
@@ -2822,7 +2822,7 @@ Scheduler: {scheduler}"""
                             choices=[""] + get_available_loras(),
                             value=None,
                             allow_custom_value=True,
-                            info="Select a fourth LoRA.",
+                            info="4. Select a fourth LoRA.",
                             show_label=False,
                             scale=3
                         )
@@ -2847,7 +2847,7 @@ Scheduler: {scheduler}"""
                             choices=[""] + get_available_loras(),
                             value=None,
                             allow_custom_value=True,
-                            info="Select a fifth LoRA.",
+                            info="5. Select a fifth LoRA.",
                             show_label=False,
                             scale=3
                         )
@@ -2872,7 +2872,7 @@ Scheduler: {scheduler}"""
                             choices=[""] + get_available_loras(),
                             value=None,
                             allow_custom_value=True,
-                            info="Select a sixth LoRA.",
+                            info="6. Select a sixth LoRA.",
                             show_label=False,
                             scale=3
                         )
@@ -2897,7 +2897,7 @@ Scheduler: {scheduler}"""
                             choices=[""] + get_available_loras(),
                             value=None,
                             allow_custom_value=True,
-                            info="Select a seventh LoRA.",
+                            info="7. Select a seventh LoRA.",
                             show_label=False,
                             scale=3
                         )
@@ -2922,7 +2922,7 @@ Scheduler: {scheduler}"""
                             choices=[""] + get_available_loras(),
                             value=None,
                             allow_custom_value=True,
-                            info="Select an eighth LoRA.",
+                            info="8. Select an eighth LoRA.",
                             show_label=False,
                             scale=3
                         )
@@ -2947,7 +2947,7 @@ Scheduler: {scheduler}"""
                             choices=[""] + get_available_loras(),
                             value=None,
                             allow_custom_value=True,
-                            info="Select a ninth LoRA.",
+                            info="9. Select a ninth LoRA.",
                             show_label=False,
                             scale=3
                         )
@@ -2972,7 +2972,7 @@ Scheduler: {scheduler}"""
                             choices=[""] + get_available_loras(),
                             value=None,
                             allow_custom_value=True,
-                            info="Select a tenth LoRA.",
+                            info="10. Select a tenth LoRA.",
                             show_label=False,
                             scale=3
                         )
@@ -3097,7 +3097,7 @@ Scheduler: {scheduler}"""
                     )
 
                     enable_embeddings = gr.Checkbox(
-                        label="Enable Embeddings from your Models\\Embeddings folder",
+                        label="Enable Embeddings from your Models\\Embeddings folder (only SDXL/Pony)",
                         value=False,
                     )
                     with gr.Row():
