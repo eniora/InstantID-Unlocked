@@ -1159,9 +1159,9 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
 
             for name, slots in slot_usage.items():
                 if len(slots) > 1:
-                    print(f"LoRA '{name}' selected in slots {slots} - total combined scale {desired_by_file[name]:.2f} (summed).")
+                    print(f"LoRA '{name}' selected in slots {slots} - total combined scale: {desired_by_file[name]:.3f} (summed).")
                 else:
-                    print(f"LoRA selected: {name} with scale {desired_by_file[name]:.2f} (slot {slots[0]})")
+                    print(f"LoRA selected: {name} with scale {desired_by_file[name]} (slot {slots[0]})")
 
             desired_lora_signature = tuple(
                 sorted((name, round(scale, 4)) for name, scale in desired_by_file.items())
