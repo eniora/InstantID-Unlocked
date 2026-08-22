@@ -594,13 +594,6 @@ def embedding_token_from_filename(filename):
     token = token if token else stem
     return f"<{token}>"
 
-def format_embeddings_info():
-    embeddings = get_available_embeddings()
-    if not embeddings:
-        return (f"No embeddings found in `{EMBEDDINGS_DIR}`. Place SDXL/Pony textual inversion "
-                f"files (.safetensors, .pt, .bin) there, then click Refresh.")
-    return ("Select one then click a button to insert its trigger word into prompt or negative prompt. You can insert the same embedding multiple times for stacked effect, which is different than embedding weight. Above 2.0 weight is generally not good.")
-
 def get_embedding_choices():
     embeddings = get_available_embeddings()
     if not embeddings:
@@ -3117,13 +3110,9 @@ Scheduler: {scheduler}"""
                         label="Enable Embeddings from your Models\\Embeddings folder",
                         value=False,
                     )
-                    embeddings_info = gr.Markdown(
-                        format_embeddings_info(),
-                        visible=False
-                    )
                     with gr.Row():
                         embeddings_dropdown = gr.Dropdown(
-                            label="Available Embeddings. Use with angle brackets, e.g. <embedding>. This is auto added when you insert.",
+                            label="Available Embeddings. Select one then click a button to insert its trigger word into prompt or negative prompt.",
                             choices=get_embedding_choices(),
                             value=None,
                             visible=False
@@ -3141,19 +3130,12 @@ Scheduler: {scheduler}"""
                         insert_embedding_prompt = gr.Button("➕ Insert into Prompt", scale=1, visible=False)
                         insert_embedding_negative = gr.Button("➕ Insert into Negative Prompt", scale=1, visible=False)
 
-                    enable_embeddings.change(
-                        fn=lambda x: gr.Markdown(visible=x),
-                        inputs=enable_embeddings,
-                        outputs=embeddings_info,
-                        queue=False
-                    )
-
                     def refresh_embeddings_list():
-                        return gr.update(value=format_embeddings_info()), gr.update(choices=get_embedding_choices(), value=None)
+                        return gr.update(choices=get_embedding_choices(), value=None)
 
                     refresh_embeddings.click(
                         fn=refresh_embeddings_list,
-                        outputs=[embeddings_info, embeddings_dropdown],
+                        outputs=[embeddings_dropdown],
                         queue=False
                     )
                     insert_embedding_prompt.click(
@@ -3170,7 +3152,7 @@ Scheduler: {scheduler}"""
                         queue=False
                     )
 
-                    EMBEDDINGS_OUTPUTS = [embeddings_info, embeddings_dropdown, embeddings_weight, insert_embedding_prompt, insert_embedding_negative, refresh_embeddings]
+                    EMBEDDINGS_OUTPUTS = [embeddings_dropdown, embeddings_weight, insert_embedding_prompt, insert_embedding_negative, refresh_embeddings]
 
                     enable_embeddings.input(
                         fn=toggle_embeddings_ui,
