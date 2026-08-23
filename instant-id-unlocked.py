@@ -65,7 +65,6 @@ ram_bytes = psutil.virtual_memory().total
 ram_gb = ram_bytes / (1024**3)
 vram_bytes = torch.cuda.get_device_properties(0).total_memory
 vram_gb = vram_bytes / (1024**3)
-default_vae_tiling = vram_gb >= 15 or ram_gb <= 60
 gpu_name = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU"
 
 original_sdpa = F.scaled_dot_product_attention
@@ -680,7 +679,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             )
 
     print(f"\nDetected GPU: {gpu_name} with {vram_gb:.2f} GB VRAM | Detected total system memory: {ram_gb:.2f} GB of RAM")
-    print(f"VAE Tiling: {'Enabled' if default_vae_tiling else 'Disabled'} (you can change it manually in the UI)\n")
 
     def load_and_cache_controlnet_model(controlnet_type):
         if controlnet_type not in cached_controlnet_models:
@@ -1485,6 +1483,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         print(f"Resize mode: {resize_mode}")
         print(f"Pad to max side: {pad_to_max_side}")
         print(f"Sage Attention: {enable_sage_attention}")
+        print(f"VAE Tiling: {enable_vae_tiling}")
         print(f"KPS Brightness: {kps_brightness}")
         print(f"Use custom resize: {enable_custom_resize}")
         if enable_custom_resize:
@@ -1706,6 +1705,7 @@ GPU used: {gpu_name}
 Weight application method: {weight_application_method}
 Clip skip: {clip_skip}
 Sage Attention: {enable_sage_attention}
+VAE Tiling: {enable_vae_tiling}
 Scheduler: {scheduler}"""
 
             png_info = PIL.PngImagePlugin.PngInfo()
@@ -1856,7 +1856,7 @@ Scheduler: {scheduler}"""
     - You can select a scheduler from the upper right corner dropdown. DPMSolver, KDPM2 and Euler are usually the best.
     - The "Weight application method" option controls how (word:weight) prompt weighting is applied: "Original InstantID per-token" uses InstantID's own method, which is EOS-interpolation loop (interpolates each token toward the chunk's end-of-text embedding). "ForgeUI per-encoder rescale" (it's how ForgeUI/A1111 work with weights) and "ForgeUI global rescale" both scale each token's embedding directly by its weight, then rescale to preserve the original mean - either per text encoder (CLIP-L and CLIP-G separately) or globally (one combined mean across both). "ComfyUI (blank prompt interpolation)" reproduces ComfyUI's default method: it separately encodes a completely blank prompt of the same length, then interpolates each weighted token toward that blank prompt's embedding at the same position rather than toward its own chunk's EOS embedding or a rescaled mean. This entire "Weight application method" has no effect at all if your prompt/negative prompt fields don't have any weights in them, such as "(anime style:1.5)" for example.
     - Clip Skip option: it picks which text-encoder layer generates your prompt embeddings, instead of always using the final one. Earlier layers give a more literal, less-refined read on the prompt (some checkpoints, especially anime ones like this). 0 is default, one layer back from the end. -1 is the true final layer, fully processed, zero skip. Positive values (1, 2, 3...) skip progressively further back toward the raw embedding layer, with 1-2 being the common useful range. Going below -1 jumps straight to that same raw layer at -2, then walks back toward the final layer again as you keep decreasing, it isn't extending further into "raw," it's retracing the positive range in reverse. This app uses two text encoders, CLIP-L and CLIP-G, and they retrace at different points: CLIP-L loops back on itself by -14/+11, while CLIP-G keeps producing new results all the way to -34/+31. So past ±11-14, only CLIP-G is still shifting the result, while CLIP-L has started repeating a layer it already showed you closer to zero.
-    - SageAttention speeds up generation by quantizing part of the attention math to lower precision (int8/fp8) instead of running it in full fp16/bf16. In practice this means noticeably faster steps with lower VRAM overhead, especially on newer NVIDIA GPUs. SageAttention produces slightly different results compared to standard SDPA, even with the same seed. That's why its checkbox state is added to PNG info, unlike VAE tiling for example.
+    - SageAttention speeds up generation by quantizing part of the attention math to lower precision (int8/fp8) instead of running it in full fp16/bf16. In practice this means noticeably faster steps with lower VRAM overhead, especially on newer NVIDIA GPUs. SageAttention produces slightly different results compared to standard SDPA, even with the same seed, that's why its checkbox state is added to PNG info.
     
     Other usage tips of InstantID:
     - If you're not satisfied with the similarity, try increasing the weight of "IdentityNet Strength" and "Image adapter strength".
@@ -2332,7 +2332,7 @@ Scheduler: {scheduler}"""
                     with gr.Row():
                         enable_vae_tiling = gr.Checkbox(
                             label="Enable VAE Tiling (faster VAE decoding)",
-                            value=default_vae_tiling
+                            value=True
                         )
                         enable_sage_attention = gr.Checkbox(
                             label="Enable SageAttention Optimization",
@@ -3408,6 +3408,7 @@ Scheduler: {scheduler}"""
                     "resize_mode": "LANCZOS",
                     "pad_to_max_side": False,
                     "enable_sage_attention": False,
+                    "enable_vae_tiling": True,
                     "enable_custom_resize": False,
                     "custom_resize_width": 960,
                     "custom_resize_height": 1280,
@@ -3642,6 +3643,8 @@ Scheduler: {scheduler}"""
                             settings["pad_to_max_side"] = "true" in line.lower()
                         elif line.startswith("Sage Attention:"):
                             settings["enable_sage_attention"] = "true" in line.lower()
+                        elif line.startswith("VAE Tiling:"):
+                            settings["enable_vae_tiling"] = "true" in line.lower()
                         elif line.startswith("Noise RNG device:"):
                             rng_value = line.replace("Noise RNG device:", "").strip()
                             if rng_value in ("GPU", "CPU"):
@@ -3661,7 +3664,7 @@ Scheduler: {scheduler}"""
 
                 if settings["enable_custom_resize"] or settings["pad_to_max_side"] or settings["ratio_base_pixel_number"] != 8:
                     open_settings_accordion = True
-                if settings["rng_source"] == "CPU" or settings["enable_sage_attention"] or settings["clip_skip"] != 0 or settings["kps_brightness"] != 0.6 or settings["resize_mode"] != "LANCZOS" or settings["weight_application_method"] != "Original InstantID per-token":
+                if settings["rng_source"] == "CPU" or settings["enable_sage_attention"] or not settings["enable_vae_tiling"] or settings["clip_skip"] != 0 or settings["kps_brightness"] != 0.6 or settings["resize_mode"] != "LANCZOS" or settings["weight_application_method"] != "Original InstantID per-token":
                     open_advanced_accordion = True
 
                 return [
@@ -3724,6 +3727,7 @@ Scheduler: {scheduler}"""
                     settings["resize_mode"],
                     settings["pad_to_max_side"],
                     settings["enable_sage_attention"],
+                    settings["enable_vae_tiling"],
                     settings["kps_brightness"],
                     settings["enable_custom_resize"],
                     settings["custom_resize_width"],
@@ -3803,6 +3807,7 @@ Scheduler: {scheduler}"""
                     resize_mode_dropdown,
                     pad_to_max_checkbox,
                     enable_sage_attention,
+                    enable_vae_tiling,
                     kps_brightness_slider,
                     enable_custom_resize,
                     custom_resize_width,
@@ -3843,7 +3848,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v8.4.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v8.4.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
