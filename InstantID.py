@@ -362,7 +362,7 @@ def load_upscaler_model(upscaler_name):
         raise gr.Error(f"Upscaler model not found at {upscaler_path}")
 
     try:
-        from spandrel import ModelLoader
+        from spandrel import ModelLoader, UnsupportedDtypeError
     except ImportError:
         raise gr.Error(
             "The 'spandrel' package is required for Hires Fix upscaling. "
@@ -371,6 +371,11 @@ def load_upscaler_model(upscaler_name):
 
     model = ModelLoader().load_from_file(upscaler_path)
     model = model.to(device)
+    try:
+        model = model.to(dtype=torch.float16)
+    except UnsupportedDtypeError as e:
+        print(f"Upscaler '{upscaler_name}' does not support fp16 ({e}); falling back to fp32 for this model.\n")
+        model = model.to(dtype=torch.float32)
     model.eval()
     _upscaler_model_cache[upscaler_name] = model
     return model
@@ -385,8 +390,9 @@ def _tile_starts(total, tile, stride):
 
 @torch.no_grad()
 def run_upscaler_model(model, image, tile_size=512, tile_overlap=32):
+    model_dtype = model.dtype
     img = np.array(image.convert("RGB")).astype(np.float32) / 255.0
-    img_tensor = torch.from_numpy(img).permute(2, 0, 1).unsqueeze(0).to(device=device, dtype=torch.float32)
+    img_tensor = torch.from_numpy(img).permute(2, 0, 1).unsqueeze(0).to(device=device, dtype=model_dtype)
 
     scale = getattr(model, "scale", None) or 4
     _, _, h, w = img_tensor.shape
@@ -395,7 +401,7 @@ def run_upscaler_model(model, image, tile_size=512, tile_overlap=32):
     if h <= tile_size and w <= tile_size:
         output = model(img_tensor)
     else:
-        output = torch.zeros((1, 3, h * scale, w * scale), device=device, dtype=torch.float32)
+        output = torch.zeros((1, 3, h * scale, w * scale), device=device, dtype=model_dtype)
         weight = torch.zeros_like(output)
         for y in _tile_starts(h, tile_size, stride):
             for x in _tile_starts(w, tile_size, stride):
@@ -1824,7 +1830,7 @@ Scheduler: {scheduler}"""
             generation_infos.append(png_info)
             final_saved_paths = save_images([image], generation_info=[png_info], prefix=file_prefix)
             saved_output_paths.append(final_saved_paths[0])
-            print(f"(√) Finished generating image {i + 1} of {num_outputs}\n")
+            print(f"\n(√) Finished generating image {i + 1} of {num_outputs}\n")
 
             torch.cuda.empty_cache()
 
@@ -3848,7 +3854,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v8.4.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v8.5.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
