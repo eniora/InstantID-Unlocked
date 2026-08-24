@@ -407,7 +407,7 @@ def run_upscaler_model(model, image, tile_size=512, tile_overlap=32):
                 output[:, :, oy:oy + oh, ox:ox + ow] += tile_out
                 weight[:, :, oy:oy + oh, ox:ox + ow] += 1.0
         output = output / weight.clamp(min=1e-8)
-    output = output.clamp(0, 1).squeeze(0).permute(1, 2, 0).cpu().numpy()
+    output = output.clamp(0, 1).float().squeeze(0).permute(1, 2, 0).cpu().numpy()
     return Image.fromarray((output * 255.0).round().astype(np.uint8))
 
 GFPGAN_DIR = "./models/GFPGAN"
