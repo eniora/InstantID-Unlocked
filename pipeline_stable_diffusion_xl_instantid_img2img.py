@@ -1170,6 +1170,10 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
             region_control.prompt_image_conditioning = [dict(region_mask=None)]
 
         # 5. Prepare timesteps
+        min_required_steps = max(1, math.ceil(1.0 / max(strength, 1e-4)))
+        if num_inference_steps < min_required_steps:
+            print(f"{num_inference_steps} step(s) at strength {strength} would produce 0 actual denoising steps. Dynamically raising num_inference_steps to {min_required_steps}.\n")
+            num_inference_steps = min_required_steps
         set_timesteps_params = inspect.signature(self.scheduler.set_timesteps).parameters
         initial_kwargs = {}
         if "strength" in set_timesteps_params:
