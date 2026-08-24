@@ -1197,9 +1197,10 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
             except ValueError as e2:
                 if "original_steps x strength" not in str(e2):
                     raise
-                print("LCMScheduler override: your step count is too high relative to denoising strength, dynamically lowering steps. Either lower your steps count or make the denoising strength higher.\n")
                 original_steps_used = set_timesteps_kwargs.get("original_inference_steps", needed_original_steps)
-                num_inference_steps = max(1, math.floor(original_steps_used * max(strength, 1e-4)))
+                new_num_inference_steps = max(1, math.floor(original_steps_used * max(strength, 1e-4)))
+                print(f"LCMScheduler override: {num_inference_steps} step(s) at strength {strength} is too high relative to denoising strength. Dynamically lowering num_inference_steps to {new_num_inference_steps}.\n")
+                num_inference_steps = new_num_inference_steps
                 self.scheduler.set_timesteps(num_inference_steps, device=device, **set_timesteps_kwargs)
         timesteps, num_inference_steps = self.get_timesteps(num_inference_steps, strength, device)
         latent_timestep = timesteps[:1].repeat(batch_size * num_images_per_prompt)
