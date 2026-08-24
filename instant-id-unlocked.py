@@ -1483,7 +1483,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         print(f"Resize mode: {resize_mode}")
         print(f"Pad to max side: {pad_to_max_side}")
         print(f"Sage Attention: {enable_sage_attention}")
-        print(f"VAE Tiling: {enable_vae_tiling}")
         print(f"KPS Brightness: {kps_brightness}")
         print(f"Use custom resize: {enable_custom_resize}")
         if enable_custom_resize:
@@ -1705,7 +1704,6 @@ GPU used: {gpu_name}
 Weight application method: {weight_application_method}
 Clip skip: {clip_skip}
 Sage Attention: {enable_sage_attention}
-VAE Tiling: {enable_vae_tiling}
 Scheduler: {scheduler}"""
 
             png_info = PIL.PngImagePlugin.PngInfo()
@@ -3408,7 +3406,6 @@ Scheduler: {scheduler}"""
                     "resize_mode": "LANCZOS",
                     "pad_to_max_side": False,
                     "enable_sage_attention": False,
-                    "enable_vae_tiling": True,
                     "enable_custom_resize": False,
                     "custom_resize_width": 960,
                     "custom_resize_height": 1280,
@@ -3643,8 +3640,6 @@ Scheduler: {scheduler}"""
                             settings["pad_to_max_side"] = "true" in line.lower()
                         elif line.startswith("Sage Attention:"):
                             settings["enable_sage_attention"] = "true" in line.lower()
-                        elif line.startswith("VAE Tiling:"):
-                            settings["enable_vae_tiling"] = "true" in line.lower()
                         elif line.startswith("Noise RNG device:"):
                             rng_value = line.replace("Noise RNG device:", "").strip()
                             if rng_value in ("GPU", "CPU"):
@@ -3664,7 +3659,7 @@ Scheduler: {scheduler}"""
 
                 if settings["enable_custom_resize"] or settings["pad_to_max_side"] or settings["ratio_base_pixel_number"] != 8:
                     open_settings_accordion = True
-                if settings["rng_source"] == "CPU" or settings["enable_sage_attention"] or not settings["enable_vae_tiling"] or settings["clip_skip"] != 0 or settings["kps_brightness"] != 0.6 or settings["resize_mode"] != "LANCZOS" or settings["weight_application_method"] != "Original InstantID per-token":
+                if settings["rng_source"] == "CPU" or settings["enable_sage_attention"] or settings["clip_skip"] != 0 or settings["kps_brightness"] != 0.6 or settings["resize_mode"] != "LANCZOS" or settings["weight_application_method"] != "Original InstantID per-token":
                     open_advanced_accordion = True
 
                 return [
@@ -3727,7 +3722,6 @@ Scheduler: {scheduler}"""
                     settings["resize_mode"],
                     settings["pad_to_max_side"],
                     settings["enable_sage_attention"],
-                    settings["enable_vae_tiling"],
                     settings["kps_brightness"],
                     settings["enable_custom_resize"],
                     settings["custom_resize_width"],
@@ -3807,7 +3801,6 @@ Scheduler: {scheduler}"""
                     resize_mode_dropdown,
                     pad_to_max_checkbox,
                     enable_sage_attention,
-                    enable_vae_tiling,
                     kps_brightness_slider,
                     enable_custom_resize,
                     custom_resize_width,
