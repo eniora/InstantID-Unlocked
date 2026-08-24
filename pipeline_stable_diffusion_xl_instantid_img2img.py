@@ -1170,10 +1170,6 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
             region_control.prompt_image_conditioning = [dict(region_mask=None)]
 
         # 5. Prepare timesteps
-        min_required_steps = max(1, math.ceil(1.0 / max(strength, 1e-4)))
-        if num_inference_steps < min_required_steps:
-            print(f"{num_inference_steps} step(s) at strength {strength} would produce 0 actual denoising steps. Dynamically raising num_inference_steps to {min_required_steps}.\n")
-            num_inference_steps = min_required_steps
         set_timesteps_params = inspect.signature(self.scheduler.set_timesteps).parameters
         initial_kwargs = {}
         if "strength" in set_timesteps_params:
@@ -1183,6 +1179,7 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
         except ValueError as e:
             if "original_steps x strength" not in str(e):
                 raise
+            # print("LCMScheduler override: requested steps exceed the scheduler's default step budget. Dynamically raising 'original_inference_steps' to compensate...\n")
             set_timesteps_kwargs = {}
             if "original_inference_steps" in set_timesteps_params:
                 needed_original_steps = math.ceil(num_inference_steps / max(strength, 1e-4))
@@ -1192,16 +1189,7 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
                 set_timesteps_kwargs["original_inference_steps"] = needed_original_steps
             if "strength" in set_timesteps_params:
                 set_timesteps_kwargs["strength"] = strength
-            try:
-                self.scheduler.set_timesteps(num_inference_steps, device=device, **set_timesteps_kwargs)
-            except ValueError as e2:
-                if "original_steps x strength" not in str(e2):
-                    raise
-                original_steps_used = set_timesteps_kwargs.get("original_inference_steps", needed_original_steps)
-                new_num_inference_steps = max(1, math.floor(original_steps_used * max(strength, 1e-4)))
-                print(f"LCMScheduler override: {num_inference_steps} step(s) at strength {strength} is too high relative to denoising strength. Dynamically lowering num_inference_steps to {new_num_inference_steps}.\n")
-                num_inference_steps = new_num_inference_steps
-                self.scheduler.set_timesteps(num_inference_steps, device=device, **set_timesteps_kwargs)
+            self.scheduler.set_timesteps(num_inference_steps, device=device, **set_timesteps_kwargs)
         timesteps, num_inference_steps = self.get_timesteps(num_inference_steps, strength, device)
         latent_timestep = timesteps[:1].repeat(batch_size * num_images_per_prompt)
         self._num_timesteps = len(timesteps)
