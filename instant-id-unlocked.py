@@ -2612,7 +2612,7 @@ Scheduler: {scheduler}"""
                         info="Use this mode to preserve more unique details from the input image.",
                         scale=2
                     )
-                    strength = gr.Slider(label="img2img Denoising Strength", minimum=0.1, maximum=1.0, value=0.95, step=0.05, visible=False, scale=5, info="Use this for more control over e.g., location setting, clothing style, pose, etc. A lower value preserves more of the original image. CFG scale of ~3 is recommended.")
+                    strength = gr.Slider(label="img2img Denoising Strength", minimum=0.05, maximum=1.0, value=0.95, step=0.05, visible=False, scale=5, info="Use this for more control over e.g., location setting, clothing style, pose, etc. A lower value preserves more of the original image.")
 
                 def toggle_img2img(enable):
                     return gr.update(visible=enable)
@@ -2677,7 +2677,7 @@ Scheduler: {scheduler}"""
                         )
                         hires_denoising_strength = gr.Slider(
                             label="Denoising Strength",
-                            minimum=0.1,
+                            minimum=0.05,
                             maximum=1.0,
                             step=0.05,
                             value=0.35,
@@ -2704,7 +2704,7 @@ Scheduler: {scheduler}"""
                         outputs=hires_upscaler,
                         queue=False
                     )
-                with gr.Accordion("PNG Metadata Reader & Loader", open=True):
+                with gr.Accordion("PNG Metadata Reader & Loader (only for InstantID images)", open=True):
                     with gr.Row():
                         metadata_input = gr.Image(
                             label="Drop PNG file here to read generation metadata",
