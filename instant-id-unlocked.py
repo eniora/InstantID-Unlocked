@@ -900,23 +900,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             input_image = Image.fromarray(res)
         return input_image
 
-    def fit_image_to_canvas(input_image, target_size, mode=PIL.Image.LANCZOS, pad_to_max_side=False):
-        target_w, target_h = target_size
-        if not pad_to_max_side:
-            return input_image.resize((target_w, target_h), mode)
-
-        src_w, src_h = input_image.size
-        scale = min(target_w / src_w, target_h / src_h)
-        new_w = max(1, round(src_w * scale))
-        new_h = max(1, round(src_h * scale))
-        resized = input_image.resize((new_w, new_h), mode)
-
-        canvas = np.ones((target_h, target_w, 3), dtype=np.uint8) * 255
-        offset_x = (target_w - new_w) // 2
-        offset_y = (target_h - new_h) // 2
-        canvas[offset_y: offset_y + new_h, offset_x: offset_x + new_w] = np.array(resized.convert("RGB"))
-        return Image.fromarray(canvas)
-
     def resize_control_images(control_images, size):
         if control_images is None:
             return control_images
@@ -1081,8 +1064,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         custom_resize_height,
         enable_img2img,
         strength,
-        enable_img2img_upscaler,
-        img2img_upscaler,
         ratio_base_pixel_number,
         enable_hires_fix,
         hires_upscaler,
@@ -1381,7 +1362,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         ]
 
         face_image = load_image(face_image_path)
-        original_face_image = face_image
         custom_size = None
         if enable_custom_resize:
             custom_size = (int(custom_resize_width), int(custom_resize_height))
@@ -1491,7 +1471,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         print(f"img2img Mode: {'Enabled' if enable_img2img else 'Disabled'}")
         if enable_img2img:
             print(f"img2img Denoising Strength: {strength}")
-            print(f"img2img Upscaler: {'Enabled - ' + img2img_upscaler if enable_img2img_upscaler else 'Disabled'}")
         print(f"Hires Fix: {'Enabled' if enable_hires_fix else 'Disabled'}")
         if enable_hires_fix:
             print(f"Hires Upscaler: {hires_upscaler}")
@@ -1571,16 +1550,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         generation_infos = []
         saved_output_paths = []
         stopped_early = False
-
-        i2i_upscaled_image = None
-        if enable_img2img and enable_img2img_upscaler:
-            effective_pad_to_max_side_i2i = pad_to_max_side and custom_size is None
-            i2i_upscaler_model = load_upscaler_model(img2img_upscaler)
-            i2i_upscaled_image = run_upscaler_model(i2i_upscaler_model, original_face_image)
-            i2i_upscaled_image = fit_image_to_canvas(
-                i2i_upscaled_image, (width, height), PIL.Image.LANCZOS, effective_pad_to_max_side_i2i
-            )
-
         for i in range(num_outputs):
             if stop_event.is_set():
                 print("Stop requested - halting before starting generation.\n")
@@ -1629,12 +1598,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 print(f"Running the first main pass of {width}x{height} before proceeding to the Hires Fix pass ({hires_upscale_by}x for {hires_preview_width}x{hires_preview_height})...\n")
 
             generator = torch.Generator(device=generator_device).manual_seed(seed + i)
-
-            if enable_img2img and enable_img2img_upscaler:
-                img2img_source_image = i2i_upscaled_image
-            else:
-                img2img_source_image = face_image
-
             common_kwargs = dict(
                 prompt=prompt_for_generation,
                 negative_prompt=negative_prompt_for_generation,
@@ -1654,7 +1617,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 if enable_img2img:
                     result = pipe(
                         **common_kwargs,
-                        image=img2img_source_image,
+                        image=face_image,
                         control_image=control_images,
                         strength=strength,
                         control_mask=control_mask,
@@ -1703,8 +1666,6 @@ Use custom resize: {enable_custom_resize}
 Custom resize size: {custom_resize_width}x{custom_resize_height}
 img2img Strength: {strength}
 img2img Mode Enabled: {enable_img2img}
-img2img Upscaler Enabled: {enable_img2img_upscaler}
-img2img Upscaler: {img2img_upscaler}
 Hires Fix Enabled: {enable_hires_fix}
 Hires Upscaler: {hires_upscaler}
 Hires Upscale By: {hires_upscale_by}
@@ -2642,58 +2603,19 @@ Scheduler: {scheduler}"""
                         outputs=[],
                         queue=False
                     )
-                with gr.Group():
-                    with gr.Row():
-                        enable_img2img = gr.Checkbox(
-                            label="Enable img2img mode",
-                            value=False,
-                            info="Use this mode to preserve more unique details from the input image.",
-                            scale=2
-                        )
-                        strength = gr.Slider(label="img2img Denoising Strength", minimum=0.05, maximum=1.0, value=0.95, step=0.05, visible=False, scale=5, info="Use this for more control over e.g., location setting, clothing style, pose, etc. A lower value preserves more of the original image.")
-                    with gr.Row(visible=False) as img2img_upscaler_row:
-                        enable_img2img_upscaler = gr.Checkbox(
-                            label="Enable upscaler for img2img (few use cases)",
-                            value=False,
-                            info="Mainly for denoising value of ~0.2 and lowres input photos. Best to use with DMD2 LoRA and LCMScheduler.",
-                            scale=4
-                        )
-                        img2img_upscaler = gr.Dropdown(
-                            label="Upscaler Model",
-                            choices=get_available_upscalers() or [DEFAULT_UPSCALER],
-                            value=DEFAULT_UPSCALER if DEFAULT_UPSCALER in get_available_upscalers() else (get_available_upscalers()[0] if get_available_upscalers() else DEFAULT_UPSCALER),
-                            allow_custom_value=True,
-                            info=f"Upscaler model. Place in models/Upscalers",
-                            visible=False,
-                            show_label=False,
-                            scale=5
-                        )
-                        refresh_img2img_upscalers = gr.Button("🔄", scale=0, min_width=40, visible=False)
-
-                    def toggle_img2img(enable):
-                        return gr.update(visible=enable), gr.update(visible=enable)
-
-                    enable_img2img.change(toggle_img2img, inputs=enable_img2img, outputs=[strength, img2img_upscaler_row], queue=False)
-
-                    def toggle_img2img_upscaler_ui(enable):
-                        return gr.update(visible=enable), gr.update(visible=enable)
-
-                    enable_img2img_upscaler.change(
-                        fn=toggle_img2img_upscaler_ui,
-                        inputs=enable_img2img_upscaler,
-                        outputs=[img2img_upscaler, refresh_img2img_upscalers],
-                        queue=False
+                with gr.Row():
+                    enable_img2img = gr.Checkbox(
+                        label="Enable img2img mode",
+                        value=False,
+                        info="Use this mode to preserve more unique details from the input image.",
+                        scale=2
                     )
+                    strength = gr.Slider(label="img2img Denoising Strength", minimum=0.05, maximum=1.0, value=0.95, step=0.05, visible=False, scale=5, info="Use this for more control over e.g., location setting, clothing style, pose, etc. A lower value preserves more of the original image.")
 
-                    def refresh_img2img_upscaler_list():
-                        choices = get_available_upscalers() or [DEFAULT_UPSCALER]
-                        return gr.update(choices=choices)
+                def toggle_img2img(enable):
+                    return gr.update(visible=enable)
 
-                    refresh_img2img_upscalers.click(
-                        fn=refresh_img2img_upscaler_list,
-                        outputs=img2img_upscaler,
-                        queue=False
-                    )
+                enable_img2img.change(toggle_img2img, inputs=enable_img2img, outputs=strength, queue=False)
 
                 with gr.Group():
                     with gr.Row():
@@ -3297,8 +3219,6 @@ Scheduler: {scheduler}"""
                 custom_resize_height,
                 enable_img2img,
                 strength,
-                enable_img2img_upscaler,
-                img2img_upscaler,
                 ratio_base_pixel_number,
                 enable_hires_fix,
                 hires_upscaler,
@@ -3434,8 +3354,6 @@ Scheduler: {scheduler}"""
                     "guidance_scale": 4.0,
                     "enable_img2img": False,
                     "strength": 0.95,
-                    "enable_img2img_upscaler": False,
-                    "img2img_upscaler": DEFAULT_UPSCALER,
                     "identitynet_strength_ratio": 0.7,
                     "adapter_strength_ratio": 0.6,
                     "pose_strength": 0.30,
@@ -3616,12 +3534,6 @@ Scheduler: {scheduler}"""
                             settings["enable_img2img"] = "true" in line.lower()
                         elif line.startswith("img2img Strength:"):
                             settings["strength"] = float(line.replace("img2img Strength:", "").strip())
-                        elif line.startswith("img2img Upscaler Enabled:"):
-                            settings["enable_img2img_upscaler"] = "true" in line.lower()
-                        elif line.startswith("img2img Upscaler:"):
-                            i2i_upscaler_value = line.replace("img2img Upscaler:", "").strip()
-                            if i2i_upscaler_value:
-                                settings["img2img_upscaler"] = i2i_upscaler_value
                         elif line.startswith("Hires Fix Enabled:"):
                             settings["enable_hires_fix"] = "true" in line.lower()
                         elif line.startswith("Hires Upscaler:"):
@@ -3759,8 +3671,6 @@ Scheduler: {scheduler}"""
                     settings["num_steps"],
                     settings["enable_img2img"],
                     settings["strength"],
-                    settings["enable_img2img_upscaler"],
-                    settings["img2img_upscaler"],
                     settings["identitynet_strength_ratio"],
                     settings["adapter_strength_ratio"],
                     settings["pose_strength"],
@@ -3840,8 +3750,6 @@ Scheduler: {scheduler}"""
                     num_steps,
                     enable_img2img,
                     strength,
-                    enable_img2img_upscaler,
-                    img2img_upscaler,
                     identitynet_strength_ratio,
                     adapter_strength_ratio,
                     pose_strength,
@@ -3910,16 +3818,6 @@ Scheduler: {scheduler}"""
                 ],
                 queue=False
             ).then(
-                fn=toggle_img2img,
-                inputs=[enable_img2img],
-                outputs=[strength, img2img_upscaler_row],
-                queue=False
-            ).then(
-                fn=toggle_img2img_upscaler_ui,
-                inputs=[enable_img2img_upscaler],
-                outputs=[img2img_upscaler, refresh_img2img_upscalers],
-                queue=False
-            ).then(
                 fn=toggle_lora_ui,
                 inputs=[enable_lora],
                 outputs=LORA_OUTPUTS,
@@ -3943,7 +3841,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v8.6.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v8.5.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
