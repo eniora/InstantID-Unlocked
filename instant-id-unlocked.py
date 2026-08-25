@@ -902,19 +902,21 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
 
     def fit_image_to_canvas(input_image, target_size, mode=PIL.Image.LANCZOS, pad_to_max_side=False):
         target_w, target_h = target_size
+        input_image = input_image.convert("RGB")
         if not pad_to_max_side:
             return input_image.resize((target_w, target_h), mode)
-
         src_w, src_h = input_image.size
+        if src_w == target_w and src_h == target_h:
+            return input_image
         scale = min(target_w / src_w, target_h / src_h)
         new_w = max(1, round(src_w * scale))
         new_h = max(1, round(src_h * scale))
         resized = input_image.resize((new_w, new_h), mode)
-
-        canvas = np.ones((target_h, target_w, 3), dtype=np.uint8) * 255
+        canvas = np.full((target_h, target_w, 3), 255, dtype=np.uint8)
         offset_x = (target_w - new_w) // 2
         offset_y = (target_h - new_h) // 2
-        canvas[offset_y: offset_y + new_h, offset_x: offset_x + new_w] = np.array(resized.convert("RGB"))
+        canvas[offset_y: offset_y + new_h, offset_x: offset_x + new_w] = np.array(resized)
+
         return Image.fromarray(canvas)
 
     def resize_control_images(control_images, size):
@@ -1579,7 +1581,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             i2i_upscaler_model = load_upscaler_model(img2img_upscaler)
             i2i_upscaled_image = run_upscaler_model(i2i_upscaler_model, original_face_image)
             i2i_upscaled_image = fit_image_to_canvas(
-                i2i_upscaled_image, (width, height), resize_mode_enum, effective_pad_to_max_side_i2i
+                i2i_upscaled_image, (width, height), PIL.Image.LANCZOS, effective_pad_to_max_side_i2i
             )
 
         for i in range(num_outputs):
