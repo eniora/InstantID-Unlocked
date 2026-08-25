@@ -854,7 +854,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
 
     def resize_img(
         input_image,
-        max_side=4096,
+        max_side=6144,
         min_side=256,
         size=None,
         pad_to_max_side=False,
@@ -2255,7 +2255,7 @@ Scheduler: {scheduler}"""
                     custom_resize_width = gr.Slider(
                         label="Custom Width ↔️",
                         minimum=256,
-                        maximum=4096,
+                        maximum=6144,
                         step=8,
                         value=960,
                         visible=False,
@@ -2264,7 +2264,7 @@ Scheduler: {scheduler}"""
                     custom_resize_height = gr.Slider(
                         label="Custom Height ↕️",
                         minimum=256,
-                        maximum=4096,
+                        maximum=6144,
                         step=8,
                         value=1280,
                         visible=False,
@@ -2273,7 +2273,7 @@ Scheduler: {scheduler}"""
                 resize_max_side_slider = gr.Slider(
                     label="Max image width/height resizing in pixels. This is for the output resolution.",
                     minimum=256,
-                    maximum=4096,
+                    maximum=6144,
                     step=8,
                     value=1280,
                     info="Controls the max_side for input image resizing. Using Hires Fix is preferable to raising this too high.",
