@@ -2653,10 +2653,10 @@ Scheduler: {scheduler}"""
                         strength = gr.Slider(label="img2img Denoising Strength", minimum=0.05, maximum=1.0, value=0.95, step=0.05, visible=False, scale=5, info="Use this for more control over e.g., location setting, clothing style, pose, etc. A lower value preserves more of the original image.")
                     with gr.Row(visible=False) as img2img_upscaler_row:
                         enable_img2img_upscaler = gr.Checkbox(
-                            label="Enable upscaler for img2img",
+                            label="Enable upscaler for img2img (few use cases)",
                             value=False,
-                            info="Best for low img2img denoising strengths (~0.2), so detail is preserved with good quality results.",
-                            scale=3
+                            info="Mainly for denoising value of ~0.2 and lowres input photos. Best to use with DMD2 LoRA and LCMScheduler.",
+                            scale=4
                         )
                         img2img_upscaler = gr.Dropdown(
                             label="Upscaler Model",
@@ -2666,7 +2666,7 @@ Scheduler: {scheduler}"""
                             info=f"Upscaler model. Place in models/Upscalers",
                             visible=False,
                             show_label=False,
-                            scale=4
+                            scale=5
                         )
                         refresh_img2img_upscalers = gr.Button("🔄", scale=0, min_width=40, visible=False)
 
