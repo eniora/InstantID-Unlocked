@@ -3913,16 +3913,6 @@ Scheduler: {scheduler}"""
                 ],
                 queue=False
             ).then(
-                fn=toggle_img2img,
-                inputs=[enable_img2img],
-                outputs=[strength, img2img_upscaler_row],
-                queue=False
-            ).then(
-                fn=toggle_img2img_upscaler_ui,
-                inputs=[enable_img2img_upscaler],
-                outputs=[img2img_upscaler, refresh_img2img_upscalers],
-                queue=False
-            ).then(
                 fn=toggle_lora_ui,
                 inputs=[enable_lora],
                 outputs=LORA_OUTPUTS,
