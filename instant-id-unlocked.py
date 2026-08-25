@@ -1892,6 +1892,7 @@ Scheduler: {scheduler}"""
     - Click the Generate button to begin image generation.
     - img2img mode imports the "pipeline_stable_diffusion_xl_instantid_img2img" pipeline. This img2img pipeline (which is used by Hires Fix too) can sometimes use ~5GB more VRAM than the normal pipeline.
     - Upscale and use Enable Hires Fix to generate images with a resolution of what SDXL is best at (usually 1280 max side) to prevent anatomy errors like long necks while still producing good quality images.
+    - Enable i2i Upscaler upscales your input image before the generation pass, using IdentityNet to sharpen and enhance facial detail as it scales. Best for lowres or soft input photos. Recommended settings: LCM Scheduler + DMD2 LoRA, 10–15 steps, ~0.2 img2img denoising strength. You can also use this to upscale an image you've already generated: just feed it back in as the face image, reuse the same seed, prompt and other settings, then bump up the target resolution to make it higher than the input image (no need for Hires Fix).
     - Select a model to use for generation from the upper left corner dropdown. Only use SDXL and Pony. Illustrious models can be loaded but not all of them are well supported and some produce broken colors.
     - You can select a scheduler from the upper right corner dropdown. DPMSolver, KDPM2 and Euler are usually the best.
     - The "Weight application method" option controls how (word:weight) prompt weighting is applied: "Original InstantID per-token" uses InstantID's own method, which is EOS-interpolation loop (interpolates each token toward the chunk's end-of-text embedding). "ForgeUI per-encoder rescale" (it's how ForgeUI/A1111 work with weights) and "ForgeUI global rescale" both scale each token's embedding directly by its weight, then rescale to preserve the original mean - either per text encoder (CLIP-L and CLIP-G separately) or globally (one combined mean across both). "ComfyUI (blank prompt interpolation)" reproduces ComfyUI's default method: it separately encodes a completely blank prompt of the same length, then interpolates each weighted token toward that blank prompt's embedding at the same position rather than toward its own chunk's EOS embedding or a rescaled mean. This entire "Weight application method" has no effect at all if your prompt/negative prompt fields don't have any weights in them, such as "(anime style:1.5)" for example.
@@ -2656,7 +2657,7 @@ Scheduler: {scheduler}"""
                         strength = gr.Slider(label="img2img Denoising Strength", minimum=0.05, maximum=1.0, value=0.95, step=0.05, visible=False, scale=5, info="Use this for more control over e.g., location setting, clothing style, pose, etc. A lower value preserves more of the original image.")
                     with gr.Row(visible=False) as img2img_upscaler_row:
                         enable_img2img_upscaler = gr.Checkbox(
-                            label="Enable upscaler for img2img (few use cases)",
+                            label="Enable i2i upscaler (optional, few use cases)",
                             value=False,
                             info="Mainly for denoising value of ~0.2 and lowres input photos. Best to use with DMD2 LoRA and LCMScheduler.",
                             scale=4
