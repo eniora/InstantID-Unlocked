@@ -111,6 +111,7 @@ def open_output_folder():
 
 import PIL
 from PIL import Image
+Image.MAX_IMAGE_PIXELS = None
 
 DEFAULT_FILE_PREFIX = "InstantID_"
 FILENAME_SAFE_TRANS = str.maketrans('', '', '\\/:*?"<>|')
@@ -177,6 +178,15 @@ def get_canny_image(image, t1=100, t2=200):
     return Image.fromarray(edges).convert("L")
 
 import gradio as gr
+import starlette.responses as _starlette_responses
+_orig_set_stat_headers = _starlette_responses.FileResponse.set_stat_headers
+def _set_stat_headers_no_content_length(self, stat_result):
+    _orig_set_stat_headers(self, stat_result)
+    try:
+        del self.headers["content-length"]
+    except KeyError:
+        pass
+_starlette_responses.FileResponse.set_stat_headers = _set_stat_headers_no_content_length
 
 MAX_SEED = 2**53 - 1
 MAX_SEED_RAND = np.iinfo(np.uint32).max - 1
@@ -3944,7 +3954,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v8.6.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v8.6.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
