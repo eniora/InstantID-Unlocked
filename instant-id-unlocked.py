@@ -576,13 +576,13 @@ def encode_image_to_latents(vae_pipe, pil_image, generator=None):
 
     return latents
 
-def latent_space_upscale(latents, target_pixel_height, target_pixel_width, mode="bicubic"):
+def latent_space_upscale(latents, target_pixel_height, target_pixel_width, mode="bicubic", antialias=True):
     target_h = max(1, round(target_pixel_height / 8))
     target_w = max(1, round(target_pixel_width / 8))
     kwargs = {"mode": mode}
     if mode in ("bicubic", "bilinear"):
         kwargs["align_corners"] = False
-        kwargs["antialias"] = True
+        kwargs["antialias"] = antialias
     return F.interpolate(latents, size=(target_h, target_w), **kwargs)
 
 EMBEDDINGS_DIR = "./models/Embeddings"
@@ -1588,7 +1588,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         i2i_latent_encode_source = None
         use_latent_upscale_i2i = False
         if enable_img2img and enable_img2img_upscaler:
-            use_latent_upscale_i2i = (img2img_upscaler == "Latent (bicubic antialiased)")
+            use_latent_upscale_i2i = (img2img_upscaler == "Latent (bicubic)")
             effective_pad_to_max_side_i2i = pad_to_max_side and custom_size is None
             if not use_latent_upscale_i2i:
                 i2i_upscaler_model = load_upscaler_model(img2img_upscaler)
@@ -1663,7 +1663,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             if enable_img2img and enable_img2img_upscaler:
                 if use_latent_upscale_i2i:
                     i2i_base_latents = encode_image_to_latents(pipe, i2i_latent_encode_source, generator=generator)
-                    img2img_source_image = latent_space_upscale(i2i_base_latents, height, width)
+                    img2img_source_image = latent_space_upscale(i2i_base_latents, height, width, mode="bicubic", antialias=False)
                 else:
                     img2img_source_image = i2i_upscaled_image
             else:
@@ -1800,8 +1800,8 @@ Scheduler: {scheduler}"""
                 hires_width = max(8, int(round((width * hires_upscale_by) / 8) * 8))
                 hires_height = max(8, int(round((height * hires_upscale_by) / 8) * 8))
 
-                use_pixel_resize = (hires_upscaler == "Pixel resize (LANCZOS)")
-                use_latent_upscale = (hires_upscaler == "Latent (bicubic antialiased)")
+                use_pixel_resize = (hires_upscaler == "Pixel resize (Lanczos)")
+                use_latent_upscale = (hires_upscaler == "Latent (bicubic)")
                 use_builtin_resize = use_pixel_resize or use_latent_upscale
 
                 if not use_builtin_resize:
@@ -1839,7 +1839,7 @@ Scheduler: {scheduler}"""
 
                 if use_latent_upscale:
                     base_latents = encode_image_to_latents(hires_pipe, image, generator=hires_generator)
-                    hires_pass_image = latent_space_upscale(base_latents, hires_height, hires_width)
+                    hires_pass_image = latent_space_upscale(base_latents, hires_height, hires_width, mode="bicubic", antialias=False)
                 else:
                     hires_pass_image = upscaled_image
 
@@ -2695,7 +2695,7 @@ Scheduler: {scheduler}"""
                         )
                         img2img_upscaler = gr.Dropdown(
                             label="Upscaler Model",
-                            choices=["Latent (bicubic antialiased)"] + (get_available_upscalers() or [DEFAULT_UPSCALER]),
+                            choices=["Latent (bicubic)"] + (get_available_upscalers() or [DEFAULT_UPSCALER]),
                             value=DEFAULT_UPSCALER if DEFAULT_UPSCALER in get_available_upscalers() else (get_available_upscalers()[0] if get_available_upscalers() else DEFAULT_UPSCALER),
                             allow_custom_value=True,
                             info=f"Upscaler model. Place in models/Upscalers",
@@ -2721,7 +2721,7 @@ Scheduler: {scheduler}"""
                     )
 
                     def refresh_img2img_upscaler_list():
-                        choices = ["Latent (bicubic antialiased)"] + (get_available_upscalers() or [DEFAULT_UPSCALER])
+                        choices = ["Latent (bicubic)"] + (get_available_upscalers() or [DEFAULT_UPSCALER])
                         return gr.update(choices=choices)
 
                     refresh_img2img_upscalers.click(
@@ -2735,7 +2735,7 @@ Scheduler: {scheduler}"""
                         enable_hires_fix = gr.Checkbox(label="Enable Hires Fix", value=False, scale=1)
                         hires_upscaler = gr.Dropdown(
                             label="Upscaler Model",
-                            choices=["Pixel resize (LANCZOS)", "Latent (bicubic antialiased)"] + (get_available_upscalers() or [DEFAULT_UPSCALER]),
+                            choices=["Pixel resize (Lanczos)", "Latent (bicubic)"] + (get_available_upscalers() or [DEFAULT_UPSCALER]),
                             value=DEFAULT_UPSCALER if DEFAULT_UPSCALER in get_available_upscalers() else (get_available_upscalers()[0] if get_available_upscalers() else DEFAULT_UPSCALER),
                             allow_custom_value=True,
                             info=f"Upscaler model. Place in models/Upscalers",
@@ -2807,7 +2807,7 @@ Scheduler: {scheduler}"""
                     )
 
                     def refresh_hires_upscaler_list():
-                        choices = ["Pixel resize (LANCZOS)", "Latent (bicubic antialiased)"] + (get_available_upscalers() or [DEFAULT_UPSCALER])
+                        choices = ["Pixel resize (Lanczos)", "Latent (bicubic)"] + (get_available_upscalers() or [DEFAULT_UPSCALER])
                         return gr.update(choices=choices)
 
                     refresh_hires_upscalers.click(
