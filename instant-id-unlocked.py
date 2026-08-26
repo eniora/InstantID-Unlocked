@@ -1586,11 +1586,11 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
 
         i2i_upscaled_image = None
         i2i_latent_encode_source = None
-        use_true_latent_upscale_i2i = False
+        use_latent_upscale_i2i = False
         if enable_img2img and enable_img2img_upscaler:
-            use_true_latent_upscale_i2i = (img2img_upscaler == "Latent (latent-space resize)")
+            use_latent_upscale_i2i = (img2img_upscaler == "Latent (latent-space resize)")
             effective_pad_to_max_side_i2i = pad_to_max_side and custom_size is None
-            if not use_true_latent_upscale_i2i:
+            if not use_latent_upscale_i2i:
                 i2i_upscaler_model = load_upscaler_model(img2img_upscaler)
                 i2i_upscaled_image = run_upscaler_model(i2i_upscaler_model, original_face_image)
                 i2i_upscaled_image = fit_image_to_canvas(
@@ -1661,7 +1661,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             generator = torch.Generator(device=generator_device).manual_seed(seed + i)
 
             if enable_img2img and enable_img2img_upscaler:
-                if use_true_latent_upscale_i2i:
+                if use_latent_upscale_i2i:
                     i2i_base_latents = encode_image_to_latents(pipe, i2i_latent_encode_source, generator=generator)
                     img2img_source_image = latent_space_upscale(i2i_base_latents, height, width)
                 else:
@@ -1800,11 +1800,11 @@ Scheduler: {scheduler}"""
                 hires_width = max(8, int(round((width * hires_upscale_by) / 8) * 8))
                 hires_height = max(8, int(round((height * hires_upscale_by) / 8) * 8))
 
-                use_pixel_resize = (hires_upscaler == "Pixel resize")
-                use_true_latent_upscale = (hires_upscaler == "Latent (latent-space resize)")
-                use_any_latent_option = use_pixel_resize or use_true_latent_upscale
+                use_pixel_resize = (hires_upscaler == "Pixel resize (LANCZOS)")
+                use_latent_upscale = (hires_upscaler == "Latent (latent-space resize)")
+                use_builtin_resize = use_pixel_resize or use_latent_upscale
 
-                if not use_any_latent_option:
+                if not use_builtin_resize:
                     upscaler_model = load_upscaler_model(hires_upscaler)
                     upscaled_image = run_upscaler_model(upscaler_model, image)
                     upscaled_image = upscaled_image.resize((hires_width, hires_height), PIL.Image.LANCZOS)
@@ -1837,7 +1837,7 @@ Scheduler: {scheduler}"""
 
                 hires_generator = torch.Generator(device=generator_device).manual_seed(seed + i)
 
-                if use_true_latent_upscale:
+                if use_latent_upscale:
                     base_latents = encode_image_to_latents(hires_pipe, image, generator=hires_generator)
                     hires_pass_image = latent_space_upscale(base_latents, hires_height, hires_width)
                 else:
@@ -2735,7 +2735,7 @@ Scheduler: {scheduler}"""
                         enable_hires_fix = gr.Checkbox(label="Enable Hires Fix", value=False, scale=1)
                         hires_upscaler = gr.Dropdown(
                             label="Upscaler Model",
-                            choices=["Pixel resize", "Latent (latent-space resize)"] + (get_available_upscalers() or [DEFAULT_UPSCALER]),
+                            choices=["Pixel resize (LANCZOS)", "Latent (latent-space resize)"] + (get_available_upscalers() or [DEFAULT_UPSCALER]),
                             value=DEFAULT_UPSCALER if DEFAULT_UPSCALER in get_available_upscalers() else (get_available_upscalers()[0] if get_available_upscalers() else DEFAULT_UPSCALER),
                             allow_custom_value=True,
                             info=f"Upscaler model. Place in models/Upscalers",
@@ -2807,7 +2807,7 @@ Scheduler: {scheduler}"""
                     )
 
                     def refresh_hires_upscaler_list():
-                        choices = ["Pixel resize", "Latent (latent-space resize)"] + (get_available_upscalers() or [DEFAULT_UPSCALER])
+                        choices = ["Pixel resize (LANCZOS)", "Latent (latent-space resize)"] + (get_available_upscalers() or [DEFAULT_UPSCALER])
                         return gr.update(choices=choices)
 
                     refresh_hires_upscalers.click(
@@ -3968,7 +3968,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v8.6.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v8.6.2</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
