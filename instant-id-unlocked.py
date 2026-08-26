@@ -1589,7 +1589,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         if enable_img2img and enable_img2img_upscaler:
             use_pixel_resize_latent_i2i = (img2img_upscaler == "Latent (pixel resize)")
             effective_pad_to_max_side_i2i = pad_to_max_side and custom_size is None
-            torch.cuda.empty_cache()
             if not use_pixel_resize_latent_i2i:
                 i2i_upscaler_model = load_upscaler_model(img2img_upscaler)
                 i2i_upscaled_image = run_upscaler_model(i2i_upscaler_model, original_face_image)
