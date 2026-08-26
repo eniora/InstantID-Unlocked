@@ -2815,13 +2815,12 @@ Scheduler: {scheduler}"""
                         outputs=hires_upscaler,
                         queue=False
                     )
-                with gr.Accordion("PNG Metadata Reader & Loader (only for images generated with InstantID)", open=True):
+                with gr.Accordion("PNG Metadata Reader & Loader (for images generated with InstantID)", open=True):
                     with gr.Row():
                         metadata_input = gr.Image(
                             label="Drop PNG file here to read generation metadata",
                             type="filepath",
-                            height=400,
-                            width=400
+                            height=400
                         )
                         metadata_output = gr.Textbox(
                             label="Generation Metadata",
