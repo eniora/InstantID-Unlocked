@@ -1575,14 +1575,21 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         stopped_early = False
 
         i2i_upscaled_image = None
+        use_pixel_resize_latent_i2i = False
         if enable_img2img and enable_img2img_upscaler:
+            use_pixel_resize_latent_i2i = (img2img_upscaler == "Latent (pixel resize)")
             effective_pad_to_max_side_i2i = pad_to_max_side and custom_size is None
             torch.cuda.empty_cache()
-            i2i_upscaler_model = load_upscaler_model(img2img_upscaler)
-            i2i_upscaled_image = run_upscaler_model(i2i_upscaler_model, original_face_image)
-            i2i_upscaled_image = fit_image_to_canvas(
-                i2i_upscaled_image, (width, height), PIL.Image.LANCZOS, effective_pad_to_max_side_i2i
-            )
+            if not use_pixel_resize_latent_i2i:
+                i2i_upscaler_model = load_upscaler_model(img2img_upscaler)
+                i2i_upscaled_image = run_upscaler_model(i2i_upscaler_model, original_face_image)
+                i2i_upscaled_image = fit_image_to_canvas(
+                    i2i_upscaled_image, (width, height), PIL.Image.LANCZOS, effective_pad_to_max_side_i2i
+                )
+            else:
+                i2i_upscaled_image = fit_image_to_canvas(
+                    original_face_image, (width, height), PIL.Image.LANCZOS, effective_pad_to_max_side_i2i
+                )
 
         for i in range(num_outputs):
             if stop_event.is_set():
@@ -2664,7 +2671,7 @@ Scheduler: {scheduler}"""
                         )
                         img2img_upscaler = gr.Dropdown(
                             label="Upscaler Model",
-                            choices=get_available_upscalers() or [DEFAULT_UPSCALER],
+                            choices=["Latent (pixel resize)"] + (get_available_upscalers() or [DEFAULT_UPSCALER]),
                             value=DEFAULT_UPSCALER if DEFAULT_UPSCALER in get_available_upscalers() else (get_available_upscalers()[0] if get_available_upscalers() else DEFAULT_UPSCALER),
                             allow_custom_value=True,
                             info=f"Upscaler model. Place in models/Upscalers",
@@ -2690,7 +2697,7 @@ Scheduler: {scheduler}"""
                     )
 
                     def refresh_img2img_upscaler_list():
-                        choices = get_available_upscalers() or [DEFAULT_UPSCALER]
+                        choices = ["Latent (pixel resize)"] + (get_available_upscalers() or [DEFAULT_UPSCALER])
                         return gr.update(choices=choices)
 
                     refresh_img2img_upscalers.click(
