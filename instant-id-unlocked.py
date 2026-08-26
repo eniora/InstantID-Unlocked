@@ -864,8 +864,8 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
 
     def resize_img(
         input_image,
-        max_side=6144,
-        min_side=128,
+        max_side=1280,
+        min_side=1024,
         size=None,
         pad_to_max_side=False,
         mode=PIL.Image.LANCZOS,
@@ -2800,7 +2800,7 @@ Scheduler: {scheduler}"""
                         outputs=hires_upscaler,
                         queue=False
                     )
-                with gr.Accordion("PNG Metadata Reader & Loader (only for InstantID images)", open=True):
+                with gr.Accordion("PNG Metadata Reader & Loader (only for images generated with InstantID)", open=True):
                     with gr.Row():
                         metadata_input = gr.Image(
                             label="Drop PNG file here to read generation metadata",
