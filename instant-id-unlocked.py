@@ -2820,14 +2820,14 @@ Scheduler: {scheduler}"""
                         metadata_input = gr.Image(
                             label="Drop PNG file here to read generation metadata",
                             type="filepath",
-                            height=500,
-                            width=500
+                            height=400,
+                            width=400
                         )
                         metadata_output = gr.Textbox(
                             label="Generation Metadata",
                             interactive=False,
-                            lines=22,
-                            max_lines=22
+                            lines=17,
+                            max_lines=17
                         )
                     with gr.Row():
                         apply_metadata_btn = gr.Button("Apply to all fields (resets all fields if no generation metadata)", elem_classes="apply-fields-custom")
