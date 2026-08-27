@@ -2682,10 +2682,10 @@ Scheduler: {scheduler}"""
                         enable_img2img = gr.Checkbox(
                             label="Enable img2img mode",
                             value=False,
-                            info="Use this mode to preserve more unique details from the input image.",
+                            info="Preserves more details from input.",
                             scale=2
                         )
-                        strength = gr.Slider(label="img2img Denoising Strength", minimum=0.05, maximum=1.0, value=0.95, step=0.05, visible=False, scale=5, info="Use this for more control over e.g., location setting, clothing style, pose, etc.")
+                        strength = gr.Slider(label="img2img Denoising Strength", minimum=0.05, maximum=1.0, value=0.95, step=0.05, visible=False, show_label=False, scale=5, info="Denoising Strength. Adjust for more control over clothing style, pose, etc.")
                     with gr.Row(visible=False) as img2img_upscaler_row:
                         enable_img2img_upscaler = gr.Checkbox(
                             label="Enable i2i upscaler (optional, few use cases)",
