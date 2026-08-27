@@ -420,6 +420,18 @@ def run_upscaler_model(model, image, tile_size=512, tile_overlap=32):
     output = output.clamp(0, 1).float().squeeze(0).permute(1, 2, 0).cpu().numpy()
     return Image.fromarray((output * 255.0).round().astype(np.uint8))
 
+def prescale_for_upscaler_model(source_image, target_w, target_h, model_scale, headroom=1.30, min_dim=8):
+    src_w, src_h = source_image.size
+    needed_scale = max(target_w / src_w, target_h / src_h) * headroom
+    prescale = min(needed_scale / model_scale, 1.0)
+    if prescale >= 0.999:
+        return source_image
+    new_w = max(min_dim, int(round(src_w * prescale)))
+    new_h = max(min_dim, int(round(src_h * prescale)))
+    if new_w == src_w and new_h == src_h:
+        return source_image
+    return source_image.resize((new_w, new_h), PIL.Image.LANCZOS)
+
 GFPGAN_DIR = "./models/GFPGAN"
 GFPGAN_MODEL_NAME = "GFPGANv1.4.pth"
 GFPGAN_MODEL_URL = "https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.4.pth"
@@ -1085,6 +1097,8 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         rng_source,
         enable_vae_tiling,
         enable_sage_attention,
+        enable_upscaler_prescale,
+        upscaler_prescale_headroom,
         resize_mode,
         pad_to_max_side,
         kps_brightness,
@@ -1510,6 +1524,10 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             print(f"Hires Upscale By: {hires_upscale_by}")
             print(f"Hires Steps: {hires_steps}{' (Auto)' if hires_steps == 0 else ''}")
             print(f"Hires Denoising Strength: {hires_denoising_strength}")
+        if enable_hires_fix:
+            print(f"Upscaler Prescale Optimization: {enable_upscaler_prescale}")
+            if enable_upscaler_prescale:
+                print(f"Upscaler Prescale Headroom: {upscaler_prescale_headroom}")
         print(f"Enhance non-face region: {'True' if enhance_face_region else 'False'} ({enhance_strength}{f' | Padding: {custom_enhance_padding:.2f}' if enhance_strength == 'Custom' else ''})")
         print(f"Guidance scale: {guidance_scale}")
         print(f"Model: {model_name}")
@@ -1744,6 +1762,8 @@ Hires Upscaler: {hires_upscaler}
 Hires Upscale By: {hires_upscale_by}
 Hires Steps: {hires_steps}
 Hires Denoising Strength: {hires_denoising_strength}
+Upscaler Prescale Optimization: {enable_upscaler_prescale}
+Upscaler Prescale Headroom: {upscaler_prescale_headroom}
 IdentityNet strength: {identitynet_strength_ratio}
 Adapter strength: {adapter_strength_ratio}
 Pose strength: {pose_strength}
@@ -1806,7 +1826,14 @@ Scheduler: {scheduler}"""
 
                 if not use_builtin_resize:
                     upscaler_model = load_upscaler_model(hires_upscaler)
-                    upscaled_image = run_upscaler_model(upscaler_model, image)
+                    if enable_upscaler_prescale:
+                        hires_model_scale = getattr(upscaler_model, "scale", None) or 4
+                        hires_prescaled_source = prescale_for_upscaler_model(
+                            image, hires_width, hires_height, hires_model_scale, headroom=upscaler_prescale_headroom
+                        )
+                        upscaled_image = run_upscaler_model(upscaler_model, hires_prescaled_source)
+                    else:
+                        upscaled_image = run_upscaler_model(upscaler_model, image)
                     upscaled_image = upscaled_image.resize((hires_width, hires_height), PIL.Image.LANCZOS)
                 elif use_pixel_resize:
                     upscaled_image = image.resize((hires_width, hires_height), PIL.Image.LANCZOS)
@@ -2399,7 +2426,21 @@ Scheduler: {scheduler}"""
                             step=0.05,
                             value=0.6,
                             info="Brightness of the face-landmark guide image InstantID uses to position face features. Leave default if unsure.",
-                            scale=3
+                        )
+                    with gr.Row():
+                        enable_upscaler_prescale = gr.Checkbox(
+                            label="Prescale images for Hires Fix upscalers",
+                            value=True,
+                            info="Less seams and sharper results for Hires Fix, slightly less detail.",
+                        )
+                        upscaler_prescale_headroom = gr.Slider(
+                            label="Prescale Headroom",
+                            minimum=1.05,
+                            maximum=1.95,
+                            step=0.05,
+                            value=1.3,
+                            show_label=False,
+                            info="Headroom (scale buffer, more = less effect)",
                         )
                     with gr.Row():
                         enable_vae_tiling = gr.Checkbox(
@@ -3323,6 +3364,8 @@ Scheduler: {scheduler}"""
                 rng_source,
                 enable_vae_tiling,
                 enable_sage_attention,
+                enable_upscaler_prescale,
+                upscaler_prescale_headroom,
                 resize_mode_dropdown,
                 pad_to_max_checkbox,
                 kps_brightness_slider,
@@ -3522,6 +3565,8 @@ Scheduler: {scheduler}"""
                     "resize_mode": "LANCZOS",
                     "pad_to_max_side": False,
                     "enable_sage_attention": False,
+                    "enable_upscaler_prescale": True,
+                    "upscaler_prescale_headroom": 1.3,
                     "enable_custom_resize": False,
                     "custom_resize_width": 960,
                     "custom_resize_height": 1280,
@@ -3677,6 +3722,13 @@ Scheduler: {scheduler}"""
                                 settings["hires_denoising_strength"] = float(line.replace("Hires Denoising Strength:", "").strip())
                             except ValueError:
                                 pass
+                        elif line.startswith("Upscaler Prescale Optimization:"):
+                            settings["enable_upscaler_prescale"] = "true" in line.lower()
+                        elif line.startswith("Upscaler Prescale Headroom:"):
+                            try:
+                                settings["upscaler_prescale_headroom"] = float(line.replace("Upscaler Prescale Headroom:", "").strip())
+                            except ValueError:
+                                pass
                         elif line.startswith("Enhance non-face region:"):
                             settings["enhance_face_region"] = "true" in line.lower()
                         elif line.startswith("Enhance region profile:"):
@@ -3781,7 +3833,7 @@ Scheduler: {scheduler}"""
 
                 if settings["enable_custom_resize"] or settings["pad_to_max_side"] or settings["ratio_base_pixel_number"] != 8:
                     open_settings_accordion = True
-                if settings["rng_source"] == "CPU" or settings["enable_sage_attention"] or settings["clip_skip"] != 0 or settings["kps_brightness"] != 0.6 or settings["resize_mode"] != "LANCZOS" or settings["weight_application_method"] != "Original InstantID per-token":
+                if settings["rng_source"] == "CPU" or settings["enable_sage_attention"] or not settings["enable_upscaler_prescale"] or settings["upscaler_prescale_headroom"] != 1.3 or settings["clip_skip"] != 0 or settings["kps_brightness"] != 0.6 or settings["resize_mode"] != "LANCZOS" or settings["weight_application_method"] != "Original InstantID per-token":
                     open_advanced_accordion = True
 
                 return [
@@ -3846,6 +3898,8 @@ Scheduler: {scheduler}"""
                     settings["resize_mode"],
                     settings["pad_to_max_side"],
                     settings["enable_sage_attention"],
+                    settings["enable_upscaler_prescale"],
+                    settings["upscaler_prescale_headroom"],
                     settings["kps_brightness"],
                     settings["enable_custom_resize"],
                     settings["custom_resize_width"],
@@ -3927,6 +3981,8 @@ Scheduler: {scheduler}"""
                     resize_mode_dropdown,
                     pad_to_max_checkbox,
                     enable_sage_attention,
+                    enable_upscaler_prescale,
+                    upscaler_prescale_headroom,
                     kps_brightness_slider,
                     enable_custom_resize,
                     custom_resize_width,
