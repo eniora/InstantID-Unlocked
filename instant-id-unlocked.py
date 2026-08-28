@@ -2928,29 +2928,54 @@ Scheduler: {scheduler}"""
                             scale=2
                         )
                     with gr.Row(visible=False) as hires_fix_row:
+                        def _get_hires_base_side(max_side, use_custom, custom_w, custom_h):
+                            return max(custom_w, custom_h) if use_custom else max_side
+
                         hires_upscale_by = gr.Slider(
                             label="Hires Upscale By",
                             minimum=1.0,
                             maximum=4.0,
                             step=0.05,
                             value=1.5,
-                            info=f"Target = max_side * this value = {max(8, int(round((resize_max_side_slider.value * 1.5) / 8) * 8))}px.",
+                            info=f"Target = max_side * this value = {max(8, int(round((_get_hires_base_side(resize_max_side_slider.value, enable_custom_resize.value, custom_resize_width.value, custom_resize_height.value) * 1.5) / 8) * 8))}px.",
                             scale=3
                         )
-                        def update_hires_upscale(max_side, upscale_by):
-                            target_px = max(8, int(round((max_side * upscale_by) / 8) * 8))
+                        def update_hires_upscale(max_side, upscale_by, use_custom, custom_w, custom_h):
+                            base_side = _get_hires_base_side(max_side, use_custom, custom_w, custom_h)
+                            target_px = max(8, int(round((base_side * upscale_by) / 8) * 8))
                             return gr.update(
                                 info=f"Target = max_side * this value = {target_px}px."
                             )
+
+                        _hires_upscale_inputs = [resize_max_side_slider, hires_upscale_by, enable_custom_resize, custom_resize_width, custom_resize_height]
+
                         resize_max_side_slider.release(
                             fn=update_hires_upscale,
-                            inputs=[resize_max_side_slider, hires_upscale_by],
+                            inputs=_hires_upscale_inputs,
                             outputs=[hires_upscale_by],
                             queue=False
                         )
                         hires_upscale_by.release(
                             fn=update_hires_upscale,
-                            inputs=[resize_max_side_slider, hires_upscale_by],
+                            inputs=_hires_upscale_inputs,
+                            outputs=[hires_upscale_by],
+                            queue=False
+                        )
+                        enable_custom_resize.change(
+                            fn=update_hires_upscale,
+                            inputs=_hires_upscale_inputs,
+                            outputs=[hires_upscale_by],
+                            queue=False
+                        )
+                        custom_resize_width.release(
+                            fn=update_hires_upscale,
+                            inputs=_hires_upscale_inputs,
+                            outputs=[hires_upscale_by],
+                            queue=False
+                        )
+                        custom_resize_height.release(
+                            fn=update_hires_upscale,
+                            inputs=_hires_upscale_inputs,
                             outputs=[hires_upscale_by],
                             queue=False
                         )
@@ -4146,20 +4171,15 @@ Scheduler: {scheduler}"""
                 outputs=EMBEDDINGS_OUTPUTS,
                 queue=False
             ).then(
-                fn=toggle_hires_fix_ui,
-                inputs=[enable_hires_fix],
-                outputs=[hires_upscaler, refresh_hires_upscalers, hires_fix_row, save_hires_original],
-                queue=False
-            ).then(
                 fn=update_hires_upscale,
-                inputs=[resize_max_side_slider, hires_upscale_by],
+                inputs=[resize_max_side_slider, hires_upscale_by, enable_custom_resize, custom_resize_width, custom_resize_height],
                 outputs=[hires_upscale_by],
                 queue=False
             )
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v8.7.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v8.7.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
