@@ -1418,6 +1418,30 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
 
         face_info = app.get(face_image_cv2)
 
+        if len(face_info) == 0 and enable_custom_resize:
+            print("\nCustom resolution stretched the face/pose image too much to be able to detect a face. Retrying detection on an aspect-preserving resize...\n")
+            fallback_detect_image = resize_img(
+                original_face_image,
+                size=None,
+                max_side=resize_max_side,
+                mode=resize_mode_enum,
+                pad_to_max_side=False,
+                base_pixel_number=ratio_base_pixel_number,
+            )
+            fallback_detect_cv2 = convert_from_image_to_cv2(fallback_detect_image)
+            fallback_face_info = app.get(fallback_detect_cv2)
+            if len(fallback_face_info) > 0:
+                det_w, det_h = fallback_detect_image.size
+                scale_x, scale_y = width / det_w, height / det_h
+                fixed_face_info = []
+                for fi in fallback_face_info:
+                    fi = dict(fi)
+                    fi["kps"] = np.array(fi["kps"], dtype=np.float32).copy()
+                    fi["kps"][:, 0] *= scale_x
+                    fi["kps"][:, 1] *= scale_y
+                    fixed_face_info.append(fi)
+                face_info = fixed_face_info
+
         if len(face_info) == 0:
             raise gr.Error(
                 f"Unable to detect a face in the image. Please upload a different photo with a clear face."
@@ -1429,11 +1453,36 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         img_controlnet = face_image
         if pose_image_path is not None:
             pose_image = load_image(pose_image_path)
+            original_pose_image = pose_image
             pose_image = resize_img(pose_image, size=custom_size, max_side=resize_max_side, mode=resize_mode_enum, pad_to_max_side=pad_to_max_side, base_pixel_number=ratio_base_pixel_number)
             img_controlnet = pose_image
             pose_image_cv2 = convert_from_image_to_cv2(pose_image)
 
             face_info = app.get(pose_image_cv2)
+
+            if len(face_info) == 0 and enable_custom_resize:
+                fallback_detect_image = resize_img(
+                    original_pose_image,
+                    size=None,
+                    max_side=resize_max_side,
+                    mode=resize_mode_enum,
+                    pad_to_max_side=False,
+                    base_pixel_number=ratio_base_pixel_number,
+                )
+                fallback_detect_cv2 = convert_from_image_to_cv2(fallback_detect_image)
+                fallback_face_info = app.get(fallback_detect_cv2)
+                if len(fallback_face_info) > 0:
+                    det_w, det_h = fallback_detect_image.size
+                    canvas_w, canvas_h = pose_image.size
+                    scale_x, scale_y = canvas_w / det_w, canvas_h / det_h
+                    fixed_face_info = []
+                    for fi in fallback_face_info:
+                        fi = dict(fi)
+                        fi["kps"] = np.array(fi["kps"], dtype=np.float32).copy()
+                        fi["kps"][:, 0] *= scale_x
+                        fi["kps"][:, 1] *= scale_y
+                        fixed_face_info.append(fi)
+                    face_info = fixed_face_info
 
             if len(face_info) == 0:
                 raise gr.Error(
@@ -2313,8 +2362,8 @@ Scheduler: {scheduler}"""
                     )
                     custom_resize_width = gr.Slider(
                         label="Custom Width ↔️",
-                        minimum=128,
-                        maximum=6144,
+                        minimum=64,
+                        maximum=12288,
                         step=8,
                         value=960,
                         visible=False,
@@ -2322,8 +2371,8 @@ Scheduler: {scheduler}"""
                     )
                     custom_resize_height = gr.Slider(
                         label="Custom Height ↕️",
-                        minimum=128,
-                        maximum=6144,
+                        minimum=64,
+                        maximum=12288,
                         step=8,
                         value=1280,
                         visible=False,
@@ -2332,7 +2381,7 @@ Scheduler: {scheduler}"""
                 resize_max_side_slider = gr.Slider(
                     label="Max image width/height resizing in pixels. This is for the output resolution.",
                     minimum=128,
-                    maximum=6144,
+                    maximum=8192,
                     step=8,
                     value=1280,
                     info="Controls the max_side for input image resizing. Using Hires Fix is preferable to raising this too high.",
@@ -4038,7 +4087,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v8.6.2</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID: Unlocked v8.7.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
