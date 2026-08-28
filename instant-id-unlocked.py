@@ -1419,7 +1419,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         face_info = app.get(face_image_cv2)
 
         if len(face_info) == 0 and enable_custom_resize:
-            print("\nCustom resolution stretched the face/pose image too much to be able to detect a face. Retrying detection on an aspect-preserving resize...\n")
+            print("\nYour custom resolution possibly stretched the face/pose image and was unable to detect a face. Retrying detection on an aspect-preserving resize...\n")
             fallback_detect_image = resize_img(
                 original_face_image,
                 size=None,
