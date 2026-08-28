@@ -1418,6 +1418,8 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
 
         face_info = app.get(face_image_cv2)
 
+        temp_app = None
+        fallback_detect_cv2 = None
         if len(face_info) == 0 and enable_custom_resize:
             print("\nYour custom resolution possibly stretched the face/pose image and was unable to detect a face. Retrying detection on an aspect-preserving resize...\n")
             fallback_detect_image = resize_img(
@@ -1439,9 +1441,42 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                     fi["kps"] = np.array(fi["kps"], dtype=np.float32).copy()
                     fi["kps"][:, 0] *= scale_x
                     fi["kps"][:, 1] *= scale_y
+                    fi["bbox"] = np.array(fi["bbox"], dtype=np.float32).copy()
+                    fi["bbox"][0] *= scale_x
+                    fi["bbox"][1] *= scale_y
+                    fi["bbox"][2] *= scale_x
+                    fi["bbox"][3] *= scale_y
                     fixed_face_info.append(fi)
                 face_info = fixed_face_info
 
+        if len(face_info) == 0 and current_det_size >= (640, 640):
+            print(f"\nNo face detected at the current detection size ({current_det_size[0]}x{current_det_size[1]}) for face image. Temporarily retrying at 320x320...\n")
+            temp_app = FaceAnalysis(
+                name="antelopev2",
+                root="./",
+                providers=["CPUExecutionProvider"],
+            )
+            temp_app.prepare(ctx_id=0, det_size=(320, 320))
+            if enable_custom_resize and fallback_detect_cv2 is not None:
+                fallback_face_info = temp_app.get(fallback_detect_cv2)
+                if len(fallback_face_info) > 0:
+                    det_w, det_h = fallback_detect_image.size
+                    scale_x, scale_y = width / det_w, height / det_h
+                    fixed_face_info = []
+                    for fi in fallback_face_info:
+                        fi = dict(fi)
+                        fi["kps"] = np.array(fi["kps"], dtype=np.float32).copy()
+                        fi["kps"][:, 0] *= scale_x
+                        fi["kps"][:, 1] *= scale_y
+                        fi["bbox"] = np.array(fi["bbox"], dtype=np.float32).copy()
+                        fi["bbox"][0] *= scale_x
+                        fi["bbox"][1] *= scale_y
+                        fi["bbox"][2] *= scale_x
+                        fi["bbox"][3] *= scale_y
+                        fixed_face_info.append(fi)
+                    face_info = fixed_face_info
+            if len(face_info) == 0:
+                face_info = temp_app.get(face_image_cv2)
         if len(face_info) == 0:
             raise gr.Error(
                 f"Unable to detect a face in the image. Please upload a different photo with a clear face."
@@ -1481,9 +1516,44 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                         fi["kps"] = np.array(fi["kps"], dtype=np.float32).copy()
                         fi["kps"][:, 0] *= scale_x
                         fi["kps"][:, 1] *= scale_y
+                        fi["bbox"] = np.array(fi["bbox"], dtype=np.float32).copy()
+                        fi["bbox"][0] *= scale_x
+                        fi["bbox"][1] *= scale_y
+                        fi["bbox"][2] *= scale_x
+                        fi["bbox"][3] *= scale_y
                         fixed_face_info.append(fi)
                     face_info = fixed_face_info
+            if len(face_info) == 0 and current_det_size >= (640, 640):
+                print(f"\nNo face detected at the current detection size ({current_det_size[0]}x{current_det_size[1]}) for pose image. Temporarily retrying at 320x320...\n")
+                if temp_app is None:
+                    temp_app = FaceAnalysis(
+                        name="antelopev2",
+                        root="./",
+                        providers=["CPUExecutionProvider"],
+                    )
+                    temp_app.prepare(ctx_id=0, det_size=(320, 320))
+                if enable_custom_resize and fallback_detect_cv2 is not None:
+                    fallback_face_info = temp_app.get(fallback_detect_cv2)
+                    if len(fallback_face_info) > 0:
+                        det_w, det_h = fallback_detect_image.size
+                        canvas_w, canvas_h = pose_image.size
+                        scale_x, scale_y = canvas_w / det_w, canvas_h / det_h
+                        fixed_face_info = []
+                        for fi in fallback_face_info:
+                            fi = dict(fi)
+                            fi["kps"] = np.array(fi["kps"], dtype=np.float32).copy()
+                            fi["kps"][:, 0] *= scale_x
+                            fi["kps"][:, 1] *= scale_y
+                            fi["bbox"] = np.array(fi["bbox"], dtype=np.float32).copy()
+                            fi["bbox"][0] *= scale_x
+                            fi["bbox"][1] *= scale_y
+                            fi["bbox"][2] *= scale_x
+                            fi["bbox"][3] *= scale_y
+                            fixed_face_info.append(fi)
+                        face_info = fixed_face_info
 
+                if len(face_info) == 0:
+                    face_info = temp_app.get(pose_image_cv2)
             if len(face_info) == 0:
                 raise gr.Error(
                     f"Cannot find any face in the reference image! Please upload another person image"
@@ -1493,6 +1563,8 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             face_kps = draw_kps(pose_image, face_info["kps"], kps_brightness)
 
             width, height = face_kps.size
+        if temp_app is not None:
+            del temp_app
 
         if enhance_face_region:
             control_mask = np.zeros([height, width, 3], dtype=np.uint8)
