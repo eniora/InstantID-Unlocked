@@ -2296,16 +2296,17 @@ Scheduler: {scheduler}"""
                             value=DEFAULT_FILE_PREFIX,
                             placeholder="Enter your custom prefix (e.g., 'myprefix' becomes myprefix_0.png) etc."
                         )
-                    with gr.Row():
-                        ratio_base_pixel_number = gr.Radio(
-                            label="Resize step in pixels for aspect ratio (8 = most accurate)",
-                            choices=[8, 16, 32, 64],
-                            value=8,
-                        )
-                        pad_to_max_checkbox = gr.Checkbox(
-                            label="Square padding (keeps subject proportions intact)",
-                            value=False
-                        )
+                    with gr.Group():
+                        with gr.Row():
+                            ratio_base_pixel_number = gr.Radio(
+                                label="Resize step in pixels for aspect ratio (8 = most accurate)",
+                                choices=[8, 16, 32, 64],
+                                value=8,
+                            )
+                            pad_to_max_checkbox = gr.Checkbox(
+                                label="Square padding (keeps subject proportions intact)",
+                                value=False
+                            )
                     enable_custom_resize = gr.Checkbox(
                         label="📐 Enable custom resolution (disables & overrides all other resolution & resizing options)",
                         value=False
@@ -2418,54 +2419,67 @@ Scheduler: {scheduler}"""
                             ],
                             value="Original InstantID per-token",
                         )
-                    with gr.Row():
-                        kps_brightness_slider = gr.Slider(
-                            label="Pose Skeleton (KPS) Brightness",
-                            minimum=0.0,
-                            maximum=1.0,
-                            step=0.05,
-                            value=0.6,
-                            info="Brightness of the face-landmark guide image InstantID uses to position face features. Leave default if unsure.",
-                        )
-                    with gr.Row():
-                        enable_upscaler_prescale = gr.Checkbox(
-                            label="Prescale images for Hires Fix upscalers",
-                            value=True,
-                            info="Less seams and sharper results for Hires Fix, slightly less detail.",
-                        )
-                        upscaler_prescale_headroom = gr.Slider(
-                            label="Prescale Headroom",
-                            minimum=1.05,
-                            maximum=1.95,
-                            step=0.05,
-                            value=1.3,
-                            show_label=False,
-                            info="Headroom (scale buffer, more = less effect)",
-                        )
-                    with gr.Row():
-                        enable_vae_tiling = gr.Checkbox(
-                            label="Enable VAE Tiling (faster VAE decoding)",
-                            value=True
-                        )
-                        enable_sage_attention = gr.Checkbox(
-                            label="Enable SageAttention Optimization",
-                            value=False
-                        )
-                    with gr.Row():
-                        resize_mode_dropdown = gr.Dropdown(
-                            label="Resize Interpolation Mode (LANCZOS, BILINEAR and HAMMING are usually the best)",
-                            choices=[
-                                "LANCZOS", "BILINEAR", "HAMMING", "BICUBIC", "BOX", "NEAREST"
-                            ],
-                            value="LANCZOS",
-                            scale=3
-                        )
-                        rng_source = gr.Radio(
-                            label="Noise RNG device:",
-                            choices=["GPU", "CPU"],
-                            value="GPU",
-                            scale=1
-                        )
+                    with gr.Group():
+                        with gr.Row():
+                            kps_brightness_slider = gr.Slider(
+                                label="Pose Skeleton (KPS) Brightness",
+                                minimum=0.0,
+                                maximum=1.0,
+                                step=0.05,
+                                value=0.6,
+                                info="Skeleton KPS brightness for face landmarks.",
+                                show_label=False
+                            )
+                            enable_upscaler_prescale = gr.Checkbox(
+                                label="Prescale images for Hires Fix upscalers",
+                                value=False,
+                                info="Speeds up upscaling. Visual results vary by upscaler model.",
+                            )
+                        with gr.Row():
+                            upscaler_prescale_headroom = gr.Slider(
+                                label="Prescale Headroom",
+                                minimum=1.05,
+                                maximum=1.95,
+                                step=0.05,
+                                value=1.3,
+                                show_label=False,
+                                info="Prescale Headroom (Extra margin before upscaling. Higher values shrink the source less, closer to original behavior)",
+                                visible=False,
+                            )
+                            def toggle_upscaler_prescale_ui(enable):
+                                return gr.update(visible=enable)
+                            enable_upscaler_prescale.change(
+                                fn=toggle_upscaler_prescale_ui,
+                                inputs=enable_upscaler_prescale,
+                                outputs=upscaler_prescale_headroom,
+                                queue=False
+                            )
+                    with gr.Group():
+                        with gr.Row():
+                            enable_vae_tiling = gr.Checkbox(
+                                label="Enable VAE Tiling (faster VAE decoding)",
+                                value=True
+                            )
+                            enable_sage_attention = gr.Checkbox(
+                                label="Enable SageAttention Optimization",
+                                value=False
+                            )
+                    with gr.Group():
+                        with gr.Row():
+                            resize_mode_dropdown = gr.Dropdown(
+                                label="Resize Interpolation Mode (LANCZOS, BILINEAR and HAMMING are usually the best)",
+                                choices=[
+                                    "LANCZOS", "BILINEAR", "HAMMING", "BICUBIC", "BOX", "NEAREST"
+                                ],
+                                value="LANCZOS",
+                                scale=3
+                            )
+                            rng_source = gr.Radio(
+                                label="Noise RNG device:",
+                                choices=["GPU", "CPU"],
+                                value="GPU",
+                                scale=1
+                            )
                 with gr.Accordion("🎚️ Controlnet", open=False) as controlnet_accordion:
                     controlnet_selection = gr.CheckboxGroup(
                         ["pose", "canny", "depth"], value=[], show_label=False,
@@ -2492,21 +2506,22 @@ Scheduler: {scheduler}"""
                         step=0.05,
                         value=0.30,
                     )
-                with gr.Row():
-                    guidance_scale = gr.Slider(
-                        label="Guidance scale (CFG)",
-                        minimum=1.0,
-                        maximum=20.0,
-                        step=0.1,
-                        value=4,
-                    )
-                    num_steps = gr.Slider(
-                        label="Sampling steps",
-                        minimum=1,
-                        maximum=150,
-                        step=1,
-                        value=20,
-                    )
+                with gr.Group():
+                    with gr.Row():
+                        guidance_scale = gr.Slider(
+                            label="Guidance scale (CFG)",
+                            minimum=1.0,
+                            maximum=20.0,
+                            step=0.1,
+                            value=4,
+                        )
+                        num_steps = gr.Slider(
+                            label="Sampling steps",
+                            minimum=1,
+                            maximum=150,
+                            step=1,
+                            value=20,
+                        )
                 with gr.Row():
                     randomize_seed = gr.Checkbox(label="Randomize seed", scale=1, value=True)
                     seed = gr.Number(
@@ -3565,7 +3580,7 @@ Scheduler: {scheduler}"""
                     "resize_mode": "LANCZOS",
                     "pad_to_max_side": False,
                     "enable_sage_attention": False,
-                    "enable_upscaler_prescale": True,
+                    "enable_upscaler_prescale": False,
                     "upscaler_prescale_headroom": 1.3,
                     "enable_custom_resize": False,
                     "custom_resize_width": 960,
@@ -3833,7 +3848,7 @@ Scheduler: {scheduler}"""
 
                 if settings["enable_custom_resize"] or settings["pad_to_max_side"] or settings["ratio_base_pixel_number"] != 8:
                     open_settings_accordion = True
-                if settings["rng_source"] == "CPU" or settings["enable_sage_attention"] or not settings["enable_upscaler_prescale"] or settings["upscaler_prescale_headroom"] != 1.3 or settings["clip_skip"] != 0 or settings["kps_brightness"] != 0.6 or settings["resize_mode"] != "LANCZOS" or settings["weight_application_method"] != "Original InstantID per-token":
+                if settings["rng_source"] == "CPU" or settings["enable_sage_attention"] or settings["enable_upscaler_prescale"] or settings["clip_skip"] != 0 or settings["kps_brightness"] != 0.6 or settings["resize_mode"] != "LANCZOS" or settings["weight_application_method"] != "Original InstantID per-token":
                     open_advanced_accordion = True
 
                 return [
