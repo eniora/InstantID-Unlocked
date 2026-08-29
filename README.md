@@ -1,4 +1,4 @@
-<h1>InstantID: Unlocked. Zero-shot Identity-Preserving Generation</h1>
+<h1>InstantID Unlocked. Zero-shot Identity-Preserving Generation</h1>
 
 I think it's worth mentioning that I am not too good with python and the code is full of workarounds/hacks + I used a lot of help from AI chatbots, but at least it works really well and everything is working as I intended with no issues at all. :D
 
