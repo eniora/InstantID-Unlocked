@@ -2435,7 +2435,7 @@ Scheduler: {scheduler}"""
                     custom_resize_width = gr.Slider(
                         label="Custom Width ↔️",
                         minimum=64,
-                        maximum=12288,
+                        maximum=16384,
                         step=8,
                         value=960,
                         visible=False,
@@ -2444,7 +2444,7 @@ Scheduler: {scheduler}"""
                     custom_resize_height = gr.Slider(
                         label="Custom Height ↕️",
                         minimum=64,
-                        maximum=12288,
+                        maximum=16384,
                         step=8,
                         value=1280,
                         visible=False,
@@ -2867,7 +2867,7 @@ Scheduler: {scheduler}"""
                         enable_img2img_upscaler = gr.Checkbox(
                             label="Enable i2i upscaler (optional, few use cases)",
                             value=False,
-                            info="Mainly for denoising value of ~0.2 and lowres input photos. Best to use with DMD2 LoRA and LCMScheduler.",
+                            info="Mainly for a denoising value of 0.15 - 0.2, best to use with DMD2 LoRA and LCMScheduler.",
                             scale=4
                         )
                         img2img_upscaler = gr.Dropdown(
