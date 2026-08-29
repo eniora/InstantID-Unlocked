@@ -1428,7 +1428,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 max_side=1280,
                 mode=resize_mode_enum,
                 pad_to_max_side=False,
-                base_pixel_number=ratio_base_pixel_number,
+                base_pixel_number=8,
             )
             fallback_detect_cv2 = convert_from_image_to_cv2(fallback_detect_image)
             fallback_face_info = app.get(fallback_detect_cv2)
@@ -1502,7 +1502,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                     max_side=1280,
                     mode=resize_mode_enum,
                     pad_to_max_side=False,
-                    base_pixel_number=ratio_base_pixel_number,
+                    base_pixel_number=8,
                 )
                 fallback_detect_cv2 = convert_from_image_to_cv2(fallback_detect_image)
                 fallback_face_info = app.get(fallback_detect_cv2)
