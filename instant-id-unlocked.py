@@ -2156,7 +2156,7 @@ Scheduler: {scheduler}"""
         });
     }
     """
-    with gr.Blocks(js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v8.7.1", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
