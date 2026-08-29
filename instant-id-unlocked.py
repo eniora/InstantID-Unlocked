@@ -1425,7 +1425,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             fallback_detect_image = resize_img(
                 original_face_image,
                 size=None,
-                max_side=resize_max_side,
+                max_side=1280,
                 mode=resize_mode_enum,
                 pad_to_max_side=False,
                 base_pixel_number=ratio_base_pixel_number,
@@ -1499,7 +1499,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 fallback_detect_image = resize_img(
                     original_pose_image,
                     size=None,
-                    max_side=resize_max_side,
+                    max_side=1280,
                     mode=resize_mode_enum,
                     pad_to_max_side=False,
                     base_pixel_number=ratio_base_pixel_number,
@@ -2452,7 +2452,7 @@ Scheduler: {scheduler}"""
                     )
                 resize_max_side_slider = gr.Slider(
                     label="Max image width/height resizing in pixels. This is for the output resolution.",
-                    minimum=128,
+                    minimum=256,
                     maximum=8192,
                     step=8,
                     value=1280,
