@@ -2820,7 +2820,7 @@ Scheduler: {scheduler}"""
                             torch.cuda.empty_cache()
 
                         progress(0.9, desc="Saving result...")
-                        saved_paths = save_images([upscaled], prefix="InstantID_Upscaled_")
+                        saved_paths = save_images([upscaled], output_dir=os.path.join("output", "upscaled_images"), prefix="InstantID_Upscaled_")
 
                         torch.cuda.empty_cache()
                         print(f"Finished upscaling image ({orig_width}x{orig_height} -> {target_width}x{target_height}). Saved to {saved_paths[0]}\n")
@@ -4179,7 +4179,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID: Unlocked v8.7.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v8.7.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
