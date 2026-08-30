@@ -1171,7 +1171,7 @@ class StableDiffusionXLInstantIDPipeline(StableDiffusionXLControlNetPipeline):
             mask_weight_image_tensor = torch.from_numpy(mask_weight_image).to(device=device, dtype=prompt_embeds.dtype)
             mask_weight_image_tensor = mask_weight_image_tensor[:, :, 0] / 255.
             mask_weight_image_tensor = mask_weight_image_tensor[None, None]
-            region_mask = torch.from_numpy(np.array(control_mask)[:, :, 0]).to(self.unet.device, dtype=self.unet.dtype) / 255.
+            region_mask = torch.from_numpy(np.array(control_mask)[:, :, 0]).to(device=device, dtype=prompt_embeds.dtype) / 255.
             region_control.prompt_image_conditioning = [dict(region_mask=region_mask)]
         else:
             mask_weight_image_tensor = None
