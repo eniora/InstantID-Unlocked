@@ -1629,7 +1629,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             sibling_pipe.controlnet = pipe.controlnet
 
         if enable_cpu_offloading:
-            pipe.enable_model_cpu_offload()
+            pipe.enable_model_cpu_offload(device=device)
         else:
             if hasattr(pipe.unet, "_hf_hook"):
                 pipe.remove_all_hooks()
