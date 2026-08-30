@@ -137,6 +137,7 @@ import diffusers
 from diffusers.utils import load_image
 from diffusers.models import ControlNetModel
 from diffusers.pipelines.controlnet.multicontrolnet import MultiControlNetModel
+from accelerate.hooks import remove_hook_from_module
 
 from insightface.app import FaceAnalysis
 
@@ -957,7 +958,9 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             return cached
 
         try:
-            sibling_pipe = target_class(**base_pipe.components).to(device)
+            sibling_pipe = target_class(**base_pipe.components)
+            if not hasattr(base_pipe.unet, "_hf_hook"):
+                sibling_pipe = sibling_pipe.to(device)
             sibling_pipe.image_proj_model = base_pipe.image_proj_model
             sibling_pipe.image_proj_model_in_features = base_pipe.image_proj_model_in_features
             sibling_pipe._current_model = getattr(base_pipe, "_current_model", None)
@@ -1594,6 +1597,9 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         else:
             control_mask = None
 
+        if hasattr(controlnet_identitynet, "_hf_hook"):
+            remove_hook_from_module(controlnet_identitynet, recurse=True)
+
         if len(controlnet_selection) > 0:
             for k in list(cached_controlnet_models.keys()):
                 if k not in controlnet_selection:
@@ -1676,7 +1682,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             cn_strength_str = ", ".join(
                 f"{s.capitalize()}: {cn_strengths[s]}" for s in controlnet_selection if s in cn_strengths
             )
-            print(f"ControlNet selection: {controlnet_selection} | Strengths - {cn_strength_str}")
+            print(f"ControlNet selection: {controlnet_selection} | Strength(s) - {cn_strength_str}")
         else:
             print("ControlNet selection: None (Disabled)")
         print(f"IdentityNet strength: {identitynet_strength_ratio}")
