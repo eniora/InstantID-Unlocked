@@ -1096,6 +1096,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         file_prefix,
         rng_source,
         enable_vae_tiling,
+        enable_cpu_offloading,
         enable_sage_attention,
         enable_upscaler_prescale,
         upscaler_prescale_headroom,
@@ -1627,6 +1628,12 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         if sibling_pipe is not None:
             sibling_pipe.controlnet = pipe.controlnet
 
+        if enable_cpu_offloading:
+            pipe.enable_model_cpu_offload()
+        else:
+            pipe.remove_all_hooks()
+            pipe.to(device)
+        
         generator = torch.Generator(device=generator_device).manual_seed(seed)
 
         print("Starting image generation...")
@@ -2156,7 +2163,7 @@ Scheduler: {scheduler}"""
         });
     }
     """
-    with gr.Blocks(title="InstantID Unlocked v8.7.2", js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v8.7.3", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
@@ -2578,12 +2585,19 @@ Scheduler: {scheduler}"""
                     with gr.Group():
                         with gr.Row():
                             enable_vae_tiling = gr.Checkbox(
-                                label="Enable VAE Tiling (faster VAE decoding)",
-                                value=True
+                                label="Enable VAE Tiling",
+                                value=True,
+                                scale=2
+                            )
+                            enable_cpu_offloading = gr.Checkbox(
+                                label="CPU Offload (saves VRAM)",
+                                value=False,
+                                scale=2
                             )
                             enable_sage_attention = gr.Checkbox(
                                 label="Enable SageAttention Optimization",
-                                value=False
+                                value=False,
+                                scale=3
                             )
                     with gr.Group():
                         with gr.Row():
@@ -3531,6 +3545,7 @@ Scheduler: {scheduler}"""
                 file_prefix,
                 rng_source,
                 enable_vae_tiling,
+                enable_cpu_offloading,
                 enable_sage_attention,
                 enable_upscaler_prescale,
                 upscaler_prescale_headroom,
@@ -4186,7 +4201,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID Unlocked v8.7.2</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v8.7.3</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
