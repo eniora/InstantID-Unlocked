@@ -2156,7 +2156,7 @@ Scheduler: {scheduler}"""
         });
     }
     """
-    with gr.Blocks(title="InstantID Unlocked v8.7.1", js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v8.7.2", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
@@ -2928,8 +2928,17 @@ Scheduler: {scheduler}"""
                             scale=2
                         )
                     with gr.Row(visible=False) as hires_fix_row:
-                        def _get_hires_base_side(max_side, use_custom, custom_w, custom_h):
-                            return max(custom_w, custom_h) if use_custom else max_side
+                        def _hires_round8(px):
+                            return max(8, int(round(px / 8) * 8))
+
+                        def _get_hires_info_text(max_side, use_custom, custom_w, custom_h, upscale_by):
+                            if use_custom:
+                                target_w = _hires_round8(custom_w * upscale_by)
+                                target_h = _hires_round8(custom_h * upscale_by)
+                                return f"Target = {target_w} x {target_h}px."
+                            else:
+                                target_px = _hires_round8(max_side * upscale_by)
+                                return f"Target = max_side * this value = {target_px}px."
 
                         hires_upscale_by = gr.Slider(
                             label="Hires Upscale By",
@@ -2937,14 +2946,12 @@ Scheduler: {scheduler}"""
                             maximum=4.0,
                             step=0.05,
                             value=1.5,
-                            info=f"Target = max_side * this value = {max(8, int(round((_get_hires_base_side(resize_max_side_slider.value, enable_custom_resize.value, custom_resize_width.value, custom_resize_height.value) * 1.5) / 8) * 8))}px.",
+                            info=_get_hires_info_text(resize_max_side_slider.value, enable_custom_resize.value, custom_resize_width.value, custom_resize_height.value, 1.5),
                             scale=3
                         )
                         def update_hires_upscale(max_side, upscale_by, use_custom, custom_w, custom_h):
-                            base_side = _get_hires_base_side(max_side, use_custom, custom_w, custom_h)
-                            target_px = max(8, int(round((base_side * upscale_by) / 8) * 8))
                             return gr.update(
-                                info=f"Target = max_side * this value = {target_px}px."
+                                info=_get_hires_info_text(max_side, use_custom, custom_w, custom_h, upscale_by)
                             )
 
                         _hires_upscale_inputs = [resize_max_side_slider, hires_upscale_by, enable_custom_resize, custom_resize_width, custom_resize_height]
@@ -4179,7 +4186,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID Unlocked v8.7.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v8.7.2</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
