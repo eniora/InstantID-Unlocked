@@ -1631,8 +1631,9 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         if enable_cpu_offloading:
             pipe.enable_model_cpu_offload()
         else:
-            pipe.remove_all_hooks()
-            pipe.to(device)
+            if hasattr(pipe.unet, "_hf_hook"):
+                pipe.remove_all_hooks()
+                pipe.to(device)
         
         generator = torch.Generator(device=generator_device).manual_seed(seed)
 
