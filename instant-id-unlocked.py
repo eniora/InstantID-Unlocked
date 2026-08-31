@@ -1126,6 +1126,19 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         save_hires_original,
         progress=gr.Progress(),
     ):
+        def _fix_guidance_range(start, end, label):
+            start, end = float(start), float(end)
+            if start >= end:
+                fallback_end = round(min(1.0, start + 0.05), 2)
+                print(f"\n[Start/End fallback for adapters] {label}: start step {start} >= end step {end}; using {fallback_end} for end step instead.")
+                end = fallback_end
+            return start, end
+        identitynet_start, identitynet_end = _fix_guidance_range(
+            identitynet_start, identitynet_end, "IdentityNet guidance range"
+        )
+        adapter_start, adapter_end = _fix_guidance_range(
+            adapter_start, adapter_end, "IP-Adapter guidance range"
+        )
         file_prefix = file_prefix.strip().translate(FILENAME_SAFE_TRANS)
         file_prefix = DEFAULT_FILE_PREFIX if not file_prefix else (f"{file_prefix}_" if not file_prefix.endswith('_') else file_prefix)
         generator_device = "cpu" if rng_source == "CPU" else device
@@ -2563,7 +2576,7 @@ Scheduler: {scheduler}"""
                                 identitynet_start_slider = gr.Slider(
                                     label="IdentityNet Start",
                                     minimum=0.0,
-                                    maximum=1.0,
+                                    maximum=0.95,
                                     step=0.05,
                                     value=0.0,
                                     show_label=False,
@@ -2582,7 +2595,7 @@ Scheduler: {scheduler}"""
                                 adapter_start_slider = gr.Slider(
                                     label="Image Adapter Start",
                                     minimum=0.0,
-                                    maximum=1.0,
+                                    maximum=0.95,
                                     step=0.05,
                                     value=0.0,
                                     show_label=False,
