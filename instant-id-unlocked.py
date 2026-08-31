@@ -1050,11 +1050,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         prompt_replacement_value,
         num_steps,
         identitynet_strength_ratio,
-        identitynet_start,
-        identitynet_end,
         adapter_strength_ratio,
-        adapter_start,
-        adapter_end,
         pose_strength,
         canny_strength,
         depth_strength,
@@ -1126,19 +1122,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         save_hires_original,
         progress=gr.Progress(),
     ):
-        def _fix_guidance_range(start, end, label):
-            start, end = float(start), float(end)
-            if start >= end:
-                fallback_end = round(min(1.0, start + 0.05), 2)
-                print(f"\n[Start/End fallback for adapters] {label}: start step {start} >= end step {end}; using {fallback_end} for end step instead.")
-                end = fallback_end
-            return start, end
-        identitynet_start, identitynet_end = _fix_guidance_range(
-            identitynet_start, identitynet_end, "IdentityNet guidance range"
-        )
-        adapter_start, adapter_end = _fix_guidance_range(
-            adapter_start, adapter_end, "IP-Adapter guidance range"
-        )
         file_prefix = file_prefix.strip().translate(FILENAME_SAFE_TRANS)
         file_prefix = DEFAULT_FILE_PREFIX if not file_prefix else (f"{file_prefix}_" if not file_prefix.endswith('_') else file_prefix)
         generator_device = "cpu" if rng_source == "CPU" else device
@@ -1637,8 +1620,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             pipe.controlnet = MultiControlNetModel([controlnet_identitynet] + controlnet_models_to_use)
             control_scales = [float(identitynet_strength_ratio)] + [controlnet_scales[s] for s in controlnet_selection]
             control_images = [face_kps] + controlnet_images
-            control_guidance_start = [float(identitynet_start)] + [0.0] * len(controlnet_selection)
-            control_guidance_end = [float(identitynet_end)] + [1.0] * len(controlnet_selection)
         else:
             if cached_controlnet_models:
                 for key in list(cached_controlnet_models.keys()):
@@ -1648,8 +1629,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             pipe.controlnet = controlnet_identitynet
             control_scales = float(identitynet_strength_ratio)
             control_images = face_kps
-            control_guidance_start = float(identitynet_start)
-            control_guidance_end = float(identitynet_end)
 
         sibling_pipe = getattr(pipe, "_sibling_pipe", None)
         if sibling_pipe is not None:
@@ -1708,8 +1687,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             print("ControlNet selection: None (Disabled)")
         print(f"IdentityNet strength: {identitynet_strength_ratio}")
         print(f"Adapter strength: {adapter_strength_ratio}")
-        if (identitynet_start, identitynet_end, adapter_start, adapter_end) != (0.0, 1.0, 0.0, 1.0):
-            print(f"Control step ranges: IdentityNet: {identitynet_start} - {identitynet_end} | Image adapter: {adapter_start} - {adapter_end}")
 
         lora_info_str = "Disabled"
         if enable_lora:
@@ -1754,6 +1731,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         print(f"Max resize side: {resize_max_side}")
         print(f"Image size: {width}x{height}\n")
 
+        pipe.set_ip_adapter_scale(adapter_strength_ratio)
         images = []
         generation_infos = []
         saved_output_paths = []
@@ -1851,11 +1829,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 clip_skip=clip_skip if clip_skip else None,
                 image_embeds=face_emb,
                 controlnet_conditioning_scale=control_scales,
-                control_guidance_start=control_guidance_start,
-                control_guidance_end=control_guidance_end,
-                ip_adapter_scale=adapter_strength_ratio,
-                ip_adapter_scale_start=float(adapter_start),
-                ip_adapter_scale_end=float(adapter_end),
                 num_inference_steps=num_steps,
                 guidance_scale=guidance_scale,
                 height=height,
@@ -1928,7 +1901,6 @@ Upscaler Prescale Optimization: {enable_upscaler_prescale}
 Upscaler Prescale Headroom: {upscaler_prescale_headroom}
 IdentityNet strength: {identitynet_strength_ratio}
 Adapter strength: {adapter_strength_ratio}
-Ranges: IdentityNet: {identitynet_start} - {identitynet_end} | Adapter: {adapter_start} - {adapter_end}
 Pose strength: {pose_strength}
 Canny strength: {canny_strength}
 Depth strength: {depth_strength}
@@ -2004,6 +1976,7 @@ Scheduler: {scheduler}"""
                 hires_pipe = get_img2img_sibling_pipe(pipe)
                 hires_pipe.controlnet = pipe.controlnet
                 hires_pipe.scheduler = pipe.scheduler
+                hires_pipe.set_ip_adapter_scale(adapter_strength_ratio)
                 hires_control_images = resize_control_images(control_images, (hires_width, hires_height))
                 hires_control_mask = resize_control_images(control_mask, (hires_width, hires_height))
                 if hires_steps and hires_steps > 0:
@@ -2055,11 +2028,6 @@ Scheduler: {scheduler}"""
                         image=hires_pass_image,
                         control_image=hires_control_images,
                         controlnet_conditioning_scale=control_scales,
-                        control_guidance_start=control_guidance_start,
-                        control_guidance_end=control_guidance_end,
-                        ip_adapter_scale=adapter_strength_ratio,
-                        ip_adapter_scale_start=float(adapter_start),
-                        ip_adapter_scale_end=float(adapter_end),
                         strength=hires_denoising_strength,
                         num_inference_steps=effective_hires_steps,
                         guidance_scale=guidance_scale,
@@ -2202,7 +2170,7 @@ Scheduler: {scheduler}"""
         });
     }
     """
-    with gr.Blocks(title="InstantID Unlocked v8.8.0", js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v8.7.3", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
@@ -2552,61 +2520,20 @@ Scheduler: {scheduler}"""
                         outputs=[],
                         queue=False
                     )
-                with gr.Group():
-                    identitynet_strength_ratio = gr.Slider(
-                        label="IdentityNet strength (weight of face fidelity retention from the input photo)",
-                        minimum=0,
-                        maximum=1.5,
-                        step=0.05,
-                        value=0.7,
-                    )
-                    adapter_strength_ratio = gr.Slider(
-                        label="Image adapter strength (weight of detail retention from the input photo)",
-                        minimum=0,
-                        maximum=1.5,
-                        step=0.05,
-                        value=0.6,
-                    )
-                    with gr.Accordion("📊 IdentityNet & Image adapter start/end ranges (controls when each begins and stops applying during generation)", open=False) as adapters_range_accordion:
-                        with gr.Group():
-                            with gr.Row():
-                                identitynet_start_slider = gr.Slider(
-                                    label="IdentityNet Start",
-                                    minimum=0.0,
-                                    maximum=0.95,
-                                    step=0.05,
-                                    value=0.0,
-                                    show_label=False,
-                                    info="IdentityNet Start Step (%)",
-                                )
-                                identitynet_end_slider = gr.Slider(
-                                    label="IdentityNet End",
-                                    minimum=0.0,
-                                    maximum=1.0,
-                                    step=0.05,
-                                    value=1.0,
-                                    show_label=False,
-                                    info="IdentityNet End Step (%)",
-                                )
-                            with gr.Row():
-                                adapter_start_slider = gr.Slider(
-                                    label="Image Adapter Start",
-                                    minimum=0.0,
-                                    maximum=0.95,
-                                    step=0.05,
-                                    value=0.0,
-                                    show_label=False,
-                                    info="Image Adapter Start Step (%)",
-                                )
-                                adapter_end_slider = gr.Slider(
-                                    label="Image Adapter End",
-                                    minimum=0.0,
-                                    maximum=1.0,
-                                    step=0.05,
-                                    value=1.0,
-                                    show_label=False,
-                                    info="Image Adapter End Step (%)",
-                                )
+                identitynet_strength_ratio = gr.Slider(
+                    label="IdentityNet strength (weight of face fidelity retention from the input photo)",
+                    minimum=0,
+                    maximum=1.5,
+                    step=0.05,
+                    value=0.7,
+                )
+                adapter_strength_ratio = gr.Slider(
+                    label="Image adapter strength (weight of detail retention from the input photo)",
+                    minimum=0,
+                    maximum=1.5,
+                    step=0.05,
+                    value=0.6,
+                )
                 with gr.Accordion("🛠️ Advanced Options", open=False) as advanced_settings_accordion:
                     with gr.Row():
                         clip_skip = gr.Slider(
@@ -2698,7 +2625,7 @@ Scheduler: {scheduler}"""
                 with gr.Accordion("🎚️ Controlnet", open=False) as controlnet_accordion:
                     controlnet_selection = gr.CheckboxGroup(
                         ["pose", "canny", "depth"], value=[], show_label=False,
-                        info="Use pose for skeleton inference, canny for edge detection, and depth for depth map estimation."
+                        info="Use pose for skeleton inference, canny for edge detection, and depth for depth map estimation. You can try all three to control the generation process."
                     )
                     pose_strength = gr.Slider(
                         label="Pose strength",
@@ -3576,11 +3503,7 @@ Scheduler: {scheduler}"""
                 prompt_replacement,
                 num_steps,
                 identitynet_strength_ratio,
-                identitynet_start_slider,
-                identitynet_end_slider,
                 adapter_strength_ratio,
-                adapter_start_slider,
-                adapter_end_slider,
                 pose_strength,
                 canny_strength,
                 depth_strength,
@@ -3781,11 +3704,7 @@ Scheduler: {scheduler}"""
                     "enable_img2img_upscaler": False,
                     "img2img_upscaler": DEFAULT_UPSCALER,
                     "identitynet_strength_ratio": 0.7,
-                    "identitynet_start": 0.0,
-                    "identitynet_end": 1.0,
                     "adapter_strength_ratio": 0.6,
-                    "adapter_start": 0.0,
-                    "adapter_end": 1.0,
                     "pose_strength": 0.30,
                     "canny_strength": 0.30,
                     "depth_strength": 0.30,
@@ -4016,19 +3935,6 @@ Scheduler: {scheduler}"""
                                 pass
                         elif line.startswith("IdentityNet strength:"):
                             settings["identitynet_strength_ratio"] = float(line.replace("IdentityNet strength:", "").strip())
-                        elif line.startswith("Ranges:"):
-                            match = re.search(
-                                r"IdentityNet:\s*([\d.]+)\s*-\s*([\d.]+)\s*\|\s*Adapter:\s*([\d.]+)\s*-\s*([\d.]+)",
-                                line,
-                            )
-                            if match:
-                                try:
-                                    settings["identitynet_start"] = float(match.group(1))
-                                    settings["identitynet_end"] = float(match.group(2))
-                                    settings["adapter_start"] = float(match.group(3))
-                                    settings["adapter_end"] = float(match.group(4))
-                                except ValueError:
-                                    pass
                         elif line.startswith("Weight application method:"):
                             method_text = line.replace("Weight application method:", "").strip()
                             valid_methods = [
@@ -4114,14 +4020,11 @@ Scheduler: {scheduler}"""
 
                 open_settings_accordion = False
                 open_advanced_accordion = False
-                open_range_accordion = False
 
                 if settings["enable_custom_resize"] or settings["pad_to_max_side"] or settings["ratio_base_pixel_number"] != 8:
                     open_settings_accordion = True
                 if settings["rng_source"] == "CPU" or settings["enable_sage_attention"] or settings["enable_upscaler_prescale"] or settings["clip_skip"] != 0 or settings["kps_brightness"] != 0.6 or settings["resize_mode"] != "LANCZOS" or settings["weight_application_method"] != "Original InstantID per-token":
                     open_advanced_accordion = True
-                if settings["identitynet_start"] != 0.0 or settings["identitynet_end"] != 1.0 or settings["adapter_start"] != 0.0 or settings["adapter_end"] != 1.0:
-                    open_range_accordion = True
 
                 return [
                     settings["prompt"],
@@ -4135,11 +4038,7 @@ Scheduler: {scheduler}"""
                     settings["enable_img2img_upscaler"],
                     settings["img2img_upscaler"],
                     settings["identitynet_strength_ratio"],
-                    settings["identitynet_start"],
-                    settings["identitynet_end"],
                     settings["adapter_strength_ratio"],
-                    settings["adapter_start"],
-                    settings["adapter_end"],
                     settings["pose_strength"],
                     settings["canny_strength"],
                     settings["depth_strength"],
@@ -4204,8 +4103,7 @@ Scheduler: {scheduler}"""
                     settings["hires_denoising_strength"],
                     accordion_update,
                     gr.update(open=open_settings_accordion),
-                    gr.update(open=open_advanced_accordion),
-                    gr.update(open=open_range_accordion)
+                    gr.update(open=open_advanced_accordion)
                 ]
 
             apply_metadata_btn.click(
@@ -4223,11 +4121,7 @@ Scheduler: {scheduler}"""
                     enable_img2img_upscaler,
                     img2img_upscaler,
                     identitynet_strength_ratio,
-                    identitynet_start_slider,
-                    identitynet_end_slider,
                     adapter_strength_ratio,
-                    adapter_start_slider,
-                    adapter_end_slider,
                     pose_strength,
                     canny_strength,
                     depth_strength,
@@ -4292,8 +4186,7 @@ Scheduler: {scheduler}"""
                     hires_denoising_strength,
                     controlnet_accordion,
                     style_settings_accordion,
-                    advanced_settings_accordion,
-                    adapters_range_accordion
+                    advanced_settings_accordion
                 ],
                 queue=False
             ).then(
@@ -4315,7 +4208,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID Unlocked v8.8.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v8.7.3</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
