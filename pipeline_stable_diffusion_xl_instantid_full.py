@@ -884,6 +884,7 @@ class StableDiffusionXLInstantIDPipeline(StableDiffusionXLControlNetPipeline):
         ip_adapter_scale=None,
         ip_adapter_scale_start: float = 0.0,
         ip_adapter_scale_end: float = 1.0,
+        smooth_range_transition: bool = False,
 
         # Enhance Face Region
         control_mask = None,
@@ -982,6 +983,15 @@ class StableDiffusionXLInstantIDPipeline(StableDiffusionXLControlNetPipeline):
             ip_adapter_scale_end (`float`, *optional*, defaults to 1.0):
                 The percentage of total steps at which the IP-Adapter (Image adapter) stops applying. Only takes
                 effect when `ip_adapter_scale` is explicitly passed.
+            smooth_range_transition (`bool`, *optional*, defaults to `False`):
+                If `False` (default), the boundary step at the start/end of IdentityNet's own
+                `control_guidance_start`/`control_guidance_end` window (index 0 of those lists) and at
+                `ip_adapter_scale_start`/`ip_adapter_scale_end` is snapped fully on or off, based on the
+                step-index convention used by diffusers. If `True`, the boundary step for both
+                IdentityNet and the IP-Adapter is instead weighted by how much of its `[i/N, (i+1)/N)`
+                interval actually falls inside its respective start/end window, giving a smooth fractional
+                ramp so that nearby start/end values (e.g. 0.02 vs 0.05 at ~20 steps) can produce distinct
+                results.
             original_size (`Tuple[int]`, *optional*, defaults to (1024, 1024)):
                 If `original_size` is not the same as `target_size` the image will appear to be down- or upsampled.
                 `original_size` defaults to `(height, width)` if not specified. Part of SDXL's micro-conditioning as
@@ -1227,20 +1237,35 @@ class StableDiffusionXLInstantIDPipeline(StableDiffusionXLControlNetPipeline):
         # 7. Prepare extra step kwargs. TODO: Logic should ideally just be moved out of the pipeline
         extra_step_kwargs = self.prepare_extra_step_kwargs(generator, eta)
 
-        # 7.1 Create tensor stating which controlnets to keep
+        # 7.1 Create tensor stating which controlnets to keep.
+        controlnet_keep_step_size = 1.0 / len(timesteps)
         controlnet_keep = []
         for i in range(len(timesteps)):
-            keeps = [
-                1.0 - float(i / len(timesteps) < s or (i + 1) / len(timesteps) > e)
-                for s, e in zip(control_guidance_start, control_guidance_end)
-            ]
+            keeps = []
+            for idx, (s, e) in enumerate(zip(control_guidance_start, control_guidance_end)):
+                if idx == 0 and smooth_range_transition:
+                    step_start = i * controlnet_keep_step_size
+                    step_end = (i + 1) * controlnet_keep_step_size
+                    overlap = min(step_end, e) - max(step_start, s)
+                    keeps.append(max(0.0, min(1.0, overlap / controlnet_keep_step_size)))
+                else:
+                    keeps.append(1.0 - float(i / len(timesteps) < s or (i + 1) / len(timesteps) > e))
             controlnet_keep.append(keeps[0] if isinstance(controlnet, ControlNetModel) else keeps)
 
-        # 7.1b Precompute the per-step IP-Adapter (Image adapter) keep/scale window
-        ip_adapter_keep = [
-            0.0 if (i / len(timesteps) < ip_adapter_scale_start or (i + 1) / len(timesteps) > ip_adapter_scale_end) else 1.0
-            for i in range(len(timesteps))
-        ]
+        # 7.1b Precompute the per-step IP-Adapter (Image adapter) keep/scale window.
+        if smooth_range_transition:
+            ip_adapter_step_size = 1.0 / len(timesteps)
+            ip_adapter_keep = []
+            for i in range(len(timesteps)):
+                step_start = i * ip_adapter_step_size
+                step_end = (i + 1) * ip_adapter_step_size
+                overlap = min(step_end, ip_adapter_scale_end) - max(step_start, ip_adapter_scale_start)
+                ip_adapter_keep.append(max(0.0, min(1.0, overlap / ip_adapter_step_size)))
+        else:
+            ip_adapter_keep = [
+                0.0 if (i / len(timesteps) < ip_adapter_scale_start or (i + 1) / len(timesteps) > ip_adapter_scale_end) else 1.0
+                for i in range(len(timesteps))
+            ]
 
         # 7.2 Prepare added time ids & embeddings
         if isinstance(image, list):
