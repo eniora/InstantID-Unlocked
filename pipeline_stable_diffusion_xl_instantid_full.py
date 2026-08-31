@@ -882,6 +882,8 @@ class StableDiffusionXLInstantIDPipeline(StableDiffusionXLControlNetPipeline):
 
         # IP adapter
         ip_adapter_scale=None,
+        ip_adapter_scale_start: float = 0.0,
+        ip_adapter_scale_end: float = 1.0,
 
         # Enhance Face Region
         control_mask = None,
@@ -974,6 +976,12 @@ class StableDiffusionXLInstantIDPipeline(StableDiffusionXLControlNetPipeline):
                 The percentage of total steps at which the ControlNet starts applying.
             control_guidance_end (`float` or `List[float]`, *optional*, defaults to 1.0):
                 The percentage of total steps at which the ControlNet stops applying.
+            ip_adapter_scale_start (`float`, *optional*, defaults to 0.0):
+                The percentage of total steps at which the IP-Adapter (Image adapter) starts applying. Only takes
+                effect when `ip_adapter_scale` is explicitly passed.
+            ip_adapter_scale_end (`float`, *optional*, defaults to 1.0):
+                The percentage of total steps at which the IP-Adapter (Image adapter) stops applying. Only takes
+                effect when `ip_adapter_scale` is explicitly passed.
             original_size (`Tuple[int]`, *optional*, defaults to (1024, 1024)):
                 If `original_size` is not the same as `target_size` the image will appear to be down- or upsampled.
                 `original_size` defaults to `(height, width)` if not specified. Part of SDXL's micro-conditioning as
@@ -1228,6 +1236,12 @@ class StableDiffusionXLInstantIDPipeline(StableDiffusionXLControlNetPipeline):
             ]
             controlnet_keep.append(keeps[0] if isinstance(controlnet, ControlNetModel) else keeps)
 
+        # 7.1b Precompute the per-step IP-Adapter (Image adapter) keep/scale window
+        ip_adapter_keep = [
+            0.0 if (i / len(timesteps) < ip_adapter_scale_start or (i + 1) / len(timesteps) > ip_adapter_scale_end) else 1.0
+            for i in range(len(timesteps))
+        ]
+
         # 7.2 Prepare added time ids & embeddings
         if isinstance(image, list):
             original_size = original_size or image[0].shape[-2:]
@@ -1376,6 +1390,10 @@ class StableDiffusionXLInstantIDPipeline(StableDiffusionXLControlNetPipeline):
                     # add 0 to the unconditional batch to keep it unchanged.
                     down_block_res_samples = [torch.cat([torch.zeros_like(d), d]) for d in down_block_res_samples]
                     mid_block_res_sample = torch.cat([torch.zeros_like(mid_block_res_sample), mid_block_res_sample])
+
+                # apply the IP-Adapter (Image adapter) timestep window for this step
+                if ip_adapter_scale is not None:
+                    self.set_ip_adapter_scale(ip_adapter_scale * ip_adapter_keep[i])
 
                 # predict the noise residual
                 noise_pred = self.unet(
