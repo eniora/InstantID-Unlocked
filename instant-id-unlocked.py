@@ -2205,7 +2205,7 @@ Scheduler: {scheduler}"""
         });
     }
     """
-    with gr.Blocks(title="InstantID Unlocked v8.8.0", js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v8.8.1", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
@@ -2611,7 +2611,7 @@ Scheduler: {scheduler}"""
                                     info="Image Adapter End Step (%)",
                                 )
                             adapter_smooth_transition = gr.Checkbox(
-                                label="Smooth start/end transition via fractional step blending (close values e.g. 0.11 vs 0.13 produce distinct results)",
+                                label="Smooth start/end transition via fractional step blending (close values e.g. 0.1 vs 0.11 produce distinct results)",
                                 value=False,
                             )
                             def toggle_range_slider_step(smooth_enabled):
@@ -2759,7 +2759,7 @@ Scheduler: {scheduler}"""
                         num_steps = gr.Slider(
                             label="Sampling steps",
                             minimum=1,
-                            maximum=150,
+                            maximum=200,
                             step=1,
                             value=20,
                         )
@@ -4151,7 +4151,7 @@ Scheduler: {scheduler}"""
                     open_settings_accordion = True
                 if settings["rng_source"] == "CPU" or settings["enable_sage_attention"] or settings["enable_upscaler_prescale"] or settings["clip_skip"] != 0 or settings["kps_brightness"] != 0.6 or settings["resize_mode"] != "LANCZOS" or settings["weight_application_method"] != "Original InstantID per-token":
                     open_advanced_accordion = True
-                if settings["identitynet_start"] != 0.0 or settings["identitynet_end"] != 1.0 or settings["adapter_start"] != 0.0 or settings["adapter_end"] != 1.0 or settings["adapter_smooth_transition"]:
+                if settings["identitynet_start"] != 0.0 or settings["identitynet_end"] != 1.0 or settings["adapter_start"] != 0.0 or settings["adapter_end"] != 1.0:
                     open_range_accordion = True
 
                 return [
@@ -4348,7 +4348,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID Unlocked v8.8.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v8.8.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
