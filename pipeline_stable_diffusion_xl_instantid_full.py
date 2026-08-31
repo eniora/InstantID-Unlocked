@@ -1292,7 +1292,8 @@ class StableDiffusionXLInstantIDPipeline(StableDiffusionXLControlNetPipeline):
         is_unet_compiled = is_compiled_module(self.unet)
         is_controlnet_compiled = is_compiled_module(self.controlnet)
         is_torch_higher_equal_2_1 = is_torch_version(">=", "2.1")
-                
+        _last_applied_ip_adapter_scale = ip_adapter_scale if ip_adapter_scale is not None else None
+
         with self.progress_bar(total=num_inference_steps) as progress_bar:
             for i, t in enumerate(timesteps):
                 # Relevant thread:
@@ -1393,7 +1394,10 @@ class StableDiffusionXLInstantIDPipeline(StableDiffusionXLControlNetPipeline):
 
                 # apply the IP-Adapter (Image adapter) timestep window for this step
                 if ip_adapter_scale is not None:
-                    self.set_ip_adapter_scale(ip_adapter_scale * ip_adapter_keep[i])
+                    _target_ip_scale = ip_adapter_scale * ip_adapter_keep[i]
+                    if _target_ip_scale != _last_applied_ip_adapter_scale:
+                        self.set_ip_adapter_scale(_target_ip_scale)
+                        _last_applied_ip_adapter_scale = _target_ip_scale
 
                 # predict the noise residual
                 noise_pred = self.unet(
