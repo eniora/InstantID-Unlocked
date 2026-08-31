@@ -4018,7 +4018,7 @@ Scheduler: {scheduler}"""
                             settings["identitynet_strength_ratio"] = float(line.replace("IdentityNet strength:", "").strip())
                         elif line.startswith("Ranges:"):
                             match = re.search(
-                                r"IdentityNet:\s*([\d.]+)\s*-\s*([\d.]+)\s*\|\s*Image adapter:\s*([\d.]+)\s*-\s*([\d.]+)",
+                                r"IdentityNet:\s*([\d.]+)\s*-\s*([\d.]+)\s*\|\s*Adapter:\s*([\d.]+)\s*-\s*([\d.]+)",
                                 line,
                             )
                             if match:
