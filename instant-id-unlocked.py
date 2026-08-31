@@ -1055,6 +1055,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         adapter_strength_ratio,
         adapter_start,
         adapter_end,
+        adapter_smooth_transition,
         pose_strength,
         canny_strength,
         depth_strength,
@@ -1709,7 +1710,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         print(f"IdentityNet strength: {identitynet_strength_ratio}")
         print(f"Adapter strength: {adapter_strength_ratio}")
         if (identitynet_start, identitynet_end, adapter_start, adapter_end) != (0.0, 1.0, 0.0, 1.0):
-            print(f"Control step ranges: IdentityNet: {identitynet_start} - {identitynet_end} | Image adapter: {adapter_start} - {adapter_end}")
+            print(f"Control step ranges: IdentityNet: {identitynet_start} - {identitynet_end} | Image adapter: {adapter_start} - {adapter_end} | Smooth transition: {adapter_smooth_transition}")
 
         lora_info_str = "Disabled"
         if enable_lora:
@@ -1856,6 +1857,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 ip_adapter_scale=adapter_strength_ratio,
                 ip_adapter_scale_start=float(adapter_start),
                 ip_adapter_scale_end=float(adapter_end),
+                smooth_range_transition=bool(adapter_smooth_transition),
                 num_inference_steps=num_steps,
                 guidance_scale=guidance_scale,
                 height=height,
@@ -1928,7 +1930,7 @@ Upscaler Prescale Optimization: {enable_upscaler_prescale}
 Upscaler Prescale Headroom: {upscaler_prescale_headroom}
 IdentityNet strength: {identitynet_strength_ratio}
 Adapter strength: {adapter_strength_ratio}
-Ranges: IdentityNet: {identitynet_start} - {identitynet_end} | Adapter: {adapter_start} - {adapter_end}
+Ranges: IdentityNet: {identitynet_start} - {identitynet_end} | Adapter: {adapter_start} - {adapter_end} | Smooth Transition: {adapter_smooth_transition}
 Pose strength: {pose_strength}
 Canny strength: {canny_strength}
 Depth strength: {depth_strength}
@@ -2060,6 +2062,7 @@ Scheduler: {scheduler}"""
                         ip_adapter_scale=adapter_strength_ratio,
                         ip_adapter_scale_start=float(adapter_start),
                         ip_adapter_scale_end=float(adapter_end),
+                        smooth_range_transition=bool(adapter_smooth_transition),
                         strength=hires_denoising_strength,
                         num_inference_steps=effective_hires_steps,
                         guidance_scale=guidance_scale,
@@ -2607,6 +2610,29 @@ Scheduler: {scheduler}"""
                                     show_label=False,
                                     info="Image Adapter End Step (%)",
                                 )
+                            adapter_smooth_transition = gr.Checkbox(
+                                label="Smooth start/end transition via fractional step blending (close values e.g. 0.11 vs 0.13 produce distinct results)",
+                                value=False,
+                            )
+                            def toggle_range_slider_step(smooth_enabled):
+                                new_step = 0.01 if smooth_enabled else 0.05
+                                return (
+                                    gr.update(step=new_step),
+                                    gr.update(step=new_step),
+                                    gr.update(step=new_step),
+                                    gr.update(step=new_step),
+                                )
+                            adapter_smooth_transition.change(
+                                fn=toggle_range_slider_step,
+                                inputs=adapter_smooth_transition,
+                                outputs=[
+                                    identitynet_start_slider,
+                                    identitynet_end_slider,
+                                    adapter_start_slider,
+                                    adapter_end_slider,
+                                ],
+                                queue=False
+                            )
                 with gr.Accordion("🛠️ Advanced Options", open=False) as advanced_settings_accordion:
                     with gr.Row():
                         clip_skip = gr.Slider(
@@ -3581,6 +3607,7 @@ Scheduler: {scheduler}"""
                 adapter_strength_ratio,
                 adapter_start_slider,
                 adapter_end_slider,
+                adapter_smooth_transition,
                 pose_strength,
                 canny_strength,
                 depth_strength,
@@ -3786,6 +3813,7 @@ Scheduler: {scheduler}"""
                     "adapter_strength_ratio": 0.6,
                     "adapter_start": 0.0,
                     "adapter_end": 1.0,
+                    "adapter_smooth_transition": False,
                     "pose_strength": 0.30,
                     "canny_strength": 0.30,
                     "depth_strength": 0.30,
@@ -4029,6 +4057,9 @@ Scheduler: {scheduler}"""
                                     settings["adapter_end"] = float(match.group(4))
                                 except ValueError:
                                     pass
+                            smooth_match = re.search(r"Smooth Transition:\s*(True|False)", line)
+                            if smooth_match:
+                                settings["adapter_smooth_transition"] = smooth_match.group(1) == "True"
                         elif line.startswith("Weight application method:"):
                             method_text = line.replace("Weight application method:", "").strip()
                             valid_methods = [
@@ -4120,7 +4151,7 @@ Scheduler: {scheduler}"""
                     open_settings_accordion = True
                 if settings["rng_source"] == "CPU" or settings["enable_sage_attention"] or settings["enable_upscaler_prescale"] or settings["clip_skip"] != 0 or settings["kps_brightness"] != 0.6 or settings["resize_mode"] != "LANCZOS" or settings["weight_application_method"] != "Original InstantID per-token":
                     open_advanced_accordion = True
-                if settings["identitynet_start"] != 0.0 or settings["identitynet_end"] != 1.0 or settings["adapter_start"] != 0.0 or settings["adapter_end"] != 1.0:
+                if settings["identitynet_start"] != 0.0 or settings["identitynet_end"] != 1.0 or settings["adapter_start"] != 0.0 or settings["adapter_end"] != 1.0 or settings["adapter_smooth_transition"]:
                     open_range_accordion = True
 
                 return [
@@ -4140,6 +4171,7 @@ Scheduler: {scheduler}"""
                     settings["adapter_strength_ratio"],
                     settings["adapter_start"],
                     settings["adapter_end"],
+                    settings["adapter_smooth_transition"],
                     settings["pose_strength"],
                     settings["canny_strength"],
                     settings["depth_strength"],
@@ -4228,6 +4260,7 @@ Scheduler: {scheduler}"""
                     adapter_strength_ratio,
                     adapter_start_slider,
                     adapter_end_slider,
+                    adapter_smooth_transition,
                     pose_strength,
                     canny_strength,
                     depth_strength,
