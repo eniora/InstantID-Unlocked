@@ -1707,9 +1707,9 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         else:
             print("ControlNet selection: None (Disabled)")
         print(f"IdentityNet strength: {identitynet_strength_ratio}")
-        print(f"IdentityNet timestep range: {identitynet_start}-{identitynet_end}")
         print(f"Adapter strength: {adapter_strength_ratio}")
-        print(f"Adapter timestep range: {adapter_start}-{adapter_end}")
+        print(f"IdentityNet timestep range: {identitynet_start} - {identitynet_end}")
+        print(f"Adapter timestep range: {adapter_start} - {adapter_end}")
 
         lora_info_str = "Disabled"
         if enable_lora:
@@ -1927,9 +1927,9 @@ Hires Denoising Strength: {hires_denoising_strength}
 Upscaler Prescale Optimization: {enable_upscaler_prescale}
 Upscaler Prescale Headroom: {upscaler_prescale_headroom}
 IdentityNet strength: {identitynet_strength_ratio}
+Adapter strength: {adapter_strength_ratio}
 IdentityNet Start: {identitynet_start}
 IdentityNet End: {identitynet_end}
-Adapter strength: {adapter_strength_ratio}
 Adapter Start: {adapter_start}
 Adapter End: {adapter_end}
 Pose strength: {pose_strength}
