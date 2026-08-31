@@ -2570,7 +2570,7 @@ Scheduler: {scheduler}"""
                         step=0.05,
                         value=0.6,
                     )
-                    with gr.Accordion("IdentityNet and Image adapter start/end ranges (controls when each begins and stops applying during generation)", open=False) as adapters_range_accordion:
+                    with gr.Accordion("📊 IdentityNet & Image adapter start/end ranges (controls when each begins and stops applying during generation)", open=False) as adapters_range_accordion:
                         with gr.Group():
                             with gr.Row():
                                 identitynet_start_slider = gr.Slider(
@@ -2701,7 +2701,7 @@ Scheduler: {scheduler}"""
                 with gr.Accordion("🎚️ Controlnet", open=False) as controlnet_accordion:
                     controlnet_selection = gr.CheckboxGroup(
                         ["pose", "canny", "depth"], value=[], show_label=False,
-                        info="Use pose for skeleton inference, canny for edge detection, and depth for depth map estimation. You can try all three to control the generation process."
+                        info="Use pose for skeleton inference, canny for edge detection, and depth for depth map estimation."
                     )
                     pose_strength = gr.Slider(
                         label="Pose strength",
