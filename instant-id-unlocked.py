@@ -1708,8 +1708,8 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             print("ControlNet selection: None (Disabled)")
         print(f"IdentityNet strength: {identitynet_strength_ratio}")
         print(f"Adapter strength: {adapter_strength_ratio}")
-        print(f"IdentityNet timestep range: {identitynet_start} - {identitynet_end}")
-        print(f"Adapter timestep range: {adapter_start} - {adapter_end}")
+        if (identitynet_start, identitynet_end, adapter_start, adapter_end) != (0.0, 1.0, 0.0, 1.0):
+            print(f"Control step ranges: IdentityNet: {identitynet_start} - {identitynet_end} | Image adapter: {adapter_start} - {adapter_end}")
 
         lora_info_str = "Disabled"
         if enable_lora:
@@ -1928,10 +1928,7 @@ Upscaler Prescale Optimization: {enable_upscaler_prescale}
 Upscaler Prescale Headroom: {upscaler_prescale_headroom}
 IdentityNet strength: {identitynet_strength_ratio}
 Adapter strength: {adapter_strength_ratio}
-IdentityNet Start: {identitynet_start}
-IdentityNet End: {identitynet_end}
-Adapter Start: {adapter_start}
-Adapter End: {adapter_end}
+Ranges: IdentityNet: {identitynet_start} - {identitynet_end} | Adapter: {adapter_start} - {adapter_end}
 Pose strength: {pose_strength}
 Canny strength: {canny_strength}
 Depth strength: {depth_strength}
@@ -4019,16 +4016,19 @@ Scheduler: {scheduler}"""
                                 pass
                         elif line.startswith("IdentityNet strength:"):
                             settings["identitynet_strength_ratio"] = float(line.replace("IdentityNet strength:", "").strip())
-                        elif line.startswith("IdentityNet Start:"):
-                            try:
-                                settings["identitynet_start"] = float(line.replace("IdentityNet Start:", "").strip())
-                            except ValueError:
-                                pass
-                        elif line.startswith("IdentityNet End:"):
-                            try:
-                                settings["identitynet_end"] = float(line.replace("IdentityNet End:", "").strip())
-                            except ValueError:
-                                pass
+                        elif line.startswith("Ranges:"):
+                            match = re.search(
+                                r"IdentityNet:\s*([\d.]+)\s*-\s*([\d.]+)\s*\|\s*Image adapter:\s*([\d.]+)\s*-\s*([\d.]+)",
+                                line,
+                            )
+                            if match:
+                                try:
+                                    settings["identitynet_start"] = float(match.group(1))
+                                    settings["identitynet_end"] = float(match.group(2))
+                                    settings["adapter_start"] = float(match.group(3))
+                                    settings["adapter_end"] = float(match.group(4))
+                                except ValueError:
+                                    pass
                         elif line.startswith("Weight application method:"):
                             method_text = line.replace("Weight application method:", "").strip()
                             valid_methods = [
@@ -4054,16 +4054,6 @@ Scheduler: {scheduler}"""
                                 settings["scheduler"] = scheduler_name
                         elif line.startswith("Adapter strength:"):
                             settings["adapter_strength_ratio"] = float(line.replace("Adapter strength:", "").strip())
-                        elif line.startswith("Adapter Start:"):
-                            try:
-                                settings["adapter_start"] = float(line.replace("Adapter Start:", "").strip())
-                            except ValueError:
-                                pass
-                        elif line.startswith("Adapter End:"):
-                            try:
-                                settings["adapter_end"] = float(line.replace("Adapter End:", "").strip())
-                            except ValueError:
-                                pass
                         elif line.startswith("Pose strength:"):
                             settings["pose_strength"] = float(line.replace("Pose strength:", "").strip())
                         elif line.startswith("Canny strength:"):
