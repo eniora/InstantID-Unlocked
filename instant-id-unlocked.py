@@ -2577,7 +2577,7 @@ Scheduler: {scheduler}"""
                                     label="IdentityNet Start",
                                     minimum=0.0,
                                     maximum=0.95,
-                                    step=0.05,
+                                    step=0.01,
                                     value=0.0,
                                     show_label=False,
                                     info="IdentityNet Start Step (%)",
@@ -2586,7 +2586,7 @@ Scheduler: {scheduler}"""
                                     label="IdentityNet End",
                                     minimum=0.0,
                                     maximum=1.0,
-                                    step=0.05,
+                                    step=0.01,
                                     value=1.0,
                                     show_label=False,
                                     info="IdentityNet End Step (%)",
@@ -2596,7 +2596,7 @@ Scheduler: {scheduler}"""
                                     label="Image Adapter Start",
                                     minimum=0.0,
                                     maximum=0.95,
-                                    step=0.05,
+                                    step=0.01,
                                     value=0.0,
                                     show_label=False,
                                     info="Image Adapter Start Step (%)",
@@ -2605,14 +2605,14 @@ Scheduler: {scheduler}"""
                                     label="Image Adapter End",
                                     minimum=0.0,
                                     maximum=1.0,
-                                    step=0.05,
+                                    step=0.01,
                                     value=1.0,
                                     show_label=False,
                                     info="Image Adapter End Step (%)",
                                 )
                             adapter_smooth_transition = gr.Checkbox(
                                 label="Smooth start/end transition via fractional step blending (close values e.g. 0.1 vs 0.11 produce distinct results)",
-                                value=False,
+                                value=True,
                             )
                             def toggle_range_slider_step(smooth_enabled):
                                 new_step = 0.01 if smooth_enabled else 0.05
@@ -3813,7 +3813,7 @@ Scheduler: {scheduler}"""
                     "adapter_strength_ratio": 0.6,
                     "adapter_start": 0.0,
                     "adapter_end": 1.0,
-                    "adapter_smooth_transition": False,
+                    "adapter_smooth_transition": True,
                     "pose_strength": 0.30,
                     "canny_strength": 0.30,
                     "depth_strength": 0.30,
