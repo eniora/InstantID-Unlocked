@@ -1681,7 +1681,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             print(f"Hires Upscale By: {hires_upscale_by}")
             print(f"Hires Steps: {hires_steps}{' (Auto)' if hires_steps == 0 else ''}")
             print(f"Hires Denoising Strength: {hires_denoising_strength}")
-        if enable_hires_fix:
             print(f"Upscaler Prescale Optimization: {enable_upscaler_prescale}")
             if enable_upscaler_prescale:
                 print(f"Upscaler Prescale Headroom: {upscaler_prescale_headroom}")
