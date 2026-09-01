@@ -1274,7 +1274,9 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
         for i in range(len(timesteps)):
             keeps = []
             for idx, (s, e) in enumerate(zip(control_guidance_start, control_guidance_end)):
-                if idx == 0 and smooth_range_transition:
+                if s == 0.0 and e == 1.0:
+                    keeps.append(1.0)
+                elif idx == 0 and smooth_range_transition:
                     step_start = i * controlnet_keep_step_size
                     step_end = (i + 1) * controlnet_keep_step_size
                     overlap = min(step_end, e) - max(step_start, s)
@@ -1284,7 +1286,9 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
             controlnet_keep.append(keeps[0] if isinstance(controlnet, ControlNetModel) else keeps)
 
         # 7.1b Precompute the per-step IP-Adapter (Image adapter) keep/scale window.
-        if smooth_range_transition:
+        if ip_adapter_scale_start == 0.0 and ip_adapter_scale_end == 1.0:
+            ip_adapter_keep = [1.0] * len(timesteps)
+        elif smooth_range_transition:
             ip_adapter_step_size = 1.0 / len(timesteps)
             ip_adapter_keep = []
             for i in range(len(timesteps)):
