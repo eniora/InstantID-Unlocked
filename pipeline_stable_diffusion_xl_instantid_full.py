@@ -884,7 +884,7 @@ class StableDiffusionXLInstantIDPipeline(StableDiffusionXLControlNetPipeline):
         ip_adapter_scale=None,
         ip_adapter_scale_start: float = 0.0,
         ip_adapter_scale_end: float = 1.0,
-        smooth_range_transition: bool = False,
+        smooth_range_transition: bool = True,
 
         # Enhance Face Region
         control_mask = None,
@@ -983,7 +983,7 @@ class StableDiffusionXLInstantIDPipeline(StableDiffusionXLControlNetPipeline):
             ip_adapter_scale_end (`float`, *optional*, defaults to 1.0):
                 The percentage of total steps at which the IP-Adapter (Image adapter) stops applying. Only takes
                 effect when `ip_adapter_scale` is explicitly passed.
-            smooth_range_transition (`bool`, *optional*, defaults to `False`):
+            smooth_range_transition (`bool`, *optional*, defaults to `True`):
                 If `False` (default), the boundary step at the start/end of IdentityNet's own
                 `control_guidance_start`/`control_guidance_end` window (index 0 of those lists) and at
                 `ip_adapter_scale_start`/`ip_adapter_scale_end` is snapped fully on or off, based on the
