@@ -2204,7 +2204,7 @@ Scheduler: {scheduler}"""
         });
     }
     """
-    with gr.Blocks(title="InstantID Unlocked v8.8.1", js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v8.8.2", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
@@ -2379,7 +2379,7 @@ Scheduler: {scheduler}"""
                     value=NEGATIVE_PROMPT_PRESETS["Default Negative Profile"],
                     elem_id="negative_prompt_textbox",
                 )
-                with gr.Accordion("⚙️ Style templates and other settings including custom resolution", open=False) as style_settings_accordion:
+                with gr.Accordion("📋 Style templates and other settings", open=False):
                     with gr.Group():
                         style = gr.Dropdown(
                             label="Style templates",
@@ -2465,76 +2465,78 @@ Scheduler: {scheduler}"""
                             value=DEFAULT_FILE_PREFIX,
                             placeholder="Enter your custom prefix (e.g., 'myprefix' becomes myprefix_0.png) etc."
                         )
-                    with gr.Group():
-                        with gr.Row():
-                            ratio_base_pixel_number = gr.Radio(
-                                label="Resize step in pixels for aspect ratio (8 = most accurate)",
-                                choices=[8, 16, 32, 64],
-                                value=8,
-                            )
-                            pad_to_max_checkbox = gr.Checkbox(
-                                label="Square padding (keeps subject proportions intact)",
-                                value=False
-                            )
-                    enable_custom_resize = gr.Checkbox(
-                        label="📐 Enable custom resolution (disables & overrides all other resolution & resizing options)",
-                        value=False
-                    )
-                    custom_resize_width = gr.Slider(
-                        label="Custom Width ↔️",
-                        minimum=64,
-                        maximum=16384,
-                        step=8,
-                        value=960,
-                        visible=False,
-                        interactive=True
-                    )
-                    custom_resize_height = gr.Slider(
-                        label="Custom Height ↕️",
-                        minimum=64,
-                        maximum=16384,
+                with gr.Group():
+                    resize_max_side_slider = gr.Slider(
+                        label="Output Resolution (max_side).",
+                        minimum=256,
+                        maximum=8192,
                         step=8,
                         value=1280,
-                        visible=False,
-                        interactive=True
+                        show_label=False,
+                        info="Output Resolution (max_side). Max width/height resizing in pixels. Using Hires Fix is preferable to raising this too high.",
                     )
-                resize_max_side_slider = gr.Slider(
-                    label="Max image width/height resizing in pixels. This is for the output resolution.",
-                    minimum=256,
-                    maximum=8192,
-                    step=8,
-                    value=1280,
-                    info="Controls the max_side for input image resizing. Using Hires Fix is preferable to raising this too high.",
-                )
-                def toggle_custom_resize_controls(value):
-                    return (
-                        gr.update(visible=value),
-                        gr.update(visible=value),
-                        gr.update(interactive=not value),
-                        gr.update(interactive=not value),
-                        gr.update(interactive=not value)
-                    )
-                enable_custom_resize.change(
-                    fn=toggle_custom_resize_controls,
-                    inputs=enable_custom_resize,
-                    outputs=[
-                        custom_resize_width,
-                        custom_resize_height,
-                        resize_max_side_slider,
-                        pad_to_max_checkbox,
-                        ratio_base_pixel_number
-                    ],
-                    queue=False
-                )
-                def toggle_resize_step(ratio_base_pixel_number):
-                    return gr.update(step=ratio_base_pixel_number)
-
-                ratio_base_pixel_number.change(
-                    fn=toggle_resize_step,
-                    inputs=ratio_base_pixel_number,
-                    outputs=[resize_max_side_slider],
-                    queue=False
-                )
+                    with gr.Accordion("📐 Custom resolution, resize step and square padding (advanced, adjust only if needed)", open=False) as resolution_settings_accordion:
+                        with gr.Group():
+                            enable_custom_resize = gr.Checkbox(
+                                label="📏 Enable custom resolution (disables & overrides all other resolution & resizing options)",
+                                value=False
+                            )
+                            custom_resize_width = gr.Slider(
+                                label="↔️ Custom Width",
+                                minimum=64,
+                                maximum=16384,
+                                step=8,
+                                value=960,
+                                visible=False,
+                                interactive=True
+                            )
+                            custom_resize_height = gr.Slider(
+                                label="↕️ Custom Height",
+                                minimum=64,
+                                maximum=16384,
+                                step=8,
+                                value=1280,
+                                visible=False,
+                                interactive=True
+                            )
+                            with gr.Row():
+                                ratio_base_pixel_number = gr.Radio(
+                                    label="Resize step in pixels for aspect ratio (8 = most accurate)",
+                                    choices=[8, 16, 32, 64],
+                                    value=8,
+                                )
+                                pad_to_max_checkbox = gr.Checkbox(
+                                    label="Square padding (keeps subject proportions intact)",
+                                    value=False
+                                )
+                            def toggle_custom_resize_controls(value):
+                                return (
+                                    gr.update(visible=value),
+                                    gr.update(visible=value),
+                                    gr.update(interactive=not value),
+                                    gr.update(interactive=not value),
+                                    gr.update(interactive=not value)
+                                )
+                            enable_custom_resize.change(
+                                fn=toggle_custom_resize_controls,
+                                inputs=enable_custom_resize,
+                                outputs=[
+                                    custom_resize_width,
+                                    custom_resize_height,
+                                    resize_max_side_slider,
+                                    pad_to_max_checkbox,
+                                    ratio_base_pixel_number
+                                ],
+                                queue=False
+                            )
+                            def toggle_resize_step(ratio_base_pixel_number):
+                                return gr.update(step=ratio_base_pixel_number)
+                            ratio_base_pixel_number.change(
+                                fn=toggle_resize_step,
+                                inputs=ratio_base_pixel_number,
+                                outputs=[resize_max_side_slider],
+                                queue=False
+                            )
                 with gr.Row():
                     generate = gr.Button("Generate (Control + Enter)", scale=8, variant="primary")
                     stop_btn = gr.Button("⏹", scale=0, min_width=60, variant="stop")
@@ -4142,12 +4144,12 @@ Scheduler: {scheduler}"""
                             except:
                                 pass
 
-                open_settings_accordion = False
+                open_resolution_accordion = False
                 open_advanced_accordion = False
                 open_range_accordion = False
 
                 if settings["enable_custom_resize"] or settings["pad_to_max_side"] or settings["ratio_base_pixel_number"] != 8:
-                    open_settings_accordion = True
+                    open_resolution_accordion = True
                 if settings["rng_source"] == "CPU" or settings["enable_sage_attention"] or settings["enable_upscaler_prescale"] or settings["clip_skip"] != 0 or settings["kps_brightness"] != 0.6 or settings["resize_mode"] != "LANCZOS" or settings["weight_application_method"] != "Original InstantID per-token":
                     open_advanced_accordion = True
                 if settings["identitynet_start"] != 0.0 or settings["identitynet_end"] != 1.0 or settings["adapter_start"] != 0.0 or settings["adapter_end"] != 1.0:
@@ -4234,7 +4236,7 @@ Scheduler: {scheduler}"""
                     settings["hires_steps"],
                     settings["hires_denoising_strength"],
                     accordion_update,
-                    gr.update(open=open_settings_accordion),
+                    gr.update(open=open_resolution_accordion),
                     gr.update(open=open_advanced_accordion),
                     gr.update(open=open_range_accordion)
                 ]
@@ -4323,7 +4325,7 @@ Scheduler: {scheduler}"""
                     hires_steps,
                     hires_denoising_strength,
                     controlnet_accordion,
-                    style_settings_accordion,
+                    resolution_settings_accordion,
                     advanced_settings_accordion,
                     adapters_range_accordion
                 ],
@@ -4347,7 +4349,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID Unlocked v8.8.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v8.8.2</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
