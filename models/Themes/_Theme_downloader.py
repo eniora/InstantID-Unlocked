@@ -22,7 +22,7 @@ def _load_hub_theme_css(repo_id):
 if __name__ == "__main__":
     # Add/remove repo ids here, then just run this script while online. InstantID will needs a full reload after downloading new themes for themes dropdown to update.
     repo_ids = [
-        "gradio/seafoam", # example
+        "gradio/seafoam", # example, which is from https://huggingface.co/spaces/gradio/seafoam/tree/main/themes. With this script it will automatically be converted to .css
     ]
     for repo_id in repo_ids:
         try:
