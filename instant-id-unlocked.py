@@ -179,6 +179,68 @@ def get_canny_image(image, t1=100, t2=200):
     return Image.fromarray(edges).convert("L")
 
 import gradio as gr
+import gradio.themes as gr_themes
+import json
+
+def create_builtin_theme_dropdown(default_theme="Default Theme"):
+    theme_classes = {
+        "Default Theme": gr_themes.Default(),
+        "Origin": gr_themes.Origin(),
+        "Base": gr_themes.Base(),
+        "Soft": gr_themes.Soft(),
+        "Glass": gr_themes.Glass(),
+        "Monochrome": gr_themes.Monochrome(),
+        "Citrus": gr_themes.Citrus(),
+        "Ocean": gr_themes.Ocean(),
+    }
+    names = list(theme_classes.keys())
+    theme_css_map = {name: theme_classes[name]._get_theme_css() for name in names}
+    theme_css_map_json = json.dumps(theme_css_map)
+    default_theme_json = json.dumps(default_theme)
+    dropdown = gr.Dropdown(
+        choices=names,
+        value=default_theme,
+        label=None,
+        show_label=False,
+        container=False,
+        scale=0,
+        min_width=150,
+        elem_id="builtin_theme_dropdown",
+        render=False,
+    )
+    js = f"""
+    (theme) => {{
+        const THEME_CSS = {theme_css_map_json};
+        let theme_elem = document.querySelector('.gradio-theme-css');
+        if (!theme_elem) {{
+            theme_elem = document.createElement('style');
+            theme_elem.classList.add('gradio-theme-css');
+            document.head.appendChild(theme_elem);
+        }}
+        theme_elem.innerHTML = THEME_CSS[theme] || "";
+        try {{ localStorage.setItem('instantid_theme', theme); }} catch (e) {{}}
+    }}
+    """
+    load_js = f"""
+    () => {{
+        const THEME_CSS = {theme_css_map_json};
+        let theme = {default_theme_json};
+        try {{
+            const saved = localStorage.getItem('instantid_theme');
+            if (saved && THEME_CSS[saved]) theme = saved;
+        }} catch (e) {{}}
+        let theme_elem = document.querySelector('.gradio-theme-css');
+        if (!theme_elem) {{
+            theme_elem = document.createElement('style');
+            theme_elem.classList.add('gradio-theme-css');
+            document.head.appendChild(theme_elem);
+        }}
+        theme_elem.innerHTML = THEME_CSS[theme] || "";
+        return theme;
+    }}
+    """
+    return dropdown, js, load_js
+
 import starlette.responses as _starlette_responses
 _orig_set_stat_headers = _starlette_responses.FileResponse.set_stat_headers
 def _set_stat_headers_no_content_length(self, stat_result):
@@ -2204,7 +2266,7 @@ Scheduler: {scheduler}"""
         });
     }
     """
-    with gr.Blocks(title="InstantID Unlocked v8.8.2", js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v8.8.3", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
@@ -4349,7 +4411,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID Unlocked v8.8.2</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID: Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v8.8.3</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
@@ -4398,6 +4460,14 @@ Scheduler: {scheduler}"""
                     outputs=None,
                     queue=False,
                 )
+
+        with gr.Row():
+            gr.Markdown("")
+            theme_dropdown, theme_change_js, theme_load_js = create_builtin_theme_dropdown(default_theme="Default Theme")
+            theme_dropdown.render()
+            gr.Markdown("")
+        theme_dropdown.change(fn=None, inputs=theme_dropdown, outputs=None, js=theme_change_js)
+        gui.load(fn=None, inputs=None, outputs=theme_dropdown, js=theme_load_js)
 
     gui.launch(inbrowser=os.environ.get("IN_BROWSER", "1") == "1")
 
