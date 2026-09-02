@@ -95,7 +95,7 @@
   --embed-radius: var(--radius-lg);
   --color-accent: var(--primary-500);
   --color-accent-soft: var(--primary-50);
-  --background-fill-primary: url('https://images.unsplash.com/photo-1451755032734-ada8d61ecf2f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1004&q=80') no-repeat center/cover;
+  --background-fill-primary: var(--neutral-50);
   --background-fill-secondary: var(--neutral-50);
   --border-color-accent: var(--primary-300);
   --border-color-primary: var(--neutral-200);
