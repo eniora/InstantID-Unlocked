@@ -33,11 +33,9 @@ def _load_hub_theme_css(repo_id):
     resp = requests.get(url, timeout=30)
     resp.raise_for_status()
     data = json.loads(resp.text, object_hook=fonts.as_font)
-    theme = gr.themes.ThemeClass.from_dict(data)
-    if theme.name is None:
-        theme.name = re.sub(r"[^\w.-]", "_", repo_id)
+    theme = gr.Theme.from_dict(data)
+    theme.name = repo_id
     css = theme._get_theme_css()
-
     with open(cache_file, "w", encoding="utf-8") as f:
         f.write(css)
     return css
