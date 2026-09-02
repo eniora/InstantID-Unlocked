@@ -182,7 +182,21 @@ import gradio as gr
 import gradio.themes as gr_themes
 import json
 
-def create_builtin_theme_dropdown(default_theme="Default Theme"):
+CUSTOM_THEMES_DIR = os.path.join("models", "Themes")
+def load_custom_themes():
+    themes = {}
+    if os.path.isdir(CUSTOM_THEMES_DIR):
+        filenames = [f for f in os.listdir(CUSTOM_THEMES_DIR) if f.endswith(".css")]
+        for filename in sorted(filenames, key=str.lower):
+            name = os.path.splitext(filename)[0]
+            try:
+                with open(os.path.join(CUSTOM_THEMES_DIR, filename), "r", encoding="utf-8") as f:
+                    themes[name] = f.read()
+            except Exception as e:
+                print(f"[theme] Skipping '{name}': {e}")
+    return themes
+
+def create_theme_dropdown(default_theme="Default Theme"):
     theme_classes = {
         "Default Theme": gr_themes.Default(),
         "Origin": gr_themes.Origin(),
@@ -193,8 +207,9 @@ def create_builtin_theme_dropdown(default_theme="Default Theme"):
         "Citrus": gr_themes.Citrus(),
         "Ocean": gr_themes.Ocean(),
     }
-    names = list(theme_classes.keys())
-    theme_css_map = {name: theme_classes[name]._get_theme_css() for name in names}
+    theme_css_map = {name: theme_classes[name]._get_theme_css() for name in theme_classes}
+    theme_css_map.update(load_custom_themes())
+    names = list(theme_css_map.keys())
     theme_css_map_json = json.dumps(theme_css_map)
     default_theme_json = json.dumps(default_theme)
     dropdown = gr.Dropdown(
@@ -204,8 +219,8 @@ def create_builtin_theme_dropdown(default_theme="Default Theme"):
         show_label=False,
         container=False,
         scale=0,
-        min_width=150,
-        elem_id="builtin_theme_dropdown",
+        min_width=200,
+        elem_id="theme_dropdown",
         render=False,
     )
     js = f"""
@@ -4463,7 +4478,7 @@ Scheduler: {scheduler}"""
 
         with gr.Row():
             gr.Markdown("")
-            theme_dropdown, theme_change_js, theme_load_js = create_builtin_theme_dropdown(default_theme="Default Theme")
+            theme_dropdown, theme_change_js, theme_load_js = create_theme_dropdown(default_theme="Default Theme")
             theme_dropdown.render()
             gr.Markdown("")
         theme_dropdown.change(fn=None, inputs=theme_dropdown, outputs=None, js=theme_change_js)
