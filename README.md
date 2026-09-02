@@ -29,7 +29,8 @@ The code barely follows any DRY principles as it started as a personal modificat
 - Hires Fix support with upscaler drop down menu.
 - Multiple schedulers available (beyond the original EulerDiscrete).
 - VAE tiling option to improve VRAM efficiency.
-- Resolution slider up to 4096px.
+- Resolution (max_side) slider up to 8192px.
+- Sliders for start/end control step for IdentitiyNet and Image adapter.
 - Weight application method: added UI options to mimic how ForgeUI/A1111 or ComfyUI deal with (word:weight).
 - Generate multiple images in one run, each with a random seed.
 - Stop button.
