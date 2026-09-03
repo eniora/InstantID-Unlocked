@@ -3,7 +3,7 @@
 I think it's worth mentioning that I am not too good with python and the code is full of workarounds/hacks + I used a lot of help from AI chatbots, but at least it works really well and everything is working as I intended with no issues at all. While I get a lot of help from chatbots, this is really not vibe coded and I still do lots of stuff manually and I try to fix all issues I find.
 
 I originally started modifying InstantID for my own usage and to improve my experience and learn a bit more about python, then decided to release it as a fork. Many thanks to the InstantX team for this awesome project!
-The code barely follows any DRY principles as it started as a personal modification project to improve my experience and I slowly fixed/patched stuff over time. So now doing "DRY" on it would require a lot of time and possibly break things.
+The code barely follows any DRY principles as it started as a personal modification project to improve my experience and I slowly fixed/patched stuff over time. So now doing "DRY" on it would require a lot of time and possibly break things (I am not too good for doing a DRY on it, and I wouldn't trust an AI chatbot to do it for me without screwing up something as the app has a million different features and most of them rely on each other).
 
 ## This fork adds the following:
 
