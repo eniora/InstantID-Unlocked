@@ -1592,24 +1592,24 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         multi_ref_filenames = []
         if enable_multi_ref and multi_ref_files:
             multi_ref_embeddings = [face_emb]
-            for ref_item in multi_ref_files:
-                ref_path = ref_item[0] if isinstance(ref_item, (list, tuple)) else ref_item
+            for additional_item in multi_ref_files:
+                additional_path = additional_item[0] if isinstance(additional_item, (list, tuple)) else additional_item
                 try:
-                    ref_image = load_image(ref_path)
-                    original_additional_image = ref_image
-                    ref_image_resized = resize_img(
-                        ref_image, size=custom_size, max_side=resize_max_side,
+                    additional_image = load_image(additional_path)
+                    original_additional_image = additional_image
+                    additional_image_resized = resize_img(
+                        additional_image, size=custom_size, max_side=resize_max_side,
                         mode=resize_mode_enum, pad_to_max_side=pad_to_max_side,
                         base_pixel_number=ratio_base_pixel_number,
                     )
-                    ref_image_cv2 = convert_from_image_to_cv2(ref_image_resized)
-                    additional_width, additional_height = ref_image_resized.size
-                    ref_face_info = app.get(ref_image_cv2)
+                    additional_image_cv2 = convert_from_image_to_cv2(additional_image_resized)
+                    additional_width, additional_height = additional_image_resized.size
+                    additional_face_info = app.get(additional_image_cv2)
 
                     additional_fallback_detect_image = None
                     additional_fallback_detect_cv2 = None
-                    if len(ref_face_info) == 0 and enable_custom_resize:
-                        print(f"\nYour custom resolution possibly stretched additional face image '{os.path.basename(ref_path)}' and was unable to detect a face. Retrying detection on an aspect-preserving resize...\n")
+                    if len(additional_face_info) == 0 and enable_custom_resize:
+                        print(f"\nYour custom resolution possibly stretched additional face image '{os.path.basename(additional_path)}' and was unable to detect a face. Retrying detection on an aspect-preserving resize...\n")
                         additional_fallback_detect_image = resize_img(
                             original_additional_image,
                             size=None,
@@ -1635,10 +1635,10 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                                 fi["bbox"][2] *= scale_x
                                 fi["bbox"][3] *= scale_y
                                 fixed_face_info.append(fi)
-                            ref_face_info = fixed_face_info
+                            additional_face_info = fixed_face_info
 
-                    if len(ref_face_info) == 0 and current_det_size >= (640, 640):
-                        print(f"\nNo face detected at the current detection size ({current_det_size[0]}x{current_det_size[1]}) for additional face image '{os.path.basename(ref_path)}'. Temporarily retrying at 320x320...\n")
+                    if len(additional_face_info) == 0 and current_det_size >= (640, 640):
+                        print(f"\nNo face detected at the current detection size ({current_det_size[0]}x{current_det_size[1]}) for additional face image '{os.path.basename(additional_path)}'. Temporarily retrying at 320x320...\n")
                         if temp_app is None:
                             temp_app = FaceAnalysis(
                                 name="antelopev2",
@@ -1663,19 +1663,19 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                                     fi["bbox"][2] *= scale_x
                                     fi["bbox"][3] *= scale_y
                                     fixed_face_info.append(fi)
-                                ref_face_info = fixed_face_info
-                        if len(ref_face_info) == 0:
-                            ref_face_info = temp_app.get(ref_image_cv2)
+                                additional_face_info = fixed_face_info
+                        if len(additional_face_info) == 0:
+                            additional_face_info = temp_app.get(additional_image_cv2)
 
-                    if len(ref_face_info) == 0:
-                        print(f"\nNo face detected in additional face image '{os.path.basename(ref_path)}'. Skipping it.\n")
-                        gr.Warning(f"No face detected in additional face image '{os.path.basename(ref_path)}'. Skipping it.")
+                    if len(additional_face_info) == 0:
+                        print(f"\nNo face detected in additional face image '{os.path.basename(additional_path)}'. Skipping it.\n")
+                        gr.Warning(f"No face detected in additional face image '{os.path.basename(additional_path)}'. Skipping it.")
                         continue
-                    ref_face_info = sorted(ref_face_info, key=lambda x:(x['bbox'][2]-x['bbox'][0])*(x['bbox'][3]-x['bbox'][1]))[-1]
-                    multi_ref_embeddings.append(ref_face_info["embedding"])
-                    multi_ref_filenames.append(os.path.basename(ref_path))
+                    additional_face_info = sorted(additional_face_info, key=lambda x:(x['bbox'][2]-x['bbox'][0])*(x['bbox'][3]-x['bbox'][1]))[-1]
+                    multi_ref_embeddings.append(additional_face_info["embedding"])
+                    multi_ref_filenames.append(os.path.basename(additional_path))
                 except Exception as e:
-                    print(f"\nFailed to process additional face image '{os.path.basename(ref_path)}': {e}\n")
+                    print(f"\nFailed to process additional face image '{os.path.basename(additional_path)}': {e}\n")
             if len(multi_ref_embeddings) > 1:
                 face_emb = np.mean(multi_ref_embeddings, axis=0)
                 multi_ref_used = len(multi_ref_embeddings)
@@ -2580,17 +2580,17 @@ Scheduler: {scheduler}"""
                                 outputs=[remove_selected_ref_btn, add_more_ref_btn],
                                 queue=False,
                             )
-                            def add_more_ref_images(new_files, gallery_value):
+                            def add_more_additional_images(new_files, gallery_value):
                                 existing = list(gallery_value) if gallery_value else []
                                 newly_added = list(new_files) if new_files else []
                                 return existing + newly_added
                             add_more_ref_btn.upload(
-                                fn=add_more_ref_images,
+                                fn=add_more_additional_images,
                                 inputs=[add_more_ref_btn, multi_ref_files],
                                 outputs=multi_ref_files,
                                 queue=False,
                             )
-                            def remove_selected_ref_image(gallery_value, selected_index):
+                            def remove_selected_additional_image(gallery_value, selected_index):
                                 if gallery_value is None or selected_index is None:
                                     still_has_items = bool(gallery_value)
                                     return gallery_value, None, gr.update(visible=still_has_items), gr.update(visible=still_has_items)
@@ -2602,7 +2602,7 @@ Scheduler: {scheduler}"""
                                 still_has_items = bool(new_value)
                                 return new_value, None, gr.update(visible=still_has_items), gr.update(visible=still_has_items)
                             remove_selected_ref_btn.click(
-                                fn=remove_selected_ref_image,
+                                fn=remove_selected_additional_image,
                                 inputs=[multi_ref_files, selected_ref_index],
                                 outputs=[multi_ref_files, selected_ref_index, remove_selected_ref_btn, add_more_ref_btn],
                                 queue=False,
