@@ -1596,16 +1596,80 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 ref_path = ref_item[0] if isinstance(ref_item, (list, tuple)) else ref_item
                 try:
                     ref_image = load_image(ref_path)
+                    original_additional_image = ref_image
                     ref_image_resized = resize_img(
                         ref_image, size=custom_size, max_side=resize_max_side,
                         mode=resize_mode_enum, pad_to_max_side=pad_to_max_side,
                         base_pixel_number=ratio_base_pixel_number,
                     )
                     ref_image_cv2 = convert_from_image_to_cv2(ref_image_resized)
+                    additional_width, additional_height = ref_image_resized.size
                     ref_face_info = app.get(ref_image_cv2)
+
+                    additional_fallback_detect_image = None
+                    additional_fallback_detect_cv2 = None
+                    if len(ref_face_info) == 0 and enable_custom_resize:
+                        print(f"\nYour custom resolution possibly stretched additional face image '{os.path.basename(ref_path)}' and was unable to detect a face. Retrying detection on an aspect-preserving resize...\n")
+                        additional_fallback_detect_image = resize_img(
+                            original_additional_image,
+                            size=None,
+                            max_side=1280,
+                            mode=resize_mode_enum,
+                            pad_to_max_side=False,
+                            base_pixel_number=8,
+                        )
+                        additional_fallback_detect_cv2 = convert_from_image_to_cv2(additional_fallback_detect_image)
+                        additional_fallback_face_info = app.get(additional_fallback_detect_cv2)
+                        if len(additional_fallback_face_info) > 0:
+                            det_w, det_h = additional_fallback_detect_image.size
+                            scale_x, scale_y = additional_width / det_w, additional_height / det_h
+                            fixed_face_info = []
+                            for fi in additional_fallback_face_info:
+                                fi = dict(fi)
+                                fi["kps"] = np.array(fi["kps"], dtype=np.float32).copy()
+                                fi["kps"][:, 0] *= scale_x
+                                fi["kps"][:, 1] *= scale_y
+                                fi["bbox"] = np.array(fi["bbox"], dtype=np.float32).copy()
+                                fi["bbox"][0] *= scale_x
+                                fi["bbox"][1] *= scale_y
+                                fi["bbox"][2] *= scale_x
+                                fi["bbox"][3] *= scale_y
+                                fixed_face_info.append(fi)
+                            ref_face_info = fixed_face_info
+
+                    if len(ref_face_info) == 0 and current_det_size >= (640, 640):
+                        print(f"\nNo face detected at the current detection size ({current_det_size[0]}x{current_det_size[1]}) for additional face image '{os.path.basename(ref_path)}'. Temporarily retrying at 320x320...\n")
+                        if temp_app is None:
+                            temp_app = FaceAnalysis(
+                                name="antelopev2",
+                                root="./",
+                                providers=["CPUExecutionProvider"],
+                            )
+                            temp_app.prepare(ctx_id=0, det_size=(320, 320))
+                        if enable_custom_resize and additional_fallback_detect_cv2 is not None:
+                            additional_fallback_face_info = temp_app.get(additional_fallback_detect_cv2)
+                            if len(additional_fallback_face_info) > 0:
+                                det_w, det_h = additional_fallback_detect_image.size
+                                scale_x, scale_y = additional_width / det_w, additional_height / det_h
+                                fixed_face_info = []
+                                for fi in additional_fallback_face_info:
+                                    fi = dict(fi)
+                                    fi["kps"] = np.array(fi["kps"], dtype=np.float32).copy()
+                                    fi["kps"][:, 0] *= scale_x
+                                    fi["kps"][:, 1] *= scale_y
+                                    fi["bbox"] = np.array(fi["bbox"], dtype=np.float32).copy()
+                                    fi["bbox"][0] *= scale_x
+                                    fi["bbox"][1] *= scale_y
+                                    fi["bbox"][2] *= scale_x
+                                    fi["bbox"][3] *= scale_y
+                                    fixed_face_info.append(fi)
+                                ref_face_info = fixed_face_info
+                        if len(ref_face_info) == 0:
+                            ref_face_info = temp_app.get(ref_image_cv2)
+
                     if len(ref_face_info) == 0:
-                        print(f"\nNo face detected in additional face image '{os.path.basename(ref_path)}'. You can try at 320x320 det-size. Skipping it.\n")
-                        gr.Warning(f"No face detected in additional face image '{os.path.basename(ref_path)}'. You can try at 320x320 det-size. Skipping it.")
+                        print(f"\nNo face detected in additional face image '{os.path.basename(ref_path)}'. Skipping it.\n")
+                        gr.Warning(f"No face detected in additional face image '{os.path.basename(ref_path)}'. Skipping it.")
                         continue
                     ref_face_info = sorted(ref_face_info, key=lambda x:(x['bbox'][2]-x['bbox'][0])*(x['bbox'][3]-x['bbox'][1]))[-1]
                     multi_ref_embeddings.append(ref_face_info["embedding"])
@@ -2467,7 +2531,7 @@ Scheduler: {scheduler}"""
                                 height=230,
                                 object_fit="cover",
                                 type="filepath",
-                                show_label=True,
+                                show_label=False,
                                 interactive=True,
                                 file_types=additional_face_image_file_types,
                                 elem_id="multi_ref_gallery",
