@@ -1,9 +1,9 @@
 <h1>InstantID Unlocked</h1>
 
-I think it's worth mentioning that I am not too good with python and the code is full of workarounds/hacks + I used a lot of help from AI chatbots, but at least it works really well and everything is working as I intended with no issues at all. :D
+I think it's worth mentioning that I am not too good with python and the code is full of workarounds/hacks + I used a lot of help from AI chatbots, but at least it works really well and everything is working as I intended with no issues at all. While I get a lot of help from chatbots, this is really not vibe coded and I still do lots of stuff manually and I try to fix all issues I find.
 
 I originally started modifying InstantID for my own usage and to improve my experience and learn a bit more about python, then decided to release it as a fork. Many thanks to the InstantX team for this awesome project!
-The code barely follows any DRY principles as it started as a personal modification project to imporve my experience and I slowly fixed/patched stuff over time. So now doing "DRY" on it would require a lot of time and possibly break things.
+The code barely follows any DRY principles as it started as a personal modification project to improve my experience and I slowly fixed/patched stuff over time. So now doing "DRY" on it would require a lot of time and possibly break things.
 
 ## This fork adds the following:
 
@@ -45,7 +45,7 @@ The code barely follows any DRY principles as it started as a personal modificat
 
 And many many more improvements such as a Standalone Image Upscaler with GFPGAN option.
 
-I tried the most popular forgeui and comfyui implementations including the popular cubiq/ComfyUI_InstantID and it's really bad compared to my gradio fork of InstantID. cubiq/ComfyUI_InstantID (which was the best from the comfy implementations I tried) tends to screw up the faces and similarity sometimes no matter what options and workflows I tried, and the multi ID feature doesn't work well anyway and is overly complicated (even the author admits this). Try this and judge for yourself. I agree that comfyui instantid is faster but the quality isn't so good really. The good thing about cubiq/ComfyUI_InstantID is the stylization with "IP-Adapter plus VIT", I've been trying to make it work with this fork but I always failed, guess I am not skilled enough for this. :>
+I tried the most popular ForgeUI and ComfyUI implementations including the popular cubiq/ComfyUI_InstantID and InstantID Unlocked is at least on par with them if not better. cubiq/ComfyUI_InstantID (which was the best from the comfy implementations I tried) tends to screw up the faces and similarity a bit sometimes no matter what options and workflows I tried, and the multi ID feature doesn't work well anyway and is overly complicated (even the author admits this). Try this fork and judge for yourself.
 
 ## How to use and run:
 
@@ -73,7 +73,7 @@ Python and PIP packages are a pain in the ***, and a lot of stuff can go wrong w
 Just download the files and extract with the latest 7zip, instructions are inside. You basically need to enter the folder with CMD/terminal and create a new venv using python 3.10.6 with "python -m venv venv" and copy over the included site-packages folder, overwriting the newly created one inside.
 If you do this and use this folder, you don't need to install the requirements.txt or torch/nvidia cuda or anything. You need python 3.10.6 installed (or point to a 3.10.6 python folder in the cfg after creating the venv) as the venv folder inside was created with 3.10.6. Then basically run the bat file "_Run InstandID.bat"
 
-Note that the "instant-id-unlocked.py" file inside won't be up to date obviously (currently at v7.5.0 in the folder), you'd need to replace it (and other .py files if necessary) in case I update the repo with new files, so if you go this route and download my full folder, download the latest repo files here (choose the green "code" button and then "download zip") and replace existing ones in the folder (all .py files like the pipeline files, instant-id-unlocked.py, ip_adapter/attention_processor.py etc.). Model files won't need to be updated and you can use any SDXL/Pony checkpoint in .safetensors format and place directly inside the models folder. Illustrious can be loaded but not all of them work good with InstantID.
+Note that the "instant-id-unlocked.py" file inside won't be up to date obviously (currently at v7.5.0 in the folder), you'd need to replace it (and other .py files including pipelines etc.), so if you go this route and download my full folder, download the latest repo files here (choose the green "code" button and then "download zip") and replace existing ones in the folder (all .py files like the pipeline files, instant-id-unlocked.py, ip_adapter/attention_processor.py etc.). Model files won't need to be updated and you can use any SDXL/Pony checkpoint in .safetensors format and place directly inside the models folder. Illustrious can be loaded but not all of them work good with InstantID.
 
 - Tested only on Windows 10/11 and Python 3.10.6 and Nvidia GPUs, you may need to do extra steps to run successfully on MacOS/Linux or if you have an AMD GPU.
 
