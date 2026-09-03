@@ -2342,6 +2342,14 @@ Scheduler: {scheduler}"""
         color: var(--body-text-color);
         padding: 16px;
     }
+    #multi_ref_gallery:not(.fullscreen) {
+        max-height: 230px !important;
+    }
+    #multi_ref_gallery:not(.fullscreen) .grid-wrap {
+        max-height: 230px !important;
+        overflow-y: auto !important;
+        box-sizing: border-box !important;
+    }
     .apply-fields-custom {
         background: #1d4ed8 !important;
         color: white !important;
@@ -2462,6 +2470,7 @@ Scheduler: {scheduler}"""
                                 show_label=True,
                                 interactive=True,
                                 file_types=additional_face_image_file_types,
+                                elem_id="multi_ref_gallery",
                             )
                             selected_ref_index = gr.State(None)
                             remove_selected_ref_btn = gr.Button(
