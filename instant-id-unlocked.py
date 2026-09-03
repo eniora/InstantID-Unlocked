@@ -1118,6 +1118,8 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
     def generate_image(
         resize_max_side,
         face_image_path,
+        enable_multi_ref,
+        multi_ref_files,
         pose_image_path,
         prompt,
         negative_prompt,
@@ -1585,6 +1587,35 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         face_emb = face_info["embedding"]
         face_kps = draw_kps(convert_from_cv2_to_image(face_image_cv2), face_info["kps"], kps_brightness)
         img_controlnet = face_image
+
+        multi_ref_used = 0
+        multi_ref_filenames = []
+        if enable_multi_ref and multi_ref_files:
+            multi_ref_embeddings = [face_emb]
+            for ref_item in multi_ref_files:
+                ref_path = ref_item[0] if isinstance(ref_item, (list, tuple)) else ref_item
+                try:
+                    ref_image = load_image(ref_path)
+                    ref_image_resized = resize_img(
+                        ref_image, size=custom_size, max_side=resize_max_side,
+                        mode=resize_mode_enum, pad_to_max_side=pad_to_max_side,
+                        base_pixel_number=ratio_base_pixel_number,
+                    )
+                    ref_image_cv2 = convert_from_image_to_cv2(ref_image_resized)
+                    ref_face_info = app.get(ref_image_cv2)
+                    if len(ref_face_info) == 0:
+                        print(f"\nNo face detected in additional face image '{os.path.basename(ref_path)}'. Skipping it.\n")
+                        continue
+                    ref_face_info = sorted(ref_face_info, key=lambda x:(x['bbox'][2]-x['bbox'][0])*(x['bbox'][3]-x['bbox'][1]))[-1]
+                    multi_ref_embeddings.append(ref_face_info["embedding"])
+                    multi_ref_filenames.append(os.path.basename(ref_path))
+                except Exception as e:
+                    print(f"\nFailed to process additional face image '{os.path.basename(ref_path)}': {e}\n")
+            if len(multi_ref_embeddings) > 1:
+                face_emb = np.mean(multi_ref_embeddings, axis=0)
+                multi_ref_used = len(multi_ref_embeddings)
+                print(f"Using an averaged face embedding from {multi_ref_used} additional face images.\n")
+        additional_images_used_text = ", ".join(multi_ref_filenames) if multi_ref_filenames else "None"
         if pose_image_path is not None:
             pose_image = load_image(pose_image_path)
             original_pose_image = pose_image
@@ -1746,6 +1777,8 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         print(f"Prompt: {prompt}\nNegative Prompt: {negative_prompt}")
         print(f"Detection size: {current_det_size}")
         print(f"Input face image: {os.path.basename(face_image_path) if face_image_path else 'None'}")
+        if multi_ref_used:
+            print(f"Multiple face images: Enabled - averaged {multi_ref_used} face embeddings")
         print(f"Reference pose image: {os.path.basename(pose_image_path) if pose_image_path else 'None'}")
         print(f"Steps: {num_steps}")
         print(f"img2img Mode: {'Enabled' if enable_img2img else 'Disabled'}")
@@ -1977,6 +2010,7 @@ Negative Prompt: {negative_prompt}
 Input Face Image: {face_image_filename}
 Reference Pose Image: {pose_image_filename}
 Detection size: {current_det_size}
+Additional face images used: {additional_images_used_text}
 Steps: {num_steps}
 Guidance scale: {guidance_scale}
 Seed: {seed + i}
@@ -2281,7 +2315,7 @@ Scheduler: {scheduler}"""
         });
     }
     """
-    with gr.Blocks(title="InstantID Unlocked v8.8.3", js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v8.9.0", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
@@ -2402,9 +2436,95 @@ Scheduler: {scheduler}"""
         with gr.Row():
             with gr.Column():
                 with gr.Row():
-                    face_file = gr.Image(
-                        label="Upload a photo containing a face", height=400, type="filepath"
-                    )
+                    with gr.Column():
+                        face_file = gr.Image(
+                            label="Upload a photo containing a face", height=400, type="filepath"
+                        )
+                        enable_multi_ref = gr.Checkbox(
+                            label="Add more face images (averages face embeddings)",
+                            value=False,
+                        )
+                        multi_ref_files = gr.Gallery(
+                            label="Additional face images",
+                            visible=False,
+                            columns=4,
+                            height=230,
+                            object_fit="cover",
+                            type="filepath",
+                            show_label=True,
+                            interactive=True,
+                        )
+                        selected_ref_index = gr.State(None)
+                        remove_selected_ref_btn = gr.Button(
+                            "🗑 Remove selected face image (click a thumbnail above first)",
+                            size="sm",
+                            visible=False,
+                        )
+                        add_more_ref_btn = gr.UploadButton(
+                            "➕ Add more faces",
+                            file_types=["image"],
+                            file_count="multiple",
+                            type="filepath",
+                            size="sm",
+                            visible=False,
+                        )
+                        def toggle_multi_ref_section(enabled, gallery_value):
+                            has_items = enabled and bool(gallery_value)
+                            return (
+                                gr.update(visible=enabled),
+                                gr.update(visible=has_items),
+                                gr.update(visible=has_items),
+                            )
+                        enable_multi_ref.change(
+                            fn=toggle_multi_ref_section,
+                            inputs=[enable_multi_ref, multi_ref_files],
+                            outputs=[multi_ref_files, remove_selected_ref_btn, add_more_ref_btn],
+                            queue=False,
+                        )
+                        def track_ref_selection(evt: gr.SelectData):
+                            return evt.index
+                        multi_ref_files.select(
+                            fn=track_ref_selection,
+                            inputs=None,
+                            outputs=selected_ref_index,
+                            queue=False,
+                        )
+                        def toggle_ref_buttons(gallery_value):
+                            visible = bool(gallery_value)
+                            return gr.update(visible=visible), gr.update(visible=visible)
+                        multi_ref_files.change(
+                            fn=toggle_ref_buttons,
+                            inputs=multi_ref_files,
+                            outputs=[remove_selected_ref_btn, add_more_ref_btn],
+                            queue=False,
+                        )
+                        def add_more_ref_images(new_files, gallery_value):
+                            existing = list(gallery_value) if gallery_value else []
+                            newly_added = list(new_files) if new_files else []
+                            return existing + newly_added
+                        add_more_ref_btn.upload(
+                            fn=add_more_ref_images,
+                            inputs=[add_more_ref_btn, multi_ref_files],
+                            outputs=multi_ref_files,
+                            queue=False,
+                        )
+                        def remove_selected_ref_image(gallery_value, selected_index):
+                            if gallery_value is None or selected_index is None:
+                                still_has_items = bool(gallery_value)
+                                return gallery_value, None, gr.update(visible=still_has_items), gr.update(visible=still_has_items)
+                            if selected_index < 0 or selected_index >= len(gallery_value):
+                                still_has_items = bool(gallery_value)
+                                return gallery_value, None, gr.update(visible=still_has_items), gr.update(visible=still_has_items)
+                            new_value = list(gallery_value)
+                            del new_value[selected_index]
+                            still_has_items = bool(new_value)
+                            return new_value, None, gr.update(visible=still_has_items), gr.update(visible=still_has_items)
+                        remove_selected_ref_btn.click(
+                            fn=remove_selected_ref_image,
+                            inputs=[multi_ref_files, selected_ref_index],
+                            outputs=[multi_ref_files, selected_ref_index, remove_selected_ref_btn, add_more_ref_btn],
+                            queue=False,
+                        )
                     pose_file = gr.Image(
                         label="Reference pose image (Optional)",
                         height=400,
@@ -3671,6 +3791,8 @@ Scheduler: {scheduler}"""
             shared_inputs = [
                 resize_max_side_slider,
                 face_file,
+                enable_multi_ref,
+                multi_ref_files,
                 pose_file,
                 prompt,
                 negative_prompt,
@@ -4426,7 +4548,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID Unlocked v8.8.3</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v8.9.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
