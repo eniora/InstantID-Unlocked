@@ -1619,7 +1619,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                     additional_image = load_image(additional_path)
                     original_additional_image = additional_image
                     additional_image_resized = resize_img(
-                        additional_image, size=custom_size, max_side=resize_max_side,
+                        additional_image, size=None, max_side=resize_max_side,
                         mode=resize_mode_enum, pad_to_max_side=pad_to_max_side,
                         base_pixel_number=ratio_base_pixel_number,
                     )
