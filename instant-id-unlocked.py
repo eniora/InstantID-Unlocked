@@ -1779,7 +1779,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         print(f"Detection size: {current_det_size}")
         print(f"Input face image: {os.path.basename(face_image_path) if face_image_path else 'None'}")
         if multi_ref_used:
-            print(f"Multiple face images: Enabled - averaged {multi_ref_used} face embeddings (additional faces: {', '.join(multi_ref_filenames)})")
+            print(f"Multiple face images: Enabled - averaged {multi_ref_used} face embeddings (additional face(s): {', '.join(multi_ref_filenames)})")
         print(f"Reference pose image: {os.path.basename(pose_image_path) if pose_image_path else 'None'}")
         print(f"Steps: {num_steps}")
         print(f"img2img Mode: {'Enabled' if enable_img2img else 'Disabled'}")
@@ -2229,6 +2229,7 @@ Scheduler: {scheduler}"""
     - (Optional) You can select multiple ControlNet models to control the generation process. The default is to use the IdentityNet only. The ControlNet models include pose skeleton, canny, and depth. You can adjust the strength of each ControlNet model to control the generation process, 0.3 for each is the recommended value.
     - Enter a text prompt, as done in normal text-to-image AI tools such as ComfuUI or A1111/ForgeUI.
     - Click the Generate button to begin image generation.
+    - "Add more face images" option averages the face embeddings from multiple images into a single identity for generation. Add more photos of the same person to improve likeness and consistency. Or mix in photos of different people to blend their faces into one morphed identity.
     - img2img mode imports the "pipeline_stable_diffusion_xl_instantid_img2img" (also used by the Hires Fix pass). It is effective at preserving input image details, depending on the denoising strength you set.
     - Upscale and use Enable Hires Fix to generate images with a resolution of what SDXL is best at (usually ~1024-1280 max side) to prevent anatomy errors like long necks while still producing good quality images.
     - Enable i2i Upscaler upscales your input image before the generation pass, using IdentityNet to sharpen and enhance facial detail as it scales. Best for lowres or soft input photos. Recommended settings: LCM Scheduler + DMD2 LoRA, 10–15 steps, ~0.2 img2img denoising strength. You can also use this to upscale an image you've already generated: just feed it back in as the face image, reuse the same seed, prompt and other settings, then bump up the target resolution to make it higher than the input image (no need for Hires Fix).
@@ -2316,7 +2317,7 @@ Scheduler: {scheduler}"""
         });
     }
     """
-    with gr.Blocks(title="InstantID Unlocked v8.9.0", js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v8.9.1", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
@@ -4075,7 +4076,8 @@ Scheduler: {scheduler}"""
                     "hires_upscaler": DEFAULT_UPSCALER,
                     "hires_upscale_by": 1.5,
                     "hires_steps": 0,
-                    "hires_denoising_strength": 0.35
+                    "hires_denoising_strength": 0.35,
+                    "enable_multi_ref": False
                 }
                 if metadata_text:
                     lines = metadata_text.split('\n')
@@ -4344,6 +4346,9 @@ Scheduler: {scheduler}"""
                                 settings["custom_resize_height"] = int(dims[1])
                             except:
                                 pass
+                        elif line.startswith("Additional face image(s) used:"):
+                            additional_face_value = line.replace("Additional face image(s) used:", "").strip()
+                            settings["enable_multi_ref"] = additional_face_value not in ("", "None")
 
                 open_resolution_accordion = False
                 open_advanced_accordion = False
@@ -4436,6 +4441,7 @@ Scheduler: {scheduler}"""
                     settings["hires_upscale_by"],
                     settings["hires_steps"],
                     settings["hires_denoising_strength"],
+                    settings["enable_multi_ref"],
                     accordion_update,
                     gr.update(open=open_resolution_accordion),
                     gr.update(open=open_advanced_accordion),
@@ -4525,6 +4531,7 @@ Scheduler: {scheduler}"""
                     hires_upscale_by,
                     hires_steps,
                     hires_denoising_strength,
+                    enable_multi_ref,
                     controlnet_accordion,
                     resolution_settings_accordion,
                     advanced_settings_accordion,
@@ -4550,7 +4557,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID Unlocked v8.9.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v8.9.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
