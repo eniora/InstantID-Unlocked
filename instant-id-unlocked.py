@@ -1195,6 +1195,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         enable_multi_ref,
         multi_ref_files,
         normalize_multi_ref,
+        multi_ref_weight,
         pose_image_path,
         prompt,
         negative_prompt,
@@ -1643,10 +1644,13 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 except Exception as e:
                     print(f"\nFailed to process additional face image '{os.path.basename(additional_path)}': {e}\n")
             if len(multi_ref_embeddings) > 1:
-                mean_embedding = np.mean(multi_ref_embeddings, axis=0)
+                embedding_weights = [1.0] + [multi_ref_weight] * (len(multi_ref_embeddings) - 1)
+                mean_embedding = np.average(multi_ref_embeddings, axis=0, weights=embedding_weights)
                 if normalize_multi_ref:
                     mean_embedding_norm = np.linalg.norm(mean_embedding)
-                    target_embedding_norm = np.mean([np.linalg.norm(e) for e in multi_ref_embeddings])
+                    target_embedding_norm = np.average(
+                        [np.linalg.norm(e) for e in multi_ref_embeddings], weights=embedding_weights
+                    )
                     if mean_embedding_norm > 0:
                         face_emb = mean_embedding / mean_embedding_norm * target_embedding_norm
                     else:
@@ -1654,7 +1658,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 else:
                     face_emb = mean_embedding
                 multi_ref_used = len(multi_ref_embeddings)
-                print(f"Using an averaged face embedding from {multi_ref_used} face images (normalization: {'enabled' if normalize_multi_ref else 'disabled'}).\n")
+                print(f"Using a weighted average face embedding from {multi_ref_used} face images (additional faces weight: {multi_ref_weight}x, normalization: {'enabled' if normalize_multi_ref else 'disabled'}).\n")
         additional_images_used_text = ", ".join(multi_ref_filenames) if multi_ref_filenames else "None"
         if pose_image_path is not None:
             pose_image = load_image(pose_image_path)
@@ -1763,7 +1767,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         print(f"Detection size: {current_det_size}")
         print(f"Input face image: {os.path.basename(face_image_path) if face_image_path else 'None'}")
         if multi_ref_used:
-            print(f"Multiple face images: Enabled - averaged {multi_ref_used} face embeddings, normalization {'enabled' if normalize_multi_ref else 'disabled'} (additional face(s): {', '.join(multi_ref_filenames)})")
+            print(f"Multiple face images: Enabled - averaged {multi_ref_used} face embeddings, additional faces weight {multi_ref_weight}x, normalization {'enabled' if normalize_multi_ref else 'disabled'} (additional face(s): {', '.join(multi_ref_filenames)})")
         print(f"Reference pose image: {os.path.basename(pose_image_path) if pose_image_path else 'None'}")
         print(f"Steps: {num_steps}")
         print(f"img2img Mode: {'Enabled' if enable_img2img else 'Disabled'}")
@@ -1997,6 +2001,7 @@ Reference Pose Image: {pose_image_filename}
 Detection size: {current_det_size}
 Additional face image(s) used: {additional_images_used_text}
 Normalize averaged face embedding: {normalize_multi_ref}
+Additional faces weight: {multi_ref_weight}
 Steps: {num_steps}
 Guidance scale: {guidance_scale}
 Seed: {seed + i}
@@ -2214,7 +2219,7 @@ Scheduler: {scheduler}"""
     - (Optional) You can select multiple ControlNet models to control the generation process. The default is to use the IdentityNet only. The ControlNet models include pose skeleton, canny, and depth. You can adjust the strength of each ControlNet model to control the generation process, 0.3 for each is the recommended value.
     - Enter a text prompt, as done in normal text-to-image AI tools such as ComfuUI or A1111/ForgeUI.
     - Click the Generate button to begin image generation.
-    - The "Add more face images" option averages the face embeddings from multiple images into a single identity. Add photos of the same person to improve likeness and consistency, or photos of different people to create a blended identity. Keep "Normalize averaged embedding" enabled to preserve the original embedding strength after averaging, or disable it to use the plain average.
+    - The "Add more face images" option averages the face embeddings from multiple images into a single identity. Add photos of the same person to improve likeness and consistency, or photos of different people to create a blended identity. The "Additional faces weight" slider controls how strongly the additional faces pull the result compared to the main face image: 1.0 (default) weighs every face equally, lower values keep the result closer to the main face; higher values push it further toward the additional faces; 0.0 makes the additional faces have no effect at all. Keep "Normalize averaged embedding" enabled to preserve the original embedding strength after averaging, or disable it to use the plain average.
     - img2img mode imports the "pipeline_stable_diffusion_xl_instantid_img2img" (also used by the Hires Fix pass). It is effective at preserving input image details, depending on the denoising strength you set.
     - Upscale and use Enable Hires Fix to generate images with a resolution of what SDXL is best at (usually ~1024-1280 max side) to prevent anatomy errors like long necks while still producing good quality images.
     - Enable i2i Upscaler upscales your input image before the generation pass, using IdentityNet to sharpen and enhance facial detail as it scales. Best for lowres or soft input photos. Recommended settings: LCM Scheduler + DMD2 LoRA, 10–15 steps, ~0.2 img2img denoising strength. You can also use this to upscale an image you've already generated: just feed it back in as the face image, reuse the same seed, prompt and other settings, then bump up the target resolution to make it higher than the input image (no need for Hires Fix).
@@ -2302,7 +2307,7 @@ Scheduler: {scheduler}"""
         });
     }
     """
-    with gr.Blocks(title="InstantID Unlocked v8.9.3", js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v9.0.0", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
@@ -2473,6 +2478,14 @@ Scheduler: {scheduler}"""
                                     variant="stop",
                                     visible=False,
                                 )
+                            multi_ref_weight = gr.Slider(
+                                label="Weight of additional face(s)",
+                                minimum=0.0,
+                                maximum=3.0,
+                                value=1.0,
+                                step=0.05,
+                                visible=False,
+                            )
                             normalize_multi_ref = gr.Checkbox(
                                 label="Normalize averaged embedding (recommended)",
                                 value=True,
@@ -2485,11 +2498,12 @@ Scheduler: {scheduler}"""
                                     gr.update(visible=has_items),
                                     gr.update(visible=has_items),
                                     gr.update(visible=enabled),
+                                    gr.update(visible=enabled),
                                 )
                             enable_multi_ref.change(
                                 fn=toggle_multi_ref_section,
                                 inputs=[enable_multi_ref, multi_ref_files],
-                                outputs=[multi_ref_files, remove_selected_ref_btn, add_more_ref_btn, normalize_multi_ref],
+                                outputs=[multi_ref_files, remove_selected_ref_btn, add_more_ref_btn, multi_ref_weight, normalize_multi_ref],
                                 queue=False,
                             )
                             def track_ref_selection(evt: gr.SelectData):
@@ -3805,6 +3819,7 @@ Scheduler: {scheduler}"""
                 enable_multi_ref,
                 multi_ref_files,
                 normalize_multi_ref,
+                multi_ref_weight,
                 pose_file,
                 prompt,
                 negative_prompt,
@@ -4087,7 +4102,8 @@ Scheduler: {scheduler}"""
                     "hires_steps": 0,
                     "hires_denoising_strength": 0.35,
                     "enable_multi_ref": False,
-                    "normalize_multi_ref": True
+                    "normalize_multi_ref": True,
+                    "multi_ref_weight": 1.0
                 }
                 if metadata_text:
                     lines = metadata_text.split('\n')
@@ -4361,6 +4377,11 @@ Scheduler: {scheduler}"""
                             settings["enable_multi_ref"] = additional_face_value not in ("", "None")
                         elif line.startswith("Normalize averaged face embedding:"):
                             settings["normalize_multi_ref"] = "true" in line.lower()
+                        elif line.startswith("Additional faces weight:"):
+                            try:
+                                settings["multi_ref_weight"] = float(line.replace("Additional faces weight:", "").strip())
+                            except ValueError:
+                                pass
 
                 open_resolution_accordion = False
                 open_advanced_accordion = False
@@ -4455,6 +4476,7 @@ Scheduler: {scheduler}"""
                     settings["hires_denoising_strength"],
                     settings["enable_multi_ref"],
                     settings["normalize_multi_ref"],
+                    settings["multi_ref_weight"],
                     accordion_update,
                     gr.update(open=open_resolution_accordion),
                     gr.update(open=open_advanced_accordion),
@@ -4546,6 +4568,7 @@ Scheduler: {scheduler}"""
                     hires_denoising_strength,
                     enable_multi_ref,
                     normalize_multi_ref,
+                    multi_ref_weight,
                     controlnet_accordion,
                     resolution_settings_accordion,
                     advanced_settings_accordion,
@@ -4571,7 +4594,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID Unlocked v8.9.3</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v9.0.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
