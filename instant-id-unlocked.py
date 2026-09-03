@@ -2437,13 +2437,8 @@ Scheduler: {scheduler}"""
                                 label="Upload a photo containing a face", height=400, type="filepath"
                             )
                             enable_multi_ref = gr.Checkbox(
-                                label="Add more face images (averages face embeddings)",
+                                label="Add more face images (blends their likeness)",
                                 value=False,
-                            )
-                            normalize_multi_ref = gr.Checkbox(
-                                label="Normalize averaged embedding (recommended)",
-                                value=True,
-                                visible=False,
                             )
                             additional_face_image_file_types = [
                                     ".jpe", ".jpg", ".jpeg", ".gif", ".png", ".bmp", ".ico",
@@ -2455,26 +2450,33 @@ Scheduler: {scheduler}"""
                                 visible=False,
                                 columns=4,
                                 height=230,
-                                object_fit="cover",
+                                object_fit="contain",
                                 type="filepath",
                                 show_label=False,
                                 interactive=True,
                                 file_types=additional_face_image_file_types,
                                 elem_id="multi_ref_gallery",
                             )
-                            selected_ref_index = gr.State(None)
-                            remove_selected_ref_btn = gr.Button(
-                                "🗑 Remove selected face image (click a thumbnail above first)",
-                                size="sm",
+                            with gr.Row():
+                                selected_ref_index = gr.State(None)
+                                add_more_ref_btn = gr.UploadButton(
+                                    "➕ Add more faces",
+                                    file_count="multiple",
+                                    type="filepath",
+                                    size="sm",
+                                    visible=False,
+                                    file_types=additional_face_image_file_types,
+                                )
+                                remove_selected_ref_btn = gr.Button(
+                                    "🗑 Remove selected face image",
+                                    size="sm",
+                                    variant="stop",
+                                    visible=False,
+                                )
+                            normalize_multi_ref = gr.Checkbox(
+                                label="Normalize averaged embedding (recommended)",
+                                value=True,
                                 visible=False,
-                            )
-                            add_more_ref_btn = gr.UploadButton(
-                                "➕ Add more faces",
-                                file_count="multiple",
-                                type="filepath",
-                                size="sm",
-                                visible=False,
-                                file_types=additional_face_image_file_types,
                             )
                             def toggle_multi_ref_section(enabled, gallery_value):
                                 has_items = enabled and bool(gallery_value)
