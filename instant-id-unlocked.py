@@ -2447,6 +2447,11 @@ Scheduler: {scheduler}"""
                                 label="Add more face images (averages face embeddings)",
                                 value=False,
                             )
+                            additional_face_image_file_types = [
+                                    ".jpe", ".jpg", ".jpeg", ".gif", ".png", ".bmp", ".ico",
+                                    ".svg", ".svgz", ".tif", ".tiff", ".ai", ".drw", ".pct",
+                                    ".psp", ".xcf", ".psd", ".raw", ".webp", ".heic", ".avif", ".jxl", "image",
+                                ]
                             multi_ref_files = gr.Gallery(
                                 label="Additional face images",
                                 visible=False,
@@ -2456,6 +2461,7 @@ Scheduler: {scheduler}"""
                                 type="filepath",
                                 show_label=True,
                                 interactive=True,
+                                file_types=additional_face_image_file_types,
                             )
                             selected_ref_index = gr.State(None)
                             remove_selected_ref_btn = gr.Button(
@@ -2465,11 +2471,11 @@ Scheduler: {scheduler}"""
                             )
                             add_more_ref_btn = gr.UploadButton(
                                 "➕ Add more faces",
-                                file_types=["image"],
                                 file_count="multiple",
                                 type="filepath",
                                 size="sm",
                                 visible=False,
+                                file_types=additional_face_image_file_types,
                             )
                             def toggle_multi_ref_section(enabled, gallery_value):
                                 has_items = enabled and bool(gallery_value)
