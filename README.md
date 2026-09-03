@@ -24,6 +24,7 @@ The code barely follows any DRY principles as it started as a personal modificat
 
 🧠 Control & Generation
 - img2img mode integrated directly (no need to run a separate pipeline).
+- Ability to add more reference face images, it averages the face embeddings from multiple images into a single identity for generation. Meaning you can add more photos of the same person to improve likeness and consistency. Or mix in photos of different people to blend their faces into one morphed identity.
 - Negative Prompt Profiles dropdown with many presets (General, Minimalist, Portraits, Realism, Anime, Fooocus, etc.).
 - Detection Size selector for face detection in input/reference photos.
 - Hires Fix support with upscaler drop down menu.
