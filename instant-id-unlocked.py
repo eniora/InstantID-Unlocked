@@ -1604,7 +1604,8 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                     ref_image_cv2 = convert_from_image_to_cv2(ref_image_resized)
                     ref_face_info = app.get(ref_image_cv2)
                     if len(ref_face_info) == 0:
-                        print(f"\nNo face detected in additional face image '{os.path.basename(ref_path)}'. Skipping it.\n")
+                        print(f"\nNo face detected in additional face image '{os.path.basename(ref_path)}'. You can try at 320x320 det-size. Skipping it.\n")
+                        gr.Warning(f"No face detected in additional face image '{os.path.basename(ref_path)}'. You can try at 320x320 det-size. Skipping it.")
                         continue
                     ref_face_info = sorted(ref_face_info, key=lambda x:(x['bbox'][2]-x['bbox'][0])*(x['bbox'][3]-x['bbox'][1]))[-1]
                     multi_ref_embeddings.append(ref_face_info["embedding"])
@@ -1614,7 +1615,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             if len(multi_ref_embeddings) > 1:
                 face_emb = np.mean(multi_ref_embeddings, axis=0)
                 multi_ref_used = len(multi_ref_embeddings)
-                print(f"Using an averaged face embedding from {multi_ref_used} additional face images.\n")
+                print(f"Using an averaged face embedding from {multi_ref_used} face images.\n")
         additional_images_used_text = ", ".join(multi_ref_filenames) if multi_ref_filenames else "None"
         if pose_image_path is not None:
             pose_image = load_image(pose_image_path)
@@ -1778,7 +1779,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         print(f"Detection size: {current_det_size}")
         print(f"Input face image: {os.path.basename(face_image_path) if face_image_path else 'None'}")
         if multi_ref_used:
-            print(f"Multiple face images: Enabled - averaged {multi_ref_used} face embeddings")
+            print(f"Multiple face images: Enabled - averaged {multi_ref_used} face embeddings (additional faces: {', '.join(multi_ref_filenames)})")
         print(f"Reference pose image: {os.path.basename(pose_image_path) if pose_image_path else 'None'}")
         print(f"Steps: {num_steps}")
         print(f"img2img Mode: {'Enabled' if enable_img2img else 'Disabled'}")
@@ -2010,7 +2011,7 @@ Negative Prompt: {negative_prompt}
 Input Face Image: {face_image_filename}
 Reference Pose Image: {pose_image_filename}
 Detection size: {current_det_size}
-Additional face images used: {additional_images_used_text}
+Additional face image(s) used: {additional_images_used_text}
 Steps: {num_steps}
 Guidance scale: {guidance_scale}
 Seed: {seed + i}
@@ -2437,94 +2438,95 @@ Scheduler: {scheduler}"""
             with gr.Column():
                 with gr.Row():
                     with gr.Column():
-                        face_file = gr.Image(
-                            label="Upload a photo containing a face", height=400, type="filepath"
-                        )
-                        enable_multi_ref = gr.Checkbox(
-                            label="Add more face images (averages face embeddings)",
-                            value=False,
-                        )
-                        multi_ref_files = gr.Gallery(
-                            label="Additional face images",
-                            visible=False,
-                            columns=4,
-                            height=230,
-                            object_fit="cover",
-                            type="filepath",
-                            show_label=True,
-                            interactive=True,
-                        )
-                        selected_ref_index = gr.State(None)
-                        remove_selected_ref_btn = gr.Button(
-                            "🗑 Remove selected face image (click a thumbnail above first)",
-                            size="sm",
-                            visible=False,
-                        )
-                        add_more_ref_btn = gr.UploadButton(
-                            "➕ Add more faces",
-                            file_types=["image"],
-                            file_count="multiple",
-                            type="filepath",
-                            size="sm",
-                            visible=False,
-                        )
-                        def toggle_multi_ref_section(enabled, gallery_value):
-                            has_items = enabled and bool(gallery_value)
-                            return (
-                                gr.update(visible=enabled),
-                                gr.update(visible=has_items),
-                                gr.update(visible=has_items),
+                        with gr.Group():
+                            face_file = gr.Image(
+                                label="Upload a photo containing a face", height=400, type="filepath"
                             )
-                        enable_multi_ref.change(
-                            fn=toggle_multi_ref_section,
-                            inputs=[enable_multi_ref, multi_ref_files],
-                            outputs=[multi_ref_files, remove_selected_ref_btn, add_more_ref_btn],
-                            queue=False,
-                        )
-                        def track_ref_selection(evt: gr.SelectData):
-                            return evt.index
-                        multi_ref_files.select(
-                            fn=track_ref_selection,
-                            inputs=None,
-                            outputs=selected_ref_index,
-                            queue=False,
-                        )
-                        def toggle_ref_buttons(gallery_value):
-                            visible = bool(gallery_value)
-                            return gr.update(visible=visible), gr.update(visible=visible)
-                        multi_ref_files.change(
-                            fn=toggle_ref_buttons,
-                            inputs=multi_ref_files,
-                            outputs=[remove_selected_ref_btn, add_more_ref_btn],
-                            queue=False,
-                        )
-                        def add_more_ref_images(new_files, gallery_value):
-                            existing = list(gallery_value) if gallery_value else []
-                            newly_added = list(new_files) if new_files else []
-                            return existing + newly_added
-                        add_more_ref_btn.upload(
-                            fn=add_more_ref_images,
-                            inputs=[add_more_ref_btn, multi_ref_files],
-                            outputs=multi_ref_files,
-                            queue=False,
-                        )
-                        def remove_selected_ref_image(gallery_value, selected_index):
-                            if gallery_value is None or selected_index is None:
-                                still_has_items = bool(gallery_value)
-                                return gallery_value, None, gr.update(visible=still_has_items), gr.update(visible=still_has_items)
-                            if selected_index < 0 or selected_index >= len(gallery_value):
-                                still_has_items = bool(gallery_value)
-                                return gallery_value, None, gr.update(visible=still_has_items), gr.update(visible=still_has_items)
-                            new_value = list(gallery_value)
-                            del new_value[selected_index]
-                            still_has_items = bool(new_value)
-                            return new_value, None, gr.update(visible=still_has_items), gr.update(visible=still_has_items)
-                        remove_selected_ref_btn.click(
-                            fn=remove_selected_ref_image,
-                            inputs=[multi_ref_files, selected_ref_index],
-                            outputs=[multi_ref_files, selected_ref_index, remove_selected_ref_btn, add_more_ref_btn],
-                            queue=False,
-                        )
+                            enable_multi_ref = gr.Checkbox(
+                                label="Add more face images (averages face embeddings)",
+                                value=False,
+                            )
+                            multi_ref_files = gr.Gallery(
+                                label="Additional face images",
+                                visible=False,
+                                columns=4,
+                                height=230,
+                                object_fit="cover",
+                                type="filepath",
+                                show_label=True,
+                                interactive=True,
+                            )
+                            selected_ref_index = gr.State(None)
+                            remove_selected_ref_btn = gr.Button(
+                                "🗑 Remove selected face image (click a thumbnail above first)",
+                                size="sm",
+                                visible=False,
+                            )
+                            add_more_ref_btn = gr.UploadButton(
+                                "➕ Add more faces",
+                                file_types=["image"],
+                                file_count="multiple",
+                                type="filepath",
+                                size="sm",
+                                visible=False,
+                            )
+                            def toggle_multi_ref_section(enabled, gallery_value):
+                                has_items = enabled and bool(gallery_value)
+                                return (
+                                    gr.update(visible=enabled),
+                                    gr.update(visible=has_items),
+                                    gr.update(visible=has_items),
+                                )
+                            enable_multi_ref.change(
+                                fn=toggle_multi_ref_section,
+                                inputs=[enable_multi_ref, multi_ref_files],
+                                outputs=[multi_ref_files, remove_selected_ref_btn, add_more_ref_btn],
+                                queue=False,
+                            )
+                            def track_ref_selection(evt: gr.SelectData):
+                                return evt.index
+                            multi_ref_files.select(
+                                fn=track_ref_selection,
+                                inputs=None,
+                                outputs=selected_ref_index,
+                                queue=False,
+                            )
+                            def toggle_ref_buttons(gallery_value):
+                                visible = bool(gallery_value)
+                                return gr.update(visible=visible), gr.update(visible=visible)
+                            multi_ref_files.change(
+                                fn=toggle_ref_buttons,
+                                inputs=multi_ref_files,
+                                outputs=[remove_selected_ref_btn, add_more_ref_btn],
+                                queue=False,
+                            )
+                            def add_more_ref_images(new_files, gallery_value):
+                                existing = list(gallery_value) if gallery_value else []
+                                newly_added = list(new_files) if new_files else []
+                                return existing + newly_added
+                            add_more_ref_btn.upload(
+                                fn=add_more_ref_images,
+                                inputs=[add_more_ref_btn, multi_ref_files],
+                                outputs=multi_ref_files,
+                                queue=False,
+                            )
+                            def remove_selected_ref_image(gallery_value, selected_index):
+                                if gallery_value is None or selected_index is None:
+                                    still_has_items = bool(gallery_value)
+                                    return gallery_value, None, gr.update(visible=still_has_items), gr.update(visible=still_has_items)
+                                if selected_index < 0 or selected_index >= len(gallery_value):
+                                    still_has_items = bool(gallery_value)
+                                    return gallery_value, None, gr.update(visible=still_has_items), gr.update(visible=still_has_items)
+                                new_value = list(gallery_value)
+                                del new_value[selected_index]
+                                still_has_items = bool(new_value)
+                                return new_value, None, gr.update(visible=still_has_items), gr.update(visible=still_has_items)
+                            remove_selected_ref_btn.click(
+                                fn=remove_selected_ref_image,
+                                inputs=[multi_ref_files, selected_ref_index],
+                                outputs=[multi_ref_files, selected_ref_index, remove_selected_ref_btn, add_more_ref_btn],
+                                queue=False,
+                            )
                     pose_file = gr.Image(
                         label="Reference pose image (Optional)",
                         height=400,
