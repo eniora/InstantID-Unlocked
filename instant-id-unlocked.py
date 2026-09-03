@@ -1026,6 +1026,80 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             return [img.resize(size, PIL.Image.LANCZOS) if hasattr(img, "resize") else img for img in control_images]
         return control_images.resize(size, PIL.Image.LANCZOS) if hasattr(control_images, "resize") else control_images
 
+    def _remap_face_info(face_info_list, scale_x, scale_y):
+        remapped = []
+        for fi in face_info_list:
+            fi = dict(fi)
+            fi["kps"] = np.array(fi["kps"], dtype=np.float32).copy()
+            fi["kps"][:, 0] *= scale_x
+            fi["kps"][:, 1] *= scale_y
+            fi["bbox"] = np.array(fi["bbox"], dtype=np.float32).copy()
+            fi["bbox"][0] *= scale_x
+            fi["bbox"][1] *= scale_y
+            fi["bbox"][2] *= scale_x
+            fi["bbox"][3] *= scale_y
+            remapped.append(fi)
+        return remapped
+
+    def detect_face_info(
+        original_image,
+        canvas_image,
+        canvas_cv2,
+        resize_mode_enum,
+        enable_custom_resize,
+        label="image",
+        need_kps=True,
+        temp_app=None,
+    ):
+        canvas_w, canvas_h = canvas_image.size
+        face_info = []
+        fallback_detect_image = None
+        fallback_detect_cv2 = None
+
+        if enable_custom_resize:
+            fallback_detect_image = resize_img(
+                original_image,
+                size=None,
+                max_side=1280,
+                mode=resize_mode_enum,
+                pad_to_max_side=False,
+                base_pixel_number=8,
+            )
+            fallback_detect_cv2 = convert_from_image_to_cv2(fallback_detect_image)
+            face_info = app.get(fallback_detect_cv2)
+            if len(face_info) > 0 and need_kps:
+                det_w, det_h = fallback_detect_image.size
+                scale_x, scale_y = canvas_w / det_w, canvas_h / det_h
+                face_info = _remap_face_info(face_info, scale_x, scale_y)
+
+        if len(face_info) == 0:
+            if enable_custom_resize:
+                print(f"\nYour custom resolution possibly stretched {label} and no face was found on the aspect-preserving resize either. Retrying detection directly on the custom-resized image...\n")
+            face_info = app.get(canvas_cv2)
+
+        if len(face_info) == 0 and current_det_size >= (640, 640):
+            print(f"\nNo face detected at the current detection size ({current_det_size[0]}x{current_det_size[1]}) for {label}. Temporarily retrying at 320x320...\n")
+            if temp_app is None:
+                temp_app = FaceAnalysis(
+                    name="antelopev2",
+                    root="./",
+                    providers=["CPUExecutionProvider"],
+                )
+                temp_app.prepare(ctx_id=0, det_size=(320, 320))
+            if enable_custom_resize and fallback_detect_cv2 is not None:
+                fallback_face_info = temp_app.get(fallback_detect_cv2)
+                if len(fallback_face_info) > 0:
+                    if need_kps:
+                        det_w, det_h = fallback_detect_image.size
+                        scale_x, scale_y = canvas_w / det_w, canvas_h / det_h
+                        face_info = _remap_face_info(fallback_face_info, scale_x, scale_y)
+                    else:
+                        face_info = fallback_face_info
+            if len(face_info) == 0:
+                face_info = temp_app.get(canvas_cv2)
+
+        return face_info, temp_app
+
     def get_sibling_pipe(base_pipe, target_class):
         if isinstance(base_pipe, target_class):
             return base_pipe
@@ -1120,6 +1194,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         face_image_path,
         enable_multi_ref,
         multi_ref_files,
+        normalize_multi_ref,
         pose_image_path,
         prompt,
         negative_prompt,
@@ -1517,67 +1592,13 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         face_image_cv2 = convert_from_image_to_cv2(face_image)
         height, width, _ = face_image_cv2.shape
 
-        face_info = app.get(face_image_cv2)
-
         temp_app = None
-        fallback_detect_cv2 = None
-        if len(face_info) == 0 and enable_custom_resize:
-            print("\nYour custom resolution possibly stretched the face/pose image and was unable to detect a face. Retrying detection on an aspect-preserving resize...\n")
-            fallback_detect_image = resize_img(
-                original_face_image,
-                size=None,
-                max_side=1280,
-                mode=resize_mode_enum,
-                pad_to_max_side=False,
-                base_pixel_number=8,
-            )
-            fallback_detect_cv2 = convert_from_image_to_cv2(fallback_detect_image)
-            fallback_face_info = app.get(fallback_detect_cv2)
-            if len(fallback_face_info) > 0:
-                det_w, det_h = fallback_detect_image.size
-                scale_x, scale_y = width / det_w, height / det_h
-                fixed_face_info = []
-                for fi in fallback_face_info:
-                    fi = dict(fi)
-                    fi["kps"] = np.array(fi["kps"], dtype=np.float32).copy()
-                    fi["kps"][:, 0] *= scale_x
-                    fi["kps"][:, 1] *= scale_y
-                    fi["bbox"] = np.array(fi["bbox"], dtype=np.float32).copy()
-                    fi["bbox"][0] *= scale_x
-                    fi["bbox"][1] *= scale_y
-                    fi["bbox"][2] *= scale_x
-                    fi["bbox"][3] *= scale_y
-                    fixed_face_info.append(fi)
-                face_info = fixed_face_info
-
-        if len(face_info) == 0 and current_det_size >= (640, 640):
-            print(f"\nNo face detected at the current detection size ({current_det_size[0]}x{current_det_size[1]}) for face image. Temporarily retrying at 320x320...\n")
-            temp_app = FaceAnalysis(
-                name="antelopev2",
-                root="./",
-                providers=["CPUExecutionProvider"],
-            )
-            temp_app.prepare(ctx_id=0, det_size=(320, 320))
-            if enable_custom_resize and fallback_detect_cv2 is not None:
-                fallback_face_info = temp_app.get(fallback_detect_cv2)
-                if len(fallback_face_info) > 0:
-                    det_w, det_h = fallback_detect_image.size
-                    scale_x, scale_y = width / det_w, height / det_h
-                    fixed_face_info = []
-                    for fi in fallback_face_info:
-                        fi = dict(fi)
-                        fi["kps"] = np.array(fi["kps"], dtype=np.float32).copy()
-                        fi["kps"][:, 0] *= scale_x
-                        fi["kps"][:, 1] *= scale_y
-                        fi["bbox"] = np.array(fi["bbox"], dtype=np.float32).copy()
-                        fi["bbox"][0] *= scale_x
-                        fi["bbox"][1] *= scale_y
-                        fi["bbox"][2] *= scale_x
-                        fi["bbox"][3] *= scale_y
-                        fixed_face_info.append(fi)
-                    face_info = fixed_face_info
-            if len(face_info) == 0:
-                face_info = temp_app.get(face_image_cv2)
+        face_info, temp_app = detect_face_info(
+            original_face_image, face_image, face_image_cv2,
+            resize_mode_enum, enable_custom_resize,
+            label="the face/pose image",
+            temp_app=temp_app,
+        )
         if len(face_info) == 0:
             raise gr.Error(
                 f"Unable to detect a face in the image. Please upload a different photo with a clear face."
@@ -1603,69 +1624,14 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                         base_pixel_number=ratio_base_pixel_number,
                     )
                     additional_image_cv2 = convert_from_image_to_cv2(additional_image_resized)
-                    additional_width, additional_height = additional_image_resized.size
-                    additional_face_info = app.get(additional_image_cv2)
 
-                    additional_fallback_detect_image = None
-                    additional_fallback_detect_cv2 = None
-                    if len(additional_face_info) == 0 and enable_custom_resize:
-                        print(f"\nYour custom resolution possibly stretched additional face image '{os.path.basename(additional_path)}' and was unable to detect a face. Retrying detection on an aspect-preserving resize...\n")
-                        additional_fallback_detect_image = resize_img(
-                            original_additional_image,
-                            size=None,
-                            max_side=1280,
-                            mode=resize_mode_enum,
-                            pad_to_max_side=False,
-                            base_pixel_number=8,
-                        )
-                        additional_fallback_detect_cv2 = convert_from_image_to_cv2(additional_fallback_detect_image)
-                        additional_fallback_face_info = app.get(additional_fallback_detect_cv2)
-                        if len(additional_fallback_face_info) > 0:
-                            det_w, det_h = additional_fallback_detect_image.size
-                            scale_x, scale_y = additional_width / det_w, additional_height / det_h
-                            fixed_face_info = []
-                            for fi in additional_fallback_face_info:
-                                fi = dict(fi)
-                                fi["kps"] = np.array(fi["kps"], dtype=np.float32).copy()
-                                fi["kps"][:, 0] *= scale_x
-                                fi["kps"][:, 1] *= scale_y
-                                fi["bbox"] = np.array(fi["bbox"], dtype=np.float32).copy()
-                                fi["bbox"][0] *= scale_x
-                                fi["bbox"][1] *= scale_y
-                                fi["bbox"][2] *= scale_x
-                                fi["bbox"][3] *= scale_y
-                                fixed_face_info.append(fi)
-                            additional_face_info = fixed_face_info
-
-                    if len(additional_face_info) == 0 and current_det_size >= (640, 640):
-                        print(f"\nNo face detected at the current detection size ({current_det_size[0]}x{current_det_size[1]}) for additional face image '{os.path.basename(additional_path)}'. Temporarily retrying at 320x320...\n")
-                        if temp_app is None:
-                            temp_app = FaceAnalysis(
-                                name="antelopev2",
-                                root="./",
-                                providers=["CPUExecutionProvider"],
-                            )
-                            temp_app.prepare(ctx_id=0, det_size=(320, 320))
-                        if enable_custom_resize and additional_fallback_detect_cv2 is not None:
-                            additional_fallback_face_info = temp_app.get(additional_fallback_detect_cv2)
-                            if len(additional_fallback_face_info) > 0:
-                                det_w, det_h = additional_fallback_detect_image.size
-                                scale_x, scale_y = additional_width / det_w, additional_height / det_h
-                                fixed_face_info = []
-                                for fi in additional_fallback_face_info:
-                                    fi = dict(fi)
-                                    fi["kps"] = np.array(fi["kps"], dtype=np.float32).copy()
-                                    fi["kps"][:, 0] *= scale_x
-                                    fi["kps"][:, 1] *= scale_y
-                                    fi["bbox"] = np.array(fi["bbox"], dtype=np.float32).copy()
-                                    fi["bbox"][0] *= scale_x
-                                    fi["bbox"][1] *= scale_y
-                                    fi["bbox"][2] *= scale_x
-                                    fi["bbox"][3] *= scale_y
-                                    fixed_face_info.append(fi)
-                                additional_face_info = fixed_face_info
-                        if len(additional_face_info) == 0:
-                            additional_face_info = temp_app.get(additional_image_cv2)
+                    additional_face_info, temp_app = detect_face_info(
+                        original_additional_image, additional_image_resized, additional_image_cv2,
+                        resize_mode_enum, enable_custom_resize,
+                        label=f"additional face image '{os.path.basename(additional_path)}'",
+                        need_kps=False,
+                        temp_app=temp_app,
+                    )
 
                     if len(additional_face_info) == 0:
                         print(f"\nNo face detected in additional face image '{os.path.basename(additional_path)}'. Skipping it.\n")
@@ -1677,9 +1643,18 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 except Exception as e:
                     print(f"\nFailed to process additional face image '{os.path.basename(additional_path)}': {e}\n")
             if len(multi_ref_embeddings) > 1:
-                face_emb = np.mean(multi_ref_embeddings, axis=0)
+                mean_embedding = np.mean(multi_ref_embeddings, axis=0)
+                if normalize_multi_ref:
+                    mean_embedding_norm = np.linalg.norm(mean_embedding)
+                    target_embedding_norm = np.mean([np.linalg.norm(e) for e in multi_ref_embeddings])
+                    if mean_embedding_norm > 0:
+                        face_emb = mean_embedding / mean_embedding_norm * target_embedding_norm
+                    else:
+                        face_emb = mean_embedding
+                else:
+                    face_emb = mean_embedding
                 multi_ref_used = len(multi_ref_embeddings)
-                print(f"Using an averaged face embedding from {multi_ref_used} face images.\n")
+                print(f"Using an averaged face embedding from {multi_ref_used} face images (normalization: {'enabled' if normalize_multi_ref else 'disabled'}).\n")
         additional_images_used_text = ", ".join(multi_ref_filenames) if multi_ref_filenames else "None"
         if pose_image_path is not None:
             pose_image = load_image(pose_image_path)
@@ -1688,67 +1663,12 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             img_controlnet = pose_image
             pose_image_cv2 = convert_from_image_to_cv2(pose_image)
 
-            face_info = app.get(pose_image_cv2)
-
-            if len(face_info) == 0 and enable_custom_resize:
-                fallback_detect_image = resize_img(
-                    original_pose_image,
-                    size=None,
-                    max_side=1280,
-                    mode=resize_mode_enum,
-                    pad_to_max_side=False,
-                    base_pixel_number=8,
-                )
-                fallback_detect_cv2 = convert_from_image_to_cv2(fallback_detect_image)
-                fallback_face_info = app.get(fallback_detect_cv2)
-                if len(fallback_face_info) > 0:
-                    det_w, det_h = fallback_detect_image.size
-                    canvas_w, canvas_h = pose_image.size
-                    scale_x, scale_y = canvas_w / det_w, canvas_h / det_h
-                    fixed_face_info = []
-                    for fi in fallback_face_info:
-                        fi = dict(fi)
-                        fi["kps"] = np.array(fi["kps"], dtype=np.float32).copy()
-                        fi["kps"][:, 0] *= scale_x
-                        fi["kps"][:, 1] *= scale_y
-                        fi["bbox"] = np.array(fi["bbox"], dtype=np.float32).copy()
-                        fi["bbox"][0] *= scale_x
-                        fi["bbox"][1] *= scale_y
-                        fi["bbox"][2] *= scale_x
-                        fi["bbox"][3] *= scale_y
-                        fixed_face_info.append(fi)
-                    face_info = fixed_face_info
-            if len(face_info) == 0 and current_det_size >= (640, 640):
-                print(f"\nNo face detected at the current detection size ({current_det_size[0]}x{current_det_size[1]}) for pose image. Temporarily retrying at 320x320...\n")
-                if temp_app is None:
-                    temp_app = FaceAnalysis(
-                        name="antelopev2",
-                        root="./",
-                        providers=["CPUExecutionProvider"],
-                    )
-                    temp_app.prepare(ctx_id=0, det_size=(320, 320))
-                if enable_custom_resize and fallback_detect_cv2 is not None:
-                    fallback_face_info = temp_app.get(fallback_detect_cv2)
-                    if len(fallback_face_info) > 0:
-                        det_w, det_h = fallback_detect_image.size
-                        canvas_w, canvas_h = pose_image.size
-                        scale_x, scale_y = canvas_w / det_w, canvas_h / det_h
-                        fixed_face_info = []
-                        for fi in fallback_face_info:
-                            fi = dict(fi)
-                            fi["kps"] = np.array(fi["kps"], dtype=np.float32).copy()
-                            fi["kps"][:, 0] *= scale_x
-                            fi["kps"][:, 1] *= scale_y
-                            fi["bbox"] = np.array(fi["bbox"], dtype=np.float32).copy()
-                            fi["bbox"][0] *= scale_x
-                            fi["bbox"][1] *= scale_y
-                            fi["bbox"][2] *= scale_x
-                            fi["bbox"][3] *= scale_y
-                            fixed_face_info.append(fi)
-                        face_info = fixed_face_info
-
-                if len(face_info) == 0:
-                    face_info = temp_app.get(pose_image_cv2)
+            face_info, temp_app = detect_face_info(
+                original_pose_image, pose_image, pose_image_cv2,
+                resize_mode_enum, enable_custom_resize,
+                label="the pose image",
+                temp_app=temp_app,
+            )
             if len(face_info) == 0:
                 raise gr.Error(
                     f"Cannot find any face in the reference image! Please upload another person image"
@@ -1843,7 +1763,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         print(f"Detection size: {current_det_size}")
         print(f"Input face image: {os.path.basename(face_image_path) if face_image_path else 'None'}")
         if multi_ref_used:
-            print(f"Multiple face images: Enabled - averaged {multi_ref_used} face embeddings (additional face(s): {', '.join(multi_ref_filenames)})")
+            print(f"Multiple face images: Enabled - averaged {multi_ref_used} face embeddings, normalization {'enabled' if normalize_multi_ref else 'disabled'} (additional face(s): {', '.join(multi_ref_filenames)})")
         print(f"Reference pose image: {os.path.basename(pose_image_path) if pose_image_path else 'None'}")
         print(f"Steps: {num_steps}")
         print(f"img2img Mode: {'Enabled' if enable_img2img else 'Disabled'}")
@@ -2076,6 +1996,7 @@ Input Face Image: {face_image_filename}
 Reference Pose Image: {pose_image_filename}
 Detection size: {current_det_size}
 Additional face image(s) used: {additional_images_used_text}
+Normalize averaged face embedding: {normalize_multi_ref}
 Steps: {num_steps}
 Guidance scale: {guidance_scale}
 Seed: {seed + i}
@@ -2293,7 +2214,7 @@ Scheduler: {scheduler}"""
     - (Optional) You can select multiple ControlNet models to control the generation process. The default is to use the IdentityNet only. The ControlNet models include pose skeleton, canny, and depth. You can adjust the strength of each ControlNet model to control the generation process, 0.3 for each is the recommended value.
     - Enter a text prompt, as done in normal text-to-image AI tools such as ComfuUI or A1111/ForgeUI.
     - Click the Generate button to begin image generation.
-    - "Add more face images" option averages the face embeddings from multiple images into a single identity for generation. Add more photos of the same person to improve likeness and consistency. Or mix in photos of different people to blend their faces into one morphed identity.
+    - The "Add more face images" option averages the face embeddings from multiple images into a single identity. Add photos of the same person to improve likeness and consistency, or photos of different people to create a blended identity. Keep "Normalize averaged embedding" enabled to preserve the original embedding strength after averaging, or disable it to use the plain average.
     - img2img mode imports the "pipeline_stable_diffusion_xl_instantid_img2img" (also used by the Hires Fix pass). It is effective at preserving input image details, depending on the denoising strength you set.
     - Upscale and use Enable Hires Fix to generate images with a resolution of what SDXL is best at (usually ~1024-1280 max side) to prevent anatomy errors like long necks while still producing good quality images.
     - Enable i2i Upscaler upscales your input image before the generation pass, using IdentityNet to sharpen and enhance facial detail as it scales. Best for lowres or soft input photos. Recommended settings: LCM Scheduler + DMD2 LoRA, 10–15 steps, ~0.2 img2img denoising strength. You can also use this to upscale an image you've already generated: just feed it back in as the face image, reuse the same seed, prompt and other settings, then bump up the target resolution to make it higher than the input image (no need for Hires Fix).
@@ -2381,7 +2302,7 @@ Scheduler: {scheduler}"""
         });
     }
     """
-    with gr.Blocks(title="InstantID Unlocked v8.9.1", js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v8.9.3", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
@@ -2519,6 +2440,11 @@ Scheduler: {scheduler}"""
                                 label="Add more face images (averages face embeddings)",
                                 value=False,
                             )
+                            normalize_multi_ref = gr.Checkbox(
+                                label="Normalize averaged embedding (recommended)",
+                                value=True,
+                                visible=False,
+                            )
                             additional_face_image_file_types = [
                                     ".jpe", ".jpg", ".jpeg", ".gif", ".png", ".bmp", ".ico",
                                     ".svg", ".svgz", ".tif", ".tiff", ".ai", ".drw", ".pct",
@@ -2556,11 +2482,12 @@ Scheduler: {scheduler}"""
                                     gr.update(visible=enabled),
                                     gr.update(visible=has_items),
                                     gr.update(visible=has_items),
+                                    gr.update(visible=enabled),
                                 )
                             enable_multi_ref.change(
                                 fn=toggle_multi_ref_section,
                                 inputs=[enable_multi_ref, multi_ref_files],
-                                outputs=[multi_ref_files, remove_selected_ref_btn, add_more_ref_btn],
+                                outputs=[multi_ref_files, remove_selected_ref_btn, add_more_ref_btn, normalize_multi_ref],
                                 queue=False,
                             )
                             def track_ref_selection(evt: gr.SelectData):
@@ -3875,6 +3802,7 @@ Scheduler: {scheduler}"""
                 face_file,
                 enable_multi_ref,
                 multi_ref_files,
+                normalize_multi_ref,
                 pose_file,
                 prompt,
                 negative_prompt,
@@ -4156,7 +4084,8 @@ Scheduler: {scheduler}"""
                     "hires_upscale_by": 1.5,
                     "hires_steps": 0,
                     "hires_denoising_strength": 0.35,
-                    "enable_multi_ref": False
+                    "enable_multi_ref": False,
+                    "normalize_multi_ref": True
                 }
                 if metadata_text:
                     lines = metadata_text.split('\n')
@@ -4428,6 +4357,8 @@ Scheduler: {scheduler}"""
                         elif line.startswith("Additional face image(s) used:"):
                             additional_face_value = line.replace("Additional face image(s) used:", "").strip()
                             settings["enable_multi_ref"] = additional_face_value not in ("", "None")
+                        elif line.startswith("Normalize averaged face embedding:"):
+                            settings["normalize_multi_ref"] = "true" in line.lower()
 
                 open_resolution_accordion = False
                 open_advanced_accordion = False
@@ -4521,6 +4452,7 @@ Scheduler: {scheduler}"""
                     settings["hires_steps"],
                     settings["hires_denoising_strength"],
                     settings["enable_multi_ref"],
+                    settings["normalize_multi_ref"],
                     accordion_update,
                     gr.update(open=open_resolution_accordion),
                     gr.update(open=open_advanced_accordion),
@@ -4611,6 +4543,7 @@ Scheduler: {scheduler}"""
                     hires_steps,
                     hires_denoising_strength,
                     enable_multi_ref,
+                    normalize_multi_ref,
                     controlnet_accordion,
                     resolution_settings_accordion,
                     advanced_settings_accordion,
@@ -4636,7 +4569,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID Unlocked v8.9.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v8.9.3</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
