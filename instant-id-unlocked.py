@@ -1644,7 +1644,10 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 except Exception as e:
                     print(f"\nFailed to process additional face image '{os.path.basename(additional_path)}': {e}\n")
             if len(multi_ref_embeddings) > 1:
-                embedding_weights = [1.0] + [multi_ref_weight] * (len(multi_ref_embeddings) - 1)
+                embedding_weights = np.array(
+                    [1.0] + [multi_ref_weight] * (len(multi_ref_embeddings) - 1),
+                    dtype=multi_ref_embeddings[0].dtype,
+                )
                 mean_embedding = np.average(multi_ref_embeddings, axis=0, weights=embedding_weights)
                 if normalize_multi_ref:
                     mean_embedding_norm = np.linalg.norm(mean_embedding)
@@ -2479,7 +2482,7 @@ Scheduler: {scheduler}"""
                                     visible=False,
                                 )
                             multi_ref_weight = gr.Slider(
-                                label="Weight of additional face(s)",
+                                label="Weight of each additional face",
                                 minimum=0.0,
                                 maximum=3.0,
                                 value=1.0,
