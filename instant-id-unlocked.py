@@ -2342,6 +2342,7 @@ Scheduler: {scheduler}"""
         max-height: 230px !important;
         overflow-y: auto !important;
         box-sizing: border-box !important;
+        position: static !important;
     }
     .apply-fields-custom {
         background: #1d4ed8 !important;
@@ -2482,7 +2483,7 @@ Scheduler: {scheduler}"""
                                     visible=False,
                                 )
                             multi_ref_weight = gr.Slider(
-                                label="Weight of each additional face",
+                                label="Additional face(s) weight",
                                 minimum=0.0,
                                 maximum=3.0,
                                 value=1.0,
