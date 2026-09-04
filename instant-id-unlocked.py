@@ -2344,6 +2344,14 @@ Scheduler: {scheduler}"""
         box-sizing: border-box !important;
         position: static !important;
     }
+    #multi_ref_gallery .grid-wrap > .icon-button-wrapper.top-panel {
+        padding: 0 4px !important;
+        gap: 0px !important;
+    }
+    #multi_ref_gallery .grid-wrap > .icon-button-wrapper.top-panel::after {
+        content: "Clear all";
+        font-size: 11px !important;
+    }
     .apply-fields-custom {
         background: #1d4ed8 !important;
         color: white !important;
