@@ -2,6 +2,7 @@
 # pip install torch==2.13.0+cu132 torchvision==0.28.0+cu132 --index-url https://download.pytorch.org/whl/cu132
 # you must have these exact same versions of packages listed below for full functionality of the program
 # python 3.12.6 is now supported (also works on python 3.10.6)
+# (optional and not really needed) if you're on python 3.12.6, and installed everything including torch==2.13.0+cu132 torchvision==0.28.0+cu132, you can install newer numpy 2.1.3 with "pip install numpy==2.1.3". Ignore the two dependency conflicts, works fine
 
 diffusers==0.32.2
 transformers==4.53.0
