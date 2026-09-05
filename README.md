@@ -64,6 +64,8 @@ pip install torch==2.13.0+cu132 torchvision==0.28.0+cu132 --index-url https://do
 
 python instant-id-unlocked.py
 
+
+python 3.12.6 is now supported (also tested and works on python 3.10.6, same requirements.txt file)
 _______________________________________________
 Python and PIP packages are a pain in the ***, and a lot of stuff can go wrong with dependencies, installations, etc. So, if you want my whole InstantID-Unlocked folder with the venv and all the models, loras, embeddings, upscalers and everything you need to get it running without any headaches, here it is in 3 parts: (~26GB)
 
@@ -76,7 +78,7 @@ If you do this and use this folder, you don't need to install the requirements.t
 
 Note that the "instant-id-unlocked.py" file inside won't be up to date obviously (currently at v7.5.0 in the folder), you'd need to replace it (and other .py files including pipelines etc.), so if you go this route and download my full folder, download the latest repo files here (choose the green "code" button and then "download zip") and replace existing ones in the folder (all .py files like the pipeline files, instant-id-unlocked.py, ip_adapter/attention_processor.py etc.). Model files won't need to be updated and you can use any SDXL/Pony checkpoint in .safetensors format and place directly inside the models folder. Illustrious can be loaded but not all of them work good with InstantID.
 
-- Tested only on Windows 10/11 and Python 3.10.6 and Nvidia GPUs, you may need to do extra steps to run successfully on MacOS/Linux or if you have an AMD GPU.
+- Tested only on Windows 10/11 and Python versions 3.10.6 and 3.12.6 and Nvidia GPUs, you may need to do extra steps to run successfully on MacOS/Linux or if you have an AMD GPU.
 
 Here's a quick preview of the fork: (This is one of hundreds ways to generate different images with this fork, for example you can add a LoRA or multiple loras with different weights, or try with and without img2img, or try different styles, or try different models, or try with embeddings, etc.)
 
