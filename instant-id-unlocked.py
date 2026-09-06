@@ -150,6 +150,65 @@ from model_util import load_models_xl, get_torch_device, torch_gc
 
 from controlnet_aux import OpenposeDetector
 from transformers import DPTImageProcessor, DPTForDepthEstimation
+
+import controlnet_aux.open_pose.util as _openpose_util
+
+def _patched_draw_bodypose(canvas, keypoints):
+    H, W, C = canvas.shape
+    if max(W, H) < 500:
+        ratio = 1.0
+    elif max(W, H) < 1000:
+        ratio = 2.0
+    elif max(W, H) < 2000:
+        ratio = 3.0
+    elif max(W, H) < 3000:
+        ratio = 4.0
+    elif max(W, H) < 4000:
+        ratio = 5.0
+    elif max(W, H) < 5000:
+        ratio = 6.0
+    else:
+        ratio = 7.0
+
+    stickwidth = 4
+    limbSeq = [
+        [2, 3], [2, 6], [3, 4], [4, 5],
+        [6, 7], [7, 8], [2, 9], [9, 10],
+        [10, 11], [2, 12], [12, 13], [13, 14],
+        [2, 1], [1, 15], [15, 17], [1, 16],
+        [16, 18],
+    ]
+    colors = [[255, 0, 0], [255, 85, 0], [255, 170, 0], [255, 255, 0], [170, 255, 0], [85, 255, 0], [0, 255, 0],
+              [0, 255, 85], [0, 255, 170], [0, 255, 255], [0, 170, 255], [0, 85, 255], [0, 0, 255], [85, 0, 255],
+              [170, 0, 255], [255, 0, 255], [255, 0, 170], [255, 0, 85]]
+
+    for (k1_index, k2_index), color in zip(limbSeq, colors):
+        keypoint1 = keypoints[k1_index - 1]
+        keypoint2 = keypoints[k2_index - 1]
+        if keypoint1 is None or keypoint2 is None:
+            continue
+        Y = np.array([keypoint1.x, keypoint2.x]) * float(W)
+        X = np.array([keypoint1.y, keypoint2.y]) * float(H)
+        mX, mY = np.mean(X), np.mean(Y)
+        length = ((X[0] - X[1]) ** 2 + (Y[0] - Y[1]) ** 2) ** 0.5
+        angle = math.degrees(math.atan2(X[0] - X[1], Y[0] - Y[1]))
+        polygon = cv2.ellipse2Poly((int(mY), int(mX)), (int(length / 2), int(stickwidth * ratio)), int(angle), 0, 360, 1)
+        cv2.fillConvexPoly(canvas, polygon, [int(float(c) * 0.6) for c in color])
+
+    for keypoint, color in zip(keypoints, colors):
+        if keypoint is None:
+            continue
+        x, y = int(keypoint.x * W), int(keypoint.y * H)
+        cv2.circle(canvas, (x, y), int(4 * ratio), color, thickness=-1)
+
+    return canvas
+
+_openpose_original_draw_bodypose = _openpose_util.draw_bodypose
+
+def set_openpose_line_fix(enabled):
+    _openpose_util.draw_bodypose = _patched_draw_bodypose if enabled else _openpose_original_draw_bodypose
+set_openpose_line_fix(False)
+
 device = get_torch_device()
 depth_estimator = DPTForDepthEstimation.from_pretrained("Intel/dpt-hybrid-midas").to(device)
 feature_extractor = DPTImageProcessor.from_pretrained("Intel/dpt-hybrid-midas")
@@ -1261,6 +1320,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         canny_strength,
         depth_strength,
         controlnet_selection,
+        enable_pose_line_fix,
         guidance_scale,
         seed,
         scheduler,
@@ -1860,6 +1920,8 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 "canny": canny_strength,
                 "depth": depth_strength,
             }
+            if "pose" in controlnet_selection:
+                set_openpose_line_fix(enable_pose_line_fix)
             controlnet_models_to_use = []
             controlnet_images = []
             for s in controlnet_selection:
@@ -1937,7 +1999,11 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             cn_strength_str = ", ".join(
                 f"{s.capitalize()}: {cn_strengths[s]}" for s in controlnet_selection if s in cn_strengths
             )
-            print(f"ControlNet selection: {controlnet_selection} | Strength(s) - {cn_strength_str}")
+            selection_display = ", ".join(
+                f"'pose' (thickness fix: {'enabled' if enable_pose_line_fix else 'disabled'})" if s == "pose" else f"'{s}'"
+                for s in controlnet_selection
+            )
+            print(f"ControlNet selection: [{selection_display}] | Strength(s) - {cn_strength_str}")
         else:
             print("ControlNet selection: None (Disabled)")
         print(f"IdentityNet strength: {identitynet_strength_ratio}")
@@ -2171,6 +2237,7 @@ IdentityNet strength: {identitynet_strength_ratio}
 Adapter strength: {adapter_strength_ratio}
 Ranges: IdentityNet: {identitynet_start} - {identitynet_end} | Adapter: {adapter_start} - {adapter_end} | Smooth Transition: {adapter_smooth_transition}
 Pose strength: {pose_strength}
+Pose line thickness fix: {enable_pose_line_fix}
 Canny strength: {canny_strength}
 Depth strength: {depth_strength}
 Noise RNG device: {rng_source}
@@ -2358,7 +2425,7 @@ Scheduler: {scheduler}"""
     - Enter a text prompt, as done in normal text-to-image AI tools such as ComfuUI or A1111/ForgeUI.
     - Click the Generate button to begin image generation.
     - The "Add more face images" option averages the face embeddings from multiple images into a single identity. Add photos of the same person to improve likeness and consistency, or photos of different people to create a blended identity. The "Additional faces weight" slider controls how strongly the additional faces pull the result compared to the main face image: 1.0 (default) weighs every face equally, lower values keep the result closer to the main face; higher values push it further toward the additional faces; 0.0 makes the additional faces have no effect at all. Keep "Normalize averaged embedding" enabled to preserve the original embedding strength after averaging, or disable it to use the plain average.
-    - The "Multi-ID" option places multiple different people in one image. It needs a reference pose image containing one face per person, positioned where you want each identity to appear. The app draws each person's pose skeleton at their assigned spot instead of using a single shared one. The main face photo claims the leftmost face detected in the pose image, each image you add in the "Additional identities" gallery claims the next face to the right, in the order you add them. Needs at least 2 valid identity photos to activate. The "Per-identity region padding" slider controls how far each person's influence is allowed to spread beyond their detected face box in the pose image, higher values blend identities more into shared areas, lower values keep them more separated. Enabling Multi-ID automatically disables "Enhance non-face region" for that generation, since it works against having multiple distinct faces in one image. This feature works best with just two identities. Expect some trial and error to get clean results and make sure to use a good pose image (preferably with just two people).
+    - The "Multi-ID" option places multiple different people in one image. It needs a reference pose image containing one face per person, positioned where you want each identity to appear. The app draws each person's pose skeleton at their assigned spot instead of using a single shared one. The main face photo claims the leftmost face detected in the pose image, each image you add in the "Additional identities" gallery claims the next face to the right, in the order you add them. Using pose controlnet at strength ~0.25 is strongly recommended. This needs at least 2 valid identity photos to activate. The "Per-identity region padding" slider controls how far each person's influence is allowed to spread beyond their detected face box in the pose image, higher values blend identities more into shared areas, lower values keep them more separated. Enabling Multi-ID automatically disables "Enhance non-face region" for that generation, since it works against having multiple distinct faces in one image. This feature works best with just two identities. Expect some trial and error to get clean results and make sure to use a good pose image (preferably with just two people), just make sure to use pose controlnet.
     - img2img mode imports the "pipeline_stable_diffusion_xl_instantid_img2img" (also used by the Hires Fix pass). It is effective at preserving input image details, depending on the denoising strength you set.
     - Upscale and use Enable Hires Fix to generate images with a resolution of what SDXL is best at (usually ~1024-1280 max side) to prevent anatomy errors like long necks while still producing good quality images.
     - Enable i2i Upscaler upscales your input image before the generation pass, using IdentityNet to sharpen and enhance facial detail as it scales. Best for lowres or soft input photos. Recommended settings: LCM Scheduler + DMD2 LoRA, 10–15 steps, ~0.2 img2img denoising strength. You can also use this to upscale an image you've already generated: just feed it back in as the face image, reuse the same seed, prompt and other settings, then bump up the target resolution to make it higher than the input image (no need for Hires Fix).
@@ -2764,7 +2831,7 @@ Scheduler: {scheduler}"""
                                 ".psp", ".xcf", ".psd", ".raw", ".webp", ".heic", ".avif", ".jxl", "image",
                             ]
                             multi_id_files = gr.Gallery(
-                                label="Additional identities (each image = one more person, claimed left-to-right in this order). This feature uses the Reference pose image above as the layout. It must contain one face per person, positioned where each identity should appear. Works best for just two persons.",
+                                label="Additional identities (each image = one more person, claimed left-to-right in this order). This feature uses the Reference pose image above as the layout. It must contain one face per person, positioned where each identity should appear. Using pose controlnet is strongly recommended.",
                                 visible=False,
                                 columns=4,
                                 height=230,
@@ -2807,12 +2874,11 @@ Scheduler: {scheduler}"""
                                     gr.update(visible=has_items),
                                     gr.update(visible=has_items),
                                     gr.update(visible=enabled),
-                                    gr.update(interactive=True),
                                 )
                             enable_multi_id.change(
                                 fn=toggle_multi_id_section,
                                 inputs=[enable_multi_id, multi_id_files],
-                                outputs=[multi_id_files, remove_selected_multi_id_btn, add_more_multi_id_btn, multi_id_mask_padding, enable_multi_ref],
+                                outputs=[multi_id_files, remove_selected_multi_id_btn, add_more_multi_id_btn, multi_id_mask_padding],
                                 queue=False,
                             )
                             def track_multi_id_selection(evt: gr.SelectData):
@@ -3219,26 +3285,40 @@ Scheduler: {scheduler}"""
                         ["pose", "canny", "depth"], value=[], show_label=False,
                         info="Use pose for skeleton inference, canny for edge detection, and depth for depth map estimation."
                     )
+                    enable_pose_line_fix = gr.Checkbox(
+                        label="Use improved pose line thickness (recommended)",
+                        value=True,
+                        visible=False,
+                        info="Scales the pose skeleton's line/joint thickness to match this ControlNet's training data instead of controlnet_aux's thin fixed default.",
+                    )
+                    def toggle_pose_line_fix_visibility(selection):
+                        return gr.update(visible="pose" in selection)
+                    controlnet_selection.change(
+                        fn=toggle_pose_line_fix_visibility,
+                        inputs=[controlnet_selection],
+                        outputs=[enable_pose_line_fix],
+                        queue=False,
+                    )
                     pose_strength = gr.Slider(
                         label="Pose strength",
                         minimum=0,
                         maximum=1.5,
                         step=0.05,
-                        value=0.30,
+                        value=0.25,
                     )
                     canny_strength = gr.Slider(
                         label="Canny strength",
                         minimum=0,
                         maximum=1.5,
                         step=0.05,
-                        value=0.30,
+                        value=0.25,
                     )
                     depth_strength = gr.Slider(
                         label="Depth strength",
                         minimum=0,
                         maximum=1.5,
                         step=0.05,
-                        value=0.30,
+                        value=0.25,
                     )
                 with gr.Group():
                     with gr.Row():
@@ -4112,6 +4192,7 @@ Scheduler: {scheduler}"""
                 canny_strength,
                 depth_strength,
                 controlnet_selection,
+                enable_pose_line_fix,
                 guidance_scale,
                 seed,
                 scheduler,
@@ -4314,9 +4395,10 @@ Scheduler: {scheduler}"""
                     "adapter_start": 0.0,
                     "adapter_end": 1.0,
                     "adapter_smooth_transition": True,
-                    "pose_strength": 0.30,
-                    "canny_strength": 0.30,
-                    "depth_strength": 0.30,
+                    "pose_strength": 0.25,
+                    "enable_pose_line_fix": True,
+                    "canny_strength": 0.25,
+                    "depth_strength": 0.25,
                     "scheduler": "DPMSolverMultistepScheduler",
                     "ratio_base_pixel_number": 8,
                     "rng_source": "GPU",
@@ -4592,6 +4674,8 @@ Scheduler: {scheduler}"""
                             settings["adapter_strength_ratio"] = float(line.replace("Adapter strength:", "").strip())
                         elif line.startswith("Pose strength:"):
                             settings["pose_strength"] = float(line.replace("Pose strength:", "").strip())
+                        elif line.startswith("Pose line thickness fix:"):
+                            settings["enable_pose_line_fix"] = "true" in line.lower()
                         elif line.startswith("Canny strength:"):
                             settings["canny_strength"] = float(line.replace("Canny strength:", "").strip())
                         elif line.startswith("Depth strength:"):
@@ -4727,6 +4811,7 @@ Scheduler: {scheduler}"""
                     settings["lora_selection_10"],
                     settings["randomize_seed"],
                     settings["controlnet_selection"],
+                    settings["enable_pose_line_fix"],
                     settings["model_name"],
                     settings["det_size_name"],
                     settings["resize_max_side"],
@@ -4821,6 +4906,7 @@ Scheduler: {scheduler}"""
                     lora_selection_10,
                     randomize_seed,
                     controlnet_selection,
+                    enable_pose_line_fix,
                     model_name,
                     det_size_name,
                     resize_max_side_slider,
