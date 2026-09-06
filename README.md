@@ -23,6 +23,7 @@ The code barely follows any DRY principles as it started as a personal modificat
 - In addition to the default diffusers format support for loading checkpoints, I added the ability to load single SDXL, Pony and Illustrious .safetensors files. They will automatically appear in the model dropdown selection menu when placed in the /models folder.
 
 🧠 Control & Generation
+- Real Multi-ID support. Better than any other implementation including the one in cubiq/ComfyUI.
 - img2img mode integrated directly (no need to run a separate pipeline).
 - Ability to add more reference face images, it averages the face embeddings from multiple images into a single identity for generation. Meaning you can add more photos of the same person to improve likeness and consistency. Or mix in photos of different people to blend their faces into one morphed identity.
 - Negative Prompt Profiles dropdown with many presets (General, Minimalist, Portraits, Realism, Anime, Fooocus, etc.).
@@ -44,9 +45,9 @@ The code barely follows any DRY principles as it started as a personal modificat
 - Works on 8GB GPUs, but expect slow generations (~5 minutes for 1280×960). Using LCM with dmd2 lora is highly recommended and I actually find myself using it often even with a beast GPU.
 - The minimum requirements for acceptable experience from what I tested is: Any Nvidia RTX with 12GB VRAM and 32GB system memory (RAM). For a very good experience you need 16GB+ VRAM with 64GB RAM.
 
-And many many more improvements such as a Standalone Image Upscaler with GFPGAN option.
+And many many more improvements and features such as a Standalone Image Upscaler with GFPGAN.
 
-I tried the most popular ForgeUI and ComfyUI implementations including the popular cubiq/ComfyUI_InstantID and InstantID Unlocked is at least on par with them if not better. cubiq/ComfyUI_InstantID (which was the best from the comfy implementations I tried) tends to screw up the faces and similarity a bit sometimes no matter what options and workflows I tried, and the multi ID feature doesn't work well anyway and is overly complicated (even the author admits this). Try this fork and judge for yourself.
+I tried the most popular ForgeUI and ComfyUI implementations including the popular cubiq/ComfyUI_InstantID and InstantID Unlocked is at least on par with them if not better. cubiq/ComfyUI_InstantID (which was the best from the comfy implementations I tried) tends to screw up the faces and similarity a bit sometimes no matter what options and workflows I tried. Try this fork and judge for yourself.
 
 ## How to use and run:
 
@@ -67,18 +68,7 @@ python instant-id-unlocked.py
 
 python 3.12.6 is now supported (also tested and works on python 3.10.6, same requirements.txt file)
 _______________________________________________
-Python and PIP packages are a pain in the ***, and a lot of stuff can go wrong with dependencies, installations, etc. So, if you want my whole InstantID-Unlocked folder with the venv and all the models, loras, embeddings, upscalers and everything you need to get it running without any headaches, here it is in 3 parts: (~26GB)
-
-- Part 1: https://drive.google.com/file/d/1MRIgwvHuopDxCZLiuXRFf6hDYzKwCeM8/view?usp=sharing
-- Part 2: https://drive.google.com/file/d/1HAob1D6ynIwWjG4HyXi7paTWRtxqz647/view?usp=sharing
-- Part 3: https://drive.google.com/file/d/1Nysf6mJ9BrWP8MIt9nsRcT5k1Km2fb98/view?usp=sharing
-
-Just download the files and extract with the latest 7zip, instructions are inside. You basically need to enter the folder with CMD/terminal and create a new venv using python 3.10.6 with "python -m venv venv" and copy over the included site-packages folder, overwriting the newly created one inside.
-If you do this and use this folder, you don't need to install the requirements.txt or torch/nvidia cuda or anything. You need python 3.10.6 installed (or point to a 3.10.6 python folder in the cfg after creating the venv) as the venv folder inside was created with 3.10.6. Then basically run the bat file "_Run InstandID.bat"
-
-Note that the "instant-id-unlocked.py" file inside won't be up to date obviously (currently at v7.5.0 in the folder), you'd need to replace it (and other .py files including pipelines etc.), so if you go this route and download my full folder, download the latest repo files here (choose the green "code" button and then "download zip") and replace existing ones in the folder (all .py files like the pipeline files, instant-id-unlocked.py, ip_adapter/attention_processor.py etc.). Model files won't need to be updated and you can use any SDXL/Pony checkpoint in .safetensors format and place directly inside the models folder. Illustrious can be loaded but not all of them work good with InstantID.
-
-- Tested only on Windows 10/11 and Python versions 3.10.6 and 3.12.6 and Nvidia GPUs, you may need to do extra steps to run successfully on MacOS/Linux or if you have an AMD GPU.
+Tested only on Windows 10/11 and Python versions 3.10.6 and 3.12.6 and Nvidia GPUs, you may need to do extra steps to run successfully on MacOS/Linux or if you have an AMD GPU.
 
 Here's a quick preview of the fork: (This is one of hundreds ways to generate different images with this fork, for example you can add a LoRA or multiple loras with different weights, or try with and without img2img, or try different styles, or try different models, or try with embeddings, etc.)
 
