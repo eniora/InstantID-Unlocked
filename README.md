@@ -67,6 +67,8 @@ python instant-id-unlocked.py
 
 
 python 3.12.6 is now supported (also tested and works on python 3.10.6, same requirements.txt file)
+
+Necessary models if you're having trouble manually downloading them (except for the SDXL default model): https://drive.google.com/file/d/1ktwtNay39-6MAZbnrF5RpIlTBm8UbHu3/view?usp=sharing
 _______________________________________________
 Tested only on Windows 10/11 and Python versions 3.10.6 and 3.12.6 and Nvidia GPUs, you may need to do extra steps to run successfully on MacOS/Linux or if you have an AMD GPU.
 
