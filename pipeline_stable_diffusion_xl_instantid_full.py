@@ -818,26 +818,43 @@ class StableDiffusionXLInstantIDPipeline(StableDiffusionXLControlNetPipeline):
                 attn_processor.scale = scale
 
     def _encode_prompt_image_emb(self, prompt_image_emb, device, num_images_per_prompt, dtype, do_classifier_free_guidance):
-        
-        if isinstance(prompt_image_emb, torch.Tensor):
-            prompt_image_emb = prompt_image_emb.clone().detach()
+
+        if isinstance(prompt_image_emb, (list, tuple)):
+            identity_embeds = list(prompt_image_emb)
         else:
-            prompt_image_emb = torch.tensor(prompt_image_emb)
-            
-        prompt_image_emb = prompt_image_emb.reshape([1, -1, self.image_proj_model_in_features])
-        
+            identity_embeds = [prompt_image_emb]
+
+        processed = []
+        for emb in identity_embeds:
+            if isinstance(emb, torch.Tensor):
+                emb = emb.clone().detach()
+            else:
+                emb = torch.tensor(emb)
+            emb = emb.reshape([1, -1, self.image_proj_model_in_features])
+            processed.append(emb)
+
+        num_ids = len(processed)
+        prompt_image_emb = torch.cat(processed, dim=0)
+
         if do_classifier_free_guidance:
             prompt_image_emb = torch.cat([torch.zeros_like(prompt_image_emb), prompt_image_emb], dim=0)
+            cfg_mult = 2
         else:
-            prompt_image_emb = torch.cat([prompt_image_emb], dim=0)
-        
+            cfg_mult = 1
+
         prompt_image_emb = prompt_image_emb.to(device=self.image_proj_model.latents.device, 
                                                dtype=self.image_proj_model.latents.dtype)
         prompt_image_emb = self.image_proj_model(prompt_image_emb)
 
-        bs_embed, seq_len, _ = prompt_image_emb.shape
+        seq_len = prompt_image_emb.shape[1]
+        out_dim = prompt_image_emb.shape[2]
+
+        prompt_image_emb = prompt_image_emb.view(cfg_mult, num_ids, seq_len, out_dim)
+        prompt_image_emb = prompt_image_emb.reshape(cfg_mult, num_ids * seq_len, out_dim)
+
+        bs_embed = cfg_mult
         prompt_image_emb = prompt_image_emb.repeat(1, num_images_per_prompt, 1)
-        prompt_image_emb = prompt_image_emb.view(bs_embed * num_images_per_prompt, seq_len, -1)
+        prompt_image_emb = prompt_image_emb.view(bs_embed * num_images_per_prompt, num_ids * seq_len, -1)
         
         return prompt_image_emb.to(device=device, dtype=dtype)
 
@@ -1183,17 +1200,26 @@ class StableDiffusionXLInstantIDPipeline(StableDiffusionXLControlNetPipeline):
             assert False
 
         # 4.1 Region control
+        num_identities = len(image_embeds) if isinstance(image_embeds, (list, tuple)) else 1
         if control_mask is not None:
-            mask_weight_image = control_mask
-            mask_weight_image = np.array(mask_weight_image)
-            mask_weight_image_tensor = torch.from_numpy(mask_weight_image).to(device=device, dtype=prompt_embeds.dtype)
-            mask_weight_image_tensor = mask_weight_image_tensor[:, :, 0] / 255.
-            mask_weight_image_tensor = mask_weight_image_tensor[None, None]
-            region_mask = torch.from_numpy(np.array(control_mask)[:, :, 0]).to(device=device, dtype=prompt_embeds.dtype) / 255.
-            region_control.prompt_image_conditioning = [dict(region_mask=region_mask)]
+            control_masks = list(control_mask) if isinstance(control_mask, (list, tuple)) else [control_mask]
+            mask_arrays = []
+            region_conditioning = []
+            for m in control_masks:
+                m_arr = np.array(m)
+                if m_arr.ndim == 3:
+                    m_arr = m_arr[:, :, 0]
+                mask_arrays.append(m_arr)
+                region_mask = torch.from_numpy(m_arr).to(device=device, dtype=prompt_embeds.dtype) / 255.
+                region_conditioning.append(dict(region_mask=region_mask))
+            region_control.prompt_image_conditioning = region_conditioning
+
+            union_mask = mask_arrays[0] if len(mask_arrays) == 1 else np.maximum.reduce(mask_arrays)
+            mask_weight_image_tensor = torch.from_numpy(union_mask).to(device=device, dtype=prompt_embeds.dtype)
+            mask_weight_image_tensor = (mask_weight_image_tensor / 255.)[None, None]
         else:
             mask_weight_image_tensor = None
-            region_control.prompt_image_conditioning = [dict(region_mask=None)]
+            region_control.prompt_image_conditioning = [dict(region_mask=None)] * num_identities
 
         # 5. Prepare timesteps
         try:
