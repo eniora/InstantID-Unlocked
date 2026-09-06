@@ -139,8 +139,6 @@ from diffusers.models import ControlNetModel
 from diffusers.pipelines.controlnet.multicontrolnet import MultiControlNetModel
 from accelerate.hooks import remove_hook_from_module
 
-from ip_adapter.attention_processor import IdentityNetAttnProcessor2_0, IdentityNetAttnProcessor
-
 from insightface.app import FaceAnalysis
 
 from style_template import styles
@@ -399,40 +397,9 @@ def read_png_metadata(filepath):
 face_adapter = f"./checkpoints/ip-adapter.bin"
 controlnet_path = f"./checkpoints/ControlNetModel"
 
-IDENTITYNET_NUM_TOKENS = 16
-
-def prepare_identitynet_region_masking(controlnet_model, num_tokens=IDENTITYNET_NUM_TOKENS):
-    if hasattr(controlnet_model, "_identitynet_original_attn_procs"):
-        return
-    original_procs = dict(controlnet_model.attn_processors)
-    processor_cls = IdentityNetAttnProcessor2_0 if hasattr(F, "scaled_dot_product_attention") else IdentityNetAttnProcessor
-    masked_procs = {}
-    for name, proc in original_procs.items():
-        if name.endswith("attn1.processor"):
-            masked_procs[name] = proc
-        else:
-            masked_procs[name] = processor_cls(num_tokens=num_tokens).to(controlnet_model.device, dtype=controlnet_model.dtype)
-    controlnet_model._identitynet_original_attn_procs = original_procs
-    controlnet_model._identitynet_masked_attn_procs = masked_procs
-    controlnet_model._identitynet_multi_id_active = False
-
-def set_identitynet_multi_id_mode(controlnet_model, enabled):
-    if not hasattr(controlnet_model, "_identitynet_original_attn_procs"):
-        return
-    if getattr(controlnet_model, "_identitynet_multi_id_active", None) == enabled:
-        return
-    processors = (
-        controlnet_model._identitynet_masked_attn_procs
-        if enabled
-        else controlnet_model._identitynet_original_attn_procs
-    )
-    controlnet_model.set_attn_processor(dict(processors))
-    controlnet_model._identitynet_multi_id_active = enabled
-
 controlnet_identitynet = ControlNetModel.from_pretrained(
     controlnet_path, torch_dtype=dtype
 )
-prepare_identitynet_region_masking(controlnet_identitynet)
 
 controlnet_pose_model = "xinsir/controlnet-openpose-sdxl-1.0"
 controlnet_canny_model = "diffusers/controlnet-canny-sdxl-1.0"
@@ -985,15 +952,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         out_img_pil = Image.fromarray(out_img.astype(np.uint8))
         return out_img_pil
 
-    def draw_kps_multi(image_pil, kps_list, kps_brightness=0.6):
-        w, h = image_pil.size
-        out_img = np.zeros([h, w, 3], dtype=np.uint8)
-        for kps in kps_list:
-            single = np.array(draw_kps(image_pil, kps, kps_brightness))
-            mask = single.any(axis=-1)
-            out_img[mask] = single[mask]
-        return Image.fromarray(out_img)
-
     def resize_img(
         input_image,
         max_side=1280,
@@ -1196,7 +1154,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             controlnet_identitynet = ControlNetModel.from_pretrained(
                 controlnet_path, torch_dtype=dtype
             )
-            prepare_identitynet_region_masking(controlnet_identitynet)
 
         PipeClass = StableDiffusionXLInstantIDImg2ImgPipeline if enable_img2img else StableDiffusionXLInstantIDPipeline
 
@@ -1240,9 +1197,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         normalize_multi_ref,
         multi_ref_weight,
         pose_image_path,
-        enable_multi_id,
-        multi_id_files,
-        multi_id_mask_padding,
         prompt,
         negative_prompt,
         weight_application_method,
@@ -1709,9 +1663,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 multi_ref_used = len(multi_ref_embeddings)
                 print(f"Using a weighted average face embedding from {multi_ref_used} face images (additional faces weight: {multi_ref_weight}x, normalization: {'enabled' if normalize_multi_ref else 'disabled'}).\n")
         additional_images_used_text = ", ".join(multi_ref_filenames) if multi_ref_filenames else "None"
-        all_pose_faces_info = None
-        multi_id_active = False
-        multi_id_images_used_text = "None"
         if pose_image_path is not None:
             pose_image = load_image(pose_image_path)
             original_pose_image = pose_image
@@ -1730,121 +1681,39 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                     f"Cannot find any face in the reference image! Please upload another person image"
                 )
 
-            all_pose_faces_info = face_info
             face_info = max(face_info, key=lambda x:(x['bbox'][2]-x['bbox'][0])*(x['bbox'][3]-x['bbox'][1]))
             face_kps = draw_kps(pose_image, face_info["kps"], kps_brightness)
 
             width, height = face_kps.size
-        if enable_multi_id and multi_id_files:
-            if pose_image_path is None or all_pose_faces_info is None:
-                raise gr.Error(
-                    "Multi-ID needs a reference pose image containing one face per person, "
-                    "positioned where you want each identity to appear. Upload one in the "
-                    "'Reference pose image' box."
-                )
-
-            identity_embeddings = [face_emb]
-            identity_labels = [os.path.basename(face_image_path) if face_image_path else "Primary"]
-            for additional_item in multi_id_files:
-                additional_path = additional_item[0] if isinstance(additional_item, (list, tuple)) else additional_item
-                try:
-                    additional_image = load_image(additional_path)
-                    original_additional_image = additional_image
-                    additional_image_resized = resize_img(
-                        additional_image, size=None, max_side=resize_max_side,
-                        mode=resize_mode_enum, pad_to_max_side=pad_to_max_side,
-                        base_pixel_number=ratio_base_pixel_number,
-                    )
-                    additional_image_cv2 = convert_from_image_to_cv2(additional_image_resized)
-
-                    additional_face_info, temp_app = detect_face_info(
-                        original_additional_image, additional_image_resized, additional_image_cv2,
-                        resize_mode_enum, enable_custom_resize,
-                        label=f"multi-ID identity image '{os.path.basename(additional_path)}'",
-                        need_kps=False,
-                        temp_app=temp_app,
-                    )
-                    if len(additional_face_info) == 0:
-                        print(f"\nNo face detected in multi-ID identity image '{os.path.basename(additional_path)}'. Skipping it.\n")
-                        gr.Warning(f"No face detected in multi-ID identity image '{os.path.basename(additional_path)}'. Skipping it.")
-                        continue
-                    additional_face_info = max(additional_face_info, key=lambda x:(x['bbox'][2]-x['bbox'][0])*(x['bbox'][3]-x['bbox'][1]))
-                    identity_embeddings.append(additional_face_info["embedding"])
-                    identity_labels.append(os.path.basename(additional_path))
-                except Exception as e:
-                    print(f"\nFailed to process multi-ID identity image '{os.path.basename(additional_path)}': {e}\n")
-
-            num_identities = len(identity_embeddings)
-            if num_identities < 2:
-                gr.Warning("Multi-ID needs at least 2 valid identity photos - falling back to single-ID generation.")
-            elif len(all_pose_faces_info) < num_identities:
-                raise gr.Error(
-                    f"Multi-ID needs at least {num_identities} faces in the reference pose image "
-                    f"(one per identity), but only {len(all_pose_faces_info)} were detected."
-                )
-            else:
-                ordered_pose_faces = sorted(
-                    all_pose_faces_info, key=lambda x: (x['bbox'][0] + x['bbox'][2]) / 2
-                )[:num_identities]
-
-                combined_kps_list = []
-                mask_images = []
-                for slot_idx, pose_face in enumerate(ordered_pose_faces):
-                    combined_kps_list.append(pose_face["kps"])
-
-                    mask = np.zeros([height, width, 3], dtype=np.uint8)
-                    x1, y1, x2, y2 = [int(v) for v in pose_face["bbox"]]
-                    padding_x = int((x2 - x1) * multi_id_mask_padding)
-                    padding_y = int((y2 - y1) * multi_id_mask_padding)
-                    x1 = max(0, x1 - padding_x)
-                    y1 = max(0, y1 - padding_y)
-                    x2 = min(width, x2 + padding_x)
-                    y2 = min(height, y2 + padding_y)
-                    mask[y1:y2, x1:x2] = 255
-                    mask_images.append(Image.fromarray(mask))
-
-                face_kps = draw_kps_multi(pose_image, combined_kps_list, kps_brightness)
-                face_emb = identity_embeddings
-                control_mask = mask_images
-                multi_id_active = True
-                additional_identity_labels = identity_labels[1:num_identities]
-                multi_id_images_used_text = ", ".join(additional_identity_labels) if additional_identity_labels else "None"
-                if multi_ref_used:
-                    print(f"Multi-ID: identity 1 uses the 'Add more face images' blended embedding (averaged {multi_ref_used} face(s), additional faces weight {multi_ref_weight}x).\n")
-                print(f"Multi-ID: Enabled - {num_identities} identities placed left-to-right onto the pose image ({', '.join(identity_labels[:num_identities])}).\n")
-
         if temp_app is not None:
             del temp_app
 
-        if not multi_id_active:
-            if enhance_face_region:
-                control_mask = np.zeros([height, width, 3], dtype=np.uint8)
-                x1, y1, x2, y2 = face_info["bbox"]
-                x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+        if enhance_face_region:
+            control_mask = np.zeros([height, width, 3], dtype=np.uint8)
+            x1, y1, x2, y2 = face_info["bbox"]
+            x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
 
-                if enhance_strength == "Balanced":
-                    padding_ratio = 0.15
-                elif enhance_strength == "High":
-                    padding_ratio = 0.3
-                elif enhance_strength == "Custom":
-                    padding_ratio = custom_enhance_padding
-                else:
-                    padding_ratio = 0.0
-
-                padding_x = int((x2 - x1) * padding_ratio)
-                padding_y = int((y2 - y1) * padding_ratio)
-
-                x1 = max(0, x1 - padding_x)
-                y1 = max(0, y1 - padding_y)
-                x2 = min(width, x2 + padding_x)
-                y2 = min(height, y2 + padding_y)
-
-                control_mask[y1:y2, x1:x2] = 255
-                control_mask = Image.fromarray(control_mask)
+            if enhance_strength == "Balanced":
+                padding_ratio = 0.15
+            elif enhance_strength == "High":
+                padding_ratio = 0.3
+            elif enhance_strength == "Custom":
+                padding_ratio = custom_enhance_padding
             else:
-                control_mask = None
+                padding_ratio = 0.0
 
-        set_identitynet_multi_id_mode(controlnet_identitynet, multi_id_active)
+            padding_x = int((x2 - x1) * padding_ratio)
+            padding_y = int((y2 - y1) * padding_ratio)
+
+            x1 = max(0, x1 - padding_x)
+            y1 = max(0, y1 - padding_y)
+            x2 = min(width, x2 + padding_x)
+            y2 = min(height, y2 + padding_y)
+
+            control_mask[y1:y2, x1:x2] = 255
+            control_mask = Image.fromarray(control_mask)
+        else:
+            control_mask = None
 
         if hasattr(controlnet_identitynet, "_hf_hook"):
             remove_hook_from_module(controlnet_identitynet, recurse=True)
@@ -1902,7 +1771,6 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         print(f"Input face image: {os.path.basename(face_image_path) if face_image_path else 'None'}")
         if multi_ref_used:
             print(f"Multiple face images: Enabled - averaged {multi_ref_used} face embeddings, additional faces weight {multi_ref_weight}x, normalization {'enabled' if normalize_multi_ref else 'disabled'} (additional face(s): {', '.join(multi_ref_filenames)})")
-        print(f"Multi-ID: {'Enabled - ' + str(len(face_emb)) + ' identities' if multi_id_active else 'Disabled'}")
         print(f"Reference pose image: {os.path.basename(pose_image_path) if pose_image_path else 'None'}")
         print(f"Steps: {num_steps}")
         print(f"img2img Mode: {'Enabled' if enable_img2img else 'Disabled'}")
@@ -2137,9 +2005,6 @@ Detection size: {current_det_size}
 Additional face image(s) used: {additional_images_used_text}
 Normalize averaged face embedding: {normalize_multi_ref}
 Additional faces weight: {multi_ref_weight}
-Multi-ID: {multi_id_active}
-Multi-ID identity image(s) used: {multi_id_images_used_text}
-Multi-ID region padding: {multi_id_mask_padding}
 Steps: {num_steps}
 Guidance scale: {guidance_scale}
 Seed: {seed + i}
@@ -2358,7 +2223,6 @@ Scheduler: {scheduler}"""
     - Enter a text prompt, as done in normal text-to-image AI tools such as ComfuUI or A1111/ForgeUI.
     - Click the Generate button to begin image generation.
     - The "Add more face images" option averages the face embeddings from multiple images into a single identity. Add photos of the same person to improve likeness and consistency, or photos of different people to create a blended identity. The "Additional faces weight" slider controls how strongly the additional faces pull the result compared to the main face image: 1.0 (default) weighs every face equally, lower values keep the result closer to the main face; higher values push it further toward the additional faces; 0.0 makes the additional faces have no effect at all. Keep "Normalize averaged embedding" enabled to preserve the original embedding strength after averaging, or disable it to use the plain average.
-    - The "Multi-ID" option places multiple different people in one image. It needs a reference pose image containing one face per person, positioned where you want each identity to appear. The app draws each person's pose skeleton at their assigned spot instead of using a single shared one. The main face photo claims the leftmost face detected in the pose image, each image you add in the "Additional identities" gallery claims the next face to the right, in the order you add them. Needs at least 2 valid identity photos to activate. The "Per-identity region padding" slider controls how far each person's influence is allowed to spread beyond their detected face box in the pose image, higher values blend identities more into shared areas, lower values keep them more separated. Enabling Multi-ID automatically disables "Enhance non-face region" for that generation, since it works against having multiple distinct faces in one image. This feature works best with just two identities. Expect some trial and error to get clean results and make sure to use a good pose image (preferably with just two people).
     - img2img mode imports the "pipeline_stable_diffusion_xl_instantid_img2img" (also used by the Hires Fix pass). It is effective at preserving input image details, depending on the denoising strength you set.
     - Upscale and use Enable Hires Fix to generate images with a resolution of what SDXL is best at (usually ~1024-1280 max side) to prevent anatomy errors like long necks while still producing good quality images.
     - Enable i2i Upscaler upscales your input image before the generation pass, using IdentityNet to sharpen and enhance facial detail as it scales. Best for lowres or soft input photos. Recommended settings: LCM Scheduler + DMD2 LoRA, 10–15 steps, ~0.2 img2img denoising strength. You can also use this to upscale an image you've already generated: just feed it back in as the face image, reuse the same seed, prompt and other settings, then bump up the target resolution to make it higher than the input image (no need for Hires Fix).
@@ -2446,7 +2310,7 @@ Scheduler: {scheduler}"""
         });
     }
     """
-    with gr.Blocks(title="InstantID Unlocked v9.1.0", js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v9.0.1", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
@@ -2485,23 +2349,6 @@ Scheduler: {scheduler}"""
         gap: 0px !important;
     }
     #multi_ref_gallery .grid-wrap > .icon-button-wrapper.top-panel::after {
-        content: "Clear all";
-        font-size: 11px !important;
-    }
-    #multi_id_gallery:not(.fullscreen) {
-        max-height: 230px !important;
-    }
-    #multi_id_gallery:not(.fullscreen) .grid-wrap {
-        max-height: 230px !important;
-        overflow-y: auto !important;
-        box-sizing: border-box !important;
-        position: static !important;
-    }
-    #multi_id_gallery .grid-wrap > .icon-button-wrapper.top-panel {
-        padding: 0 4px !important;
-        gap: 0px !important;
-    }
-    #multi_id_gallery .grid-wrap > .icon-button-wrapper.top-panel::after {
         content: "Clear all";
         font-size: 11px !important;
     }
@@ -2616,7 +2463,7 @@ Scheduler: {scheduler}"""
                                     ".psp", ".xcf", ".psd", ".raw", ".webp", ".heic", ".avif", ".jxl", "image",
                                 ]
                             multi_ref_files = gr.Gallery(
-                                label="Additional face images. When used with Multi-ID, only the first main face identity will be blended.",
+                                label="Additional face images",
                                 visible=False,
                                 columns=4,
                                 height=230,
@@ -2686,6 +2533,7 @@ Scheduler: {scheduler}"""
                                 fn=toggle_ref_buttons,
                                 inputs=multi_ref_files,
                                 outputs=[remove_selected_ref_btn, add_more_ref_btn],
+                                queue=False,
                             )
                             def add_more_additional_images(new_files, gallery_value):
                                 existing = list(gallery_value) if gallery_value else []
@@ -2714,150 +2562,44 @@ Scheduler: {scheduler}"""
                                 outputs=[multi_ref_files, selected_ref_index, remove_selected_ref_btn, add_more_ref_btn],
                                 queue=False,
                             )
-                    with gr.Column():
-                        with gr.Group():
-                            pose_file = gr.Image(
-                                label="Reference pose image (optional for single identity)",
-                                height=400,
-                                type="filepath"
-                            )
-                            def update_img_resolution(img_path, default_label):
-                                if img_path:
-                                    try:
-                                        with Image.open(img_path) as img:
-                                            w, h = img.size
-                                        return gr.update(label=f"{default_label} ({w}x{h})")
-                                    except Exception:
-                                        pass
-                                return gr.update(label=default_label)
-                            face_file.upload(
-                                fn=lambda x: update_img_resolution(x, "Upload a photo containing a face"),
-                                inputs=face_file,
-                                outputs=face_file,
-                                queue=False
-                            )
-                            face_file.clear(
-                                fn=lambda: gr.update(label="Upload a photo containing a face"),
-                                inputs=None,
-                                outputs=face_file,
-                                queue=False
-                            )
-                            pose_file.upload(
-                                fn=lambda x: update_img_resolution(x, "Reference pose image"),
-                                inputs=pose_file,
-                                outputs=pose_file,
-                                queue=False
-                            )
-                            pose_file.clear(
-                                fn=lambda: gr.update(label="Reference pose image (optional for single identity)"),
-                                inputs=None,
-                                outputs=pose_file,
-                                queue=False
-                            )
-                            enable_multi_id = gr.Checkbox(
-                                label="🧑‍🤝‍🧑 Multi-ID: multiple people in one image",
-                                value=False,
-                            )
-                            multi_id_file_types = [
-                                ".jpe", ".jpg", ".jpeg", ".gif", ".png", ".bmp", ".ico",
-                                ".svg", ".svgz", ".tif", ".tiff", ".ai", ".drw", ".pct",
-                                ".psp", ".xcf", ".psd", ".raw", ".webp", ".heic", ".avif", ".jxl", "image",
-                            ]
-                            multi_id_files = gr.Gallery(
-                                label="Additional identities (each image = one more person, claimed left-to-right in this order). This feature uses the Reference pose image above as the layout. It must contain one face per person, positioned where each identity should appear. Works best for just two persons.",
-                                visible=False,
-                                columns=4,
-                                height=230,
-                                object_fit="contain",
-                                type="filepath",
-                                show_label=False,
-                                interactive=True,
-                                file_types=multi_id_file_types,
-                                elem_id="multi_id_gallery",
-                            )
-                            with gr.Row():
-                                selected_multi_id_index = gr.State(None)
-                                add_more_multi_id_btn = gr.UploadButton(
-                                    "➕ Add another identity",
-                                    file_count="multiple",
-                                    type="filepath",
-                                    size="sm",
-                                    visible=False,
-                                    file_types=multi_id_file_types,
-                                )
-                                remove_selected_multi_id_btn = gr.Button(
-                                    "🗑 Remove selected identity",
-                                    size="sm",
-                                    variant="stop",
-                                    visible=False,
-                                )
-                            multi_id_mask_padding = gr.Slider(
-                                label="Per-identity region padding",
-                                minimum=0.0,
-                                maximum=1.0,
-                                value=0.35,
-                                step=0.05,
-                                visible=False,
-                                info="How far each identity's influence spreads past their face box.",
-                            )
-                            def toggle_multi_id_section(enabled, gallery_value):
-                                has_items = enabled and bool(gallery_value)
-                                return (
-                                    gr.update(visible=enabled),
-                                    gr.update(visible=has_items),
-                                    gr.update(visible=has_items),
-                                    gr.update(visible=enabled),
-                                    gr.update(interactive=True),
-                                )
-                            enable_multi_id.change(
-                                fn=toggle_multi_id_section,
-                                inputs=[enable_multi_id, multi_id_files],
-                                outputs=[multi_id_files, remove_selected_multi_id_btn, add_more_multi_id_btn, multi_id_mask_padding, enable_multi_ref],
-                                queue=False,
-                            )
-                            def track_multi_id_selection(evt: gr.SelectData):
-                                return evt.index
-                            multi_id_files.select(
-                                fn=track_multi_id_selection,
-                                inputs=None,
-                                outputs=selected_multi_id_index,
-                                queue=False,
-                            )
-                            def toggle_multi_id_buttons(gallery_value):
-                                visible = bool(gallery_value)
-                                return gr.update(visible=visible), gr.update(visible=visible)
-                            multi_id_files.change(
-                                fn=toggle_multi_id_buttons,
-                                inputs=multi_id_files,
-                                outputs=[remove_selected_multi_id_btn, add_more_multi_id_btn],
-                            )
-                            def add_more_multi_id_images(new_files, gallery_value):
-                                existing = list(gallery_value) if gallery_value else []
-                                newly_added = list(new_files) if new_files else []
-                                return existing + newly_added
-                            add_more_multi_id_btn.upload(
-                                fn=add_more_multi_id_images,
-                                inputs=[add_more_multi_id_btn, multi_id_files],
-                                outputs=multi_id_files,
-                                queue=False,
-                            )
-                            def remove_selected_multi_id_image(gallery_value, selected_index):
-                                if gallery_value is None or selected_index is None:
-                                    still_has_items = bool(gallery_value)
-                                    return gallery_value, None, gr.update(visible=still_has_items), gr.update(visible=still_has_items)
-                                if selected_index < 0 or selected_index >= len(gallery_value):
-                                    still_has_items = bool(gallery_value)
-                                    return gallery_value, None, gr.update(visible=still_has_items), gr.update(visible=still_has_items)
-                                new_value = list(gallery_value)
-                                del new_value[selected_index]
-                                still_has_items = bool(new_value)
-                                return new_value, None, gr.update(visible=still_has_items), gr.update(visible=still_has_items)
-                            remove_selected_multi_id_btn.click(
-                                fn=remove_selected_multi_id_image,
-                                inputs=[multi_id_files, selected_multi_id_index],
-                                outputs=[multi_id_files, selected_multi_id_index, remove_selected_multi_id_btn, add_more_multi_id_btn],
-                                queue=False,
-                            )
+                    pose_file = gr.Image(
+                        label="Reference pose image (Optional)",
+                        height=400,
+                        type="filepath"
+                    )
+                    def update_img_resolution(img_path, default_label):
+                        if img_path:
+                            try:
+                                with Image.open(img_path) as img:
+                                    w, h = img.size
+                                return gr.update(label=f"{default_label} ({w}x{h})")
+                            except Exception:
+                                pass
+                        return gr.update(label=default_label)
+                    face_file.upload(
+                        fn=lambda x: update_img_resolution(x, "Upload a photo containing a face"),
+                        inputs=face_file,
+                        outputs=face_file,
+                        queue=False
+                    )
+                    face_file.clear(
+                        fn=lambda: gr.update(label="Upload a photo containing a face"),
+                        inputs=None,
+                        outputs=face_file,
+                        queue=False
+                    )
+                    pose_file.upload(
+                        fn=lambda x: update_img_resolution(x, "Reference pose image (Optional)"),
+                        inputs=pose_file,
+                        outputs=pose_file,
+                        queue=False
+                    )
+                    pose_file.clear(
+                        fn=lambda: gr.update(label="Reference pose image (Optional)"),
+                        inputs=None,
+                        outputs=pose_file,
+                        queue=False
+                    )
                 prompt = gr.Textbox(
                     label="Prompt",
                     info="Giving a simple prompt is usually enough. You can highlight text & use Ctrl + ↑/↓ keys to change the weight.",
@@ -4091,9 +3833,6 @@ Scheduler: {scheduler}"""
                 normalize_multi_ref,
                 multi_ref_weight,
                 pose_file,
-                enable_multi_id,
-                multi_id_files,
-                multi_id_mask_padding,
                 prompt,
                 negative_prompt,
                 weight_application_method,
@@ -4376,9 +4115,7 @@ Scheduler: {scheduler}"""
                     "hires_denoising_strength": 0.35,
                     "enable_multi_ref": False,
                     "normalize_multi_ref": True,
-                    "multi_ref_weight": 1.0,
-                    "enable_multi_id": False,
-                    "multi_id_mask_padding": 0.35
+                    "multi_ref_weight": 1.0
                 }
                 if metadata_text:
                     lines = metadata_text.split('\n')
@@ -4657,13 +4394,6 @@ Scheduler: {scheduler}"""
                                 settings["multi_ref_weight"] = float(line.replace("Additional faces weight:", "").strip())
                             except ValueError:
                                 pass
-                        elif line.startswith("Multi-ID:"):
-                            settings["enable_multi_id"] = "true" in line.lower()
-                        elif line.startswith("Multi-ID region padding:"):
-                            try:
-                                settings["multi_id_mask_padding"] = float(line.replace("Multi-ID region padding:", "").strip())
-                            except ValueError:
-                                pass
 
                 open_resolution_accordion = False
                 open_advanced_accordion = False
@@ -4759,8 +4489,6 @@ Scheduler: {scheduler}"""
                     settings["enable_multi_ref"],
                     settings["normalize_multi_ref"],
                     settings["multi_ref_weight"],
-                    settings["enable_multi_id"],
-                    settings["multi_id_mask_padding"],
                     accordion_update,
                     gr.update(open=open_resolution_accordion),
                     gr.update(open=open_advanced_accordion),
@@ -4853,8 +4581,6 @@ Scheduler: {scheduler}"""
                     enable_multi_ref,
                     normalize_multi_ref,
                     multi_ref_weight,
-                    enable_multi_id,
-                    multi_id_mask_padding,
                     controlnet_accordion,
                     resolution_settings_accordion,
                     advanced_settings_accordion,
@@ -4880,7 +4606,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID Unlocked v9.1.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v9.0.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
