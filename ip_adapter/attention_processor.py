@@ -163,14 +163,22 @@ class IPAttnProcessor(nn.Module):
         if attn.group_norm is not None:
             hidden_states = attn.group_norm(hidden_states.transpose(1, 2)).transpose(1, 2)
 
+        # Multi-ID support: encoder_hidden_states carries the text tokens followed by
+        # one block of `self.num_tokens` image-prompt tokens per identity. The number
+        # of identities currently active is communicated globally via
+        # region_control.prompt_image_conditioning (one dict per identity, each
+        # optionally holding that identity's own region_mask).
+        num_identities = max(len(region_control.prompt_image_conditioning), 1)
+
         query = attn.to_q(hidden_states)
 
         if encoder_hidden_states is None:
             encoder_hidden_states = hidden_states
+            ip_hidden_states_all = None
         else:
             # get encoder_hidden_states, ip_hidden_states
-            end_pos = encoder_hidden_states.shape[1] - self.num_tokens
-            encoder_hidden_states, ip_hidden_states = encoder_hidden_states[:, :end_pos, :], encoder_hidden_states[:, end_pos:, :]
+            end_pos = encoder_hidden_states.shape[1] - self.num_tokens * num_identities
+            encoder_hidden_states, ip_hidden_states_all = encoder_hidden_states[:, :end_pos, :], encoder_hidden_states[:, end_pos:, :]
             if attn.norm_cross:
                 encoder_hidden_states = attn.norm_encoder_hidden_states(encoder_hidden_states)
 
@@ -187,29 +195,29 @@ class IPAttnProcessor(nn.Module):
             attention_probs = attn.get_attention_scores(query, key, attention_mask)
             hidden_states = torch.bmm(attention_probs, value)
         hidden_states = attn.batch_to_head_dim(hidden_states)
-        
-        # for ip-adapter
-        ip_key = self.to_k_ip(ip_hidden_states)
-        ip_value = self.to_v_ip(ip_hidden_states)
-        
-        ip_key = attn.head_to_batch_dim(ip_key)
-        ip_value = attn.head_to_batch_dim(ip_value)
-        
-        if xformers_available:
-            ip_hidden_states = self._memory_efficient_attention_xformers(query, ip_key, ip_value, None)
-        else:
-            ip_attention_probs = attn.get_attention_scores(query, ip_key, None)
-            ip_hidden_states = torch.bmm(ip_attention_probs, ip_value)
-        ip_hidden_states = attn.batch_to_head_dim(ip_hidden_states)
 
-        # region control
-        if len(region_control.prompt_image_conditioning) == 1:
-            region_mask = region_control.prompt_image_conditioning[0].get('region_mask', None)
-            if region_mask is not None:
-                mask = _resize_region_mask(region_mask, query.shape[1])
+        # for ip-adapter - one attention pass per identity, each gated by its own region mask
+        ip_hidden_states = 0
+        for idx in range(num_identities):
+            id_tokens = ip_hidden_states_all[:, idx * self.num_tokens: (idx + 1) * self.num_tokens, :]
+            ip_key = self.to_k_ip(id_tokens)
+            ip_value = self.to_v_ip(id_tokens)
+
+            ip_key = attn.head_to_batch_dim(ip_key)
+            ip_value = attn.head_to_batch_dim(ip_value)
+
+            if xformers_available:
+                ip_hidden_states_i = self._memory_efficient_attention_xformers(query, ip_key, ip_value, None)
             else:
-                mask = torch.ones_like(ip_hidden_states)
-            ip_hidden_states = ip_hidden_states * mask     
+                ip_attention_probs = attn.get_attention_scores(query, ip_key, None)
+                ip_hidden_states_i = torch.bmm(ip_attention_probs, ip_value)
+            ip_hidden_states_i = attn.batch_to_head_dim(ip_hidden_states_i)
+
+            region_mask = None
+            if idx < len(region_control.prompt_image_conditioning):
+                region_mask = region_control.prompt_image_conditioning[idx].get('region_mask', None)
+            mask = _resize_region_mask(region_mask, query.shape[1]) if region_mask is not None else torch.ones_like(ip_hidden_states_i)
+            ip_hidden_states = ip_hidden_states + ip_hidden_states_i * mask
 
         hidden_states = hidden_states + self.scale * ip_hidden_states
 
@@ -386,14 +394,22 @@ class IPAttnProcessor2_0(torch.nn.Module):
         if attn.group_norm is not None:
             hidden_states = attn.group_norm(hidden_states.transpose(1, 2)).transpose(1, 2)
 
+        # Multi-ID support: encoder_hidden_states carries the text tokens followed by
+        # one block of `self.num_tokens` image-prompt tokens per identity. The number
+        # of identities currently active is communicated globally via
+        # region_control.prompt_image_conditioning (one dict per identity, each
+        # optionally holding that identity's own region_mask).
+        num_identities = max(len(region_control.prompt_image_conditioning), 1)
+
         query = attn.to_q(hidden_states)
 
         if encoder_hidden_states is None:
             encoder_hidden_states = hidden_states
+            ip_hidden_states_all = None
         else:
             # get encoder_hidden_states, ip_hidden_states
-            end_pos = encoder_hidden_states.shape[1] - self.num_tokens
-            encoder_hidden_states, ip_hidden_states = (
+            end_pos = encoder_hidden_states.shape[1] - self.num_tokens * num_identities
+            encoder_hidden_states, ip_hidden_states_all = (
                 encoder_hidden_states[:, :end_pos, :],
                 encoder_hidden_states[:, end_pos:, :],
             )
@@ -420,36 +436,215 @@ class IPAttnProcessor2_0(torch.nn.Module):
         hidden_states = hidden_states.transpose(1, 2).reshape(batch_size, -1, attn.heads * head_dim)
         hidden_states = hidden_states.to(query.dtype)
 
-        # for ip-adapter
-        ip_key = self.to_k_ip(ip_hidden_states)
-        ip_value = self.to_v_ip(ip_hidden_states)
+        # for ip-adapter - one attention pass per identity, each gated by its own region mask
+        ip_hidden_states = 0
+        for idx in range(num_identities):
+            id_tokens = ip_hidden_states_all[:, idx * self.num_tokens: (idx + 1) * self.num_tokens, :]
+            ip_key = self.to_k_ip(id_tokens)
+            ip_value = self.to_v_ip(id_tokens)
 
-        ip_key = ip_key.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
-        ip_value = ip_value.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
+            ip_key = ip_key.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
+            ip_value = ip_value.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
 
-        # the output of sdp = (batch, num_heads, seq_len, head_dim)
-        # TODO: add support for attn.scale when we move to Torch 2.1
-        ip_hidden_states = F.scaled_dot_product_attention(
-            query, ip_key, ip_value, attn_mask=None, dropout_p=0.0, is_causal=False
-        )
-        with torch.no_grad():
-            self.attn_map = query @ ip_key.transpose(-2, -1).softmax(dim=-1)
-            #print(self.attn_map.shape)
+            # the output of sdp = (batch, num_heads, seq_len, head_dim)
+            ip_hidden_states_i = F.scaled_dot_product_attention(
+                query, ip_key, ip_value, attn_mask=None, dropout_p=0.0, is_causal=False
+            )
+            if idx == 0:
+                self.attn_maps = []
+            with torch.no_grad():
+                identity_attn_map = query @ ip_key.transpose(-2, -1).softmax(dim=-1)
+            self.attn_maps.append(identity_attn_map)
+            if idx == 0:
+                self.attn_map = identity_attn_map
 
-        ip_hidden_states = ip_hidden_states.transpose(1, 2).reshape(batch_size, -1, attn.heads * head_dim)
-        ip_hidden_states = ip_hidden_states.to(query.dtype)
+            ip_hidden_states_i = ip_hidden_states_i.transpose(1, 2).reshape(batch_size, -1, attn.heads * head_dim)
+            ip_hidden_states_i = ip_hidden_states_i.to(query.dtype)
 
-        # region control
-        if len(region_control.prompt_image_conditioning) == 1:
-            region_mask = region_control.prompt_image_conditioning[0].get('region_mask', None)
+            region_mask = None
+            if idx < len(region_control.prompt_image_conditioning):
+                region_mask = region_control.prompt_image_conditioning[idx].get('region_mask', None)
             if region_mask is not None:
-                query = query.reshape([-1, query.shape[-2], query.shape[-1]])
-                mask = _resize_region_mask(region_mask, query.shape[1])
+                mask = _resize_region_mask(region_mask, query.shape[-2])
             else:
-                mask = torch.ones_like(ip_hidden_states)
-            ip_hidden_states = ip_hidden_states * mask
+                mask = torch.ones_like(ip_hidden_states_i)
+            ip_hidden_states = ip_hidden_states + ip_hidden_states_i * mask
 
         hidden_states = hidden_states + self.scale * ip_hidden_states
+
+        # linear proj
+        hidden_states = attn.to_out[0](hidden_states)
+        # dropout
+        hidden_states = attn.to_out[1](hidden_states)
+
+        if input_ndim == 4:
+            hidden_states = hidden_states.transpose(-1, -2).reshape(batch_size, channel, height, width)
+
+        if attn.residual_connection:
+            hidden_states = hidden_states + residual
+
+        hidden_states = hidden_states / attn.rescale_output_factor
+
+        return hidden_states
+
+
+class IdentityNetAttnProcessor(nn.Module):
+    def __init__(self, num_tokens=16):
+        super().__init__()
+        self.num_tokens = num_tokens
+
+    def forward(
+        self,
+        attn,
+        hidden_states,
+        encoder_hidden_states=None,
+        attention_mask=None,
+        temb=None,
+    ):
+        residual = hidden_states
+
+        if attn.spatial_norm is not None:
+            hidden_states = attn.spatial_norm(hidden_states, temb)
+
+        input_ndim = hidden_states.ndim
+
+        if input_ndim == 4:
+            batch_size, channel, height, width = hidden_states.shape
+            hidden_states = hidden_states.view(batch_size, channel, height * width).transpose(1, 2)
+
+        batch_size, sequence_length, _ = (
+            hidden_states.shape if encoder_hidden_states is None else encoder_hidden_states.shape
+        )
+        attention_mask = attn.prepare_attention_mask(attention_mask, sequence_length, batch_size)
+
+        if attn.group_norm is not None:
+            hidden_states = attn.group_norm(hidden_states.transpose(1, 2)).transpose(1, 2)
+
+        query = attn.to_q(hidden_states)
+
+        if encoder_hidden_states is None:
+            encoder_hidden_states = hidden_states
+            num_identities = 1
+        else:
+            if attn.norm_cross:
+                encoder_hidden_states = attn.norm_encoder_hidden_states(encoder_hidden_states)
+            num_identities = max(len(region_control.prompt_image_conditioning), 1)
+
+        query = attn.head_to_batch_dim(query)
+
+        hidden_states = 0
+        for idx in range(num_identities):
+            id_tokens = encoder_hidden_states[:, idx * self.num_tokens: (idx + 1) * self.num_tokens, :]
+            key = attn.to_k(id_tokens)
+            value = attn.to_v(id_tokens)
+            key = attn.head_to_batch_dim(key)
+            value = attn.head_to_batch_dim(value)
+
+            if xformers_available:
+                hidden_states_i = self._memory_efficient_attention_xformers(query, key, value, None)
+            else:
+                attention_probs = attn.get_attention_scores(query, key, None)
+                hidden_states_i = torch.bmm(attention_probs, value)
+            hidden_states_i = attn.batch_to_head_dim(hidden_states_i)
+
+            region_mask = None
+            if idx < len(region_control.prompt_image_conditioning):
+                region_mask = region_control.prompt_image_conditioning[idx].get('region_mask', None)
+            mask = _resize_region_mask(region_mask, query.shape[1]) if region_mask is not None else torch.ones_like(hidden_states_i)
+            hidden_states = hidden_states + hidden_states_i * mask
+
+        # linear proj
+        hidden_states = attn.to_out[0](hidden_states)
+        # dropout
+        hidden_states = attn.to_out[1](hidden_states)
+
+        if input_ndim == 4:
+            hidden_states = hidden_states.transpose(-1, -2).reshape(batch_size, channel, height, width)
+
+        if attn.residual_connection:
+            hidden_states = hidden_states + residual
+
+        hidden_states = hidden_states / attn.rescale_output_factor
+
+        return hidden_states
+
+    def _memory_efficient_attention_xformers(self, query, key, value, attention_mask):
+        query = query.contiguous()
+        key = key.contiguous()
+        value = value.contiguous()
+        hidden_states = xformers.ops.memory_efficient_attention(query, key, value, attn_bias=attention_mask)
+        return hidden_states
+
+
+class IdentityNetAttnProcessor2_0(torch.nn.Module):
+    def __init__(self, num_tokens=16):
+        super().__init__()
+        if not hasattr(F, "scaled_dot_product_attention"):
+            raise ImportError("IdentityNetAttnProcessor2_0 requires PyTorch 2.0, to use it, please upgrade PyTorch to 2.0.")
+        self.num_tokens = num_tokens
+
+    def forward(
+        self,
+        attn,
+        hidden_states,
+        encoder_hidden_states=None,
+        attention_mask=None,
+        temb=None,
+    ):
+        residual = hidden_states
+
+        if attn.spatial_norm is not None:
+            hidden_states = attn.spatial_norm(hidden_states, temb)
+
+        input_ndim = hidden_states.ndim
+
+        if input_ndim == 4:
+            batch_size, channel, height, width = hidden_states.shape
+            hidden_states = hidden_states.view(batch_size, channel, height * width).transpose(1, 2)
+        else:
+            batch_size = hidden_states.shape[0]
+
+        if attn.group_norm is not None:
+            hidden_states = attn.group_norm(hidden_states.transpose(1, 2)).transpose(1, 2)
+
+        query = attn.to_q(hidden_states)
+
+        if encoder_hidden_states is None:
+            encoder_hidden_states = hidden_states
+            num_identities = 1
+        else:
+            if attn.norm_cross:
+                encoder_hidden_states = attn.norm_encoder_hidden_states(encoder_hidden_states)
+            num_identities = max(len(region_control.prompt_image_conditioning), 1)
+
+        inner_dim = attn.to_k.out_features
+        head_dim = inner_dim // attn.heads
+
+        query = query.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
+
+        hidden_states = 0
+        for idx in range(num_identities):
+            id_tokens = encoder_hidden_states[:, idx * self.num_tokens: (idx + 1) * self.num_tokens, :]
+            key = attn.to_k(id_tokens)
+            value = attn.to_v(id_tokens)
+
+            key = key.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
+            value = value.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
+
+            hidden_states_i = F.scaled_dot_product_attention(
+                query, key, value, attn_mask=None, dropout_p=0.0, is_causal=False
+            )
+            hidden_states_i = hidden_states_i.transpose(1, 2).reshape(batch_size, -1, attn.heads * head_dim)
+            hidden_states_i = hidden_states_i.to(query.dtype)
+
+            region_mask = None
+            if idx < len(region_control.prompt_image_conditioning):
+                region_mask = region_control.prompt_image_conditioning[idx].get('region_mask', None)
+            if region_mask is not None:
+                mask = _resize_region_mask(region_mask, query.shape[-2])
+            else:
+                mask = torch.ones_like(hidden_states_i)
+            hidden_states = hidden_states + hidden_states_i * mask
 
         # linear proj
         hidden_states = attn.to_out[0](hidden_states)
