@@ -1302,6 +1302,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         enable_multi_id,
         multi_id_files,
         multi_id_mask_padding,
+        prioritize_largest_faces,
         prompt,
         negative_prompt,
         weight_application_method,
@@ -1843,9 +1844,19 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                     f"(one per identity), but only {len(all_pose_faces_info)} were detected."
                 )
             else:
-                ordered_pose_faces = sorted(
-                    all_pose_faces_info, key=lambda x: (x['bbox'][0] + x['bbox'][2]) / 2
-                )[:num_identities]
+                if prioritize_largest_faces:
+                    largest_faces = sorted(
+                        all_pose_faces_info,
+                        key=lambda x: (x['bbox'][2] - x['bbox'][0]) * (x['bbox'][3] - x['bbox'][1]),
+                        reverse=True,
+                    )[:num_identities]
+                    ordered_pose_faces = sorted(
+                        largest_faces, key=lambda x: (x['bbox'][0] + x['bbox'][2]) / 2
+                    )
+                else:
+                    ordered_pose_faces = sorted(
+                        all_pose_faces_info, key=lambda x: (x['bbox'][0] + x['bbox'][2]) / 2
+                    )[:num_identities]
 
                 combined_kps_list = []
                 mask_images = []
@@ -1871,7 +1882,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 multi_id_images_used_text = ", ".join(additional_identity_labels) if additional_identity_labels else "None"
                 if multi_ref_used:
                     print(f"Multi-ID: identity 1 uses the 'Add more face images' blended embedding (averaged {multi_ref_used} face(s), additional faces weight {multi_ref_weight}x).\n")
-                print(f"Multi-ID: Enabled - {num_identities} identities placed left-to-right onto the pose image ({', '.join(identity_labels[:num_identities])}).\n")
+                print(f"Multi-ID: Enabled - {num_identities} identities placed left-to-right onto the pose image ({', '.join(identity_labels[:num_identities])}). Pose face selection: {'largest faces only' if prioritize_largest_faces else 'all detected faces'}.\n")
 
         if temp_app is not None:
             del temp_app
@@ -2206,6 +2217,7 @@ Additional faces weight: {multi_ref_weight}
 Multi-ID: {multi_id_active}
 Multi-ID identity image(s) used: {multi_id_images_used_text}
 Multi-ID region padding: {multi_id_mask_padding}
+Multi-ID pose face selection: {'Largest faces only' if prioritize_largest_faces else 'All detected faces'}
 Steps: {num_steps}
 Guidance scale: {guidance_scale}
 Seed: {seed + i}
@@ -2425,7 +2437,7 @@ Scheduler: {scheduler}"""
     - Enter a text prompt, as done in normal text-to-image AI tools such as ComfuUI or A1111/ForgeUI.
     - Click the Generate button to begin image generation.
     - The "Add more face images" option averages the face embeddings from multiple images into a single identity. Add photos of the same person to improve likeness and consistency, or photos of different people to create a blended identity. The "Additional faces weight" slider controls how strongly the additional faces pull the result compared to the main face image: 1.0 (default) weighs every face equally, lower values keep the result closer to the main face; higher values push it further toward the additional faces; 0.0 makes the additional faces have no effect at all. Keep "Normalize averaged embedding" enabled to preserve the original embedding strength after averaging, or disable it to use the plain average.
-    - The "Multi-ID" option places multiple different people in one image. It needs a reference pose image containing one face per person, positioned where you want each identity to appear. The app draws each person's pose skeleton at their assigned spot instead of using a single shared one. The main face photo claims the leftmost face detected in the pose image, each image you add in the "Additional identities" gallery claims the next face to the right, in the order you add them. Using pose controlnet at strength ~0.25 is strongly recommended. This needs at least 2 valid identity photos to activate. The "Per-identity region padding" slider controls how far each person's influence is allowed to spread beyond their detected face box in the pose image, higher values blend identities more into shared areas, lower values keep them more separated. Enabling Multi-ID automatically disables "Enhance non-face region" for that generation, since it works against having multiple distinct faces in one image. This feature works best with just two identities. Expect some trial and error to get clean results and make sure to use a good pose image (preferably with just two people), just make sure to use pose controlnet.
+    - The "Multi-ID" option places multiple different people in one image. It needs a reference pose image containing one face per person, positioned where you want each identity to appear. The app draws each person's pose skeleton at their assigned spot instead of using a single shared one. The main face photo claims the leftmost face detected in the pose image, each image you add in the "Additional identities" gallery claims the next face to the right, in the order you add them. Using pose controlnet at strength ~0.30 is strongly recommended (canny somehow also works but pose is better). This needs at least 2 valid identity photos to activate. The "Per-identity region padding" slider controls how far each person's influence is allowed to spread beyond their detected face box in the pose image, higher values blend identities more into shared areas, lower values keep them more separated. Enabling Multi-ID automatically disables "Enhance non-face region" for that generation, since it works against having multiple distinct faces in one image. This feature works best with just two identities. Expect some trial and error to get clean results and make sure to use a good pose image (preferably with just two people), just make sure to use pose controlnet.
     - img2img mode imports the "pipeline_stable_diffusion_xl_instantid_img2img" (also used by the Hires Fix pass). It is effective at preserving input image details, depending on the denoising strength you set.
     - Upscale and use Enable Hires Fix to generate images with a resolution of what SDXL is best at (usually ~1024-1280 max side) to prevent anatomy errors like long necks while still producing good quality images.
     - Enable i2i Upscaler upscales your input image before the generation pass, using IdentityNet to sharpen and enhance facial detail as it scales. Best for lowres or soft input photos. Recommended settings: LCM Scheduler + DMD2 LoRA, 10–15 steps, ~0.2 img2img denoising strength. You can also use this to upscale an image you've already generated: just feed it back in as the face image, reuse the same seed, prompt and other settings, then bump up the target resolution to make it higher than the input image (no need for Hires Fix).
@@ -2513,7 +2525,7 @@ Scheduler: {scheduler}"""
         });
     }
     """
-    with gr.Blocks(title="InstantID Unlocked v9.1.0", js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v9.1.1", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
@@ -2867,6 +2879,11 @@ Scheduler: {scheduler}"""
                                 visible=False,
                                 info="How far each identity's influence spreads past their face box.",
                             )
+                            prioritize_largest_faces = gr.Checkbox(
+                                label="Prioritize largest faces in pose image",
+                                value=False,
+                                visible=False,
+                            )
                             def toggle_multi_id_section(enabled, gallery_value):
                                 has_items = enabled and bool(gallery_value)
                                 return (
@@ -2874,11 +2891,12 @@ Scheduler: {scheduler}"""
                                     gr.update(visible=has_items),
                                     gr.update(visible=has_items),
                                     gr.update(visible=enabled),
+                                    gr.update(visible=enabled),
                                 )
                             enable_multi_id.change(
                                 fn=toggle_multi_id_section,
                                 inputs=[enable_multi_id, multi_id_files],
-                                outputs=[multi_id_files, remove_selected_multi_id_btn, add_more_multi_id_btn, multi_id_mask_padding],
+                                outputs=[multi_id_files, remove_selected_multi_id_btn, add_more_multi_id_btn, multi_id_mask_padding, prioritize_largest_faces],
                                 queue=False,
                             )
                             def track_multi_id_selection(evt: gr.SelectData):
@@ -3304,21 +3322,21 @@ Scheduler: {scheduler}"""
                         minimum=0,
                         maximum=1.5,
                         step=0.05,
-                        value=0.25,
+                        value=0.30,
                     )
                     canny_strength = gr.Slider(
                         label="Canny strength",
                         minimum=0,
                         maximum=1.5,
                         step=0.05,
-                        value=0.25,
+                        value=0.30,
                     )
                     depth_strength = gr.Slider(
                         label="Depth strength",
                         minimum=0,
                         maximum=1.5,
                         step=0.05,
-                        value=0.25,
+                        value=0.30,
                     )
                 with gr.Group():
                     with gr.Row():
@@ -4174,6 +4192,7 @@ Scheduler: {scheduler}"""
                 enable_multi_id,
                 multi_id_files,
                 multi_id_mask_padding,
+                prioritize_largest_faces,
                 prompt,
                 negative_prompt,
                 weight_application_method,
@@ -4395,10 +4414,10 @@ Scheduler: {scheduler}"""
                     "adapter_start": 0.0,
                     "adapter_end": 1.0,
                     "adapter_smooth_transition": True,
-                    "pose_strength": 0.25,
+                    "pose_strength": 0.30,
                     "enable_pose_line_fix": True,
-                    "canny_strength": 0.25,
-                    "depth_strength": 0.25,
+                    "canny_strength": 0.30,
+                    "depth_strength": 0.30,
                     "scheduler": "DPMSolverMultistepScheduler",
                     "ratio_base_pixel_number": 8,
                     "rng_source": "GPU",
@@ -4460,7 +4479,8 @@ Scheduler: {scheduler}"""
                     "normalize_multi_ref": True,
                     "multi_ref_weight": 1.0,
                     "enable_multi_id": False,
-                    "multi_id_mask_padding": 0.35
+                    "multi_id_mask_padding": 0.35,
+                    "prioritize_largest_faces": False
                 }
                 if metadata_text:
                     lines = metadata_text.split('\n')
@@ -4748,6 +4768,8 @@ Scheduler: {scheduler}"""
                                 settings["multi_id_mask_padding"] = float(line.replace("Multi-ID region padding:", "").strip())
                             except ValueError:
                                 pass
+                        elif line.startswith("Multi-ID pose face selection:"):
+                            settings["prioritize_largest_faces"] = "largest" in line.lower()
 
                 open_resolution_accordion = False
                 open_advanced_accordion = False
@@ -4846,6 +4868,7 @@ Scheduler: {scheduler}"""
                     settings["multi_ref_weight"],
                     settings["enable_multi_id"],
                     settings["multi_id_mask_padding"],
+                    settings["prioritize_largest_faces"],
                     accordion_update,
                     gr.update(open=open_resolution_accordion),
                     gr.update(open=open_advanced_accordion),
@@ -4941,6 +4964,7 @@ Scheduler: {scheduler}"""
                     multi_ref_weight,
                     enable_multi_id,
                     multi_id_mask_padding,
+                    prioritize_largest_faces,
                     controlnet_accordion,
                     resolution_settings_accordion,
                     advanced_settings_accordion,
@@ -4966,7 +4990,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID Unlocked v9.1.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v9.1.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
