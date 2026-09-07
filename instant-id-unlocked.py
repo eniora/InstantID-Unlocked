@@ -4957,7 +4957,7 @@ Scheduler: {scheduler}"""
                     settings["enable_embeddings"],
                     settings["enable_hires_fix"],
                     settings["enable_hires_prompt"],
-                    gr.update(value=settings["hires_prompt"], visible=settings["enable_hires_prompt"]),
+                    settings["hires_prompt"],
                     settings["hires_upscaler"],
                     settings["hires_upscale_by"],
                     settings["hires_steps"],
