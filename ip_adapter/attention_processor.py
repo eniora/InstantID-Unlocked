@@ -660,3 +660,53 @@ class IdentityNetAttnProcessor2_0(torch.nn.Module):
         hidden_states = hidden_states / attn.rescale_output_factor
 
         return hidden_states
+
+
+def run_separate_identitynet(controlnet, sample, timestep, image_tokens,
+                             identity_images, conditioning_scale, guess_mode,
+                             added_cond_kwargs):
+    """Run one original IdentityNet forward per identity, mask outputs, then sum.
+
+    UNet regional attention state remains unchanged. Restore ControlNet processors
+    even if a forward fails, so later ordinary Multi-ID runs use their old path.
+    """
+    regions = region_control.prompt_image_conditioning
+    count = len(regions)
+    if count < 2 or len(identity_images) != count:
+        raise ValueError("Separate IdentityNet requires one landmark image and mask per identity.")
+    if image_tokens.shape[1] % count:
+        raise ValueError("Identity token count does not match the identity regions.")
+    original = getattr(controlnet, "_identitynet_original_attn_procs", None)
+    if original is None:
+        raise ValueError("Separate IdentityNet requires the updated InstantID app initialization.")
+    # Guess mode supplies only the conditional sample batch.
+    if image_tokens.shape[0] == 2 * sample.shape[0]:
+        image_tokens = image_tokens.chunk(2)[1]
+    tokens_per_id = image_tokens.shape[1] // count
+    saved_processors = dict(controlnet.attn_processors)
+    down_sum, mid_sum = None, None
+    try:
+        controlnet.set_attn_processor(dict(original))
+        for idx, (region, landmark_image) in enumerate(zip(regions, identity_images)):
+            mask = region.get("region_mask")
+            if mask is None:
+                raise ValueError("Separate IdentityNet requires a mask for every identity.")
+            if landmark_image.shape[0] == 2 * sample.shape[0]:
+                landmark_image = landmark_image.chunk(2)[1]
+            down, mid = controlnet(
+                sample, timestep,
+                encoder_hidden_states=image_tokens[:, idx * tokens_per_id:(idx + 1) * tokens_per_id],
+                controlnet_cond=landmark_image,
+                conditioning_scale=conditioning_scale, guess_mode=guess_mode,
+                added_cond_kwargs=added_cond_kwargs, return_dict=False,
+            )
+            def mask_output(value):
+                return value * F.interpolate(mask[None, None].to(value),
+                                             size=value.shape[-2:], mode="bilinear", align_corners=False)
+            down = [mask_output(value) for value in down]
+            mid = mask_output(mid)
+            down_sum = down if down_sum is None else [a + b for a, b in zip(down_sum, down)]
+            mid_sum = mid if mid_sum is None else mid_sum + mid
+        return down_sum, mid_sum
+    finally:
+        controlnet.set_attn_processor(saved_processors)
