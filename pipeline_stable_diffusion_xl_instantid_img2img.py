@@ -44,7 +44,7 @@ if is_torch2_available():
     from ip_adapter.attention_processor import IPAttnProcessor2_0 as IPAttnProcessor, AttnProcessor2_0 as AttnProcessor
 else:
     from ip_adapter.attention_processor import IPAttnProcessor, AttnProcessor
-from ip_adapter.attention_processor import region_control
+from ip_adapter.attention_processor import region_control, run_separate_identitynet
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
 
@@ -901,6 +901,8 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
 
         # Enhance Face Region
         control_mask = None,
+        separate_identitynet: bool = False,
+        identity_control_images = None,
 
         # Prompt weighting behavior
         weight_application_method: str = "Original InstantID per-token",
@@ -1222,6 +1224,22 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
             mask_weight_image_tensor = None
             region_control.prompt_image_conditioning = [dict(region_mask=None)] * num_identities
 
+        use_separate_identitynet = bool(separate_identitynet and num_identities > 1)
+        if use_separate_identitynet:
+            if identity_control_images is None or len(identity_control_images) != num_identities:
+                raise ValueError("Separate IdentityNet needs one landmark image per identity.")
+            if len(region_control.prompt_image_conditioning) != num_identities:
+                raise ValueError("Separate IdentityNet needs one region mask per identity.")
+            identity_net = self.controlnet.nets[0] if isinstance(self.controlnet, MultiControlNetModel) else self.controlnet
+            prepared_identity_images = [self.prepare_control_image(
+                image=landmarks, width=width, height=height,
+                batch_size=batch_size * num_images_per_prompt,
+                num_images_per_prompt=num_images_per_prompt,
+                device=device, dtype=identity_net.dtype,
+                do_classifier_free_guidance=self.do_classifier_free_guidance,
+                guess_mode=guess_mode,
+            ) for landmarks in identity_control_images]
+
         # 5. Prepare timesteps
         min_required_steps = max(1, math.ceil(1.0 / max(strength, 1e-4)))
         if num_inference_steps < min_required_steps:
@@ -1418,7 +1436,26 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
                         controlnet_cond_scale = controlnet_cond_scale[0]
                     cond_scale = controlnet_cond_scale * controlnet_keep[i]
 
-                if isinstance(self.controlnet, MultiControlNetModel):
+                if use_separate_identitynet:
+                    id_scale = cond_scale[0] if isinstance(cond_scale, list) else cond_scale
+                    down_block_res_samples, mid_block_res_sample = run_separate_identitynet(
+                        identity_net, control_model_input, t, prompt_image_emb,
+                        prepared_identity_images, id_scale, guess_mode, controlnet_added_cond_kwargs,
+                    )
+                    # Other ControlNets still run once with their ordinary text conditioning.
+                    if isinstance(self.controlnet, MultiControlNetModel):
+                        other_prompt_embeds = prompt_embeds.chunk(2)[1] if guess_mode and self.do_classifier_free_guidance else prompt_embeds
+                        for control_index, other_net in enumerate(self.controlnet.nets[1:], start=1):
+                            other_scale = cond_scale[control_index] if isinstance(cond_scale, list) else cond_scale
+                            other_down, other_mid = other_net(
+                                control_model_input, t, encoder_hidden_states=other_prompt_embeds,
+                                controlnet_cond=control_image[control_index],
+                                conditioning_scale=other_scale, guess_mode=guess_mode,
+                                added_cond_kwargs=controlnet_added_cond_kwargs, return_dict=False,
+                            )
+                            down_block_res_samples = [a + b for a, b in zip(down_block_res_samples, other_down)]
+                            mid_block_res_sample = mid_block_res_sample + other_mid
+                elif isinstance(self.controlnet, MultiControlNetModel):
                     down_block_res_samples_list, mid_block_res_sample_list = [], []
                     for control_index in range(len(self.controlnet.nets)):
                         controlnet_net = self.controlnet.nets[control_index]
