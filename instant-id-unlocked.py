@@ -392,6 +392,7 @@ EXCLUDED_MODELS = {
     "lllyasviel/Annotators",
     "lllyasviel/ControlNet",
     "xinsir/controlnet-openpose-sdxl-1.0",
+    "eniora/controlnet-openpose-sdxl-1.0",
     "stabilityai/stable-diffusion-xl-base-1.0"
 }
 EXCLUDED_MODELS_LOWER = {m.lower() for m in EXCLUDED_MODELS}
@@ -494,6 +495,10 @@ controlnet_identitynet = ControlNetModel.from_pretrained(
 prepare_identitynet_region_masking(controlnet_identitynet)
 
 controlnet_pose_model = "xinsir/controlnet-openpose-sdxl-1.0"
+POSE_MODEL_CHOICES = [
+    "xinsir/controlnet-openpose-sdxl-1.0",
+    "eniora/controlnet-openpose-sdxl-1.0",
+]
 controlnet_canny_model = "diffusers/controlnet-canny-sdxl-1.0"
 controlnet_depth_model = "diffusers/controlnet-depth-sdxl-1.0-small"
 
@@ -872,10 +877,17 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
 
     print(f"\nDetected GPU: {gpu_name} with {vram_gb:.2f} GB VRAM | Detected total system memory: {ram_gb:.2f} GB of RAM\n")
 
-    def load_and_cache_controlnet_model(controlnet_type):
-        if controlnet_type not in cached_controlnet_models:
-            print(f"Loading ControlNet model: {controlnet_type}")
-            model = ControlNetModel.from_pretrained(controlnet_model_paths[controlnet_type], torch_dtype=dtype).to(device)
+    def load_and_cache_controlnet_model(controlnet_type, model_path_override=None):
+        model_path = model_path_override or controlnet_model_paths[controlnet_type]
+        cached = cached_controlnet_models.get(controlnet_type)
+        if cached is None or getattr(cached, "_source_path", None) != model_path:
+            print(f"Loading ControlNet model: {model_path}")
+            model = ControlNetModel.from_pretrained(model_path, torch_dtype=dtype).to(device)
+            model._source_path = model_path
+            if cached is not None:
+                del cached_controlnet_models[controlnet_type]
+                gc.collect()
+                torch.cuda.empty_cache()
             cached_controlnet_models[controlnet_type] = model
         return cached_controlnet_models[controlnet_type]
 
@@ -1321,6 +1333,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         canny_strength,
         depth_strength,
         controlnet_selection,
+        pose_model_selection,
         enable_pose_line_fix,
         guidance_scale,
         seed,
@@ -1936,7 +1949,8 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             controlnet_models_to_use = []
             controlnet_images = []
             for s in controlnet_selection:
-                model = load_and_cache_controlnet_model(s) 
+                model_override = pose_model_selection if s == "pose" else None
+                model = load_and_cache_controlnet_model(s, model_override)
                 controlnet_models_to_use.append(model)
                 controlnet_images.append(controlnet_map_fn[s](img_controlnet).resize((width, height)))
             pipe.controlnet = MultiControlNetModel([controlnet_identitynet] + controlnet_models_to_use)
@@ -2223,6 +2237,7 @@ Guidance scale: {guidance_scale}
 Seed: {seed + i}
 Model: {model_name}
 ControlNet selection: {controlnet_selection}
+Pose model: {pose_model_selection}
 Max resize side: {resize_max_side}
 Image size: {width}x{height}
 Ratio base pixel number: {ratio_base_pixel_number}
@@ -2874,7 +2889,7 @@ Scheduler: {scheduler}"""
                                 label="Per-identity region padding",
                                 minimum=0.0,
                                 maximum=1.0,
-                                value=0.35,
+                                value=0.30,
                                 step=0.05,
                                 visible=False,
                                 info="How far each identity's influence spreads past their face box.",
@@ -3303,18 +3318,26 @@ Scheduler: {scheduler}"""
                         ["pose", "canny", "depth"], value=[], show_label=False,
                         info="Use pose for skeleton inference, canny for edge detection, and depth for depth map estimation."
                     )
-                    enable_pose_line_fix = gr.Checkbox(
-                        label="Use improved pose line thickness (recommended)",
-                        value=True,
-                        visible=False,
-                        info="Scales the pose skeleton's line/joint thickness to match this ControlNet's training data instead of controlnet_aux's thin fixed default.",
-                    )
-                    def toggle_pose_line_fix_visibility(selection):
-                        return gr.update(visible="pose" in selection)
+                    with gr.Row():
+                        enable_pose_line_fix = gr.Checkbox(
+                            label="Use improved pose line thickness",
+                            value=False,
+                            visible=False,
+                            info="Scales the pose skeleton's line/joint thickness from the model instead of controlnet_aux's thin fixed default.",
+                        )
+                        pose_model_selection = gr.Dropdown(
+                            label="Pose ControlNet model",
+                            choices=POSE_MODEL_CHOICES,
+                            value=POSE_MODEL_CHOICES[0],
+                            visible=False,
+                        )
+                    def toggle_pose_ui_visibility(selection):
+                        pose_visible = "pose" in selection
+                        return gr.update(visible=pose_visible), gr.update(visible=pose_visible)
                     controlnet_selection.change(
-                        fn=toggle_pose_line_fix_visibility,
+                        fn=toggle_pose_ui_visibility,
                         inputs=[controlnet_selection],
-                        outputs=[enable_pose_line_fix],
+                        outputs=[enable_pose_line_fix, pose_model_selection],
                         queue=False,
                     )
                     pose_strength = gr.Slider(
@@ -4211,6 +4234,7 @@ Scheduler: {scheduler}"""
                 canny_strength,
                 depth_strength,
                 controlnet_selection,
+                pose_model_selection,
                 enable_pose_line_fix,
                 guidance_scale,
                 seed,
@@ -4415,7 +4439,7 @@ Scheduler: {scheduler}"""
                     "adapter_end": 1.0,
                     "adapter_smooth_transition": True,
                     "pose_strength": 0.30,
-                    "enable_pose_line_fix": True,
+                    "enable_pose_line_fix": False,
                     "canny_strength": 0.30,
                     "depth_strength": 0.30,
                     "scheduler": "DPMSolverMultistepScheduler",
@@ -4450,6 +4474,7 @@ Scheduler: {scheduler}"""
                     "style": DEFAULT_STYLE_NAME,
                     "randomize_seed": True,
                     "controlnet_selection": [],
+                    "pose_model_selection": POSE_MODEL_CHOICES[0],
                     "model_name": DEFAULT_MODEL,
                     "det_size_name": "640x640 (default)",
                     "disable_lora_1": False,
@@ -4479,7 +4504,7 @@ Scheduler: {scheduler}"""
                     "normalize_multi_ref": True,
                     "multi_ref_weight": 1.0,
                     "enable_multi_id": False,
-                    "multi_id_mask_padding": 0.35,
+                    "multi_id_mask_padding": 0.30,
                     "prioritize_largest_faces": False
                 }
                 if metadata_text:
@@ -4713,6 +4738,10 @@ Scheduler: {scheduler}"""
                                             accordion_update = gr.update(open=True)
                                 except:
                                     pass
+                        elif line.startswith("Pose model:"):
+                            pose_model_value = line.replace("Pose model:", "").strip()
+                            if pose_model_value in POSE_MODEL_CHOICES:
+                                settings["pose_model_selection"] = pose_model_value
                         elif line.startswith("Model:"):
                             model_name = line.replace("Model:", "").strip()
                             current_models = get_available_models()
@@ -4833,6 +4862,7 @@ Scheduler: {scheduler}"""
                     settings["lora_selection_10"],
                     settings["randomize_seed"],
                     settings["controlnet_selection"],
+                    settings["pose_model_selection"],
                     settings["enable_pose_line_fix"],
                     settings["model_name"],
                     settings["det_size_name"],
@@ -4929,6 +4959,7 @@ Scheduler: {scheduler}"""
                     lora_selection_10,
                     randomize_seed,
                     controlnet_selection,
+                    pose_model_selection,
                     enable_pose_line_fix,
                     model_name,
                     det_size_name,
@@ -5050,4 +5081,4 @@ Scheduler: {scheduler}"""
 
     gui.launch(inbrowser=os.environ.get("IN_BROWSER", "1") == "1")
 
-main()
+main()
