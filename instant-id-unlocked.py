@@ -1401,6 +1401,8 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         hires_steps,
         hires_denoising_strength,
         save_hires_original,
+        enable_hires_prompt,
+        hires_prompt,
         progress=gr.Progress(),
     ):
         def _fix_guidance_range(start, end, label):
@@ -1607,6 +1609,8 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         loaded_embedding_tokens = []
         if enable_embeddings:
             combined_text = f"{prompt}\n{negative_prompt}"
+            if enable_hires_fix and enable_hires_prompt and hires_prompt:
+                combined_text += f"\n{hires_prompt}"
             needed_tokens = [
                 embedding_token_from_filename(f) for f in get_available_embeddings()
                 if re.search(re.escape(embedding_token_from_filename(f)), combined_text, flags=re.IGNORECASE)
@@ -1686,6 +1690,8 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
 
         prompt_for_generation = prompt
         negative_prompt_for_generation = negative_prompt
+        hires_prompt_for_generation = hires_prompt if (enable_hires_fix and enable_hires_prompt) else prompt
+
         if enable_embeddings and loaded_embedding_tokens:
             def _normalize_embedding_casing(text, tokens):
                 for tok in tokens:
@@ -1694,14 +1700,17 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
 
             prompt_normalized = _normalize_embedding_casing(prompt, loaded_embedding_tokens)
             negative_prompt_normalized = _normalize_embedding_casing(negative_prompt, loaded_embedding_tokens)
+            hires_prompt_normalized = _normalize_embedding_casing(hires_prompt_for_generation, loaded_embedding_tokens)
 
             prompt_for_generation = pipe.maybe_convert_prompt(prompt_normalized, pipe.tokenizer)
             negative_prompt_for_generation = pipe.maybe_convert_prompt(negative_prompt_normalized, pipe.tokenizer)
+            hires_prompt_for_generation = pipe.maybe_convert_prompt(hires_prompt_normalized, pipe.tokenizer)
 
         used_embedding_tokens = [
             tok for tok in loaded_embedding_tokens
             if re.search(re.escape(tok), prompt_for_generation, flags=re.IGNORECASE)
             or re.search(re.escape(tok), negative_prompt_for_generation, flags=re.IGNORECASE)
+            or re.search(re.escape(tok), hires_prompt_for_generation, flags=re.IGNORECASE)
         ]
 
         face_image = load_image(face_image_path)
@@ -2003,6 +2012,9 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             print(f"img2img Upscaler: {'Enabled - ' + img2img_upscaler if enable_img2img_upscaler else 'Disabled'}")
         print(f"Hires Fix: {'Enabled' if enable_hires_fix else 'Disabled'}")
         if enable_hires_fix:
+            print(f"Separate Hires Fix Prompt: {enable_hires_prompt}")
+            if enable_hires_prompt:
+                print(f"Hires Fix Prompt: {hires_prompt}")
             print(f"Hires Upscaler: {hires_upscaler}")
             print(f"Hires Upscale By: {hires_upscale_by}")
             print(f"Hires Steps: {hires_steps}{' (Auto)' if hires_steps == 0 else ''}")
@@ -2262,6 +2274,8 @@ img2img Mode Enabled: {enable_img2img}
 img2img Upscaler Enabled: {enable_img2img_upscaler}
 img2img Upscaler: {img2img_upscaler}
 Hires Fix Enabled: {enable_hires_fix}
+Separate Hires Fix Prompt: {enable_hires_prompt}
+Hires Fix Prompt: {hires_prompt}
 Hires Upscaler: {hires_upscaler}
 Hires Upscale By: {hires_upscale_by}
 Hires Steps: {hires_steps}
@@ -2390,7 +2404,7 @@ Scheduler: {scheduler}"""
 
                 try:
                     hires_result = hires_pipe(
-                        prompt=prompt_for_generation,
+                        prompt=hires_prompt_for_generation,
                         negative_prompt=negative_prompt_for_generation,
                         weight_application_method=weight_application_method,
                         clip_skip=clip_skip if clip_skip else None,
@@ -2550,7 +2564,7 @@ Scheduler: {scheduler}"""
         });
     }
     """
-    with gr.Blocks(title="InstantID Unlocked v9.2.0", js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v9.2.1", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
@@ -3755,13 +3769,27 @@ Scheduler: {scheduler}"""
                             scale=3
                         )
 
+                    with gr.Column(visible=False) as hires_prompt_section:
+                        enable_hires_prompt = gr.Checkbox(
+                            label="Use a separate Hires Fix prompt (optional, very specific use cases)", value=False,
+                        )
+                        hires_prompt = gr.Textbox(
+                            label="Hires Fix prompt", value="", visible=False, show_label=False,
+                            placeholder="Enter a custom prompt for the Hires Fix pass",
+                            info="Hires Fix prompt. Replaces the main prompt for Hires Fix. You can add embeddings here as the ones from the main prompt don't carry over.",
+                        )
+                    enable_hires_prompt.change(
+                        fn=lambda enabled: gr.update(visible=enabled),
+                        inputs=enable_hires_prompt, outputs=hires_prompt, queue=False,
+                    )
+
                     def toggle_hires_fix_ui(enable):
-                        return gr.update(visible=enable), gr.update(visible=enable), gr.update(visible=enable), gr.update(visible=enable)
+                        return gr.update(visible=enable), gr.update(visible=enable), gr.update(visible=enable), gr.update(visible=enable), gr.update(visible=enable)
 
                     enable_hires_fix.change(
                         fn=toggle_hires_fix_ui,
                         inputs=enable_hires_fix,
-                        outputs=[hires_upscaler, refresh_hires_upscalers, hires_fix_row, save_hires_original],
+                        outputs=[hires_upscaler, refresh_hires_upscalers, hires_fix_row, save_hires_original, hires_prompt_section],
                         queue=False
                     )
 
@@ -4318,6 +4346,8 @@ Scheduler: {scheduler}"""
                 hires_steps,
                 hires_denoising_strength,
                 save_hires_original,
+                enable_hires_prompt,
+                hires_prompt,
             ]
             generate.click(fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False).then(
                 fn=generate_image, inputs=shared_inputs, outputs=[gallery]
@@ -4513,6 +4543,8 @@ Scheduler: {scheduler}"""
                     "custom_resize_width": 960,
                     "custom_resize_height": 1280,
                     "enable_hires_fix": False,
+                    "enable_hires_prompt": False,
+                    "hires_prompt": "",
                     "hires_upscaler": DEFAULT_UPSCALER,
                     "hires_upscale_by": 1.5,
                     "hires_steps": 0,
@@ -4650,6 +4682,21 @@ Scheduler: {scheduler}"""
                             i2i_upscaler_value = line.replace("img2img Upscaler:", "").strip()
                             if i2i_upscaler_value:
                                 settings["img2img_upscaler"] = i2i_upscaler_value
+                        elif line.startswith("Separate Hires Fix Prompt:"):
+                            settings["enable_hires_prompt"] = "true" in line.lower()
+                        elif stripped_line.startswith("Hires Fix Prompt:"):
+                            hires_prompt_value = line[len("Hires Fix Prompt:"):]
+                            if hires_prompt_value.startswith(" "):
+                                hires_prompt_value = hires_prompt_value[1:]
+                            hires_prompt_lines = [hires_prompt_value]
+                            continue_idx = idx + 1
+                            while continue_idx < len(lines):
+                                next_line = lines[continue_idx]
+                                if next_line.strip().startswith("Hires Upscaler:"):
+                                    break
+                                hires_prompt_lines.append(next_line)
+                                continue_idx += 1
+                            settings["hires_prompt"] = "\n".join(hires_prompt_lines)
                         elif line.startswith("Hires Fix Enabled:"):
                             settings["enable_hires_fix"] = "true" in line.lower()
                         elif line.startswith("Hires Upscaler:"):
@@ -4909,6 +4956,8 @@ Scheduler: {scheduler}"""
                     settings["ratio_base_pixel_number"],
                     settings["enable_embeddings"],
                     settings["enable_hires_fix"],
+                    settings["enable_hires_prompt"],
+                    gr.update(value=settings["hires_prompt"], visible=settings["enable_hires_prompt"]),
                     settings["hires_upscaler"],
                     settings["hires_upscale_by"],
                     settings["hires_steps"],
@@ -5007,6 +5056,8 @@ Scheduler: {scheduler}"""
                     ratio_base_pixel_number,
                     enable_embeddings,
                     enable_hires_fix,
+                    enable_hires_prompt,
+                    hires_prompt,
                     hires_upscaler,
                     hires_upscale_by,
                     hires_steps,
@@ -5043,7 +5094,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID Unlocked v9.2.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v9.2.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
