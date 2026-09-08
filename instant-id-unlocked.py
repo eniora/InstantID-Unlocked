@@ -2749,7 +2749,7 @@ Scheduler: {scheduler}"""
                                 label="Upload a photo containing a face", height=400, type="filepath"
                             )
                             enable_multi_ref = gr.Checkbox(
-                                label="Add more face images (blends their likeness)",
+                                label="🔀 Add more face images (blends their likeness)",
                                 value=False,
                             )
                             additional_face_image_file_types = [
