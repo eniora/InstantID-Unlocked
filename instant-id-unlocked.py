@@ -2497,7 +2497,7 @@ Scheduler: {scheduler}"""
     - Upload an image with a face. For images with multiple faces, only the largest face will be detected. Ensure the face is not too small and is clearly visible without significant obstructions or blurring.
     - (Optional) You can upload another image as a reference for the face pose. If you don't, the first detected face image will be used to extract facial landmarks. If you used a cropped face as main photo, it is recommended to upload a reference photo to define a new face pose.
     - (Optional) You can select multiple ControlNet models to control the generation process. The default is to use the IdentityNet only. The ControlNet models include pose skeleton, canny, and depth. You can adjust the strength of each ControlNet model to control the generation process, 0.3 for each is the recommended value.
-    - Enter a text prompt, as done in normal text-to-image AI tools such as ComfuUI or A1111/ForgeUI.
+    - Enter a text prompt, as done in normal text-to-image AI tools such as ComfyUI/A1111/ForgeUI etc.
     - Click the Generate button to begin image generation.
     - The "Add more face images" option averages the face embeddings from multiple images into a single identity. Add photos of the same person to improve likeness and consistency, or photos of different people to create a blended identity. The "Additional faces weight" slider controls how strongly the additional faces pull the result compared to the main face image: 1.0 (default) weighs every face equally, lower values keep the result closer to the main face; higher values push it further toward the additional faces; 0.0 makes the additional faces have no effect at all. Keep "Normalize averaged embedding" enabled to preserve the original embedding strength after averaging, or disable it to use the plain average.
     - The "Multi-ID" option places multiple different people in one image. It needs a reference pose image containing one face per person, positioned where you want each identity to appear. The app draws each person's pose skeleton at their assigned spot instead of using a single shared one. The main face photo claims the leftmost face detected in the pose image, each image you add in the "Additional identities" gallery claims the next face to the right, in the order you add them. Using pose controlnet at strength ~0.30 is strongly recommended (canny somehow also works but pose is better). This needs at least 2 valid identity photos to activate. The "Per-identity region padding" slider controls how far each person's influence is allowed to spread beyond their detected face box in the pose image, higher values blend identities more into shared areas, lower values keep them more separated. Enabling Multi-ID automatically disables "Enhance non-face region" for that generation, since it works against having multiple distinct faces in one image. This feature works best with just two identities. Expect some trial and error to get clean results and make sure to use a good pose image (preferably with just two people). Use controlnet pose if you're struggling to get a good result.
@@ -2786,7 +2786,7 @@ Scheduler: {scheduler}"""
                                     visible=False,
                                 )
                             multi_ref_weight = gr.Slider(
-                                label="Additional face(s) weight",
+                                label="Weight of additional face(s)",
                                 minimum=0.0,
                                 maximum=3.0,
                                 value=1.0,
@@ -3804,7 +3804,7 @@ Scheduler: {scheduler}"""
                         hires_prompt = gr.Textbox(
                             label="Hires Fix prompt", value="", visible=False, show_label=False,
                             placeholder="Enter a custom prompt for the Hires Fix pass",
-                            info="Hires Fix prompt. Replaces the main prompt for Hires Fix. You can add embeddings here as the ones from the main prompt don't carry over.",
+                            info="Hires Fix prompt. Replaces the main prompt for Hires Fix. You can add embeddings here (the ones from the main prompt don't carry over).",
                         )
                     enable_hires_prompt.change(
                         fn=lambda enabled: gr.update(visible=enabled),
