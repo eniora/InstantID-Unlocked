@@ -1315,6 +1315,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         multi_id_files,
         multi_id_mask_padding,
         prioritize_largest_faces,
+        multi_id_resolve_overlap,
         multi_id_separate_identitynet,
         prompt,
         negative_prompt,
@@ -1883,20 +1884,42 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                     )[:num_identities]
 
                 combined_kps_list = []
-                mask_images = []
+                raw_masks = []
+                face_centers = []
                 for slot_idx, pose_face in enumerate(ordered_pose_faces):
                     combined_kps_list.append(pose_face["kps"])
 
-                    mask = np.zeros([height, width, 3], dtype=np.uint8)
                     x1, y1, x2, y2 = [int(v) for v in pose_face["bbox"]]
+                    face_centers.append(((x1 + x2) / 2.0, (y1 + y2) / 2.0))
+
                     padding_x = int((x2 - x1) * multi_id_mask_padding)
                     padding_y = int((y2 - y1) * multi_id_mask_padding)
-                    x1 = max(0, x1 - padding_x)
-                    y1 = max(0, y1 - padding_y)
-                    x2 = min(width, x2 + padding_x)
-                    y2 = min(height, y2 + padding_y)
-                    mask[y1:y2, x1:x2] = 255
-                    mask_images.append(Image.fromarray(mask))
+                    px1 = max(0, x1 - padding_x)
+                    py1 = max(0, y1 - padding_y)
+                    px2 = min(width, x2 + padding_x)
+                    py2 = min(height, y2 + padding_y)
+
+                    raw_mask = np.zeros([height, width], dtype=bool)
+                    raw_mask[py1:py2, px1:px2] = True
+                    raw_masks.append(raw_mask)
+
+                raw_masks_stack = np.stack(raw_masks, axis=0)
+                if multi_id_resolve_overlap and raw_masks_stack.sum(axis=0).max() > 1:
+                    yy, xx = np.indices((height, width))
+                    dists = np.stack(
+                        [np.sqrt((xx - cx) ** 2 + (yy - cy) ** 2) for cx, cy in face_centers],
+                        axis=0,
+                    )
+                    dists = np.where(raw_masks_stack, dists, np.inf)
+                    nearest_idx = np.argmin(dists, axis=0)
+                    resolved_masks = [raw_masks_stack[idx] & (nearest_idx == idx) for idx in range(len(raw_masks))]
+                else:
+                    resolved_masks = raw_masks
+
+                mask_images = [
+                    Image.fromarray((m.astype(np.uint8) * 255)[:, :, None].repeat(3, axis=2))
+                    for m in resolved_masks
+                ]
 
                 face_kps = draw_kps_multi(pose_image, combined_kps_list, kps_brightness)
                 if multi_id_separate_identitynet:
@@ -1908,7 +1931,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 multi_id_images_used_text = ", ".join(additional_identity_labels) if additional_identity_labels else "None"
                 if multi_ref_used:
                     print(f"Multi-ID: identity 1 uses the 'Add more face images' blended embedding (averaged {multi_ref_used} face(s), additional faces weight {multi_ref_weight}x).\n")
-                print(f"Multi-ID: Enabled - {num_identities} identities placed left-to-right onto the pose image ({', '.join(identity_labels[:num_identities])}). Pose face selection: {'largest faces only' if prioritize_largest_faces else 'all detected faces'}. Separate IdentityNet: {'enabled' if multi_id_separate_identitynet else 'disabled'}.\n")
+                print(f"Multi-ID: Enabled - {num_identities} identities placed left-to-right onto the pose image ({', '.join(identity_labels[:num_identities])}). Pose face selection: {'largest faces only' if prioritize_largest_faces else 'all detected faces'}. Resolve overlap: {'enabled' if multi_id_resolve_overlap else 'disabled'}. Separate IdentityNet: {'enabled' if multi_id_separate_identitynet else 'disabled'}.\n")
 
         if temp_app is not None:
             del temp_app
@@ -2251,6 +2274,7 @@ Multi-ID: {multi_id_active}
 Multi-ID identity image(s) used: {multi_id_images_used_text}
 Multi-ID region padding: {multi_id_mask_padding}
 Multi-ID pose face selection: {'Largest faces only' if prioritize_largest_faces else 'All detected faces'}
+Multi-ID resolve overlap: {multi_id_resolve_overlap}
 Multi-ID separate IdentityNet: {multi_id_separate_identitynet}
 Steps: {num_steps}
 Guidance scale: {guidance_scale}
@@ -2564,7 +2588,7 @@ Scheduler: {scheduler}"""
         });
     }
     """
-    with gr.Blocks(title="InstantID Unlocked v9.2.1", js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v9.2.2", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
@@ -2918,11 +2942,6 @@ Scheduler: {scheduler}"""
                                 visible=False,
                                 info="How far each identity's influence spreads past their face box.",
                             )
-                            prioritize_largest_faces = gr.Checkbox(
-                                label="Prioritize largest faces in pose image",
-                                value=False,
-                                visible=False,
-                            )
                             multi_id_separate_identitynet = gr.Checkbox(
                                 label="Process each face separately in IdentityNet",
                                 value=True,
@@ -2936,12 +2955,11 @@ Scheduler: {scheduler}"""
                                     gr.update(visible=has_items),
                                     gr.update(visible=enabled),
                                     gr.update(visible=enabled),
-                                    gr.update(visible=enabled),
                                 )
                             enable_multi_id.change(
                                 fn=toggle_multi_id_section,
                                 inputs=[enable_multi_id, multi_id_files],
-                                outputs=[multi_id_files, remove_selected_multi_id_btn, add_more_multi_id_btn, multi_id_mask_padding, prioritize_largest_faces, multi_id_separate_identitynet],
+                                outputs=[multi_id_files, remove_selected_multi_id_btn, add_more_multi_id_btn, multi_id_mask_padding, multi_id_separate_identitynet],
                                 queue=False,
                             )
                             def track_multi_id_selection(evt: gr.SelectData):
@@ -3342,6 +3360,16 @@ Scheduler: {scheduler}"""
                                 choices=["GPU", "CPU"],
                                 value="GPU",
                                 scale=1
+                            )
+                    with gr.Group():
+                        with gr.Row():
+                            prioritize_largest_faces = gr.Checkbox(
+                                label="Multi-ID: Prioritize largest faces in pose image",
+                                value=True,
+                            )
+                            multi_id_resolve_overlap = gr.Checkbox(
+                                label="Multi-ID: Resolve overlapping identity regions",
+                                value=True,
                             )
                 with gr.Accordion("🎚️ Controlnet", open=False) as controlnet_accordion:
                     controlnet_selection = gr.CheckboxGroup(
@@ -4260,6 +4288,7 @@ Scheduler: {scheduler}"""
                 multi_id_files,
                 multi_id_mask_padding,
                 prioritize_largest_faces,
+                multi_id_resolve_overlap,
                 multi_id_separate_identitynet,
                 prompt,
                 negative_prompt,
@@ -4554,7 +4583,8 @@ Scheduler: {scheduler}"""
                     "multi_ref_weight": 1.0,
                     "enable_multi_id": False,
                     "multi_id_mask_padding": 0.30,
-                    "prioritize_largest_faces": False,
+                    "prioritize_largest_faces": True,
+                    "multi_id_resolve_overlap": True,
                     "multi_id_separate_identitynet": True
                 }
                 if metadata_text:
@@ -4864,6 +4894,8 @@ Scheduler: {scheduler}"""
                                 pass
                         elif line.startswith("Multi-ID pose face selection:"):
                             settings["prioritize_largest_faces"] = "largest" in line.lower()
+                        elif line.startswith("Multi-ID resolve overlap:"):
+                            settings["multi_id_resolve_overlap"] = "true" in line.lower()
                         elif line.startswith("Multi-ID separate IdentityNet:"):
                             settings["multi_id_separate_identitynet"] = "true" in line.lower()
 
@@ -4873,7 +4905,7 @@ Scheduler: {scheduler}"""
 
                 if settings["enable_custom_resize"] or settings["pad_to_max_side"] or settings["ratio_base_pixel_number"] != 8:
                     open_resolution_accordion = True
-                if settings["rng_source"] == "CPU" or settings["enable_sage_attention"] or settings["enable_upscaler_prescale"] or settings["clip_skip"] != 0 or settings["kps_brightness"] != 0.6 or settings["resize_mode"] != "LANCZOS" or settings["weight_application_method"] != "Original InstantID per-token":
+                if settings["rng_source"] == "CPU" or settings["enable_sage_attention"] or settings["enable_upscaler_prescale"] or settings["clip_skip"] != 0 or settings["kps_brightness"] != 0.6 or settings["resize_mode"] != "LANCZOS" or not settings ["multi_id_resolve_overlap"] or not settings ["prioritize_largest_faces"] or settings["weight_application_method"] != "Original InstantID per-token":
                     open_advanced_accordion = True
                 if settings["identitynet_start"] != 0.0 or settings["identitynet_end"] != 1.0 or settings["adapter_start"] != 0.0 or settings["adapter_end"] != 1.0:
                     open_range_accordion = True
@@ -4968,6 +5000,7 @@ Scheduler: {scheduler}"""
                     settings["enable_multi_id"],
                     settings["multi_id_mask_padding"],
                     settings["prioritize_largest_faces"],
+                    settings["multi_id_resolve_overlap"],
                     settings["multi_id_separate_identitynet"],
                     accordion_update,
                     gr.update(open=open_resolution_accordion),
@@ -5068,6 +5101,7 @@ Scheduler: {scheduler}"""
                     enable_multi_id,
                     multi_id_mask_padding,
                     prioritize_largest_faces,
+                    multi_id_resolve_overlap,
                     multi_id_separate_identitynet,
                     controlnet_accordion,
                     resolution_settings_accordion,
@@ -5094,7 +5128,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID Unlocked v9.2.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v9.2.2</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
