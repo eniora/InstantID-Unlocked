@@ -74,7 +74,7 @@ Tested only on Windows 10/11 and Python versions 3.10.6 and 3.12.6 and Nvidia GP
 
 Here's a quick preview of the fork: (This is one of hundreds ways to generate different images with this fork, for example you can add a LoRA or multiple loras with different weights, or try with and without img2img, or try different styles, or try different models, or try with embeddings, etc.)
 
-<img src='Preview/InstantID-Gradio_Unlocked_Overview_New_Features.png'>
+<img src='Preview/InstantID-Gradio_Unlocked_Overview_New_Features_Multi_ID.png'>
 
 
 _______________________________________________
