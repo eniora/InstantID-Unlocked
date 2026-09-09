@@ -1931,7 +1931,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 multi_id_images_used_text = ", ".join(additional_identity_labels) if additional_identity_labels else "None"
                 if multi_ref_used:
                     print(f"Multi-ID: identity 1 uses the 'Add more face images' blended embedding (averaged {multi_ref_used} face(s), additional faces weight {multi_ref_weight}x).\n")
-                print(f"Multi-ID: Enabled - {num_identities} identities placed left-to-right onto the pose image ({', '.join(identity_labels[:num_identities])}). Pose face selection: {'largest faces only' if prioritize_largest_faces else 'all detected faces'}. Resolve overlap: {'enabled' if multi_id_resolve_overlap else 'disabled'}. Separate IdentityNet: {'enabled' if multi_id_separate_identitynet else 'disabled'}.\n")
+                print(f"Multi-ID: Enabled - {num_identities} identities placed left-to-right onto the pose image ({', '.join(identity_labels[:num_identities])}). Pose face selection: {'prioritize largest faces' if prioritize_largest_faces else 'all detected faces'}. Resolve overlap: {'enabled' if multi_id_resolve_overlap else 'disabled'}. Separate IdentityNet: {'enabled' if multi_id_separate_identitynet else 'disabled'}.\n")
 
         if temp_app is not None:
             del temp_app
@@ -2271,7 +2271,7 @@ Additional faces weight: {multi_ref_weight}
 Multi-ID: {multi_id_active}
 Multi-ID identity image(s) used: {multi_id_images_used_text}
 Multi-ID region padding: {multi_id_mask_padding}
-Multi-ID pose face selection: {'Largest faces only' if prioritize_largest_faces else 'All detected faces'}
+Multi-ID pose face selection: {'Prioritize largest faces' if prioritize_largest_faces else 'All detected faces'}
 Multi-ID resolve overlap: {multi_id_resolve_overlap}
 Multi-ID separate IdentityNet: {multi_id_separate_identitynet}
 Steps: {num_steps}
