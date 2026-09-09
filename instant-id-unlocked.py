@@ -2035,16 +2035,14 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             print(f"img2img Upscaler: {'Enabled - ' + img2img_upscaler if enable_img2img_upscaler else 'Disabled'}")
         print(f"Hires Fix: {'Enabled' if enable_hires_fix else 'Disabled'}")
         if enable_hires_fix:
-            print(f"Separate Hires Fix Prompt: {enable_hires_prompt}")
             if enable_hires_prompt:
-                print(f"Hires Fix Prompt: {hires_prompt}")
+                print(f"Hires Fix prompt enabled with prompt: {hires_prompt}")
             print(f"Hires Upscaler: {hires_upscaler}")
             print(f"Hires Upscale By: {hires_upscale_by}")
             print(f"Hires Steps: {hires_steps}{' (Auto)' if hires_steps == 0 else ''}")
             print(f"Hires Denoising Strength: {hires_denoising_strength}")
-            print(f"Upscaler Prescale Optimization: {enable_upscaler_prescale}")
             if enable_upscaler_prescale:
-                print(f"Upscaler Prescale Headroom: {upscaler_prescale_headroom}")
+                print(f"Upscaler Prescale enabled. Headroom: {upscaler_prescale_headroom}")
         print(f"Enhance non-face region: {'True' if enhance_face_region else 'False'} ({enhance_strength}{f' | Padding: {custom_enhance_padding:.2f}' if enhance_strength == 'Custom' else ''})")
         print(f"Guidance scale: {guidance_scale}")
         print(f"Model: {model_name}")
