@@ -2498,7 +2498,7 @@ Scheduler: {scheduler}"""
     - Enter a text prompt, as done in normal text-to-image AI tools such as ComfyUI/A1111/ForgeUI etc.
     - Click the Generate button to begin image generation.
     - The "Add more face images" option averages the face embeddings from multiple images into a single identity. Add photos of the same person to improve likeness and consistency, or photos of different people to create a blended identity. The "Additional faces weight" slider controls how strongly the additional faces pull the result compared to the main face image: 1.0 (default) weighs every face equally, lower values keep the result closer to the main face; higher values push it further toward the additional faces; 0.0 makes the additional faces have no effect at all. Keep "Normalize averaged embedding" enabled to preserve the original embedding strength after averaging, or disable it to use the plain average.
-    - The "Multi-ID" option places multiple different people in one image. It needs a reference pose image containing one face per person, positioned where you want each identity to appear. The app draws each person's pose skeleton at their assigned spot instead of using a single shared one. The main face photo claims the leftmost face detected in the pose image, each image you add in the "Additional identities" gallery claims the next face to the right, in the order you add them. Using pose controlnet at strength ~0.30 is recommended. This needs at least 2 valid identity photos to activate. The "Per-identity region padding" slider controls how far each person's influence is allowed to spread beyond their detected face box in the pose image, higher values blend identities more into shared areas, lower values keep them more separated. "Enhance non-face region" has no effect on Multi-ID and that's by design. Expect some trial and error to get clean results and make sure to use a good pose image. First try with just two identities and use controlnet pose if you're struggling to get a good result.
+    - The "Multi-ID" option places multiple different people in one image. It needs a reference pose image containing one face per person, positioned where you want each identity to appear. The app draws each person's pose skeleton at their assigned spot instead of using a single shared one. The main face photo claims the leftmost face detected in the pose image, each image you add in the "Additional identities" gallery claims the next face to the right, in the order you add them. Using pose controlnet at strength ~0.30 is recommended. This needs at least 2 valid identity photos to activate. The "Spread of each identity beyond its face box" slider controls how far each person's influence is allowed to spread beyond their detected face box in the pose image, higher values blend identities more into shared areas, lower values keep them more separated. "Enhance non-face region" has no effect on Multi-ID and that's by design. Expect some trial and error to get clean results and make sure to use a good pose image. First try with just two identities and use controlnet pose if you're struggling to get a good result.
     - img2img mode imports the "pipeline_stable_diffusion_xl_instantid_img2img" (also used by the Hires Fix pass). It is effective at preserving input image details, depending on the denoising strength you set.
     - Upscale and use Enable Hires Fix to generate images with a resolution of what SDXL is best at (usually ~1024-1280 max side) to prevent anatomy errors like long necks while still producing good quality images.
     - Enable i2i Upscaler upscales your input image before the generation pass, using IdentityNet to sharpen and enhance facial detail as it scales. Best for lowres or soft input photos. Recommended settings: LCM Scheduler + DMD2 LoRA, 10–15 steps, ~0.2 img2img denoising strength. You can also use this to upscale an image you've already generated: just feed it back in as the face image, reuse the same seed, prompt and other settings, then bump up the target resolution to make it higher than the input image (no need for Hires Fix).
@@ -2533,7 +2533,7 @@ Scheduler: {scheduler}"""
 
             const target = e.target;
             if (!target || target.tagName !== "TEXTAREA") return;
-            if (!target.closest("#prompt_textbox, #negative_prompt_textbox")) return;
+            if (!target.closest("#prompt_textbox, #negative_prompt_textbox, #hires_prompt_textbox")) return;
 
             e.preventDefault();
 
@@ -2586,7 +2586,7 @@ Scheduler: {scheduler}"""
         });
     }
     """
-    with gr.Blocks(title="InstantID Unlocked v9.2.2", js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v9.2.3", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
@@ -2789,6 +2789,8 @@ Scheduler: {scheduler}"""
                                 maximum=3.0,
                                 value=1.0,
                                 step=0.05,
+                                show_label=False,
+                                info="Blend strength of the additional face(s)",
                                 visible=False,
                             )
                             normalize_multi_ref = gr.Checkbox(
@@ -2937,8 +2939,9 @@ Scheduler: {scheduler}"""
                                 maximum=1.0,
                                 value=0.30,
                                 step=0.05,
+                                show_label=False,
                                 visible=False,
-                                info="How far each identity's influence spreads past their face box.",
+                                info="Spread of each identity beyond its face box.",
                             )
                             multi_id_separate_identitynet = gr.Checkbox(
                                 label="Process each face separately in IdentityNet (slower)",
@@ -3195,14 +3198,14 @@ Scheduler: {scheduler}"""
                     )
                 with gr.Group():
                     identitynet_strength_ratio = gr.Slider(
-                        label="IdentityNet strength (weight of face fidelity retention from the input photo)",
+                        label="IdentityNet strength (weight of face fidelity retention from the input photos)",
                         minimum=0,
                         maximum=1.5,
                         step=0.05,
                         value=0.7,
                     )
                     adapter_strength_ratio = gr.Slider(
-                        label="Image adapter strength (weight of detail retention from the input photo)",
+                        label="Image adapter strength (weight of detail retention from the input photos)",
                         minimum=0,
                         maximum=1.5,
                         step=0.05,
@@ -3802,6 +3805,7 @@ Scheduler: {scheduler}"""
                         hires_prompt = gr.Textbox(
                             label="Hires Fix prompt", value="", visible=False, show_label=False,
                             placeholder="Enter a custom prompt for the Hires Fix pass",
+                            elem_id="hires_prompt_textbox",
                             info="Hires Fix prompt. Replaces the main prompt for Hires Fix. You can add embeddings here (the ones from the main prompt don't carry over).",
                         )
                     enable_hires_prompt.change(
@@ -4242,6 +4246,7 @@ Scheduler: {scheduler}"""
                     with gr.Row():
                         insert_embedding_prompt = gr.Button("➕ Insert into Prompt", scale=1, visible=False)
                         insert_embedding_negative = gr.Button("➕ Insert into Negative Prompt", scale=1, visible=False)
+                    insert_embedding_hires = gr.Button("➕ Insert into Hires Fix prompt", scale=1, visible=False)
 
                     def refresh_embeddings_list():
                         return gr.update(choices=get_embedding_choices(), value=None)
@@ -4265,12 +4270,34 @@ Scheduler: {scheduler}"""
                         queue=False
                     )
 
+                    insert_embedding_hires.click(
+                        fn=insert_token_into_text,
+                        inputs=[hires_prompt, embeddings_dropdown, embeddings_weight],
+                        outputs=[hires_prompt],
+                        queue=False
+                    )
+
                     EMBEDDINGS_OUTPUTS = [embeddings_dropdown, embeddings_weight, insert_embedding_prompt, insert_embedding_negative, refresh_embeddings]
+
+                    def toggle_hires_embedding_button(enable_embeddings_checkbox, enable_hires_prompt_checkbox):
+                        return gr.update(visible=enable_embeddings_checkbox and enable_hires_prompt_checkbox)
 
                     enable_embeddings.input(
                         fn=toggle_embeddings_ui,
                         inputs=[enable_embeddings],
                         outputs=EMBEDDINGS_OUTPUTS,
+                        queue=False,
+                    )
+                    enable_embeddings.input(
+                        fn=toggle_hires_embedding_button,
+                        inputs=[enable_embeddings, enable_hires_prompt],
+                        outputs=[insert_embedding_hires],
+                        queue=False,
+                    )
+                    enable_hires_prompt.change(
+                        fn=toggle_hires_embedding_button,
+                        inputs=[enable_embeddings, enable_hires_prompt],
+                        outputs=[insert_embedding_hires],
                         queue=False,
                     )
 
@@ -5126,7 +5153,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID Unlocked v9.2.2</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v9.2.3</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
