@@ -459,6 +459,13 @@ def read_png_metadata(filepath):
 face_adapter = f"./checkpoints/ip-adapter.bin"
 controlnet_path = f"./checkpoints/ControlNetModel"
 
+style_adapter_path = f"./checkpoints/ip-adapter-plus_sdxl_vit-h.safetensors"
+style_image_encoder_path = f"./checkpoints/image_encoder"
+STYLE_ADAPTER_VARIANT_SETTINGS = {
+    "plus": (16, 1280),
+    "standard": (4, 1024),
+}
+
 IDENTITYNET_NUM_TOKENS = 16
 
 def prepare_identitynet_region_masking(controlnet_model, num_tokens=IDENTITYNET_NUM_TOKENS):
@@ -1303,6 +1310,39 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
 
         return pipe
 
+    def ensure_style_adapter_ready(pipe, enable_style_adapter, style_variant="plus"):
+        from style_ip_adapter import (
+            download_style_adapter_files,
+            load_ip_adapter_style,
+            unload_ip_adapter_style,
+            get_loaded_style_variant,
+        )
+
+        if enable_style_adapter:
+            loaded_variant = get_loaded_style_variant(pipe)
+            if loaded_variant != style_variant:
+                if loaded_variant is not None:
+                    print(f"Switching style/content reference adapter ({loaded_variant} -> {style_variant})...")
+                    unload_ip_adapter_style(pipe)
+                num_tokens, embedding_dim = STYLE_ADAPTER_VARIANT_SETTINGS[style_variant]
+                ckpt_path, encoder_dir = download_style_adapter_files(
+                    checkpoints_dir=os.path.dirname(style_adapter_path) or "./checkpoints",
+                    variant=style_variant,
+                )
+                print(f"Loading style/content reference IP-Adapter ({style_variant}) into VRAM...")
+                load_ip_adapter_style(
+                    pipe,
+                    model_ckpt=ckpt_path,
+                    image_encoder_path=encoder_dir,
+                    num_tokens=num_tokens,
+                    embedding_dim=embedding_dim,
+                    variant=style_variant,
+                )
+        else:
+            if get_loaded_style_variant(pipe) is not None:
+                print("Unloading style/content reference IP-Adapter to free VRAM...")
+                unload_ip_adapter_style(pipe)
+
     def generate_image(
         resize_max_side,
         face_image_path,
@@ -1404,6 +1444,11 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         save_hires_original,
         enable_hires_prompt,
         hires_prompt,
+        style_adapter_enabled,
+        style_image_path,
+        style_strength,
+        style_adapter_variant,
+        style_independent_strength,
         progress=gr.Progress(),
     ):
         def _fix_guidance_range(start, end, label):
@@ -1636,6 +1681,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
 
         face_image_filename = os.path.basename(face_image_path) if face_image_path else "None"
         pose_image_filename = os.path.basename(pose_image_path) if pose_image_path else "None"
+        style_image_filename = os.path.basename(style_image_path) if style_image_path else "None"
 
         if not controlnet_selection:
             torch.cuda.empty_cache()
@@ -2149,6 +2195,22 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                     original_face_image, (enc_w, enc_h), PIL.Image.LANCZOS, effective_pad_to_max_side_i2i
                 )
 
+        style_adapter_active = bool(style_adapter_enabled) and bool(style_image_path) and float(style_strength) > 0
+        style_variant = style_adapter_variant if style_adapter_variant in ("plus", "standard") else "plus"
+        ensure_style_adapter_ready(pipe, style_adapter_active, style_variant)
+
+        style_image_embeds = None
+        if style_adapter_active:
+            from style_ip_adapter import encode_style_image, set_style_scale, set_independent_style_strength
+            style_ref_image = load_image(style_image_path)
+            set_style_scale(pipe, float(style_strength))
+            set_independent_style_strength(pipe, bool(style_independent_strength))
+            style_image_embeds = encode_style_image(
+                pipe, style_ref_image, num_images_per_prompt=1,
+                do_classifier_free_guidance=(guidance_scale > 1.0),
+            )
+            print(f"Style/content reference: {os.path.basename(style_image_path)} (strength: {style_strength}, variant: {style_variant}, independent strength: {bool(style_independent_strength)})\n")
+
         for i in range(num_outputs):
             if stop_event.is_set():
                 print("Stop requested - halting before starting generation.\n")
@@ -2226,6 +2288,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 width=width,
                 generator=generator,
                 callback_on_step_end=gradio_callback_lambda,
+                style_image_embeds=style_image_embeds,
             )
             if multi_id_active and multi_id_separate_identitynet:
                 common_kwargs.update(separate_identitynet=True, identity_control_images=identity_control_images)
@@ -2311,6 +2374,11 @@ Pose strength: {pose_strength}
 Pose line thickness fix: {enable_pose_line_fix}
 Canny strength: {canny_strength}
 Depth strength: {depth_strength}
+Style/content reference enabled: {style_adapter_active}
+Style/content reference image: {style_image_filename}
+Style/content reference strength: {style_strength}
+Style/content reference variant: {style_variant}
+Style/content reference independent strength: {bool(style_independent_strength)}
 Noise RNG device: {rng_source}
 LoRA Enabled: {enable_lora}
 LoRA 1 selection: {'None' if disable_lora_1 or not (enable_lora and lora_selection and os.path.exists(os.path.join('./models/Loras', lora_selection))) else lora_selection}
@@ -2448,6 +2516,7 @@ Scheduler: {scheduler}"""
                         generator=hires_generator,
                         callback_on_step_end=hires_gradio_callback_lambda,
                         control_mask=hires_control_mask,
+                        style_image_embeds=style_image_embeds,
                         **(dict(separate_identitynet=True, identity_control_images=resize_control_images(identity_control_images, (hires_width, hires_height)))
                            if multi_id_active and multi_id_separate_identitynet else {}),
                     )
@@ -2586,7 +2655,7 @@ Scheduler: {scheduler}"""
         });
     }
     """
-    with gr.Blocks(title="InstantID Unlocked v9.2.3", js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v9.3.0", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
@@ -3274,6 +3343,41 @@ Scheduler: {scheduler}"""
                                 ],
                                 queue=False
                             )
+                    style_adapter_enabled = gr.Checkbox(
+                        label="🎨 Add a visual prompt image (style/content reference)",
+                        value=False,
+                    )
+                    style_image = gr.Image(label="Style/content reference image", height=250, type="filepath", visible=False)
+                    style_strength = gr.Slider(
+                        label="Style strength (increase for human style images, decrease for pure style images such as a colorful image)",
+                        minimum=0,
+                        maximum=1.5,
+                        step=0.05,
+                        value=0.3,
+                        visible=False,
+                    )
+                    style_adapter_variant = gr.Dropdown(
+                        label="Style adapter type",
+                        choices=[
+                            ("Plus (fine-grained, follows reference closely)", "plus"),
+                            ("Standard (global, more prompt-following)", "standard"),
+                        ],
+                        value="plus",
+                        visible=False,
+                    )
+                    style_independent_strength = gr.Checkbox(
+                        label="Independent style strength (helps balance style vs. face adapter strength at the cost of decreased style effect)",
+                        value=False,
+                        visible=False,
+                    )
+                    def toggle_style_adapter_section(enabled):
+                        return gr.update(visible=enabled), gr.update(visible=enabled), gr.update(visible=enabled), gr.update(visible=enabled)
+                    style_adapter_enabled.change(
+                        fn=toggle_style_adapter_section,
+                        inputs=[style_adapter_enabled],
+                        outputs=[style_image, style_strength, style_adapter_variant, style_independent_strength],
+                        queue=False,
+                    )
                 with gr.Accordion("🛠️ Advanced Options", open=False) as advanced_settings_accordion:
                     with gr.Row():
                         clip_skip = gr.Slider(
@@ -4402,6 +4506,11 @@ Scheduler: {scheduler}"""
                 save_hires_original,
                 enable_hires_prompt,
                 hires_prompt,
+                style_adapter_enabled,
+                style_image,
+                style_strength,
+                style_adapter_variant,
+                style_independent_strength,
             ]
             generate.click(fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False).then(
                 fn=generate_image, inputs=shared_inputs, outputs=[gallery]
@@ -4543,6 +4652,10 @@ Scheduler: {scheduler}"""
                     "enable_pose_line_fix": False,
                     "canny_strength": 0.30,
                     "depth_strength": 0.30,
+                    "style_adapter_enabled": False,
+                    "style_strength": 0.3,
+                    "style_adapter_variant": "plus",
+                    "style_independent_strength": False,
                     "scheduler": "DPMSolverMultistepScheduler",
                     "ratio_base_pixel_number": 8,
                     "rng_source": "GPU",
@@ -4845,6 +4958,19 @@ Scheduler: {scheduler}"""
                             settings["canny_strength"] = float(line.replace("Canny strength:", "").strip())
                         elif line.startswith("Depth strength:"):
                             settings["depth_strength"] = float(line.replace("Depth strength:", "").strip())
+                        elif line.startswith("Style/content reference enabled:"):
+                            settings["style_adapter_enabled"] = "true" in line.lower()
+                        elif line.startswith("Style/content reference strength:"):
+                            try:
+                                settings["style_strength"] = float(line.replace("Style/content reference strength:", "").strip())
+                            except ValueError:
+                                pass
+                        elif line.startswith("Style/content reference variant:"):
+                            variant_value = line.replace("Style/content reference variant:", "").strip()
+                            if variant_value in ("plus", "standard"):
+                                settings["style_adapter_variant"] = variant_value
+                        elif line.startswith("Style/content reference independent strength:"):
+                            settings["style_independent_strength"] = "true" in line.lower()
                         elif line.startswith("ControlNet selection:"):
                             cn_selection = line.replace("ControlNet selection:", "").strip()
                             if cn_selection.startswith("["):
@@ -5027,6 +5153,10 @@ Scheduler: {scheduler}"""
                     settings["prioritize_largest_faces"],
                     settings["multi_id_resolve_overlap"],
                     settings["multi_id_separate_identitynet"],
+                    settings["style_adapter_enabled"],
+                    settings["style_strength"],
+                    settings["style_adapter_variant"],
+                    settings["style_independent_strength"],
                     accordion_update,
                     gr.update(open=open_resolution_accordion),
                     gr.update(open=open_advanced_accordion),
@@ -5128,6 +5258,10 @@ Scheduler: {scheduler}"""
                     prioritize_largest_faces,
                     multi_id_resolve_overlap,
                     multi_id_separate_identitynet,
+                    style_adapter_enabled,
+                    style_strength,
+                    style_adapter_variant,
+                    style_independent_strength,
                     controlnet_accordion,
                     resolution_settings_accordion,
                     advanced_settings_accordion,
@@ -5153,7 +5287,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID Unlocked v9.2.3</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v9.3.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
