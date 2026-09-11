@@ -193,7 +193,8 @@ def set_independent_style_strength(pipe, enabled, budget=1.0):
 
 def get_independent_style_strength(pipe):
     return _style_state(pipe).get("independent_style_strength", False)
-
+    
+@torch.no_grad()
 def encode_style_image(pipe, style_image, num_images_per_prompt=1, do_classifier_free_guidance=True):
     device = pipe.unet.device
     dtype = pipe.unet.dtype
@@ -209,7 +210,7 @@ def encode_style_image(pipe, style_image, num_images_per_prompt=1, do_classifier
         ).hidden_states[-2]
     else:
         clip_image_embeds = state["image_encoder"](pixel_values).image_embeds
-        uncond_clip_image_embeds = state["image_encoder"](torch.zeros_like(pixel_values)).image_embeds
+        uncond_clip_image_embeds = torch.zeros_like(clip_image_embeds)
 
     style_tokens = state["image_proj_model"](clip_image_embeds)
     uncond_style_tokens = state["image_proj_model"](uncond_clip_image_embeds)
