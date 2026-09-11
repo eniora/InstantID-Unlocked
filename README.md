@@ -29,6 +29,7 @@ The code barely follows any DRY principles as it started as a personal modificat
 - Negative Prompt Profiles dropdown with many presets (General, Minimalist, Portraits, Realism, Anime, Fooocus, etc.).
 - Detection Size selector for face detection in input/reference photos.
 - Hires Fix support with upscaler drop down menu.
+- Visual prompt image. You input an image and the generation will follow that image's style and colors etc.
 - Multiple schedulers available (beyond the original EulerDiscrete).
 - VAE tiling option to improve VRAM efficiency.
 - Resolution (max_side) slider up to 8192px.
