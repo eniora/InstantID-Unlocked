@@ -147,7 +147,21 @@ def load_ip_adapter_style(
             attn_processor.to(device, dtype=dtype)
         style_layers.append(attn_processor)
 
-    style_layers.load_state_dict(renamed_sd, strict=False)
+    load_result = style_layers.load_state_dict(renamed_sd, strict=False)
+    missing_style_keys = [
+        key for key in load_result.missing_keys
+        if "to_k_ip_style." in key or "to_v_ip_style." in key
+    ]
+    if missing_style_keys or load_result.unexpected_keys:
+        for attn_processor in style_layers:
+            if isinstance(attn_processor, (IPAttnProcessor, IPAttnProcessor2_0)):
+                attn_processor.remove_style_branch()
+
+        raise RuntimeError(
+            "Style adapter checkpoint did not match the attention layers.\n"
+            f"Missing style weights: {missing_style_keys}\n"
+            f"Unexpected weights: {load_result.unexpected_keys}"
+        )
 
     state.update({
         "image_encoder": style_image_encoder,
