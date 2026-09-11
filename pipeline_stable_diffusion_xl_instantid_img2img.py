@@ -899,6 +899,8 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
         ip_adapter_scale_end: float = 1.0,
         smooth_range_transition: bool = True,
 
+        style_image_embeds: Optional[torch.FloatTensor] = None,
+
         # Enhance Face Region
         control_mask = None,
         separate_identitynet: bool = False,
@@ -1390,6 +1392,8 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
         add_text_embeds = add_text_embeds.to(device)
         add_time_ids = add_time_ids.to(device).repeat(batch_size * num_images_per_prompt, 1)
         encoder_hidden_states = torch.cat([prompt_embeds, prompt_image_emb], dim=1)
+        if style_image_embeds is not None:
+            encoder_hidden_states = torch.cat([encoder_hidden_states, style_image_embeds.to(encoder_hidden_states.dtype)], dim=1)
 
         if isinstance(self.controlnet, MultiControlNetModel) and hasattr(self.controlnet, "_hf_hook"):
             self.controlnet.to(device)
