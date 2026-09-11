@@ -181,7 +181,7 @@ def set_style_scale(pipe, scale):
         if isinstance(attn_processor, (IPAttnProcessor, IPAttnProcessor2_0)):
             attn_processor.style_scale = scale
 
-def set_independent_style_strength(pipe, enabled, budget=1.0):
+def set_independent_style_strength(pipe, enabled, budget=2.0):
     for attn_processor in pipe.unet.attn_processors.values():
         if isinstance(attn_processor, (IPAttnProcessor, IPAttnProcessor2_0)):
             attn_processor.independent_style_strength = bool(enabled)
