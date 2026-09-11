@@ -25,6 +25,15 @@ def _region_mask_stage_shapes(h, w):
     stage2_h, stage2_w = real_downsample(stage1_h), real_downsample(stage1_w)
     return [(latent_h, latent_w), (stage1_h, stage1_w), (stage2_h, stage2_w)]
 
+def _combine_face_and_style_injections(base_hidden_states, face_injection, style_injection, independent_style_strength, style_injection_budget):
+    assert independent_style_strength, "helper should only be called on the independent-strength path"
+    combined = face_injection + style_injection
+    combined_norm = combined.norm(dim=-1, keepdim=True)
+    base_norm = base_hidden_states.norm(dim=-1, keepdim=True)
+    max_norm = style_injection_budget * base_norm
+    scale_factor = torch.clamp(max_norm / (combined_norm + 1e-6), max=1.0)
+    return combined * scale_factor
+
 def _resize_region_mask(region_mask, seq_len):
     h, w = region_mask.shape[:2]
     for stage_h, stage_w in _region_mask_stage_shapes(h, w):
@@ -136,6 +145,25 @@ class IPAttnProcessor(nn.Module):
         self.to_k_ip = nn.Linear(cross_attention_dim or hidden_size, hidden_size, bias=False)
         self.to_v_ip = nn.Linear(cross_attention_dim or hidden_size, hidden_size, bias=False)
 
+        self.num_style_tokens = 0
+        self.style_scale = 0.0
+        self.independent_style_strength = False
+        self.style_injection_budget = 1.0
+
+    def add_style_branch(self, num_style_tokens, style_scale=1.0):
+        self.num_style_tokens = num_style_tokens
+        self.style_scale = style_scale
+        self.to_k_ip_style = nn.Linear(self.cross_attention_dim or self.hidden_size, self.hidden_size, bias=False)
+        self.to_v_ip_style = nn.Linear(self.cross_attention_dim or self.hidden_size, self.hidden_size, bias=False)
+
+    def remove_style_branch(self):
+        self.num_style_tokens = 0
+        self.style_scale = 0.0
+        if hasattr(self, "to_k_ip_style"):
+            del self.to_k_ip_style
+        if hasattr(self, "to_v_ip_style"):
+            del self.to_v_ip_style
+
     def forward(
         self,
         attn,
@@ -175,7 +203,15 @@ class IPAttnProcessor(nn.Module):
         if encoder_hidden_states is None:
             encoder_hidden_states = hidden_states
             ip_hidden_states_all = None
+            style_hidden_states_all = None
         else:
+            style_hidden_states_all = None
+            if self.num_style_tokens > 0:
+                style_start = encoder_hidden_states.shape[1] - self.num_style_tokens
+                encoder_hidden_states, style_hidden_states_all = (
+                    encoder_hidden_states[:, :style_start, :],
+                    encoder_hidden_states[:, style_start:, :],
+                )
             # get encoder_hidden_states, ip_hidden_states
             end_pos = encoder_hidden_states.shape[1] - self.num_tokens * num_identities
             encoder_hidden_states, ip_hidden_states_all = encoder_hidden_states[:, :end_pos, :], encoder_hidden_states[:, end_pos:, :]
@@ -219,7 +255,31 @@ class IPAttnProcessor(nn.Module):
             mask = _resize_region_mask(region_mask, query.shape[1]) if region_mask is not None else torch.ones_like(ip_hidden_states_i)
             ip_hidden_states = ip_hidden_states + ip_hidden_states_i * mask
 
-        hidden_states = hidden_states + self.scale * ip_hidden_states
+        face_injection = self.scale * ip_hidden_states
+
+        if style_hidden_states_all is not None and self.style_scale != 0:
+            style_key = self.to_k_ip_style(style_hidden_states_all)
+            style_value = self.to_v_ip_style(style_hidden_states_all)
+            style_key = attn.head_to_batch_dim(style_key)
+            style_value = attn.head_to_batch_dim(style_value)
+            if xformers_available:
+                style_hidden_states = self._memory_efficient_attention_xformers(query, style_key, style_value, None)
+            else:
+                style_attention_probs = attn.get_attention_scores(query, style_key, None)
+                style_hidden_states = torch.bmm(style_attention_probs, style_value)
+            style_hidden_states = attn.batch_to_head_dim(style_hidden_states)
+            style_injection = self.style_scale * style_hidden_states
+            if self.independent_style_strength:
+                combined = _combine_face_and_style_injections(
+                    hidden_states, face_injection, style_injection,
+                    True, self.style_injection_budget,
+                )
+                hidden_states = hidden_states + combined
+            else:
+                hidden_states = hidden_states + face_injection
+                hidden_states = hidden_states + style_injection
+        else:
+            hidden_states = hidden_states + face_injection
 
         # linear proj
         hidden_states = attn.to_out[0](hidden_states)
@@ -362,6 +422,25 @@ class IPAttnProcessor2_0(torch.nn.Module):
         self.to_k_ip = nn.Linear(cross_attention_dim or hidden_size, hidden_size, bias=False)
         self.to_v_ip = nn.Linear(cross_attention_dim or hidden_size, hidden_size, bias=False)
 
+        self.num_style_tokens = 0
+        self.style_scale = 0.0
+        self.independent_style_strength = False
+        self.style_injection_budget = 1.0
+
+    def add_style_branch(self, num_style_tokens, style_scale=1.0):
+        self.num_style_tokens = num_style_tokens
+        self.style_scale = style_scale
+        self.to_k_ip_style = nn.Linear(self.cross_attention_dim or self.hidden_size, self.hidden_size, bias=False)
+        self.to_v_ip_style = nn.Linear(self.cross_attention_dim or self.hidden_size, self.hidden_size, bias=False)
+
+    def remove_style_branch(self):
+        self.num_style_tokens = 0
+        self.style_scale = 0.0
+        if hasattr(self, "to_k_ip_style"):
+            del self.to_k_ip_style
+        if hasattr(self, "to_v_ip_style"):
+            del self.to_v_ip_style
+
     def forward(
         self,
         attn,
@@ -406,7 +485,15 @@ class IPAttnProcessor2_0(torch.nn.Module):
         if encoder_hidden_states is None:
             encoder_hidden_states = hidden_states
             ip_hidden_states_all = None
+            style_hidden_states_all = None
         else:
+            style_hidden_states_all = None
+            if self.num_style_tokens > 0:
+                style_start = encoder_hidden_states.shape[1] - self.num_style_tokens
+                encoder_hidden_states, style_hidden_states_all = (
+                    encoder_hidden_states[:, :style_start, :],
+                    encoder_hidden_states[:, style_start:, :],
+                )
             # get encoder_hidden_states, ip_hidden_states
             end_pos = encoder_hidden_states.shape[1] - self.num_tokens * num_identities
             encoder_hidden_states, ip_hidden_states_all = (
@@ -470,7 +557,30 @@ class IPAttnProcessor2_0(torch.nn.Module):
                 mask = torch.ones_like(ip_hidden_states_i)
             ip_hidden_states = ip_hidden_states + ip_hidden_states_i * mask
 
-        hidden_states = hidden_states + self.scale * ip_hidden_states
+        face_injection = self.scale * ip_hidden_states
+
+        if style_hidden_states_all is not None and self.style_scale != 0:
+            style_key = self.to_k_ip_style(style_hidden_states_all)
+            style_value = self.to_v_ip_style(style_hidden_states_all)
+            style_key = style_key.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
+            style_value = style_value.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
+            style_hidden_states = F.scaled_dot_product_attention(
+                query, style_key, style_value, attn_mask=None, dropout_p=0.0, is_causal=False
+            )
+            style_hidden_states = style_hidden_states.transpose(1, 2).reshape(batch_size, -1, attn.heads * head_dim)
+            style_hidden_states = style_hidden_states.to(query.dtype)
+            style_injection = self.style_scale * style_hidden_states
+            if self.independent_style_strength:
+                combined = _combine_face_and_style_injections(
+                    hidden_states, face_injection, style_injection,
+                    True, self.style_injection_budget,
+                )
+                hidden_states = hidden_states + combined
+            else:
+                hidden_states = hidden_states + face_injection
+                hidden_states = hidden_states + style_injection
+        else:
+            hidden_states = hidden_states + face_injection
 
         # linear proj
         hidden_states = attn.to_out[0](hidden_states)
