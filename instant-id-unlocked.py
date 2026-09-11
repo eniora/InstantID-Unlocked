@@ -2209,7 +2209,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 pipe, style_ref_image, num_images_per_prompt=1,
                 do_classifier_free_guidance=(guidance_scale > 1.0),
             )
-            print(f"Style/content reference: {os.path.basename(style_image_path)} (strength: {style_strength}, variant: {style_variant}, independent strength: {bool(style_independent_strength)})\n")
+            print(f"Style/content reference: {os.path.basename(style_image_path)} (strength: {style_strength}, variant: {style_variant}, limit combined influence: {bool(style_independent_strength)})\n")
 
         for i in range(num_outputs):
             if stop_event.is_set():
@@ -2378,7 +2378,7 @@ Style/content reference enabled: {style_adapter_active}
 Style/content reference image: {style_image_filename}
 Style/content reference strength: {style_strength}
 Style/content reference variant: {style_variant}
-Style/content reference independent strength: {bool(style_independent_strength)}
+Style/content reference limit combined influence: {bool(style_independent_strength)}
 Noise RNG device: {rng_source}
 LoRA Enabled: {enable_lora}
 LoRA 1 selection: {'None' if disable_lora_1 or not (enable_lora and lora_selection and os.path.exists(os.path.join('./models/Loras', lora_selection))) else lora_selection}
@@ -2451,6 +2451,13 @@ Scheduler: {scheduler}"""
                 hires_pipe = get_img2img_sibling_pipe(pipe)
                 hires_pipe.controlnet = pipe.controlnet
                 hires_pipe.scheduler = pipe.scheduler
+                ensure_style_adapter_ready(hires_pipe, style_adapter_active, style_variant)
+                if style_adapter_active:
+                    from style_ip_adapter import set_style_scale, set_independent_style_strength
+                    set_style_scale(hires_pipe, float(style_strength))
+                    set_independent_style_strength(
+                        hires_pipe, bool(style_independent_strength)
+                    )
                 hires_control_images = resize_control_images(control_images, (hires_width, hires_height))
                 hires_control_mask = resize_control_images(control_mask, (hires_width, hires_height))
                 if hires_steps and hires_steps > 0:
@@ -3367,7 +3374,7 @@ Scheduler: {scheduler}"""
                             visible=False,
                         )
                         style_independent_strength = gr.Checkbox(
-                            label="Independent style strength (usually not needed)",
+                            label="Limit combined face/style influence",
                             value=False,
                             visible=False,
                         )
@@ -4970,7 +4977,7 @@ Scheduler: {scheduler}"""
                             variant_value = line.replace("Style/content reference variant:", "").strip()
                             if variant_value in ("plus", "standard"):
                                 settings["style_adapter_variant"] = variant_value
-                        elif line.startswith("Style/content reference independent strength:"):
+                        elif line.startswith("Style/content reference limit combined influence:"):
                             settings["style_independent_strength"] = "true" in line.lower()
                         elif line.startswith("ControlNet selection:"):
                             cn_selection = line.replace("ControlNet selection:", "").strip()
