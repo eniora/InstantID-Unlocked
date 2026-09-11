@@ -92,7 +92,7 @@ def load_ip_adapter_style(
     scale=1.0,
     variant="plus",
     independent_style_strength=False,
-    style_injection_budget=1.0,
+    style_injection_budget=2.0,
 ):
     if variant not in ("plus", "standard"):
         raise ValueError(f"Unknown style adapter variant: {variant!r}")
