@@ -2208,7 +2208,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             set_independent_style_strength(pipe, bool(style_independent_strength), budget=float(style_injection_budget))
             style_image_embeds = encode_style_image(
                 pipe, style_ref_image, num_images_per_prompt=1,
-                do_classifier_free_guidance=(guidance_scale > 1.0),
+                do_classifier_free_guidance=(guidance_scale > 1.0 and pipe.unet.config.time_cond_proj_dim is None),
             )
             budget_info = f", injection budget: {style_injection_budget}" if style_independent_strength else ""
             print(f"Style/content reference: {os.path.basename(style_image_path)} (strength: {style_strength}, variant: {style_variant}, limit combined influence: {bool(style_independent_strength)}{budget_info})\n")
