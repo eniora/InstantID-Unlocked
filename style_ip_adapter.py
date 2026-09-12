@@ -195,6 +195,26 @@ def set_style_scale(pipe, scale):
         if isinstance(attn_processor, (IPAttnProcessor, IPAttnProcessor2_0)):
             attn_processor.style_scale = scale
 
+STYLE_ONLY_BLOCK_PREFIXES = ("up_blocks.0.attentions.1",)
+
+def set_style_block_restriction(pipe, enabled, bleed_through=0.0, target_block_prefixes=STYLE_ONLY_BLOCK_PREFIXES):
+    state = _style_state(pipe)
+    for name, attn_processor in pipe.unet.attn_processors.items():
+        if isinstance(attn_processor, (IPAttnProcessor, IPAttnProcessor2_0)):
+            if enabled:
+                attn_processor.style_block_scale = 1.0 if name.startswith(target_block_prefixes) else float(bleed_through)
+            else:
+                attn_processor.style_block_scale = 1.0
+    if state.get("loaded", False):
+        state["style_restrict_to_style_layers"] = bool(enabled)
+        state["style_restrict_bleed_through"] = float(bleed_through)
+
+def get_style_block_restriction(pipe):
+    return _style_state(pipe).get("style_restrict_to_style_layers", False)
+
+def get_style_restrict_bleed_through(pipe):
+    return _style_state(pipe).get("style_restrict_bleed_through", 0.0)
+
 def set_independent_style_strength(pipe, enabled, budget=2.0):
     for attn_processor in pipe.unet.attn_processors.values():
         if isinstance(attn_processor, (IPAttnProcessor, IPAttnProcessor2_0)):
