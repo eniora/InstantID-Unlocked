@@ -3362,12 +3362,12 @@ Scheduler: {scheduler}"""
                                 queue=False
                             )
                     style_adapter_enabled = gr.Checkbox(
-                        label="🎨 Add a visual prompt image (style/content reference)",
+                        label="🎨 Add a visual prompt image (style/content reference) using IP-Adapter ViT-H model variants",
                         value=False,
                     )
                     style_image = gr.Image(label="Style/content reference image", height=250, type="filepath", visible=False)
                     style_strength = gr.Slider(
-                        label="Style strength (increase for human style images, decrease for pure style images such as a colorful image)",
+                        label="Style strength (try higher for references with people and lower for ones focused on colors and textures)",
                         minimum=0,
                         maximum=1.5,
                         step=0.05,
