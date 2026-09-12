@@ -3382,11 +3382,13 @@ Scheduler: {scheduler}"""
                                 ("Standard (global, more prompt-following)", "standard"),
                             ],
                             value="plus",
+                            scale=9,
                             visible=False,
                         )
                         style_independent_strength = gr.Checkbox(
-                            label="Limit combined face/style influence",
+                            label="Limit combined face/style influence (usually unneeded)",
                             value=False,
+                            scale=10,
                             visible=False,
                         )
                     with gr.Row():
@@ -3397,7 +3399,7 @@ Scheduler: {scheduler}"""
                             step=0.1,
                             value=2.0,
                             show_label=False,
-                            info="Injection budget * base signal strength (for combined influence). Higher = closer to the box being unchecked.",
+                            info="Injection budget * base signal strength (for combined influence). Higher = closer to the 'limit' checkbox being unchecked.",
                             visible=False,
                         )
                     style_restrict_to_style_layers = gr.Checkbox(
@@ -3408,11 +3410,11 @@ Scheduler: {scheduler}"""
                     style_restrict_bleed_through = gr.Slider(
                         label="Bleed-through.",
                         minimum=0.0,
-                        maximum=1.0,
+                        maximum=0.95,
                         step=0.05,
                         value=0.5,
                         show_label=False,
-                        info="How much composition/layout reaches the excluded layers. 0 = fully restricted, 1 = same as unchecked (adapter's default)",
+                        info="How much composition/layout reaches the excluded layers. 0 = fully restricted, higher = closer to the adapter's default",
                         visible=False,
                     )
                     def toggle_style_adapter_section(enabled, independent_strength, restrict_to_style_layers):
