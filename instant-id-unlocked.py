@@ -1450,6 +1450,8 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         style_adapter_variant,
         style_independent_strength,
         style_injection_budget,
+        style_restrict_to_style_layers,
+        style_restrict_bleed_through,
         progress=gr.Progress(),
     ):
         def _fix_guidance_range(start, end, label):
@@ -2072,8 +2074,9 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         print(f"Input face image: {os.path.basename(face_image_path) if face_image_path else 'None'}")
         if multi_ref_used:
             print(f"Multiple face images: Enabled - averaged {multi_ref_used} face embeddings, additional faces weight {multi_ref_weight}x, normalization {'enabled' if normalize_multi_ref else 'disabled'} (additional face(s): {', '.join(multi_ref_filenames)})")
-        print(f"Multi-ID separate IdentityNet: {'Enabled' if multi_id_active and multi_id_separate_identitynet else 'Inactive (Multi-ID disabled)' if multi_id_separate_identitynet else 'Disabled'}")
         print(f"Multi-ID: {'Enabled - ' + str(len(face_emb)) + ' identities' if multi_id_active else 'Disabled'}")
+        if multi_id_active:
+            print(f"Multi-ID separate IdentityNet: {'Enabled' if multi_id_separate_identitynet else 'Disabled'}")
         print(f"Reference pose image: {os.path.basename(pose_image_path) if pose_image_path else 'None'}")
         print(f"Steps: {num_steps}")
         print(f"img2img Mode: {'Enabled' if enable_img2img else 'Disabled'}")
@@ -2202,16 +2205,18 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
 
         style_image_embeds = None
         if style_adapter_active:
-            from style_ip_adapter import encode_style_image, set_style_scale, set_independent_style_strength
+            from style_ip_adapter import encode_style_image, set_style_scale, set_independent_style_strength, set_style_block_restriction
             style_ref_image = load_image(style_image_path)
             set_style_scale(pipe, float(style_strength))
             set_independent_style_strength(pipe, bool(style_independent_strength), budget=float(style_injection_budget))
+            set_style_block_restriction(pipe, bool(style_restrict_to_style_layers), bleed_through=float(style_restrict_bleed_through))
             style_image_embeds = encode_style_image(
                 pipe, style_ref_image, num_images_per_prompt=1,
                 do_classifier_free_guidance=(guidance_scale > 1.0 and pipe.unet.config.time_cond_proj_dim is None),
             )
             budget_info = f", injection budget: {style_injection_budget}" if style_independent_strength else ""
-            print(f"Style/content reference: {os.path.basename(style_image_path)} (strength: {style_strength}, variant: {style_variant}, limit combined influence: {bool(style_independent_strength)}{budget_info})\n")
+            restrict_info = f", style-only layers (bleed-through: {style_restrict_bleed_through})" if style_restrict_to_style_layers else ""
+            print(f"Style/content reference: {os.path.basename(style_image_path)} (strength: {style_strength}, variant: {style_variant}, limit combined influence: {bool(style_independent_strength)}{budget_info}{restrict_info})\n")
 
         for i in range(num_outputs):
             if stop_event.is_set():
@@ -2382,6 +2387,8 @@ Style/content reference strength: {style_strength}
 Style/content reference variant: {style_variant}
 Style/content reference limit combined influence: {bool(style_independent_strength)}
 Style/content reference injection budget: {style_injection_budget}
+Style/content reference style-only layers: {bool(style_restrict_to_style_layers)}
+Style/content reference bleed-through: {style_restrict_bleed_through}
 Noise RNG device: {rng_source}
 LoRA Enabled: {enable_lora}
 LoRA 1 selection: {'None' if disable_lora_1 or not (enable_lora and lora_selection and os.path.exists(os.path.join('./models/Loras', lora_selection))) else lora_selection}
@@ -2456,11 +2463,12 @@ Scheduler: {scheduler}"""
                 hires_pipe.scheduler = pipe.scheduler
                 ensure_style_adapter_ready(hires_pipe, style_adapter_active, style_variant)
                 if style_adapter_active:
-                    from style_ip_adapter import set_style_scale, set_independent_style_strength
+                    from style_ip_adapter import set_style_scale, set_independent_style_strength, set_style_block_restriction
                     set_style_scale(hires_pipe, float(style_strength))
                     set_independent_style_strength(
                         hires_pipe, bool(style_independent_strength), budget=float(style_injection_budget)
                     )
+                    set_style_block_restriction(hires_pipe, bool(style_restrict_to_style_layers), bleed_through=float(style_restrict_bleed_through))
                 hires_control_images = resize_control_images(control_images, (hires_width, hires_height))
                 hires_control_mask = resize_control_images(control_mask, (hires_width, hires_height))
                 if hires_steps and hires_steps > 0:
@@ -2665,7 +2673,7 @@ Scheduler: {scheduler}"""
         });
     }
     """
-    with gr.Blocks(title="InstantID Unlocked v9.3.1", js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v9.3.2", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
@@ -3363,7 +3371,7 @@ Scheduler: {scheduler}"""
                         minimum=0,
                         maximum=1.5,
                         step=0.05,
-                        value=0.4,
+                        value=0.5,
                         visible=False,
                     )
                     with gr.Row():
@@ -3392,18 +3400,35 @@ Scheduler: {scheduler}"""
                             info="Injection budget * base signal strength (for combined influence). Higher = closer to the box being unchecked.",
                             visible=False,
                         )
-                    def toggle_style_adapter_section(enabled, independent_strength):
+                    style_restrict_to_style_layers = gr.Checkbox(
+                        label="Prevent reference composition from leaking in. Helps stop the reference's own layout from warping the output.",
+                        value=True,
+                        visible=False,
+                    )
+                    style_restrict_bleed_through = gr.Slider(
+                        label="Bleed-through.",
+                        minimum=0.0,
+                        maximum=1.0,
+                        step=0.05,
+                        value=0.5,
+                        show_label=False,
+                        info="How much composition/layout reaches the excluded layers. 0 = fully restricted, 1 = same as unchecked (adapter's default)",
+                        visible=False,
+                    )
+                    def toggle_style_adapter_section(enabled, independent_strength, restrict_to_style_layers):
                         return (
                             gr.update(visible=enabled),
                             gr.update(visible=enabled),
                             gr.update(visible=enabled),
                             gr.update(visible=enabled),
+                            gr.update(visible=enabled),
                             gr.update(visible=enabled and independent_strength),
+                            gr.update(visible=enabled and restrict_to_style_layers),
                         )
                     style_adapter_enabled.change(
                         fn=toggle_style_adapter_section,
-                        inputs=[style_adapter_enabled, style_independent_strength],
-                        outputs=[style_image, style_strength, style_adapter_variant, style_independent_strength, style_injection_budget],
+                        inputs=[style_adapter_enabled, style_independent_strength, style_restrict_to_style_layers],
+                        outputs=[style_image, style_strength, style_adapter_variant, style_independent_strength, style_restrict_to_style_layers, style_injection_budget, style_restrict_bleed_through],
                         queue=False,
                     )
                     def toggle_independent_strength_budget(independent_strength, enabled):
@@ -3412,6 +3437,14 @@ Scheduler: {scheduler}"""
                         fn=toggle_independent_strength_budget,
                         inputs=[style_independent_strength, style_adapter_enabled],
                         outputs=[style_injection_budget],
+                        queue=False,
+                    )
+                    def toggle_restrict_bleed_through(restrict_to_style_layers, enabled):
+                        return gr.update(visible=enabled and restrict_to_style_layers)
+                    style_restrict_to_style_layers.change(
+                        fn=toggle_restrict_bleed_through,
+                        inputs=[style_restrict_to_style_layers, style_adapter_enabled],
+                        outputs=[style_restrict_bleed_through],
                         queue=False,
                     )
                 with gr.Accordion("🛠️ Advanced Options", open=False) as advanced_settings_accordion:
@@ -4548,6 +4581,8 @@ Scheduler: {scheduler}"""
                 style_adapter_variant,
                 style_independent_strength,
                 style_injection_budget,
+                style_restrict_to_style_layers,
+                style_restrict_bleed_through,
             ]
             generate.click(fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False).then(
                 fn=generate_image, inputs=shared_inputs, outputs=[gallery]
@@ -4690,10 +4725,12 @@ Scheduler: {scheduler}"""
                     "canny_strength": 0.30,
                     "depth_strength": 0.30,
                     "style_adapter_enabled": False,
-                    "style_strength": 0.4,
+                    "style_strength": 0.5,
                     "style_adapter_variant": "plus",
                     "style_independent_strength": False,
                     "style_injection_budget": 2.0,
+                    "style_restrict_to_style_layers": True,
+                    "style_restrict_bleed_through": 0.5,
                     "scheduler": "DPMSolverMultistepScheduler",
                     "ratio_base_pixel_number": 8,
                     "rng_source": "GPU",
@@ -5014,6 +5051,13 @@ Scheduler: {scheduler}"""
                                 settings["style_injection_budget"] = float(line.replace("Style/content reference injection budget:", "").strip())
                             except ValueError:
                                 pass
+                        elif line.startswith("Style/content reference style-only layers:"):
+                            settings["style_restrict_to_style_layers"] = "true" in line.lower()
+                        elif line.startswith("Style/content reference bleed-through:"):
+                            try:
+                                settings["style_restrict_bleed_through"] = float(line.replace("Style/content reference bleed-through:", "").strip())
+                            except ValueError:
+                                pass
                         elif line.startswith("ControlNet selection:"):
                             cn_selection = line.replace("ControlNet selection:", "").strip()
                             if cn_selection.startswith("["):
@@ -5201,6 +5245,8 @@ Scheduler: {scheduler}"""
                     settings["style_adapter_variant"],
                     settings["style_independent_strength"],
                     settings["style_injection_budget"],
+                    settings["style_restrict_to_style_layers"],
+                    settings["style_restrict_bleed_through"],
                     accordion_update,
                     gr.update(open=open_resolution_accordion),
                     gr.update(open=open_advanced_accordion),
@@ -5307,6 +5353,8 @@ Scheduler: {scheduler}"""
                     style_adapter_variant,
                     style_independent_strength,
                     style_injection_budget,
+                    style_restrict_to_style_layers,
+                    style_restrict_bleed_through,
                     controlnet_accordion,
                     resolution_settings_accordion,
                     advanced_settings_accordion,
@@ -5332,7 +5380,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID Unlocked v9.3.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v9.3.2</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
