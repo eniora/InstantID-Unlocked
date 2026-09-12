@@ -149,12 +149,10 @@ class IPAttnProcessor(nn.Module):
         self.style_scale = 0.0
         self.independent_style_strength = False
         self.style_injection_budget = 1.0
-        self.style_block_scale = 1.0
 
     def add_style_branch(self, num_style_tokens, style_scale=1.0):
         self.num_style_tokens = num_style_tokens
         self.style_scale = style_scale
-        self.style_block_scale = 1.0
         self.to_k_ip_style = nn.Linear(self.cross_attention_dim or self.hidden_size, self.hidden_size, bias=False)
         self.to_v_ip_style = nn.Linear(self.cross_attention_dim or self.hidden_size, self.hidden_size, bias=False)
 
@@ -259,7 +257,7 @@ class IPAttnProcessor(nn.Module):
 
         face_injection = self.scale * ip_hidden_states
 
-        if style_hidden_states_all is not None and self.style_scale != 0 and self.style_block_scale != 0:
+        if style_hidden_states_all is not None and self.style_scale != 0:
             style_key = self.to_k_ip_style(style_hidden_states_all)
             style_value = self.to_v_ip_style(style_hidden_states_all)
             style_key = attn.head_to_batch_dim(style_key)
@@ -270,7 +268,7 @@ class IPAttnProcessor(nn.Module):
                 style_attention_probs = attn.get_attention_scores(query, style_key, None)
                 style_hidden_states = torch.bmm(style_attention_probs, style_value)
             style_hidden_states = attn.batch_to_head_dim(style_hidden_states)
-            style_injection = self.style_scale * self.style_block_scale * style_hidden_states
+            style_injection = self.style_scale * style_hidden_states
             if self.independent_style_strength:
                 combined = _combine_face_and_style_injections(
                     hidden_states, face_injection, style_injection,
@@ -428,12 +426,10 @@ class IPAttnProcessor2_0(torch.nn.Module):
         self.style_scale = 0.0
         self.independent_style_strength = False
         self.style_injection_budget = 1.0
-        self.style_block_scale = 1.0
 
     def add_style_branch(self, num_style_tokens, style_scale=1.0):
         self.num_style_tokens = num_style_tokens
         self.style_scale = style_scale
-        self.style_block_scale = 1.0
         self.to_k_ip_style = nn.Linear(self.cross_attention_dim or self.hidden_size, self.hidden_size, bias=False)
         self.to_v_ip_style = nn.Linear(self.cross_attention_dim or self.hidden_size, self.hidden_size, bias=False)
 
@@ -563,7 +559,7 @@ class IPAttnProcessor2_0(torch.nn.Module):
 
         face_injection = self.scale * ip_hidden_states
 
-        if style_hidden_states_all is not None and self.style_scale != 0 and self.style_block_scale != 0:
+        if style_hidden_states_all is not None and self.style_scale != 0:
             style_key = self.to_k_ip_style(style_hidden_states_all)
             style_value = self.to_v_ip_style(style_hidden_states_all)
             style_key = style_key.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
@@ -573,7 +569,7 @@ class IPAttnProcessor2_0(torch.nn.Module):
             )
             style_hidden_states = style_hidden_states.transpose(1, 2).reshape(batch_size, -1, attn.heads * head_dim)
             style_hidden_states = style_hidden_states.to(query.dtype)
-            style_injection = self.style_scale * self.style_block_scale * style_hidden_states
+            style_injection = self.style_scale * style_hidden_states
             if self.independent_style_strength:
                 combined = _combine_face_and_style_injections(
                     hidden_states, face_injection, style_injection,
