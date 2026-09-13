@@ -144,6 +144,7 @@ def load_ip_adapter_style(
             attn_processor.add_style_branch(num_tokens, style_scale=scale)
             attn_processor.independent_style_strength = bool(independent_style_strength)
             attn_processor.style_injection_budget = style_injection_budget
+            attn_processor.multi_style_enabled = False
             attn_processor.to(device, dtype=dtype)
         style_layers.append(attn_processor)
 
@@ -227,7 +228,55 @@ def set_independent_style_strength(pipe, enabled, budget=2.0):
 
 def get_independent_style_strength(pipe):
     return _style_state(pipe).get("independent_style_strength", False)
-    
+
+def set_multi_style_enabled(pipe, enabled):
+    for attn_processor in pipe.unet.attn_processors.values():
+        if isinstance(attn_processor, (IPAttnProcessor, IPAttnProcessor2_0)):
+            attn_processor.multi_style_enabled = bool(enabled)
+    state = _style_state(pipe)
+    if state.get("loaded", False):
+        state["multi_style_enabled"] = bool(enabled)
+
+def get_multi_style_enabled(pipe):
+    return _style_state(pipe).get("multi_style_enabled", False)
+
+@torch.no_grad()
+def encode_style_images(pipe, style_images, num_images_per_prompt=1, do_classifier_free_guidance=True):
+    device = pipe.unet.device
+    dtype = pipe.unet.dtype
+    state = _style_state(pipe)
+    variant = state.get("variant", "plus")
+
+    all_tokens = []
+    all_uncond_tokens = []
+    for style_image in style_images:
+        pixel_values = state["clip_image_processor"](images=style_image, return_tensors="pt").pixel_values
+        pixel_values = pixel_values.to(device, dtype=dtype)
+
+        if variant == "plus":
+            clip_image_embeds = state["image_encoder"](pixel_values, output_hidden_states=True).hidden_states[-2]
+            uncond_clip_image_embeds = state["image_encoder"](
+                torch.zeros_like(pixel_values), output_hidden_states=True
+            ).hidden_states[-2]
+        else:
+            clip_image_embeds = state["image_encoder"](pixel_values).image_embeds
+            uncond_clip_image_embeds = torch.zeros_like(clip_image_embeds)
+
+        all_tokens.append(state["image_proj_model"](clip_image_embeds))
+        all_uncond_tokens.append(state["image_proj_model"](uncond_clip_image_embeds))
+
+    style_tokens = torch.cat(all_tokens, dim=1)
+    uncond_style_tokens = torch.cat(all_uncond_tokens, dim=1)
+
+    if do_classifier_free_guidance:
+        style_tokens = torch.cat([uncond_style_tokens, style_tokens], dim=0)
+
+    bs_embed, seq_len, _ = style_tokens.shape
+    style_tokens = style_tokens.repeat(1, num_images_per_prompt, 1)
+    style_tokens = style_tokens.view(bs_embed * num_images_per_prompt, seq_len, -1)
+
+    return style_tokens.to(device=device, dtype=dtype)
+
 @torch.no_grad()
 def encode_style_image(pipe, style_image, num_images_per_prompt=1, do_classifier_free_guidance=True):
     device = pipe.unet.device
