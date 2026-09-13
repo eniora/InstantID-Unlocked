@@ -1452,6 +1452,11 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         style_injection_budget,
         style_restrict_to_style_layers,
         style_restrict_bleed_through,
+        style_multiid_individual,
+        style_left_image_path,
+        style_right_image_path,
+        style_left_strength,
+        style_right_strength,
         progress=gr.Progress(),
     ):
         def _fix_guidance_range(start, end, label):
@@ -1685,6 +1690,8 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         face_image_filename = os.path.basename(face_image_path) if face_image_path else "None"
         pose_image_filename = os.path.basename(pose_image_path) if pose_image_path else "None"
         style_image_filename = os.path.basename(style_image_path) if style_image_path else "None"
+        style_left_image_filename = os.path.basename(style_left_image_path) if style_left_image_path else "None"
+        style_right_image_filename = os.path.basename(style_right_image_path) if style_right_image_path else "None"
 
         if not controlnet_selection:
             torch.cuda.empty_cache()
@@ -2199,24 +2206,80 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                     original_face_image, (enc_w, enc_h), PIL.Image.LANCZOS, effective_pad_to_max_side_i2i
                 )
 
-        style_adapter_active = bool(style_adapter_enabled) and bool(style_image_path) and float(style_strength) > 0
+        style_multiid_active = bool(style_multiid_individual) and multi_id_active
+        style_left_strength = min(2.0, max(0.1, float(style_left_strength))) if style_left_strength is not None else 1.0
+        style_right_strength = min(2.0, max(0.1, float(style_right_strength))) if style_right_strength is not None else 1.0
+        regional_style_images = []
+        if style_multiid_active and isinstance(control_mask, list):
+            if style_left_image_path and len(control_mask) >= 1:
+                regional_style_images.append(("left", style_left_image_path, control_mask[0], style_left_strength))
+            if style_right_image_path and len(control_mask) >= 2:
+                regional_style_images.append(("right", style_right_image_path, control_mask[1], style_right_strength))
+            if regional_style_images and num_identities > 2 and style_adapter_enabled and float(style_strength) > 0:
+                print(f"Style/content reference: per-identity left/right references only apply to the first two identities; the other {num_identities - 2} identit{'y' if num_identities - 2 == 1 else 'ies'} will only receive the background reference (if set).\n")
+
+        if style_multiid_active:
+            style_adapter_active = (
+                bool(style_adapter_enabled)
+                and float(style_strength) > 0
+                and (bool(style_image_path) or bool(regional_style_images))
+            )
+        else:
+            style_adapter_active = bool(style_adapter_enabled) and bool(style_image_path) and float(style_strength) > 0
         style_variant = style_adapter_variant if style_adapter_variant in ("plus", "standard") else "plus"
         ensure_style_adapter_ready(pipe, style_adapter_active, style_variant)
 
         style_image_embeds = None
+        style_control_mask = None
+        style_region_scales = None
         if style_adapter_active:
-            from style_ip_adapter import encode_style_image, set_style_scale, set_independent_style_strength, set_style_block_restriction
-            style_ref_image = load_image(style_image_path)
-            set_style_scale(pipe, float(style_strength))
-            set_independent_style_strength(pipe, bool(style_independent_strength), budget=float(style_injection_budget))
-            set_style_block_restriction(pipe, bool(style_restrict_to_style_layers), bleed_through=float(style_restrict_bleed_through))
-            style_image_embeds = encode_style_image(
-                pipe, style_ref_image, num_images_per_prompt=1,
-                do_classifier_free_guidance=(guidance_scale > 1.0 and pipe.unet.config.time_cond_proj_dim is None),
-            )
-            budget_info = f", injection budget: {style_injection_budget}" if style_independent_strength else ""
-            restrict_info = f", style-only layers (bleed-through: {style_restrict_bleed_through})" if style_restrict_to_style_layers else ""
-            print(f"Style/content reference: {os.path.basename(style_image_path)} (strength: {style_strength}, variant: {style_variant}, limit combined influence: {bool(style_independent_strength)}{budget_info}{restrict_info})\n")
+            if style_multiid_active:
+                from style_ip_adapter import encode_style_images, set_style_scale, set_independent_style_strength, set_style_block_restriction, set_multi_style_enabled
+                set_style_scale(pipe, float(style_strength))
+                set_independent_style_strength(pipe, bool(style_independent_strength), budget=float(style_injection_budget))
+                set_style_block_restriction(pipe, bool(style_restrict_to_style_layers), bleed_through=float(style_restrict_bleed_through))
+                set_multi_style_enabled(pipe, True)
+
+                style_images_to_encode = []
+                style_masks_to_use = []
+                style_scales_to_use = []
+                style_ref_labels = []
+                if style_image_path:
+                    style_images_to_encode.append(load_image(style_image_path))
+                    style_masks_to_use.append(None)
+                    style_scales_to_use.append(1.0)
+                    style_ref_labels.append(f"background: {style_image_filename}")
+                for side, region_path, region_mask_pil, region_strength in regional_style_images:
+                    style_images_to_encode.append(load_image(region_path))
+                    style_masks_to_use.append(region_mask_pil)
+                    style_scales_to_use.append(region_strength)
+                    style_ref_labels.append(f"{side}: {os.path.basename(region_path)} (relative strength: {region_strength})")
+
+                style_image_embeds = encode_style_images(
+                    pipe, style_images_to_encode, num_images_per_prompt=1,
+                    do_classifier_free_guidance=(guidance_scale > 1.0 and pipe.unet.config.time_cond_proj_dim is None),
+                )
+                style_control_mask = style_masks_to_use
+                style_region_scales = style_scales_to_use
+                budget_info = f", injection budget: {style_injection_budget}" if style_independent_strength else ""
+                restrict_info = f", style-only layers (bleed-through: {style_restrict_bleed_through})" if style_restrict_to_style_layers else ""
+                print(f"Style/content reference(s): {', '.join(style_ref_labels)} (strength: {style_strength}, variant: {style_variant}, limit combined influence: {bool(style_independent_strength)}{budget_info}{restrict_info})\n")
+                if len(style_images_to_encode) > 1:
+                    print(f"Style/content reference: {len(style_images_to_encode)} reference images active.\n")
+            else:
+                from style_ip_adapter import encode_style_image, set_style_scale, set_independent_style_strength, set_style_block_restriction, set_multi_style_enabled
+                style_ref_image = load_image(style_image_path)
+                set_style_scale(pipe, float(style_strength))
+                set_independent_style_strength(pipe, bool(style_independent_strength), budget=float(style_injection_budget))
+                set_style_block_restriction(pipe, bool(style_restrict_to_style_layers), bleed_through=float(style_restrict_bleed_through))
+                set_multi_style_enabled(pipe, False)
+                style_image_embeds = encode_style_image(
+                    pipe, style_ref_image, num_images_per_prompt=1,
+                    do_classifier_free_guidance=(guidance_scale > 1.0 and pipe.unet.config.time_cond_proj_dim is None),
+                )
+                budget_info = f", injection budget: {style_injection_budget}" if style_independent_strength else ""
+                restrict_info = f", style-only layers (bleed-through: {style_restrict_bleed_through})" if style_restrict_to_style_layers else ""
+                print(f"Style/content reference: {os.path.basename(style_image_path)} (strength: {style_strength}, variant: {style_variant}, limit combined influence: {bool(style_independent_strength)}{budget_info}{restrict_info})\n")
 
         for i in range(num_outputs):
             if stop_event.is_set():
@@ -2296,6 +2359,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 generator=generator,
                 callback_on_step_end=gradio_callback_lambda,
                 style_image_embeds=style_image_embeds,
+                style_region_scales=style_region_scales,
             )
             if multi_id_active and multi_id_separate_identitynet:
                 common_kwargs.update(separate_identitynet=True, identity_control_images=identity_control_images)
@@ -2308,12 +2372,14 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                         control_image=control_images,
                         strength=strength,
                         control_mask=control_mask,
+                        style_control_mask=style_control_mask,
                     )
                 else:
                     result = pipe(
                         **common_kwargs,
                         image=control_images,
                         control_mask=control_mask,
+                        style_control_mask=style_control_mask,
                     )
             except GenerationStopped:
                 print(f"Stop requested - generation of image {i + 1} was interrupted mid-way.\n")
@@ -2389,6 +2455,11 @@ Style/content reference limit combined influence: {bool(style_independent_streng
 Style/content reference injection budget: {style_injection_budget}
 Style/content reference style-only layers: {bool(style_restrict_to_style_layers)}
 Style/content reference bleed-through: {style_restrict_bleed_through}
+Style/content reference multi-ID individual style: {style_multiid_active}
+Style/content reference left image (Multi-ID): {style_left_image_filename}
+Style/content reference right image (Multi-ID): {style_right_image_filename}
+Style/content reference left strength (Multi-ID): {style_left_strength}
+Style/content reference right strength (Multi-ID): {style_right_strength}
 Noise RNG device: {rng_source}
 LoRA Enabled: {enable_lora}
 LoRA 1 selection: {'None' if disable_lora_1 or not (enable_lora and lora_selection and os.path.exists(os.path.join('./models/Loras', lora_selection))) else lora_selection}
@@ -2463,14 +2534,16 @@ Scheduler: {scheduler}"""
                 hires_pipe.scheduler = pipe.scheduler
                 ensure_style_adapter_ready(hires_pipe, style_adapter_active, style_variant)
                 if style_adapter_active:
-                    from style_ip_adapter import set_style_scale, set_independent_style_strength, set_style_block_restriction
+                    from style_ip_adapter import set_style_scale, set_independent_style_strength, set_style_block_restriction, set_multi_style_enabled
                     set_style_scale(hires_pipe, float(style_strength))
                     set_independent_style_strength(
                         hires_pipe, bool(style_independent_strength), budget=float(style_injection_budget)
                     )
                     set_style_block_restriction(hires_pipe, bool(style_restrict_to_style_layers), bleed_through=float(style_restrict_bleed_through))
+                    set_multi_style_enabled(hires_pipe, style_multiid_active)
                 hires_control_images = resize_control_images(control_images, (hires_width, hires_height))
                 hires_control_mask = resize_control_images(control_mask, (hires_width, hires_height))
+                hires_style_control_mask = resize_control_images(style_control_mask, (hires_width, hires_height))
                 if hires_steps and hires_steps > 0:
                     effective_hires_steps = max(1, math.ceil(hires_steps / max(hires_denoising_strength, 1e-4)))
                     display_hires_steps = int(hires_steps)
@@ -2535,6 +2608,8 @@ Scheduler: {scheduler}"""
                         callback_on_step_end=hires_gradio_callback_lambda,
                         control_mask=hires_control_mask,
                         style_image_embeds=style_image_embeds,
+                        style_control_mask=hires_style_control_mask,
+                        style_region_scales=style_region_scales,
                         **(dict(separate_identitynet=True, identity_control_images=resize_control_images(identity_control_images, (hires_width, hires_height)))
                            if multi_id_active and multi_id_separate_identitynet else {}),
                     )
@@ -2673,7 +2748,7 @@ Scheduler: {scheduler}"""
         });
     }
     """
-    with gr.Blocks(title="InstantID Unlocked v9.3.3", js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v9.4.0", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
@@ -3362,10 +3437,35 @@ Scheduler: {scheduler}"""
                                 queue=False
                             )
                     style_adapter_enabled = gr.Checkbox(
-                        label="🎨 Add a visual prompt image (style/content reference) using IP-Adapter ViT-H model variants",
+                        label="🎨 Add a visual prompt image (style/content reference) using IP-Adapter ViT-H (Standard/Plus)",
                         value=False,
                     )
                     style_image = gr.Image(label="Style/content reference image", height=250, type="filepath", visible=False)
+                    style_multiid_individual = gr.Checkbox(
+                        label="Enable per-ID style for Multi-ID (BETA). Applies to the first two. Increasing the style strength helps get better results.",
+                        value=False,
+                        visible=False,
+                    )
+                    with gr.Row():
+                        style_left_image = gr.Image(label="Left ID style", height=180, type="filepath", visible=False)
+                        style_right_image = gr.Image(label="Right ID style", height=180, type="filepath", visible=False)
+                    with gr.Row():
+                        style_left_strength = gr.Slider(
+                            label="Left ID style strength (relative)",
+                            minimum=0.1,
+                            maximum=2.0,
+                            step=0.05,
+                            value=1.0,
+                            visible=False,
+                        )
+                        style_right_strength = gr.Slider(
+                            label="Right ID style strength (relative)",
+                            minimum=0.1,
+                            maximum=2.0,
+                            step=0.05,
+                            value=1.0,
+                            visible=False,
+                        )
                     style_strength = gr.Slider(
                         label="Style strength (briefly describing the reference image's subject/style in the prompt gives better results)",
                         minimum=0,
@@ -3386,7 +3486,7 @@ Scheduler: {scheduler}"""
                             visible=False,
                         )
                         style_independent_strength = gr.Checkbox(
-                            label="Limit combined face/style influence (usually unneeded)",
+                            label="Limit combined face/style influence",
                             value=False,
                             scale=10,
                             visible=False,
@@ -3395,7 +3495,7 @@ Scheduler: {scheduler}"""
                         style_injection_budget = gr.Slider(
                             label="Injection budget.",
                             minimum=0.1,
-                            maximum=5.0,
+                            maximum=8.0,
                             step=0.1,
                             value=2.0,
                             show_label=False,
@@ -3417,7 +3517,9 @@ Scheduler: {scheduler}"""
                         info="How much composition/layout reaches the excluded layers. 0 = fully restricted, higher = closer to the adapter's default",
                         visible=False,
                     )
-                    def toggle_style_adapter_section(enabled, independent_strength, restrict_to_style_layers):
+                    def toggle_style_adapter_section(enabled, independent_strength, restrict_to_style_layers, multi_id_enabled, multiid_individual_style):
+                        regional_visible = bool(enabled) and bool(multi_id_enabled)
+                        per_id_uploads_visible = regional_visible and bool(multiid_individual_style)
                         return (
                             gr.update(visible=enabled),
                             gr.update(visible=enabled),
@@ -3426,11 +3528,36 @@ Scheduler: {scheduler}"""
                             gr.update(visible=enabled),
                             gr.update(visible=enabled and independent_strength),
                             gr.update(visible=enabled and restrict_to_style_layers),
+                            gr.update(visible=regional_visible),
+                            gr.update(visible=per_id_uploads_visible),
+                            gr.update(visible=per_id_uploads_visible),
+                            gr.update(visible=per_id_uploads_visible),
+                            gr.update(visible=per_id_uploads_visible),
                         )
                     style_adapter_enabled.change(
                         fn=toggle_style_adapter_section,
-                        inputs=[style_adapter_enabled, style_independent_strength, style_restrict_to_style_layers],
-                        outputs=[style_image, style_strength, style_adapter_variant, style_independent_strength, style_restrict_to_style_layers, style_injection_budget, style_restrict_bleed_through],
+                        inputs=[style_adapter_enabled, style_independent_strength, style_restrict_to_style_layers, enable_multi_id, style_multiid_individual],
+                        outputs=[style_image, style_strength, style_adapter_variant, style_independent_strength, style_restrict_to_style_layers, style_injection_budget, style_restrict_bleed_through, style_multiid_individual, style_left_image, style_right_image, style_left_strength, style_right_strength],
+                        queue=False,
+                    )
+                    enable_multi_id.change(
+                        fn=toggle_style_adapter_section,
+                        inputs=[style_adapter_enabled, style_independent_strength, style_restrict_to_style_layers, enable_multi_id, style_multiid_individual],
+                        outputs=[style_image, style_strength, style_adapter_variant, style_independent_strength, style_restrict_to_style_layers, style_injection_budget, style_restrict_bleed_through, style_multiid_individual, style_left_image, style_right_image, style_left_strength, style_right_strength],
+                        queue=False,
+                    )
+                    def toggle_multiid_individual_uploads(multiid_individual_style, enabled, multi_id_enabled):
+                        uploads_visible = bool(enabled) and bool(multi_id_enabled) and bool(multiid_individual_style)
+                        return (
+                            gr.update(visible=uploads_visible),
+                            gr.update(visible=uploads_visible),
+                            gr.update(visible=uploads_visible),
+                            gr.update(visible=uploads_visible),
+                        )
+                    style_multiid_individual.change(
+                        fn=toggle_multiid_individual_uploads,
+                        inputs=[style_multiid_individual, style_adapter_enabled, enable_multi_id],
+                        outputs=[style_left_image, style_right_image, style_left_strength, style_right_strength],
                         queue=False,
                     )
                     def toggle_independent_strength_budget(independent_strength, enabled):
@@ -4585,6 +4712,11 @@ Scheduler: {scheduler}"""
                 style_injection_budget,
                 style_restrict_to_style_layers,
                 style_restrict_bleed_through,
+                style_multiid_individual,
+                style_left_image,
+                style_right_image,
+                style_left_strength,
+                style_right_strength,
             ]
             generate.click(fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False).then(
                 fn=generate_image, inputs=shared_inputs, outputs=[gallery]
@@ -4733,6 +4865,9 @@ Scheduler: {scheduler}"""
                     "style_injection_budget": 2.0,
                     "style_restrict_to_style_layers": True,
                     "style_restrict_bleed_through": 0.6,
+                    "style_multiid_individual": False,
+                    "style_left_strength": 1.0,
+                    "style_right_strength": 1.0,
                     "scheduler": "DPMSolverMultistepScheduler",
                     "ratio_base_pixel_number": 8,
                     "rng_source": "GPU",
@@ -5060,6 +5195,18 @@ Scheduler: {scheduler}"""
                                 settings["style_restrict_bleed_through"] = float(line.replace("Style/content reference bleed-through:", "").strip())
                             except ValueError:
                                 pass
+                        elif line.startswith("Style/content reference multi-ID individual style:"):
+                            settings["style_multiid_individual"] = "true" in line.lower()
+                        elif line.startswith("Style/content reference left strength (Multi-ID):"):
+                            try:
+                                settings["style_left_strength"] = float(line.replace("Style/content reference left strength (Multi-ID):", "").strip())
+                            except ValueError:
+                                pass
+                        elif line.startswith("Style/content reference right strength (Multi-ID):"):
+                            try:
+                                settings["style_right_strength"] = float(line.replace("Style/content reference right strength (Multi-ID):", "").strip())
+                            except ValueError:
+                                pass
                         elif line.startswith("ControlNet selection:"):
                             cn_selection = line.replace("ControlNet selection:", "").strip()
                             if cn_selection.startswith("["):
@@ -5249,6 +5396,9 @@ Scheduler: {scheduler}"""
                     settings["style_injection_budget"],
                     settings["style_restrict_to_style_layers"],
                     settings["style_restrict_bleed_through"],
+                    settings["style_multiid_individual"],
+                    settings["style_left_strength"],
+                    settings["style_right_strength"],
                     accordion_update,
                     gr.update(open=open_resolution_accordion),
                     gr.update(open=open_advanced_accordion),
@@ -5357,6 +5507,9 @@ Scheduler: {scheduler}"""
                     style_injection_budget,
                     style_restrict_to_style_layers,
                     style_restrict_bleed_through,
+                    style_multiid_individual,
+                    style_left_strength,
+                    style_right_strength,
                     controlnet_accordion,
                     resolution_settings_accordion,
                     advanced_settings_accordion,
@@ -5382,7 +5535,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID Unlocked v9.3.3</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v9.4.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
