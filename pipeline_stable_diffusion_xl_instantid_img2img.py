@@ -44,7 +44,7 @@ if is_torch2_available():
     from ip_adapter.attention_processor import IPAttnProcessor2_0 as IPAttnProcessor, AttnProcessor2_0 as AttnProcessor
 else:
     from ip_adapter.attention_processor import IPAttnProcessor, AttnProcessor
-from ip_adapter.attention_processor import region_control, run_separate_identitynet
+from ip_adapter.attention_processor import region_control, style_region_control, run_separate_identitynet
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
 
@@ -900,6 +900,8 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
         smooth_range_transition: bool = True,
 
         style_image_embeds: Optional[torch.FloatTensor] = None,
+        style_control_mask=None,
+        style_region_scales=None,
 
         # Enhance Face Region
         control_mask = None,
@@ -1225,6 +1227,24 @@ class StableDiffusionXLInstantIDImg2ImgPipeline(StableDiffusionXLControlNetImg2I
         else:
             mask_weight_image_tensor = None
             region_control.prompt_image_conditioning = [dict(region_mask=None)] * num_identities
+
+        if style_control_mask is not None:
+            style_masks_list = list(style_control_mask) if isinstance(style_control_mask, (list, tuple)) else [style_control_mask]
+            style_scales_list = list(style_region_scales) if isinstance(style_region_scales, (list, tuple)) else None
+            style_conditioning = []
+            for idx, m in enumerate(style_masks_list):
+                style_scale = float(style_scales_list[idx]) if style_scales_list is not None and idx < len(style_scales_list) else 1.0
+                if m is None:
+                    style_conditioning.append(dict(region_mask=None, scale=style_scale))
+                    continue
+                m_arr = np.array(m)
+                if m_arr.ndim == 3:
+                    m_arr = m_arr[:, :, 0]
+                style_region_mask = torch.from_numpy(m_arr).to(device=device, dtype=prompt_embeds.dtype) / 255.
+                style_conditioning.append(dict(region_mask=style_region_mask, scale=style_scale))
+            style_region_control.style_image_conditioning = style_conditioning
+        else:
+            style_region_control.style_image_conditioning = [dict(region_mask=None, scale=1.0)]
 
         use_separate_identitynet = bool(separate_identitynet and num_identities > 1)
         if use_separate_identitynet:
