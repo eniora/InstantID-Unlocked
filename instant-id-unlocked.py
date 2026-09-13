@@ -3442,13 +3442,13 @@ Scheduler: {scheduler}"""
                     )
                     style_image = gr.Image(label="Style/content reference image", height=250, type="filepath", visible=False)
                     style_multiid_individual = gr.Checkbox(
-                        label="Enable per-ID style for Multi-ID (BETA). Applies to the first two. Increasing the style strength helps get better results.",
+                        label="Enable per-ID style for Multi-ID. Applies to the first two IDs.",
                         value=False,
                         visible=False,
                     )
                     with gr.Row():
-                        style_left_image = gr.Image(label="Left ID style", height=180, type="filepath", visible=False)
-                        style_right_image = gr.Image(label="Right ID style", height=180, type="filepath", visible=False)
+                        style_left_image = gr.Image(label="Left ID style image", height=180, type="filepath", visible=False)
+                        style_right_image = gr.Image(label="Right ID style image", height=180, type="filepath", visible=False)
                     with gr.Row():
                         style_left_strength = gr.Slider(
                             label="Left ID style strength (relative)",
