@@ -2673,7 +2673,7 @@ Scheduler: {scheduler}"""
         });
     }
     """
-    with gr.Blocks(title="InstantID Unlocked v9.3.2", js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v9.3.3", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
@@ -3367,11 +3367,11 @@ Scheduler: {scheduler}"""
                     )
                     style_image = gr.Image(label="Style/content reference image", height=250, type="filepath", visible=False)
                     style_strength = gr.Slider(
-                        label="Style strength (try higher for references with people and lower for ones focused on colors and textures)",
+                        label="Style strength (briefly describing the reference image's subject/style in the prompt gives better results)",
                         minimum=0,
                         maximum=1.5,
                         step=0.05,
-                        value=0.5,
+                        value=0.6,
                         visible=False,
                     )
                     with gr.Row():
@@ -3403,7 +3403,7 @@ Scheduler: {scheduler}"""
                             visible=False,
                         )
                     style_restrict_to_style_layers = gr.Checkbox(
-                        label="Prevent reference composition from leaking in. Helps stop the reference's own layout from warping the output.",
+                        label="Lower reference composition leakage. Helps stop the reference's own layout from warping the output.",
                         value=True,
                         visible=False,
                     )
@@ -3412,7 +3412,7 @@ Scheduler: {scheduler}"""
                         minimum=0.0,
                         maximum=0.95,
                         step=0.05,
-                        value=0.5,
+                        value=0.6,
                         show_label=False,
                         info="How much composition/layout reaches the excluded layers. 0 = fully restricted, higher = closer to the adapter's default",
                         visible=False,
@@ -4727,12 +4727,12 @@ Scheduler: {scheduler}"""
                     "canny_strength": 0.30,
                     "depth_strength": 0.30,
                     "style_adapter_enabled": False,
-                    "style_strength": 0.5,
+                    "style_strength": 0.6,
                     "style_adapter_variant": "plus",
                     "style_independent_strength": False,
                     "style_injection_budget": 2.0,
                     "style_restrict_to_style_layers": True,
-                    "style_restrict_bleed_through": 0.5,
+                    "style_restrict_bleed_through": 0.6,
                     "scheduler": "DPMSolverMultistepScheduler",
                     "ratio_base_pixel_number": 8,
                     "rng_source": "GPU",
@@ -5382,7 +5382,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID Unlocked v9.3.2</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v9.3.3</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
