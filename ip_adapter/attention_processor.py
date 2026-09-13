@@ -15,6 +15,11 @@ class RegionControler(object):
         self.prompt_image_conditioning = []
 region_control = RegionControler()
 
+class StyleRegionControler(object):
+    def __init__(self) -> None:
+        self.style_image_conditioning = [dict(region_mask=None, scale=1.0)]
+style_region_control = StyleRegionControler()
+
 def _region_mask_stage_shapes(h, w):
     latent_h, latent_w = h // 8, w // 8
 
@@ -150,6 +155,7 @@ class IPAttnProcessor(nn.Module):
         self.independent_style_strength = False
         self.style_injection_budget = 1.0
         self.style_block_scale = 1.0
+        self.multi_style_enabled = False
 
     def add_style_branch(self, num_style_tokens, style_scale=1.0):
         self.num_style_tokens = num_style_tokens
@@ -199,6 +205,7 @@ class IPAttnProcessor(nn.Module):
         # region_control.prompt_image_conditioning (one dict per identity, each
         # optionally holding that identity's own region_mask).
         num_identities = max(len(region_control.prompt_image_conditioning), 1)
+        num_style_images = max(len(style_region_control.style_image_conditioning), 1) if self.multi_style_enabled else 1
 
         query = attn.to_q(hidden_states)
 
@@ -209,7 +216,10 @@ class IPAttnProcessor(nn.Module):
         else:
             style_hidden_states_all = None
             if self.num_style_tokens > 0:
-                style_start = encoder_hidden_states.shape[1] - self.num_style_tokens
+                if self.multi_style_enabled:
+                    style_start = encoder_hidden_states.shape[1] - self.num_style_tokens * num_style_images
+                else:
+                    style_start = encoder_hidden_states.shape[1] - self.num_style_tokens
                 encoder_hidden_states, style_hidden_states_all = (
                     encoder_hidden_states[:, :style_start, :],
                     encoder_hidden_states[:, style_start:, :],
@@ -261,17 +271,49 @@ class IPAttnProcessor(nn.Module):
 
         if style_hidden_states_all is not None and self.style_scale != 0:
             if self.style_block_scale != 0:
-                style_key = self.to_k_ip_style(style_hidden_states_all)
-                style_value = self.to_v_ip_style(style_hidden_states_all)
-                style_key = attn.head_to_batch_dim(style_key)
-                style_value = attn.head_to_batch_dim(style_value)
-                if xformers_available:
-                    style_hidden_states = self._memory_efficient_attention_xformers(query, style_key, style_value, None)
+                if self.multi_style_enabled:
+                    style_hidden_states_sum = 0
+                    style_mask_sum = None
+                    for idx in range(num_style_images):
+                        style_tokens_i = style_hidden_states_all[:, idx * self.num_style_tokens: (idx + 1) * self.num_style_tokens, :]
+                        style_key = self.to_k_ip_style(style_tokens_i)
+                        style_value = self.to_v_ip_style(style_tokens_i)
+                        style_key = attn.head_to_batch_dim(style_key)
+                        style_value = attn.head_to_batch_dim(style_value)
+                        if xformers_available:
+                            style_hidden_states_i = self._memory_efficient_attention_xformers(query, style_key, style_value, None)
+                        else:
+                            style_attention_probs = attn.get_attention_scores(query, style_key, None)
+                            style_hidden_states_i = torch.bmm(style_attention_probs, style_value)
+                        style_hidden_states_i = attn.batch_to_head_dim(style_hidden_states_i)
+
+                        style_region_mask = None
+                        style_region_scale = 1.0
+                        if idx < len(style_region_control.style_image_conditioning):
+                            style_region_mask = style_region_control.style_image_conditioning[idx].get('region_mask', None)
+                            style_region_scale = style_region_control.style_image_conditioning[idx].get('scale', 1.0)
+                        if style_region_mask is not None:
+                            style_mask = _resize_region_mask(style_region_mask, query.shape[1])
+                        else:
+                            style_mask = torch.ones((1, query.shape[1], 1), dtype=style_hidden_states_i.dtype, device=style_hidden_states_i.device)
+                        style_hidden_states_sum = style_hidden_states_sum + style_hidden_states_i * style_mask * style_region_scale
+                        style_mask_sum = style_mask if style_mask_sum is None else style_mask_sum + style_mask
+
+                    style_hidden_states_sum = style_hidden_states_sum / torch.clamp(style_mask_sum, min=1.0)
+
+                    style_injection = self.style_scale * self.style_block_scale * style_hidden_states_sum
                 else:
-                    style_attention_probs = attn.get_attention_scores(query, style_key, None)
-                    style_hidden_states = torch.bmm(style_attention_probs, style_value)
-                style_hidden_states = attn.batch_to_head_dim(style_hidden_states)
-                style_injection = self.style_scale * self.style_block_scale * style_hidden_states
+                    style_key = self.to_k_ip_style(style_hidden_states_all)
+                    style_value = self.to_v_ip_style(style_hidden_states_all)
+                    style_key = attn.head_to_batch_dim(style_key)
+                    style_value = attn.head_to_batch_dim(style_value)
+                    if xformers_available:
+                        style_hidden_states = self._memory_efficient_attention_xformers(query, style_key, style_value, None)
+                    else:
+                        style_attention_probs = attn.get_attention_scores(query, style_key, None)
+                        style_hidden_states = torch.bmm(style_attention_probs, style_value)
+                    style_hidden_states = attn.batch_to_head_dim(style_hidden_states)
+                    style_injection = self.style_scale * self.style_block_scale * style_hidden_states
             else:
                 style_injection = torch.zeros_like(face_injection)
 
@@ -433,6 +475,7 @@ class IPAttnProcessor2_0(torch.nn.Module):
         self.independent_style_strength = False
         self.style_injection_budget = 1.0
         self.style_block_scale = 1.0
+        self.multi_style_enabled = False
 
     def add_style_branch(self, num_style_tokens, style_scale=1.0):
         self.num_style_tokens = num_style_tokens
@@ -487,6 +530,7 @@ class IPAttnProcessor2_0(torch.nn.Module):
         # region_control.prompt_image_conditioning (one dict per identity, each
         # optionally holding that identity's own region_mask).
         num_identities = max(len(region_control.prompt_image_conditioning), 1)
+        num_style_images = max(len(style_region_control.style_image_conditioning), 1) if self.multi_style_enabled else 1
 
         query = attn.to_q(hidden_states)
 
@@ -497,7 +541,10 @@ class IPAttnProcessor2_0(torch.nn.Module):
         else:
             style_hidden_states_all = None
             if self.num_style_tokens > 0:
-                style_start = encoder_hidden_states.shape[1] - self.num_style_tokens
+                if self.multi_style_enabled:
+                    style_start = encoder_hidden_states.shape[1] - self.num_style_tokens * num_style_images
+                else:
+                    style_start = encoder_hidden_states.shape[1] - self.num_style_tokens
                 encoder_hidden_states, style_hidden_states_all = (
                     encoder_hidden_states[:, :style_start, :],
                     encoder_hidden_states[:, style_start:, :],
@@ -569,16 +616,47 @@ class IPAttnProcessor2_0(torch.nn.Module):
 
         if style_hidden_states_all is not None and self.style_scale != 0:
             if self.style_block_scale != 0:
-                style_key = self.to_k_ip_style(style_hidden_states_all)
-                style_value = self.to_v_ip_style(style_hidden_states_all)
-                style_key = style_key.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
-                style_value = style_value.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
-                style_hidden_states = F.scaled_dot_product_attention(
-                    query, style_key, style_value, attn_mask=None, dropout_p=0.0, is_causal=False
-                )
-                style_hidden_states = style_hidden_states.transpose(1, 2).reshape(batch_size, -1, attn.heads * head_dim)
-                style_hidden_states = style_hidden_states.to(query.dtype)
-                style_injection = self.style_scale * self.style_block_scale * style_hidden_states
+                if self.multi_style_enabled:
+                    style_hidden_states_sum = 0
+                    style_mask_sum = None
+                    for idx in range(num_style_images):
+                        style_tokens_i = style_hidden_states_all[:, idx * self.num_style_tokens: (idx + 1) * self.num_style_tokens, :]
+                        style_key = self.to_k_ip_style(style_tokens_i)
+                        style_value = self.to_v_ip_style(style_tokens_i)
+                        style_key = style_key.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
+                        style_value = style_value.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
+                        style_hidden_states_i = F.scaled_dot_product_attention(
+                            query, style_key, style_value, attn_mask=None, dropout_p=0.0, is_causal=False
+                        )
+                        style_hidden_states_i = style_hidden_states_i.transpose(1, 2).reshape(batch_size, -1, attn.heads * head_dim)
+                        style_hidden_states_i = style_hidden_states_i.to(query.dtype)
+
+                        style_region_mask = None
+                        style_region_scale = 1.0
+                        if idx < len(style_region_control.style_image_conditioning):
+                            style_region_mask = style_region_control.style_image_conditioning[idx].get('region_mask', None)
+                            style_region_scale = style_region_control.style_image_conditioning[idx].get('scale', 1.0)
+                        if style_region_mask is not None:
+                            style_mask = _resize_region_mask(style_region_mask, query.shape[-2])
+                        else:
+                            style_mask = torch.ones((1, query.shape[-2], 1), dtype=style_hidden_states_i.dtype, device=style_hidden_states_i.device)
+                        style_hidden_states_sum = style_hidden_states_sum + style_hidden_states_i * style_mask * style_region_scale
+                        style_mask_sum = style_mask if style_mask_sum is None else style_mask_sum + style_mask
+
+                    style_hidden_states_sum = style_hidden_states_sum / torch.clamp(style_mask_sum, min=1.0)
+
+                    style_injection = self.style_scale * self.style_block_scale * style_hidden_states_sum
+                else:
+                    style_key = self.to_k_ip_style(style_hidden_states_all)
+                    style_value = self.to_v_ip_style(style_hidden_states_all)
+                    style_key = style_key.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
+                    style_value = style_value.view(batch_size, -1, attn.heads, head_dim).transpose(1, 2)
+                    style_hidden_states = F.scaled_dot_product_attention(
+                        query, style_key, style_value, attn_mask=None, dropout_p=0.0, is_causal=False
+                    )
+                    style_hidden_states = style_hidden_states.transpose(1, 2).reshape(batch_size, -1, attn.heads * head_dim)
+                    style_hidden_states = style_hidden_states.to(query.dtype)
+                    style_injection = self.style_scale * self.style_block_scale * style_hidden_states
             else:
                 style_injection = torch.zeros_like(face_injection)
 
