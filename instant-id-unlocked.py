@@ -1457,6 +1457,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         style_right_image_path,
         style_left_strength,
         style_right_strength,
+        style_overlap_additive,
         progress=gr.Progress(),
     ):
         def _fix_guidance_range(start, end, label):
@@ -2206,7 +2207,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                     original_face_image, (enc_w, enc_h), PIL.Image.LANCZOS, effective_pad_to_max_side_i2i
                 )
 
-        style_multiid_active = bool(style_multiid_individual) and multi_id_active
+        style_multiid_active = bool(style_multiid_individual) and multi_id_active and (bool(style_left_image_path) or bool(style_right_image_path))
         style_left_strength = min(2.0, max(0.1, float(style_left_strength))) if style_left_strength is not None else 1.0
         style_right_strength = min(2.0, max(0.1, float(style_right_strength))) if style_right_strength is not None else 1.0
         regional_style_images = []
@@ -2228,6 +2229,8 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             style_adapter_active = bool(style_adapter_enabled) and bool(style_image_path) and float(style_strength) > 0
         style_variant = style_adapter_variant if style_adapter_variant in ("plus", "standard") else "plus"
         ensure_style_adapter_ready(pipe, style_adapter_active, style_variant)
+        from ip_adapter.attention_processor import set_style_overlap_additive
+        set_style_overlap_additive(pipe, style_multiid_active and bool(style_overlap_additive))
 
         style_image_embeds = None
         style_control_mask = None
@@ -2456,6 +2459,7 @@ Style/content reference injection budget: {style_injection_budget}
 Style/content reference style-only layers: {bool(style_restrict_to_style_layers)}
 Style/content reference bleed-through: {style_restrict_bleed_through}
 Style/content reference multi-ID individual style: {style_multiid_active}
+Style/content reference additive overlap (Multi-ID): {style_multiid_active and bool(style_overlap_additive)}
 Style/content reference left image (Multi-ID): {style_left_image_filename}
 Style/content reference right image (Multi-ID): {style_right_image_filename}
 Style/content reference left strength (Multi-ID): {style_left_strength}
@@ -2533,6 +2537,7 @@ Scheduler: {scheduler}"""
                 hires_pipe.controlnet = pipe.controlnet
                 hires_pipe.scheduler = pipe.scheduler
                 ensure_style_adapter_ready(hires_pipe, style_adapter_active, style_variant)
+                set_style_overlap_additive(hires_pipe, style_multiid_active and bool(style_overlap_additive))
                 if style_adapter_active:
                     from style_ip_adapter import set_style_scale, set_independent_style_strength, set_style_block_restriction, set_multi_style_enabled
                     set_style_scale(hires_pipe, float(style_strength))
@@ -3446,6 +3451,11 @@ Scheduler: {scheduler}"""
                         value=False,
                         visible=False,
                     )
+                    style_overlap_additive = gr.Checkbox(
+                        label="Keep full style strength in overlapping regions instead of averaging them. Can increase combined influence.",
+                        value=False,
+                        visible=False,
+                    )
                     with gr.Row():
                         style_left_image = gr.Image(label="Left ID style/ref", height=180, type="filepath", visible=False)
                         style_right_image = gr.Image(label="Right ID style/ref", height=180, type="filepath", visible=False)
@@ -3533,17 +3543,18 @@ Scheduler: {scheduler}"""
                             gr.update(visible=per_id_uploads_visible),
                             gr.update(visible=per_id_uploads_visible),
                             gr.update(visible=per_id_uploads_visible),
+                            gr.update(visible=per_id_uploads_visible),
                         )
                     style_adapter_enabled.change(
                         fn=toggle_style_adapter_section,
                         inputs=[style_adapter_enabled, style_independent_strength, style_restrict_to_style_layers, enable_multi_id, style_multiid_individual],
-                        outputs=[style_image, style_strength, style_adapter_variant, style_independent_strength, style_restrict_to_style_layers, style_injection_budget, style_restrict_bleed_through, style_multiid_individual, style_left_image, style_right_image, style_left_strength, style_right_strength],
+                        outputs=[style_image, style_strength, style_adapter_variant, style_independent_strength, style_restrict_to_style_layers, style_injection_budget, style_restrict_bleed_through, style_multiid_individual, style_left_image, style_right_image, style_left_strength, style_right_strength, style_overlap_additive],
                         queue=False,
                     )
                     enable_multi_id.change(
                         fn=toggle_style_adapter_section,
                         inputs=[style_adapter_enabled, style_independent_strength, style_restrict_to_style_layers, enable_multi_id, style_multiid_individual],
-                        outputs=[style_image, style_strength, style_adapter_variant, style_independent_strength, style_restrict_to_style_layers, style_injection_budget, style_restrict_bleed_through, style_multiid_individual, style_left_image, style_right_image, style_left_strength, style_right_strength],
+                        outputs=[style_image, style_strength, style_adapter_variant, style_independent_strength, style_restrict_to_style_layers, style_injection_budget, style_restrict_bleed_through, style_multiid_individual, style_left_image, style_right_image, style_left_strength, style_right_strength, style_overlap_additive],
                         queue=False,
                     )
                     def toggle_multiid_individual_uploads(multiid_individual_style, enabled, multi_id_enabled):
@@ -3553,11 +3564,12 @@ Scheduler: {scheduler}"""
                             gr.update(visible=uploads_visible),
                             gr.update(visible=uploads_visible),
                             gr.update(visible=uploads_visible),
+                            gr.update(visible=uploads_visible),
                         )
                     style_multiid_individual.change(
                         fn=toggle_multiid_individual_uploads,
                         inputs=[style_multiid_individual, style_adapter_enabled, enable_multi_id],
-                        outputs=[style_left_image, style_right_image, style_left_strength, style_right_strength],
+                        outputs=[style_left_image, style_right_image, style_left_strength, style_right_strength, style_overlap_additive],
                         queue=False,
                     )
                     def toggle_independent_strength_budget(independent_strength, enabled):
@@ -4717,6 +4729,7 @@ Scheduler: {scheduler}"""
                 style_right_image,
                 style_left_strength,
                 style_right_strength,
+                style_overlap_additive,
             ]
             generate.click(fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False).then(
                 fn=generate_image, inputs=shared_inputs, outputs=[gallery]
@@ -4868,6 +4881,7 @@ Scheduler: {scheduler}"""
                     "style_multiid_individual": False,
                     "style_left_strength": 1.0,
                     "style_right_strength": 1.0,
+                    "style_overlap_additive": False,
                     "scheduler": "DPMSolverMultistepScheduler",
                     "ratio_base_pixel_number": 8,
                     "rng_source": "GPU",
@@ -5197,6 +5211,8 @@ Scheduler: {scheduler}"""
                                 pass
                         elif line.startswith("Style/content reference multi-ID individual style:"):
                             settings["style_multiid_individual"] = "true" in line.lower()
+                        elif line.startswith("Style/content reference additive overlap (Multi-ID):"):
+                            settings["style_overlap_additive"] = "true" in line.lower()
                         elif line.startswith("Style/content reference left strength (Multi-ID):"):
                             try:
                                 settings["style_left_strength"] = float(line.replace("Style/content reference left strength (Multi-ID):", "").strip())
@@ -5399,6 +5415,7 @@ Scheduler: {scheduler}"""
                     settings["style_multiid_individual"],
                     settings["style_left_strength"],
                     settings["style_right_strength"],
+                    settings["style_overlap_additive"],
                     accordion_update,
                     gr.update(open=open_resolution_accordion),
                     gr.update(open=open_advanced_accordion),
@@ -5510,6 +5527,7 @@ Scheduler: {scheduler}"""
                     style_multiid_individual,
                     style_left_strength,
                     style_right_strength,
+                    style_overlap_additive,
                     controlnet_accordion,
                     resolution_settings_accordion,
                     advanced_settings_accordion,
