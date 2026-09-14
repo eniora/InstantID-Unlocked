@@ -157,6 +157,7 @@ class IPAttnProcessor(nn.Module):
         self.style_block_scale = 1.0
         self.multi_style_enabled = False
         self.style_overlap_additive = False
+        self.style_overlap_retention = 0.5
 
     def add_style_branch(self, num_style_tokens, style_scale=1.0):
         self.num_style_tokens = num_style_tokens
@@ -275,6 +276,7 @@ class IPAttnProcessor(nn.Module):
                 if self.multi_style_enabled:
                     style_hidden_states_sum = 0
                     style_mask_sum = None
+                    overlap_retention = self.style_overlap_retention if self.style_overlap_additive else 0.0
                     for idx in range(num_style_images):
                         style_tokens_i = style_hidden_states_all[:, idx * self.num_style_tokens: (idx + 1) * self.num_style_tokens, :]
                         style_key = self.to_k_ip_style(style_tokens_i)
@@ -298,11 +300,14 @@ class IPAttnProcessor(nn.Module):
                         else:
                             style_mask = torch.ones((1, query.shape[1], 1), dtype=style_hidden_states_i.dtype, device=style_hidden_states_i.device)
                         style_hidden_states_sum = style_hidden_states_sum + style_hidden_states_i * style_mask * style_region_scale
-                        if not self.style_overlap_additive:
+                        if overlap_retention < 1.0:
                             style_mask_sum = style_mask if style_mask_sum is None else style_mask_sum + style_mask
 
-                    if not self.style_overlap_additive:
+                    if overlap_retention == 0.0:
                         style_hidden_states_sum = style_hidden_states_sum / torch.clamp(style_mask_sum, min=1.0)
+                    elif overlap_retention < 1.0:
+                        averaged_style = style_hidden_states_sum / torch.clamp(style_mask_sum, min=1.0)
+                        style_hidden_states_sum = averaged_style + (style_hidden_states_sum - averaged_style) * overlap_retention
 
                     style_injection = self.style_scale * self.style_block_scale * style_hidden_states_sum
                 else:
@@ -480,6 +485,7 @@ class IPAttnProcessor2_0(torch.nn.Module):
         self.style_block_scale = 1.0
         self.multi_style_enabled = False
         self.style_overlap_additive = False
+        self.style_overlap_retention = 0.5
 
     def add_style_branch(self, num_style_tokens, style_scale=1.0):
         self.num_style_tokens = num_style_tokens
@@ -623,6 +629,7 @@ class IPAttnProcessor2_0(torch.nn.Module):
                 if self.multi_style_enabled:
                     style_hidden_states_sum = 0
                     style_mask_sum = None
+                    overlap_retention = self.style_overlap_retention if self.style_overlap_additive else 0.0
                     for idx in range(num_style_images):
                         style_tokens_i = style_hidden_states_all[:, idx * self.num_style_tokens: (idx + 1) * self.num_style_tokens, :]
                         style_key = self.to_k_ip_style(style_tokens_i)
@@ -645,11 +652,14 @@ class IPAttnProcessor2_0(torch.nn.Module):
                         else:
                             style_mask = torch.ones((1, query.shape[-2], 1), dtype=style_hidden_states_i.dtype, device=style_hidden_states_i.device)
                         style_hidden_states_sum = style_hidden_states_sum + style_hidden_states_i * style_mask * style_region_scale
-                        if not self.style_overlap_additive:
+                        if overlap_retention < 1.0:
                             style_mask_sum = style_mask if style_mask_sum is None else style_mask_sum + style_mask
 
-                    if not self.style_overlap_additive:
+                    if overlap_retention == 0.0:
                         style_hidden_states_sum = style_hidden_states_sum / torch.clamp(style_mask_sum, min=1.0)
+                    elif overlap_retention < 1.0:
+                        averaged_style = style_hidden_states_sum / torch.clamp(style_mask_sum, min=1.0)
+                        style_hidden_states_sum = averaged_style + (style_hidden_states_sum - averaged_style) * overlap_retention
 
                     style_injection = self.style_scale * self.style_block_scale * style_hidden_states_sum
                 else:
@@ -917,8 +927,9 @@ def run_separate_identitynet(controlnet, sample, timestep, image_tokens,
     finally:
         controlnet.set_attn_processor(saved_processors)
 
-
-def set_style_overlap_additive(pipe, enabled):
+def set_style_overlap_additive(pipe, enabled, retention=0.5):
+    retention = min(1.0, max(0.0, float(retention)))
     for processor in pipe.unet.attn_processors.values():
         if isinstance(processor, (IPAttnProcessor, IPAttnProcessor2_0)):
             processor.style_overlap_additive = bool(enabled)
+            processor.style_overlap_retention = retention
