@@ -2231,7 +2231,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         style_variant = style_adapter_variant if style_adapter_variant in ("plus", "standard") else "plus"
         ensure_style_adapter_ready(pipe, style_adapter_active, style_variant)
         from ip_adapter.attention_processor import set_style_overlap_additive
-        style_overlap_retention = min(1.0, max(0.0, float(style_overlap_retention))) if style_overlap_retention is not None else 0.5
+        style_overlap_retention = min(1.0, max(0.0, float(style_overlap_retention))) if style_overlap_retention is not None else 0.35
         set_style_overlap_additive(pipe, style_multiid_active and bool(style_overlap_additive), retention=style_overlap_retention)
 
         style_image_embeds = None
@@ -3457,7 +3457,7 @@ Scheduler: {scheduler}"""
                     )
                     style_overlap_additive = gr.Checkbox(
                         label="Adjust or fully keep style strength in overlapping regions. Can increase combined influence.",
-                        value=False,
+                        value=True,
                         visible=False,
                     )
                     style_overlap_retention = gr.Slider(
@@ -3466,7 +3466,7 @@ Scheduler: {scheduler}"""
                         minimum=0.0,
                         maximum=1.0,
                         step=0.05,
-                        value=0.5,
+                        value=0.35,
                         show_label=False,
                         visible=False,
                         interactive=False,
@@ -4908,8 +4908,8 @@ Scheduler: {scheduler}"""
                     "style_multiid_individual": False,
                     "style_left_strength": 1.0,
                     "style_right_strength": 1.0,
-                    "style_overlap_additive": False,
-                    "style_overlap_retention": 0.5,
+                    "style_overlap_additive": True,
+                    "style_overlap_retention": 0.35,
                     "scheduler": "DPMSolverMultistepScheduler",
                     "ratio_base_pixel_number": 8,
                     "rng_source": "GPU",
