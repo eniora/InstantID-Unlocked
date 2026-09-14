@@ -157,7 +157,7 @@ class IPAttnProcessor(nn.Module):
         self.style_block_scale = 1.0
         self.multi_style_enabled = False
         self.style_overlap_additive = False
-        self.style_overlap_retention = 0.5
+        self.style_overlap_retention = 0.35
 
     def add_style_branch(self, num_style_tokens, style_scale=1.0):
         self.num_style_tokens = num_style_tokens
@@ -485,7 +485,7 @@ class IPAttnProcessor2_0(torch.nn.Module):
         self.style_block_scale = 1.0
         self.multi_style_enabled = False
         self.style_overlap_additive = False
-        self.style_overlap_retention = 0.5
+        self.style_overlap_retention = 0.35
 
     def add_style_branch(self, num_style_tokens, style_scale=1.0):
         self.num_style_tokens = num_style_tokens
@@ -927,7 +927,7 @@ def run_separate_identitynet(controlnet, sample, timestep, image_tokens,
     finally:
         controlnet.set_attn_processor(saved_processors)
 
-def set_style_overlap_additive(pipe, enabled, retention=0.5):
+def set_style_overlap_additive(pipe, enabled, retention=0.35):
     retention = min(1.0, max(0.0, float(retention)))
     for processor in pipe.unet.attn_processors.values():
         if isinstance(processor, (IPAttnProcessor, IPAttnProcessor2_0)):
