@@ -1453,10 +1453,12 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         style_restrict_to_style_layers,
         style_restrict_bleed_through,
         style_multiid_individual,
-        style_left_image_path,
-        style_right_image_path,
-        style_left_strength,
-        style_right_strength,
+        style_first_image_path,
+        style_second_image_path,
+        style_third_image_path,
+        style_first_strength,
+        style_second_strength,
+        style_third_strength,
         style_overlap_additive,
         style_overlap_retention,
         progress=gr.Progress(),
@@ -1692,8 +1694,9 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         face_image_filename = os.path.basename(face_image_path) if face_image_path else "None"
         pose_image_filename = os.path.basename(pose_image_path) if pose_image_path else "None"
         style_image_filename = os.path.basename(style_image_path) if style_image_path else "None"
-        style_left_image_filename = os.path.basename(style_left_image_path) if style_left_image_path else "None"
-        style_right_image_filename = os.path.basename(style_right_image_path) if style_right_image_path else "None"
+        style_first_image_filename = os.path.basename(style_first_image_path) if style_first_image_path else "None"
+        style_second_image_filename = os.path.basename(style_second_image_path) if style_second_image_path else "None"
+        style_third_image_filename = os.path.basename(style_third_image_path) if style_third_image_path else "None"
 
         if not controlnet_selection:
             torch.cuda.empty_cache()
@@ -2208,17 +2211,20 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                     original_face_image, (enc_w, enc_h), PIL.Image.LANCZOS, effective_pad_to_max_side_i2i
                 )
 
-        style_multiid_active = bool(style_multiid_individual) and multi_id_active and (bool(style_left_image_path) or bool(style_right_image_path))
-        style_left_strength = min(2.0, max(0.1, float(style_left_strength))) if style_left_strength is not None else 1.0
-        style_right_strength = min(2.0, max(0.1, float(style_right_strength))) if style_right_strength is not None else 1.0
+        style_multiid_active = bool(style_multiid_individual) and multi_id_active and (bool(style_first_image_path) or bool(style_second_image_path) or (bool(style_third_image_path) and isinstance(control_mask, list) and len(control_mask) >= 3))
+        style_first_strength = min(2.0, max(0.1, float(style_first_strength))) if style_first_strength is not None else 1.0
+        style_second_strength = min(2.0, max(0.1, float(style_second_strength))) if style_second_strength is not None else 1.0
+        style_third_strength = min(2.0, max(0.1, float(style_third_strength))) if style_third_strength is not None else 1.0
         regional_style_images = []
         if style_multiid_active and isinstance(control_mask, list):
-            if style_left_image_path and len(control_mask) >= 1:
-                regional_style_images.append(("left", style_left_image_path, control_mask[0], style_left_strength))
-            if style_right_image_path and len(control_mask) >= 2:
-                regional_style_images.append(("right", style_right_image_path, control_mask[1], style_right_strength))
-            if regional_style_images and num_identities > 2 and style_adapter_enabled and float(style_strength) > 0:
-                print(f"Style/content reference: per-identity left/right references only apply to the first two identities; the other {num_identities - 2} identit{'y' if num_identities - 2 == 1 else 'ies'} will only receive the background reference (if set).\n")
+            if style_first_image_path and len(control_mask) >= 1:
+                regional_style_images.append(("first", style_first_image_path, control_mask[0], style_first_strength))
+            if style_second_image_path and len(control_mask) >= 2:
+                regional_style_images.append(("second", style_second_image_path, control_mask[1], style_second_strength))
+            if style_third_image_path and len(control_mask) >= 3:
+                regional_style_images.append(("third", style_third_image_path, control_mask[2], style_third_strength))
+            if regional_style_images and num_identities > 3 and style_adapter_enabled and float(style_strength) > 0:
+                print(f"Style/content reference: per-identity references only apply to the first three identities; the other {num_identities - 3} identit{'y' if num_identities - 3 == 1 else 'ies'} will only receive the background reference (if set).\n")
 
         if style_multiid_active:
             style_adapter_active = (
@@ -2464,10 +2470,12 @@ Style/content reference bleed-through: {style_restrict_bleed_through}
 Style/content reference multi-ID individual style: {style_multiid_active}
 Style/content reference additive overlap (Multi-ID): {style_multiid_active and bool(style_overlap_additive)}
 Style/content reference overlap strength retention (Multi-ID): {style_overlap_retention}
-Style/content reference left image (Multi-ID): {style_left_image_filename}
-Style/content reference right image (Multi-ID): {style_right_image_filename}
-Style/content reference left strength (Multi-ID): {style_left_strength}
-Style/content reference right strength (Multi-ID): {style_right_strength}
+Style/content reference first image (Multi-ID): {style_first_image_filename}
+Style/content reference second image (Multi-ID): {style_second_image_filename}
+Style/content reference third image (Multi-ID): {style_third_image_filename}
+Style/content reference first strength (Multi-ID): {style_first_strength}
+Style/content reference second strength (Multi-ID): {style_second_strength}
+Style/content reference third strength (Multi-ID): {style_third_strength}
 Noise RNG device: {rng_source}
 LoRA Enabled: {enable_lora}
 LoRA 1 selection: {'None' if disable_lora_1 or not (enable_lora and lora_selection and os.path.exists(os.path.join('./models/Loras', lora_selection))) else lora_selection}
@@ -2757,7 +2765,7 @@ Scheduler: {scheduler}"""
         });
     }
     """
-    with gr.Blocks(title="InstantID Unlocked v9.4.1", js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v9.4.2", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
@@ -3451,7 +3459,7 @@ Scheduler: {scheduler}"""
                     )
                     style_image = gr.Image(label="Style/content reference image", height=250, type="filepath", visible=False)
                     style_multiid_individual = gr.Checkbox(
-                        label="Enable per-ID style for Multi-ID. Applies to the first two IDs. Increase 'Per-ID region padding' value for better results.",
+                        label="Enable per-ID style for Multi-ID. Applies to up to three IDs. Increase 'Per-ID region padding' value for better results.",
                         value=False,
                         visible=False,
                     )
@@ -3472,19 +3480,28 @@ Scheduler: {scheduler}"""
                         interactive=False,
                     )
                     with gr.Row():
-                        style_left_image = gr.Image(label="Left ID style/ref", height=180, type="filepath", visible=False)
-                        style_right_image = gr.Image(label="Right ID style/ref", height=180, type="filepath", visible=False)
+                        style_first_image = gr.Image(label="First ID style/ref", height=180, type="filepath", visible=False)
+                        style_second_image = gr.Image(label="Second ID style/ref", height=180, type="filepath", visible=False)
+                        style_third_image = gr.Image(label="Third ID style/ref (optional, needs 3rd ID)", height=180, type="filepath", visible=False)
                     with gr.Row():
-                        style_left_strength = gr.Slider(
-                            label="Left ID style strength (relative)",
+                        style_first_strength = gr.Slider(
+                            label="1st ID style strength",
                             minimum=0.1,
                             maximum=2.0,
                             step=0.05,
                             value=1.0,
                             visible=False,
                         )
-                        style_right_strength = gr.Slider(
-                            label="Right ID style strength (relative)",
+                        style_second_strength = gr.Slider(
+                            label="2nd ID style strength",
+                            minimum=0.1,
+                            maximum=2.0,
+                            step=0.05,
+                            value=1.0,
+                            visible=False,
+                        )
+                        style_third_strength = gr.Slider(
+                            label="3rd ID style strength",
                             minimum=0.1,
                             maximum=2.0,
                             step=0.05,
@@ -3560,17 +3577,19 @@ Scheduler: {scheduler}"""
                             gr.update(visible=per_id_uploads_visible),
                             gr.update(visible=per_id_uploads_visible),
                             gr.update(visible=per_id_uploads_visible and bool(overlap_enabled), interactive=bool(overlap_enabled)),
+                            gr.update(visible=per_id_uploads_visible),
+                            gr.update(visible=per_id_uploads_visible),
                         )
                     style_adapter_enabled.change(
                         fn=toggle_style_adapter_section,
                         inputs=[style_adapter_enabled, style_independent_strength, style_restrict_to_style_layers, enable_multi_id, style_multiid_individual, style_overlap_additive],
-                        outputs=[style_image, style_strength, style_adapter_variant, style_independent_strength, style_restrict_to_style_layers, style_injection_budget, style_restrict_bleed_through, style_multiid_individual, style_left_image, style_right_image, style_left_strength, style_right_strength, style_overlap_additive, style_overlap_retention],
+                        outputs=[style_image, style_strength, style_adapter_variant, style_independent_strength, style_restrict_to_style_layers, style_injection_budget, style_restrict_bleed_through, style_multiid_individual, style_first_image, style_second_image, style_first_strength, style_second_strength, style_overlap_additive, style_overlap_retention, style_third_image, style_third_strength],
                         queue=False,
                     )
                     enable_multi_id.change(
                         fn=toggle_style_adapter_section,
                         inputs=[style_adapter_enabled, style_independent_strength, style_restrict_to_style_layers, enable_multi_id, style_multiid_individual, style_overlap_additive],
-                        outputs=[style_image, style_strength, style_adapter_variant, style_independent_strength, style_restrict_to_style_layers, style_injection_budget, style_restrict_bleed_through, style_multiid_individual, style_left_image, style_right_image, style_left_strength, style_right_strength, style_overlap_additive, style_overlap_retention],
+                        outputs=[style_image, style_strength, style_adapter_variant, style_independent_strength, style_restrict_to_style_layers, style_injection_budget, style_restrict_bleed_through, style_multiid_individual, style_first_image, style_second_image, style_first_strength, style_second_strength, style_overlap_additive, style_overlap_retention, style_third_image, style_third_strength],
                         queue=False,
                     )
                     def toggle_multiid_individual_uploads(multiid_individual_style, enabled, multi_id_enabled, overlap_enabled):
@@ -3582,11 +3601,13 @@ Scheduler: {scheduler}"""
                             gr.update(visible=uploads_visible),
                             gr.update(visible=uploads_visible),
                             gr.update(visible=uploads_visible and bool(overlap_enabled), interactive=bool(overlap_enabled)),
+                            gr.update(visible=uploads_visible),
+                            gr.update(visible=uploads_visible),
                         )
                     style_multiid_individual.change(
                         fn=toggle_multiid_individual_uploads,
                         inputs=[style_multiid_individual, style_adapter_enabled, enable_multi_id, style_overlap_additive],
-                        outputs=[style_left_image, style_right_image, style_left_strength, style_right_strength, style_overlap_additive, style_overlap_retention],
+                        outputs=[style_first_image, style_second_image, style_first_strength, style_second_strength, style_overlap_additive, style_overlap_retention, style_third_image, style_third_strength],
                         queue=False,
                     )
                     def toggle_overlap_retention(overlap_enabled, enabled, multi_id_enabled, multiid_individual_style):
@@ -4751,10 +4772,12 @@ Scheduler: {scheduler}"""
                 style_restrict_to_style_layers,
                 style_restrict_bleed_through,
                 style_multiid_individual,
-                style_left_image,
-                style_right_image,
-                style_left_strength,
-                style_right_strength,
+                style_first_image,
+                style_second_image,
+                style_third_image,
+                style_first_strength,
+                style_second_strength,
+                style_third_strength,
                 style_overlap_additive,
                 style_overlap_retention,
             ]
@@ -4906,8 +4929,9 @@ Scheduler: {scheduler}"""
                     "style_restrict_to_style_layers": True,
                     "style_restrict_bleed_through": 0.6,
                     "style_multiid_individual": False,
-                    "style_left_strength": 1.0,
-                    "style_right_strength": 1.0,
+                    "style_first_strength": 1.0,
+                    "style_second_strength": 1.0,
+                    "style_third_strength": 1.0,
                     "style_overlap_additive": True,
                     "style_overlap_retention": 0.35,
                     "scheduler": "DPMSolverMultistepScheduler",
@@ -5246,14 +5270,19 @@ Scheduler: {scheduler}"""
                                 settings["style_overlap_retention"] = min(1.0, max(0.0, float(line.replace("Style/content reference overlap strength retention (Multi-ID):", "").strip())))
                             except ValueError:
                                 pass
-                        elif line.startswith("Style/content reference left strength (Multi-ID):"):
+                        elif line.startswith("Style/content reference first strength (Multi-ID):"):
                             try:
-                                settings["style_left_strength"] = float(line.replace("Style/content reference left strength (Multi-ID):", "").strip())
+                                settings["style_first_strength"] = float(line.replace("Style/content reference first strength (Multi-ID):", "").strip())
                             except ValueError:
                                 pass
-                        elif line.startswith("Style/content reference right strength (Multi-ID):"):
+                        elif line.startswith("Style/content reference second strength (Multi-ID):"):
                             try:
-                                settings["style_right_strength"] = float(line.replace("Style/content reference right strength (Multi-ID):", "").strip())
+                                settings["style_second_strength"] = float(line.replace("Style/content reference second strength (Multi-ID):", "").strip())
+                            except ValueError:
+                                pass
+                        elif line.startswith("Style/content reference third strength (Multi-ID):"):
+                            try:
+                                settings["style_third_strength"] = float(line.replace("Style/content reference third strength (Multi-ID):", "").strip())
                             except ValueError:
                                 pass
                         elif line.startswith("ControlNet selection:"):
@@ -5446,8 +5475,9 @@ Scheduler: {scheduler}"""
                     settings["style_restrict_to_style_layers"],
                     settings["style_restrict_bleed_through"],
                     settings["style_multiid_individual"],
-                    settings["style_left_strength"],
-                    settings["style_right_strength"],
+                    settings["style_first_strength"],
+                    settings["style_second_strength"],
+                    settings["style_third_strength"],
                     settings["style_overlap_additive"],
                     settings["style_overlap_retention"],
                     accordion_update,
@@ -5559,8 +5589,9 @@ Scheduler: {scheduler}"""
                     style_restrict_to_style_layers,
                     style_restrict_bleed_through,
                     style_multiid_individual,
-                    style_left_strength,
-                    style_right_strength,
+                    style_first_strength,
+                    style_second_strength,
+                    style_third_strength,
                     style_overlap_additive,
                     style_overlap_retention,
                     controlnet_accordion,
@@ -5588,7 +5619,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID Unlocked v9.4.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v9.4.2</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
