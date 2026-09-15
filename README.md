@@ -72,6 +72,7 @@ python 3.12.6 is now supported (also tested and works on python 3.10.6, same req
 All necessary models if you're having trouble manually downloading them (default SDXL model not included, will be auto downloaded):
 
 Part 1: https://drive.google.com/file/d/1NsdVjCHjLdF5iprAMk7bu6Egeoua1Tu6/view?usp=sharing
+
 Part 2: https://drive.google.com/file/d/1CJKw-rDGW6s1ox4at2Sy7K5JdYZPfoyQ/view?usp=sharing
 
 _______________________________________________
