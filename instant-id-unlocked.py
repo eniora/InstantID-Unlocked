@@ -393,7 +393,9 @@ EXCLUDED_MODELS = {
     "lllyasviel/ControlNet",
     "xinsir/controlnet-openpose-sdxl-1.0",
     "eniora/controlnet-openpose-sdxl-1.0",
-    "stabilityai/stable-diffusion-xl-base-1.0"
+    "stabilityai/stable-diffusion-xl-base-1.0",
+    "h94/IP-Adapter",
+    "h94/IP-Adapter-FaceID"
 }
 EXCLUDED_MODELS_LOWER = {m.lower() for m in EXCLUDED_MODELS}
 SAFETENSORS_CHECKPOINTS_DIR = "models"
