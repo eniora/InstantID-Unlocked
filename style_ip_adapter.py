@@ -417,6 +417,10 @@ def _remove_faceid_lora_hooks(state):
     state.pop("faceid_lora_targets", None)
 
 
+def set_faceid_lora_scale(pipe, scale=1.0):
+    _style_state(pipe)["faceid_lora_scale"] = float(scale)
+
+
 def refresh_faceid_lora_hooks(pipe):
     state = _style_state(pipe)
     weights = state.get("faceid_lora_weights", {})
@@ -443,9 +447,13 @@ def refresh_faceid_lora_hooks(pipe):
             down = down.to(device=module.weight.device, dtype=module.weight.dtype)
             up = up.to(device=module.weight.device, dtype=module.weight.dtype)
             def add_delta(layer, inputs, output, down=down, up=up):
+                scale = state.get("faceid_lora_scale", 1.0)
+                if scale == 0.0:
+                    return output
                 value = inputs[0].to(dtype=down.dtype)
                 delta = torch.nn.functional.linear(torch.nn.functional.linear(value, down), up)
-                return output + delta.to(dtype=output.dtype)
+                delta = delta.to(dtype=output.dtype)
+                return output + delta if scale == 1.0 else output + scale * delta
             handles.append(module.register_forward_hook(add_delta))
     except Exception:
         for handle in handles:
