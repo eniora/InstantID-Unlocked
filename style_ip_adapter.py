@@ -227,7 +227,6 @@ def load_ip_adapter_style(
             unload_ip_adapter_style(pipe)
             raise
 
-
 def unload_ip_adapter_style(pipe):
     state = _style_state(pipe)
     if not state.get("loaded", False):
@@ -379,7 +378,6 @@ class FaceIDProjection(torch.nn.Module):
     def forward(self, identity):
         return self.norm(self.proj(identity).reshape(-1, self.num_tokens, self.output_dim))
 
-
 class FaceIDResampler(torch.nn.Module):
     def __init__(self, dim, clip_dim):
         super().__init__()
@@ -400,7 +398,6 @@ class FaceIDResampler(torch.nn.Module):
             identity_tokens = identity_tokens + feed_forward(identity_tokens)
         return self.norm_out(self.proj_out(identity_tokens))
 
-
 class FaceIDPlusProjection(FaceIDProjection):
     def __init__(self, output_dim, num_tokens, clip_dim):
         super().__init__(output_dim, num_tokens)
@@ -410,12 +407,13 @@ class FaceIDPlusProjection(FaceIDProjection):
         tokens = super().forward(identity)
         return tokens + self.perceiver_resampler(tokens, clip_tokens)
 
-
 def _remove_faceid_lora_hooks(state):
     for handle in state.pop("faceid_lora_handles", []):
         handle.remove()
     state.pop("faceid_lora_targets", None)
 
+def set_faceid_lora_scale(pipe, scale=1.0):
+    _style_state(pipe)["faceid_lora_scale"] = float(scale)
 
 def refresh_faceid_lora_hooks(pipe):
     state = _style_state(pipe)
@@ -443,9 +441,13 @@ def refresh_faceid_lora_hooks(pipe):
             down = down.to(device=module.weight.device, dtype=module.weight.dtype)
             up = up.to(device=module.weight.device, dtype=module.weight.dtype)
             def add_delta(layer, inputs, output, down=down, up=up):
+                scale = state.get("faceid_lora_scale", 1.0)
+                if scale == 0.0:
+                    return output
                 value = inputs[0].to(dtype=down.dtype)
                 delta = torch.nn.functional.linear(torch.nn.functional.linear(value, down), up)
-                return output + delta.to(dtype=output.dtype)
+                delta = delta.to(dtype=output.dtype)
+                return output + delta if scale == 1.0 else output + scale * delta
             handles.append(module.register_forward_hook(add_delta))
     except Exception:
         for handle in handles:
@@ -453,7 +455,6 @@ def refresh_faceid_lora_hooks(pipe):
         raise
     state["faceid_lora_handles"] = handles
     state["faceid_lora_targets"] = [id(item[0]) for item in targets]
-
 
 def _encode_faceid_styles(pipe, images, num_images_per_prompt, do_classifier_free_guidance):
     import numpy as np
