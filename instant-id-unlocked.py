@@ -464,6 +464,8 @@ style_image_encoder_path = f"./checkpoints/image_encoder"
 STYLE_ADAPTER_VARIANT_SETTINGS = {
     "plus": (16, 1280),
     "standard": (4, 1024),
+    "plus_face": (16, 1280),
+    "sdxl_adapter_bigg": (4, 1280),
 }
 
 IDENTITYNET_NUM_TOKENS = 16
@@ -2234,7 +2236,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             )
         else:
             style_adapter_active = bool(style_adapter_enabled) and bool(style_image_path) and float(style_strength) > 0
-        style_variant = style_adapter_variant if style_adapter_variant in ("plus", "standard") else "plus"
+        style_variant = style_adapter_variant if style_adapter_variant in ("plus", "standard", "plus_face", "sdxl_adapter_bigg") else "plus"
         ensure_style_adapter_ready(pipe, style_adapter_active, style_variant)
         from ip_adapter.attention_processor import set_style_overlap_additive
         style_overlap_retention = min(1.0, max(0.0, float(style_overlap_retention))) if style_overlap_retention is not None else 0.35
@@ -3454,7 +3456,7 @@ Scheduler: {scheduler}"""
                                 queue=False
                             )
                     style_adapter_enabled = gr.Checkbox(
-                        label="🎨 Add a visual prompt image (style/content reference) using IP-Adapter ViT-H (Standard/Plus)",
+                        label="🎨 Add a visual prompt image (style/content reference) using IP-Adapter ViT-H (Plus/Standard/Plus Face/SDXL bigG)",
                         value=False,
                     )
                     style_image = gr.Image(label="Style/content reference image", height=250, type="filepath", visible=False)
@@ -3522,6 +3524,8 @@ Scheduler: {scheduler}"""
                             choices=[
                                 ("Plus (fine-grained, follows reference closely)", "plus"),
                                 ("Standard (global, more prompt-following)", "standard"),
+                                ("Plus Face (fine-grained, face-focused)", "plus_face"),
+                                ("SDXL bigG Adapter (global, ViT-bigG encoder)", "sdxl_adapter_bigg"),
                             ],
                             value="plus",
                             scale=9,
@@ -5245,7 +5249,7 @@ Scheduler: {scheduler}"""
                                 pass
                         elif line.startswith("Style/content reference variant:"):
                             variant_value = line.replace("Style/content reference variant:", "").strip()
-                            if variant_value in ("plus", "standard"):
+                            if variant_value in ("plus", "standard", "plus_face", "sdxl_adapter_bigg"):
                                 settings["style_adapter_variant"] = variant_value
                         elif line.startswith("Style/content reference limit combined influence:"):
                             settings["style_independent_strength"] = "true" in line.lower()
