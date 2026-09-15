@@ -1473,6 +1473,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         style_third_strength,
         style_overlap_additive,
         style_overlap_retention,
+        faceid_lora_scale,
         progress=gr.Progress(),
     ):
         def _fix_guidance_range(start, end, label):
@@ -2248,6 +2249,9 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             style_adapter_active = bool(style_adapter_enabled) and bool(style_image_path) and float(style_strength) > 0
         style_variant = style_adapter_variant if style_adapter_variant in ("plus", "standard", "plus_face", "sdxl_adapter_bigg", "faceid", "faceid_plusv2", "faceid_portrait", "faceid_portrait_unnorm") else "plus"
         ensure_style_adapter_ready(pipe, style_adapter_active, style_variant)
+        if style_adapter_active and style_variant in ("faceid", "faceid_plusv2"):
+            from style_ip_adapter import set_faceid_lora_scale
+            set_faceid_lora_scale(pipe, faceid_lora_scale)
         from ip_adapter.attention_processor import set_style_overlap_additive
         style_overlap_retention = min(1.0, max(0.0, float(style_overlap_retention))) if style_overlap_retention is not None else 0.35
         set_style_overlap_additive(pipe, style_multiid_active and bool(style_overlap_additive), retention=style_overlap_retention)
@@ -2475,6 +2479,7 @@ Style/content reference enabled: {style_adapter_active}
 Style/content reference image: {style_image_filename}
 Style/content reference strength: {style_strength}
 Style/content reference variant: {style_variant}
+FaceID LoRA strength: {faceid_lora_scale}
 Style/content reference limit combined influence: {bool(style_independent_strength)}
 Style/content reference injection budget: {style_injection_budget}
 Style/content reference style-only layers: {bool(style_restrict_to_style_layers)}
@@ -2561,6 +2566,9 @@ Scheduler: {scheduler}"""
                 hires_pipe.controlnet = pipe.controlnet
                 hires_pipe.scheduler = pipe.scheduler
                 ensure_style_adapter_ready(hires_pipe, style_adapter_active, style_variant)
+                if style_adapter_active and style_variant in ("faceid", "faceid_plusv2"):
+                    from style_ip_adapter import set_faceid_lora_scale
+                    set_faceid_lora_scale(hires_pipe, faceid_lora_scale)
                 set_style_overlap_additive(hires_pipe, style_multiid_active and bool(style_overlap_additive), retention=style_overlap_retention)
                 if style_adapter_active:
                     from style_ip_adapter import set_style_scale, set_independent_style_strength, set_style_block_restriction, set_multi_style_enabled
@@ -2777,7 +2785,7 @@ Scheduler: {scheduler}"""
         });
     }
     """
-    with gr.Blocks(title="InstantID Unlocked v9.5.0", js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v9.5.1", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
@@ -3562,6 +3570,16 @@ Scheduler: {scheduler}"""
                             info="Injection budget * base signal strength (for combined influence). Higher = closer to the 'limit' checkbox being unchecked.",
                             visible=False,
                         )
+                    faceid_lora_scale = gr.Slider(
+                        label="FaceID LoRA strength",
+                        minimum=0.0,
+                        maximum=2.0,
+                        step=0.05,
+                        value=1.0,
+                        show_label=False,
+                        info="FaceID LoRA strength. To use FaceID as a standalone identity adapter, set IdentityNet and Image adapter strengths to 0.",
+                        visible=False,
+                    )
                     style_restrict_to_style_layers = gr.Checkbox(
                         label="Lower reference composition leakage. Helps stop the reference's own layout from warping the output.",
                         value=True,
@@ -3577,6 +3595,17 @@ Scheduler: {scheduler}"""
                         info="How much composition/layout reaches the excluded layers. 0 = fully restricted, higher = closer to the adapter's default",
                         visible=False,
                     )
+                    def toggle_faceid_lora_scale(enabled, variant):
+                        return gr.update(visible=bool(enabled) and variant in ("faceid", "faceid_plusv2"))
+
+                    for component in (style_adapter_enabled, style_adapter_variant):
+                        component.change(
+                            fn=toggle_faceid_lora_scale,
+                            inputs=[style_adapter_enabled, style_adapter_variant],
+                            outputs=[faceid_lora_scale],
+                            queue=False,
+                        )
+
                     def toggle_style_adapter_section(enabled, independent_strength, restrict_to_style_layers, multi_id_enabled, multiid_individual_style, overlap_enabled):
                         regional_visible = bool(enabled) and bool(multi_id_enabled)
                         per_id_uploads_visible = regional_visible and bool(multiid_individual_style)
@@ -4798,6 +4827,7 @@ Scheduler: {scheduler}"""
                 style_third_strength,
                 style_overlap_additive,
                 style_overlap_retention,
+                faceid_lora_scale,
             ]
             generate.click(fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False).then(
                 fn=generate_image, inputs=shared_inputs, outputs=[gallery]
@@ -4952,6 +4982,7 @@ Scheduler: {scheduler}"""
                     "style_third_strength": 1.0,
                     "style_overlap_additive": True,
                     "style_overlap_retention": 0.35,
+                    "faceid_lora_scale": 1.0,
                     "scheduler": "DPMSolverMultistepScheduler",
                     "ratio_base_pixel_number": 8,
                     "rng_source": "GPU",
@@ -5261,6 +5292,11 @@ Scheduler: {scheduler}"""
                                 settings["style_strength"] = float(line.replace("Style/content reference strength:", "").strip())
                             except ValueError:
                                 pass
+                        elif line.startswith("FaceID LoRA strength:"):
+                            try:
+                                settings["faceid_lora_scale"] = min(2.0, max(0.0, float(line.replace("FaceID LoRA strength:", "").strip())))
+                            except ValueError:
+                                pass
                         elif line.startswith("Style/content reference variant:"):
                             variant_value = line.replace("Style/content reference variant:", "").strip()
                             if variant_value in ("plus", "standard", "plus_face", "sdxl_adapter_bigg", "faceid", "faceid_plusv2", "faceid_portrait", "faceid_portrait_unnorm"):
@@ -5498,6 +5534,7 @@ Scheduler: {scheduler}"""
                     settings["style_third_strength"],
                     settings["style_overlap_additive"],
                     settings["style_overlap_retention"],
+                    settings["faceid_lora_scale"],
                     accordion_update,
                     gr.update(open=open_resolution_accordion),
                     gr.update(open=open_advanced_accordion),
@@ -5612,6 +5649,7 @@ Scheduler: {scheduler}"""
                     style_third_strength,
                     style_overlap_additive,
                     style_overlap_retention,
+                    faceid_lora_scale,
                     controlnet_accordion,
                     resolution_settings_accordion,
                     advanced_settings_accordion,
@@ -5637,7 +5675,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID Unlocked v9.5.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v9.5.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
