@@ -482,6 +482,15 @@ def _encode_faceid_styles(pipe, images, num_images_per_prompt, do_classifier_fre
         bgr = np.asarray(image.convert("RGB"))[:, :, ::-1].copy()
         faces = state["faceid_analyser"].get(bgr)
         if not faces:
+            detector = state["faceid_analyser"].det_model
+            original_size = detector.input_size
+            try:
+                print("\nNo face detected inside the style image used by FaceID, temporarily retrying at 320x320 det-size...\n")
+                detector.input_size = (320, 320)
+                faces = state["faceid_analyser"].get(bgr)
+            finally:
+                detector.input_size = original_size
+        if not faces:
             raise ValueError(f"FaceID reference {index + 1}: no face detected. Upload a clear face photo.")
         face = max(faces, key=lambda f: (f.bbox[2] - f.bbox[0]) * (f.bbox[3] - f.bbox[1]))
         if state["variant"] == "faceid_portrait_unnorm":
