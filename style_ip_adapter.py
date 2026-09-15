@@ -27,9 +27,18 @@ STYLE_ADAPTER_REPO_ID = "h94/IP-Adapter"
 STYLE_ADAPTER_REPO_FILENAMES = {
     "plus": "sdxl_models/ip-adapter-plus_sdxl_vit-h.safetensors",
     "standard": "sdxl_models/ip-adapter_sdxl_vit-h.safetensors",
+    "plus_face": "sdxl_models/ip-adapter-plus-face_sdxl_vit-h.safetensors",
+    "sdxl_adapter_bigg": "sdxl_models/ip-adapter_sdxl.safetensors",
 }
 STYLE_ADAPTER_ENCODER_SUBFOLDER = "models/image_encoder"
+STYLE_ADAPTER_ENCODER_SUBFOLDER_BIGG = "sdxl_models/image_encoder"
 STYLE_ADAPTER_ENCODER_FILES = ("config.json", "model.safetensors")
+STYLE_ADAPTER_ENCODER_DIRS = {
+    "plus": ("image_encoder", STYLE_ADAPTER_ENCODER_SUBFOLDER),
+    "standard": ("image_encoder", STYLE_ADAPTER_ENCODER_SUBFOLDER),
+    "plus_face": ("image_encoder", STYLE_ADAPTER_ENCODER_SUBFOLDER),
+    "sdxl_adapter_bigg": ("image_encoder_bigg", STYLE_ADAPTER_ENCODER_SUBFOLDER_BIGG),
+}
 
 def _style_state(pipe):
     state = getattr(pipe.unet, "_style_adapter_state", None)
@@ -59,12 +68,13 @@ def download_style_adapter_files(checkpoints_dir="./checkpoints", variant="plus"
         downloaded = hf_hub_download(repo_id=STYLE_ADAPTER_REPO_ID, filename=repo_filename)
         shutil.copyfile(downloaded, adapter_ckpt_path)
 
-    image_encoder_dir = os.path.join(checkpoints_dir, "image_encoder")
+    encoder_dir_name, encoder_subfolder = STYLE_ADAPTER_ENCODER_DIRS[variant]
+    image_encoder_dir = os.path.join(checkpoints_dir, encoder_dir_name)
     os.makedirs(image_encoder_dir, exist_ok=True)
     for fname in STYLE_ADAPTER_ENCODER_FILES:
         dest = os.path.join(image_encoder_dir, fname)
         if not os.path.exists(dest):
-            repo_path = f"{STYLE_ADAPTER_ENCODER_SUBFOLDER}/{fname}"
+            repo_path = f"{encoder_subfolder}/{fname}"
             print(f"[style adapter] Downloading {repo_path} from {STYLE_ADAPTER_REPO_ID}...")
             downloaded = hf_hub_download(repo_id=STYLE_ADAPTER_REPO_ID, filename=repo_path)
             shutil.copyfile(downloaded, dest)
@@ -94,7 +104,7 @@ def load_ip_adapter_style(
     independent_style_strength=False,
     style_injection_budget=2.0,
 ):
-    if variant not in ("plus", "standard"):
+    if variant not in ("plus", "standard", "plus_face", "sdxl_adapter_bigg"):
         raise ValueError(f"Unknown style adapter variant: {variant!r}")
 
     device = pipe.unet.device
@@ -108,7 +118,7 @@ def load_ip_adapter_style(
     style_image_encoder.requires_grad_(False)
     style_clip_image_processor = CLIPImageProcessor()
 
-    if variant == "plus":
+    if variant in ("plus", "plus_face"):
         style_image_proj_model = Resampler(
             dim=1280,
             depth=4,
@@ -253,7 +263,7 @@ def encode_style_images(pipe, style_images, num_images_per_prompt=1, do_classifi
         pixel_values = state["clip_image_processor"](images=style_image, return_tensors="pt").pixel_values
         pixel_values = pixel_values.to(device, dtype=dtype)
 
-        if variant == "plus":
+        if variant in ("plus", "plus_face"):
             clip_image_embeds = state["image_encoder"](pixel_values, output_hidden_states=True).hidden_states[-2]
             uncond_clip_image_embeds = state["image_encoder"](
                 torch.zeros_like(pixel_values), output_hidden_states=True
@@ -286,7 +296,7 @@ def encode_style_image(pipe, style_image, num_images_per_prompt=1, do_classifier
     pixel_values = state["clip_image_processor"](images=style_image, return_tensors="pt").pixel_values
     pixel_values = pixel_values.to(device, dtype=dtype)
 
-    if state.get("variant", "plus") == "plus":
+    if state.get("variant", "plus") in ("plus", "plus_face"):
         clip_image_embeds = state["image_encoder"](pixel_values, output_hidden_states=True).hidden_states[-2]
         uncond_clip_image_embeds = state["image_encoder"](
             torch.zeros_like(pixel_values), output_hidden_states=True
