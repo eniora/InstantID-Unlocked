@@ -466,6 +466,10 @@ STYLE_ADAPTER_VARIANT_SETTINGS = {
     "standard": (4, 1024),
     "plus_face": (16, 1280),
     "sdxl_adapter_bigg": (4, 1280),
+    "faceid": (4, 512),
+    "faceid_plusv2": (4, 512),
+    "faceid_portrait": (16, 512),
+    "faceid_portrait_unnorm": (16, 512),
 }
 
 IDENTITYNET_NUM_TOKENS = 16
@@ -1344,6 +1348,10 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             if get_loaded_style_variant(pipe) is not None:
                 print("Unloading style/content reference IP-Adapter to free VRAM...")
                 unload_ip_adapter_style(pipe)
+
+        if enable_style_adapter and style_variant in ("faceid", "faceid_plusv2", "faceid_portrait", "faceid_portrait_unnorm"):
+            from style_ip_adapter import refresh_faceid_lora_hooks
+            refresh_faceid_lora_hooks(pipe)
 
     def generate_image(
         resize_max_side,
@@ -2236,7 +2244,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             )
         else:
             style_adapter_active = bool(style_adapter_enabled) and bool(style_image_path) and float(style_strength) > 0
-        style_variant = style_adapter_variant if style_adapter_variant in ("plus", "standard", "plus_face", "sdxl_adapter_bigg") else "plus"
+        style_variant = style_adapter_variant if style_adapter_variant in ("plus", "standard", "plus_face", "sdxl_adapter_bigg", "faceid", "faceid_plusv2", "faceid_portrait", "faceid_portrait_unnorm") else "plus"
         ensure_style_adapter_ready(pipe, style_adapter_active, style_variant)
         from ip_adapter.attention_processor import set_style_overlap_additive
         style_overlap_retention = min(1.0, max(0.0, float(style_overlap_retention))) if style_overlap_retention is not None else 0.35
@@ -2767,7 +2775,7 @@ Scheduler: {scheduler}"""
         });
     }
     """
-    with gr.Blocks(title="InstantID Unlocked v9.4.2", js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v9.5.0", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
@@ -3087,7 +3095,7 @@ Scheduler: {scheduler}"""
                                 ".psp", ".xcf", ".psd", ".raw", ".webp", ".heic", ".avif", ".jxl", "image",
                             ]
                             multi_id_files = gr.Gallery(
-                                label="Additional identities (each image = one more person, claimed left-to-right in this order). This feature uses the Reference pose image above as the layout. It must contain one face per person, positioned where each identity should appear. Using pose controlnet is strongly recommended.",
+                                label="Additional identities (each image = one more person, claimed left-to-right in this order). This feature uses the Reference pose image above as the layout. It must contain one face per person, positioned where each identity should appear. Using pose controlnet is recommended.",
                                 visible=False,
                                 columns=4,
                                 height=230,
@@ -3456,7 +3464,7 @@ Scheduler: {scheduler}"""
                                 queue=False
                             )
                     style_adapter_enabled = gr.Checkbox(
-                        label="🎨 Add a visual prompt image (style/content reference) using IP-Adapter ViT-H (Plus/Standard/Plus Face/SDXL bigG)",
+                        label="🎨 Add a visual prompt image (style/content reference) using IP-Adapter ViT-H and IP-Adapter-FaceID models",
                         value=False,
                     )
                     style_image = gr.Image(label="Style/content reference image", height=250, type="filepath", visible=False)
@@ -3520,12 +3528,16 @@ Scheduler: {scheduler}"""
                     )
                     with gr.Row():
                         style_adapter_variant = gr.Dropdown(
-                            label="Style adapter type",
+                            label="Style adapter type (FaceID ones need a face in style)",
                             choices=[
                                 ("Plus (fine-grained, follows reference closely)", "plus"),
                                 ("Standard (global, more prompt-following)", "standard"),
                                 ("Plus Face (fine-grained, face-focused)", "plus_face"),
                                 ("SDXL bigG Adapter (global, ViT-bigG encoder)", "sdxl_adapter_bigg"),
+                                ("FaceID SDXL (face identity)", "faceid"),
+                                ("FaceID PlusV2 SDXL (identity + face structure)", "faceid_plusv2"),
+                                ("FaceID Portrait SDXL (face identity)", "faceid_portrait"),
+                                ("FaceID Portrait Unnorm (raw face identity)", "faceid_portrait_unnorm"),
                             ],
                             value="plus",
                             scale=9,
@@ -5249,7 +5261,7 @@ Scheduler: {scheduler}"""
                                 pass
                         elif line.startswith("Style/content reference variant:"):
                             variant_value = line.replace("Style/content reference variant:", "").strip()
-                            if variant_value in ("plus", "standard", "plus_face", "sdxl_adapter_bigg"):
+                            if variant_value in ("plus", "standard", "plus_face", "sdxl_adapter_bigg", "faceid", "faceid_plusv2", "faceid_portrait", "faceid_portrait_unnorm"):
                                 settings["style_adapter_variant"] = variant_value
                         elif line.startswith("Style/content reference limit combined influence:"):
                             settings["style_independent_strength"] = "true" in line.lower()
@@ -5623,7 +5635,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID Unlocked v9.4.2</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v9.5.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
