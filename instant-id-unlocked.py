@@ -2796,7 +2796,7 @@ Scheduler: {scheduler}"""
         });
     }
     """
-    with gr.Blocks(title="InstantID Unlocked v9.5.2", js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v9.5.3", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
@@ -3229,6 +3229,233 @@ Scheduler: {scheduler}"""
                     value=NEGATIVE_PROMPT_PRESETS["Default Negative Profile"],
                     elem_id="negative_prompt_textbox",
                 )
+                with gr.Group():
+                    style_adapter_enabled = gr.Checkbox(
+                        label="🎨 Add a visual prompt image (style/content reference) using IP-Adapter ViT-H and IP-Adapter-FaceID models",
+                        value=False,
+                    )
+                    style_image = gr.Image(label="Style/content reference image", height=250, type="filepath", visible=False)
+                    style_main_strength = gr.Slider(
+                        label="Main style image strength (this is visible and effective only when Multi-ID per-ID stylization is enabled)",
+                        minimum=0.1,
+                        maximum=2.0,
+                        step=0.05,
+                        value=1.0,
+                        visible=False,
+                    )
+                    style_multiid_individual = gr.Checkbox(
+                        label="Enable per-ID style for Multi-ID. Applies to up to three IDs. Increase 'Per-ID region padding' value for better results.",
+                        value=False,
+                        visible=False,
+                    )
+                    style_overlap_additive = gr.Checkbox(
+                        label="Adjust or fully keep style strength in overlapping regions. Can increase combined influence when set to a high value.",
+                        value=True,
+                        visible=False,
+                    )
+                    style_overlap_retention = gr.Slider(
+                        label="Overlap strength retention",
+                        info="Overlap Strength Retention. 0 = full averaging as if the box is unchecked. 1 = full style strength in overlapping regions.",
+                        minimum=0.0,
+                        maximum=1.0,
+                        step=0.05,
+                        value=0.35,
+                        show_label=False,
+                        visible=False,
+                        interactive=False,
+                    )
+                    with gr.Row():
+                        style_first_image = gr.Image(label="First ID style/ref", height=180, type="filepath", visible=False)
+                        style_second_image = gr.Image(label="Second ID style/ref", height=180, type="filepath", visible=False)
+                        style_third_image = gr.Image(label="Third ID style/ref (optional, needs 3rd ID)", height=180, type="filepath", visible=False)
+                    with gr.Row():
+                        style_first_strength = gr.Slider(
+                            label="1st ID style strength",
+                            minimum=0.1,
+                            maximum=2.0,
+                            step=0.05,
+                            value=1.0,
+                            visible=False,
+                        )
+                        style_second_strength = gr.Slider(
+                            label="2nd ID style strength",
+                            minimum=0.1,
+                            maximum=2.0,
+                            step=0.05,
+                            value=1.0,
+                            visible=False,
+                        )
+                        style_third_strength = gr.Slider(
+                            label="3rd ID style strength",
+                            minimum=0.1,
+                            maximum=2.0,
+                            step=0.05,
+                            value=1.0,
+                            visible=False,
+                        )
+                    style_strength = gr.Slider(
+                        label="Style strength (briefly describing the reference image's subject/style in the prompt gives better results)",
+                        minimum=0,
+                        maximum=1.5,
+                        step=0.05,
+                        value=0.7,
+                        visible=False,
+                    )
+                    with gr.Row():
+                        style_adapter_variant = gr.Dropdown(
+                            label="Style adapter type (FaceID ones need a face in style)",
+                            choices=[
+                                ("Plus (fine-grained, follows reference closely)", "plus"),
+                                ("Standard (global, more prompt-following)", "standard"),
+                                ("Plus Face (fine-grained, face-focused)", "plus_face"),
+                                ("SDXL bigG Adapter (global, ViT-bigG encoder)", "sdxl_adapter_bigg"),
+                                ("FaceID SDXL (face identity)", "faceid"),
+                                ("FaceID PlusV2 SDXL (identity + face structure)", "faceid_plusv2"),
+                                ("FaceID Portrait SDXL (face identity)", "faceid_portrait"),
+                                ("FaceID Portrait Unnorm (raw face identity)", "faceid_portrait_unnorm"),
+                            ],
+                            value="plus",
+                            scale=9,
+                            visible=False,
+                        )
+                        style_independent_strength = gr.Checkbox(
+                            label="Limit combined face/style influence",
+                            value=False,
+                            scale=10,
+                            visible=False,
+                        )
+                    with gr.Row():
+                        style_injection_budget = gr.Slider(
+                            label="Injection budget.",
+                            minimum=0.1,
+                            maximum=8.0,
+                            step=0.1,
+                            value=2.0,
+                            show_label=False,
+                            info="Injection budget * base signal strength (for combined influence). Higher = closer to the 'limit' checkbox being unchecked.",
+                            visible=False,
+                        )
+                    faceid_lora_scale = gr.Slider(
+                        label="FaceID LoRA strength",
+                        minimum=0.0,
+                        maximum=2.0,
+                        step=0.05,
+                        value=1.0,
+                        show_label=False,
+                        info="FaceID LoRA strength. To use FaceID as a standalone identity adapter, set IdentityNet and Image adapter strengths to 0.",
+                        visible=False,
+                    )
+                    style_restrict_to_style_layers = gr.Checkbox(
+                        label="Lower reference composition leakage. Helps stop the reference's own layout from warping the output.",
+                        value=True,
+                        visible=False,
+                    )
+                    style_restrict_bleed_through = gr.Slider(
+                        label="Bleed-through.",
+                        minimum=0.0,
+                        maximum=0.95,
+                        step=0.05,
+                        value=0.6,
+                        show_label=False,
+                        info="How much composition/layout reaches the excluded layers. 0 = fully restricted, higher = closer to the adapter's default",
+                        visible=False,
+                    )
+                    def toggle_faceid_lora_scale(enabled, variant):
+                        return gr.update(visible=bool(enabled) and variant in ("faceid", "faceid_plusv2"))
+
+                    for component in (style_adapter_enabled, style_adapter_variant):
+                        component.change(
+                            fn=toggle_faceid_lora_scale,
+                            inputs=[style_adapter_enabled, style_adapter_variant],
+                            outputs=[faceid_lora_scale],
+                            queue=False,
+                        )
+                    def toggle_main_style_strength(enabled, multi_id_enabled, per_id_enabled):
+                        return gr.update(visible=bool(enabled) and bool(multi_id_enabled) and bool(per_id_enabled))
+
+                    for component in (style_adapter_enabled, enable_multi_id, style_multiid_individual):
+                        component.change(
+                            fn=toggle_main_style_strength,
+                            inputs=[style_adapter_enabled, enable_multi_id, style_multiid_individual],
+                            outputs=[style_main_strength],
+                            queue=False,
+                        )
+                    def toggle_style_adapter_section(enabled, independent_strength, restrict_to_style_layers, multi_id_enabled, multiid_individual_style, overlap_enabled):
+                        regional_visible = bool(enabled) and bool(multi_id_enabled)
+                        per_id_uploads_visible = regional_visible and bool(multiid_individual_style)
+                        return (
+                            gr.update(visible=enabled),
+                            gr.update(visible=enabled),
+                            gr.update(visible=enabled),
+                            gr.update(visible=enabled),
+                            gr.update(visible=enabled),
+                            gr.update(visible=enabled and independent_strength),
+                            gr.update(visible=enabled and restrict_to_style_layers),
+                            gr.update(visible=regional_visible),
+                            gr.update(visible=per_id_uploads_visible),
+                            gr.update(visible=per_id_uploads_visible),
+                            gr.update(visible=per_id_uploads_visible),
+                            gr.update(visible=per_id_uploads_visible),
+                            gr.update(visible=per_id_uploads_visible),
+                            gr.update(visible=per_id_uploads_visible and bool(overlap_enabled), interactive=bool(overlap_enabled)),
+                            gr.update(visible=per_id_uploads_visible),
+                            gr.update(visible=per_id_uploads_visible),
+                        )
+                    style_adapter_enabled.change(
+                        fn=toggle_style_adapter_section,
+                        inputs=[style_adapter_enabled, style_independent_strength, style_restrict_to_style_layers, enable_multi_id, style_multiid_individual, style_overlap_additive],
+                        outputs=[style_image, style_strength, style_adapter_variant, style_independent_strength, style_restrict_to_style_layers, style_injection_budget, style_restrict_bleed_through, style_multiid_individual, style_first_image, style_second_image, style_first_strength, style_second_strength, style_overlap_additive, style_overlap_retention, style_third_image, style_third_strength],
+                        queue=False,
+                    )
+                    enable_multi_id.change(
+                        fn=toggle_style_adapter_section,
+                        inputs=[style_adapter_enabled, style_independent_strength, style_restrict_to_style_layers, enable_multi_id, style_multiid_individual, style_overlap_additive],
+                        outputs=[style_image, style_strength, style_adapter_variant, style_independent_strength, style_restrict_to_style_layers, style_injection_budget, style_restrict_bleed_through, style_multiid_individual, style_first_image, style_second_image, style_first_strength, style_second_strength, style_overlap_additive, style_overlap_retention, style_third_image, style_third_strength],
+                        queue=False,
+                    )
+                    def toggle_multiid_individual_uploads(multiid_individual_style, enabled, multi_id_enabled, overlap_enabled):
+                        uploads_visible = bool(enabled) and bool(multi_id_enabled) and bool(multiid_individual_style)
+                        return (
+                            gr.update(visible=uploads_visible),
+                            gr.update(visible=uploads_visible),
+                            gr.update(visible=uploads_visible),
+                            gr.update(visible=uploads_visible),
+                            gr.update(visible=uploads_visible),
+                            gr.update(visible=uploads_visible and bool(overlap_enabled), interactive=bool(overlap_enabled)),
+                            gr.update(visible=uploads_visible),
+                            gr.update(visible=uploads_visible),
+                        )
+                    style_multiid_individual.change(
+                        fn=toggle_multiid_individual_uploads,
+                        inputs=[style_multiid_individual, style_adapter_enabled, enable_multi_id, style_overlap_additive],
+                        outputs=[style_first_image, style_second_image, style_first_strength, style_second_strength, style_overlap_additive, style_overlap_retention, style_third_image, style_third_strength],
+                        queue=False,
+                    )
+                    def toggle_overlap_retention(overlap_enabled, enabled, multi_id_enabled, multiid_individual_style):
+                        active = bool(overlap_enabled) and bool(enabled) and bool(multi_id_enabled) and bool(multiid_individual_style)
+                        return gr.update(visible=active, interactive=active)
+                    style_overlap_additive.change(
+                        fn=toggle_overlap_retention,
+                        inputs=[style_overlap_additive, style_adapter_enabled, enable_multi_id, style_multiid_individual],
+                        outputs=[style_overlap_retention],
+                        queue=False,
+                    )
+                    def toggle_independent_strength_budget(independent_strength, enabled):
+                        return gr.update(visible=enabled and independent_strength)
+                    style_independent_strength.change(
+                        fn=toggle_independent_strength_budget,
+                        inputs=[style_independent_strength, style_adapter_enabled],
+                        outputs=[style_injection_budget],
+                        queue=False,
+                    )
+                    def toggle_restrict_bleed_through(restrict_to_style_layers, enabled):
+                        return gr.update(visible=enabled and restrict_to_style_layers)
+                    style_restrict_to_style_layers.change(
+                        fn=toggle_restrict_bleed_through,
+                        inputs=[style_restrict_to_style_layers, style_adapter_enabled],
+                        outputs=[style_restrict_bleed_through],
+                        queue=False,
+                    )
                 with gr.Accordion("📋 Style templates and other settings", open=False):
                     with gr.Group():
                         style = gr.Dropdown(
@@ -3323,7 +3550,7 @@ Scheduler: {scheduler}"""
                         step=8,
                         value=1280,
                         show_label=False,
-                        info="Output Resolution (max_side). Max width/height resizing in pixels. Using Hires Fix is preferable to raising this too high.",
+                        info="🔍 Output Resolution (max_side). Max width/height resizing in pixels. Using Hires Fix is preferable to raising this too high.",
                     )
                     with gr.Accordion("📐 Custom resolution, resize step and square padding (advanced, adjust only if needed)", open=False) as resolution_settings_accordion:
                         with gr.Group():
@@ -3484,232 +3711,6 @@ Scheduler: {scheduler}"""
                                 ],
                                 queue=False
                             )
-                    style_adapter_enabled = gr.Checkbox(
-                        label="🎨 Add a visual prompt image (style/content reference) using IP-Adapter ViT-H and IP-Adapter-FaceID models",
-                        value=False,
-                    )
-                    style_image = gr.Image(label="Style/content reference image", height=250, type="filepath", visible=False)
-                    style_main_strength = gr.Slider(
-                        label="Main style image strength (this is visible and effective only when Multi-ID per-ID stylization is enabled)",
-                        minimum=0.1,
-                        maximum=2.0,
-                        step=0.05,
-                        value=1.0,
-                        visible=False,
-                    )
-                    style_multiid_individual = gr.Checkbox(
-                        label="Enable per-ID style for Multi-ID. Applies to up to three IDs. Increase 'Per-ID region padding' value for better results.",
-                        value=False,
-                        visible=False,
-                    )
-                    style_overlap_additive = gr.Checkbox(
-                        label="Adjust or fully keep style strength in overlapping regions. Can increase combined influence when set to a high value.",
-                        value=True,
-                        visible=False,
-                    )
-                    style_overlap_retention = gr.Slider(
-                        label="Overlap strength retention",
-                        info="Overlap Strength Retention. 0 = full averaging as if the box is unchecked. 1 = full style strength in overlapping regions.",
-                        minimum=0.0,
-                        maximum=1.0,
-                        step=0.05,
-                        value=0.35,
-                        show_label=False,
-                        visible=False,
-                        interactive=False,
-                    )
-                    with gr.Row():
-                        style_first_image = gr.Image(label="First ID style/ref", height=180, type="filepath", visible=False)
-                        style_second_image = gr.Image(label="Second ID style/ref", height=180, type="filepath", visible=False)
-                        style_third_image = gr.Image(label="Third ID style/ref (optional, needs 3rd ID)", height=180, type="filepath", visible=False)
-                    with gr.Row():
-                        style_first_strength = gr.Slider(
-                            label="1st ID style strength",
-                            minimum=0.1,
-                            maximum=2.0,
-                            step=0.05,
-                            value=1.0,
-                            visible=False,
-                        )
-                        style_second_strength = gr.Slider(
-                            label="2nd ID style strength",
-                            minimum=0.1,
-                            maximum=2.0,
-                            step=0.05,
-                            value=1.0,
-                            visible=False,
-                        )
-                        style_third_strength = gr.Slider(
-                            label="3rd ID style strength",
-                            minimum=0.1,
-                            maximum=2.0,
-                            step=0.05,
-                            value=1.0,
-                            visible=False,
-                        )
-                    style_strength = gr.Slider(
-                        label="Style strength (briefly describing the reference image's subject/style in the prompt gives better results)",
-                        minimum=0,
-                        maximum=1.5,
-                        step=0.05,
-                        value=0.6,
-                        visible=False,
-                    )
-                    with gr.Row():
-                        style_adapter_variant = gr.Dropdown(
-                            label="Style adapter type (FaceID ones need a face in style)",
-                            choices=[
-                                ("Plus (fine-grained, follows reference closely)", "plus"),
-                                ("Standard (global, more prompt-following)", "standard"),
-                                ("Plus Face (fine-grained, face-focused)", "plus_face"),
-                                ("SDXL bigG Adapter (global, ViT-bigG encoder)", "sdxl_adapter_bigg"),
-                                ("FaceID SDXL (face identity)", "faceid"),
-                                ("FaceID PlusV2 SDXL (identity + face structure)", "faceid_plusv2"),
-                                ("FaceID Portrait SDXL (face identity)", "faceid_portrait"),
-                                ("FaceID Portrait Unnorm (raw face identity)", "faceid_portrait_unnorm"),
-                            ],
-                            value="plus",
-                            scale=9,
-                            visible=False,
-                        )
-                        style_independent_strength = gr.Checkbox(
-                            label="Limit combined face/style influence",
-                            value=False,
-                            scale=10,
-                            visible=False,
-                        )
-                    with gr.Row():
-                        style_injection_budget = gr.Slider(
-                            label="Injection budget.",
-                            minimum=0.1,
-                            maximum=8.0,
-                            step=0.1,
-                            value=2.0,
-                            show_label=False,
-                            info="Injection budget * base signal strength (for combined influence). Higher = closer to the 'limit' checkbox being unchecked.",
-                            visible=False,
-                        )
-                    faceid_lora_scale = gr.Slider(
-                        label="FaceID LoRA strength",
-                        minimum=0.0,
-                        maximum=2.0,
-                        step=0.05,
-                        value=1.0,
-                        show_label=False,
-                        info="FaceID LoRA strength. To use FaceID as a standalone identity adapter, set IdentityNet and Image adapter strengths to 0.",
-                        visible=False,
-                    )
-                    style_restrict_to_style_layers = gr.Checkbox(
-                        label="Lower reference composition leakage. Helps stop the reference's own layout from warping the output.",
-                        value=True,
-                        visible=False,
-                    )
-                    style_restrict_bleed_through = gr.Slider(
-                        label="Bleed-through.",
-                        minimum=0.0,
-                        maximum=0.95,
-                        step=0.05,
-                        value=0.6,
-                        show_label=False,
-                        info="How much composition/layout reaches the excluded layers. 0 = fully restricted, higher = closer to the adapter's default",
-                        visible=False,
-                    )
-                    def toggle_faceid_lora_scale(enabled, variant):
-                        return gr.update(visible=bool(enabled) and variant in ("faceid", "faceid_plusv2"))
-
-                    for component in (style_adapter_enabled, style_adapter_variant):
-                        component.change(
-                            fn=toggle_faceid_lora_scale,
-                            inputs=[style_adapter_enabled, style_adapter_variant],
-                            outputs=[faceid_lora_scale],
-                            queue=False,
-                        )
-                    def toggle_main_style_strength(enabled, multi_id_enabled, per_id_enabled):
-                        return gr.update(visible=bool(enabled) and bool(multi_id_enabled) and bool(per_id_enabled))
-
-                    for component in (style_adapter_enabled, enable_multi_id, style_multiid_individual):
-                        component.change(
-                            fn=toggle_main_style_strength,
-                            inputs=[style_adapter_enabled, enable_multi_id, style_multiid_individual],
-                            outputs=[style_main_strength],
-                            queue=False,
-                        )
-                    def toggle_style_adapter_section(enabled, independent_strength, restrict_to_style_layers, multi_id_enabled, multiid_individual_style, overlap_enabled):
-                        regional_visible = bool(enabled) and bool(multi_id_enabled)
-                        per_id_uploads_visible = regional_visible and bool(multiid_individual_style)
-                        return (
-                            gr.update(visible=enabled),
-                            gr.update(visible=enabled),
-                            gr.update(visible=enabled),
-                            gr.update(visible=enabled),
-                            gr.update(visible=enabled),
-                            gr.update(visible=enabled and independent_strength),
-                            gr.update(visible=enabled and restrict_to_style_layers),
-                            gr.update(visible=regional_visible),
-                            gr.update(visible=per_id_uploads_visible),
-                            gr.update(visible=per_id_uploads_visible),
-                            gr.update(visible=per_id_uploads_visible),
-                            gr.update(visible=per_id_uploads_visible),
-                            gr.update(visible=per_id_uploads_visible),
-                            gr.update(visible=per_id_uploads_visible and bool(overlap_enabled), interactive=bool(overlap_enabled)),
-                            gr.update(visible=per_id_uploads_visible),
-                            gr.update(visible=per_id_uploads_visible),
-                        )
-                    style_adapter_enabled.change(
-                        fn=toggle_style_adapter_section,
-                        inputs=[style_adapter_enabled, style_independent_strength, style_restrict_to_style_layers, enable_multi_id, style_multiid_individual, style_overlap_additive],
-                        outputs=[style_image, style_strength, style_adapter_variant, style_independent_strength, style_restrict_to_style_layers, style_injection_budget, style_restrict_bleed_through, style_multiid_individual, style_first_image, style_second_image, style_first_strength, style_second_strength, style_overlap_additive, style_overlap_retention, style_third_image, style_third_strength],
-                        queue=False,
-                    )
-                    enable_multi_id.change(
-                        fn=toggle_style_adapter_section,
-                        inputs=[style_adapter_enabled, style_independent_strength, style_restrict_to_style_layers, enable_multi_id, style_multiid_individual, style_overlap_additive],
-                        outputs=[style_image, style_strength, style_adapter_variant, style_independent_strength, style_restrict_to_style_layers, style_injection_budget, style_restrict_bleed_through, style_multiid_individual, style_first_image, style_second_image, style_first_strength, style_second_strength, style_overlap_additive, style_overlap_retention, style_third_image, style_third_strength],
-                        queue=False,
-                    )
-                    def toggle_multiid_individual_uploads(multiid_individual_style, enabled, multi_id_enabled, overlap_enabled):
-                        uploads_visible = bool(enabled) and bool(multi_id_enabled) and bool(multiid_individual_style)
-                        return (
-                            gr.update(visible=uploads_visible),
-                            gr.update(visible=uploads_visible),
-                            gr.update(visible=uploads_visible),
-                            gr.update(visible=uploads_visible),
-                            gr.update(visible=uploads_visible),
-                            gr.update(visible=uploads_visible and bool(overlap_enabled), interactive=bool(overlap_enabled)),
-                            gr.update(visible=uploads_visible),
-                            gr.update(visible=uploads_visible),
-                        )
-                    style_multiid_individual.change(
-                        fn=toggle_multiid_individual_uploads,
-                        inputs=[style_multiid_individual, style_adapter_enabled, enable_multi_id, style_overlap_additive],
-                        outputs=[style_first_image, style_second_image, style_first_strength, style_second_strength, style_overlap_additive, style_overlap_retention, style_third_image, style_third_strength],
-                        queue=False,
-                    )
-                    def toggle_overlap_retention(overlap_enabled, enabled, multi_id_enabled, multiid_individual_style):
-                        active = bool(overlap_enabled) and bool(enabled) and bool(multi_id_enabled) and bool(multiid_individual_style)
-                        return gr.update(visible=active, interactive=active)
-                    style_overlap_additive.change(
-                        fn=toggle_overlap_retention,
-                        inputs=[style_overlap_additive, style_adapter_enabled, enable_multi_id, style_multiid_individual],
-                        outputs=[style_overlap_retention],
-                        queue=False,
-                    )
-                    def toggle_independent_strength_budget(independent_strength, enabled):
-                        return gr.update(visible=enabled and independent_strength)
-                    style_independent_strength.change(
-                        fn=toggle_independent_strength_budget,
-                        inputs=[style_independent_strength, style_adapter_enabled],
-                        outputs=[style_injection_budget],
-                        queue=False,
-                    )
-                    def toggle_restrict_bleed_through(restrict_to_style_layers, enabled):
-                        return gr.update(visible=enabled and restrict_to_style_layers)
-                    style_restrict_to_style_layers.change(
-                        fn=toggle_restrict_bleed_through,
-                        inputs=[style_restrict_to_style_layers, style_adapter_enabled],
-                        outputs=[style_restrict_bleed_through],
-                        queue=False,
-                    )
                 with gr.Accordion("🛠️ Advanced Options", open=False) as advanced_settings_accordion:
                     with gr.Row():
                         clip_skip = gr.Slider(
@@ -3918,7 +3919,17 @@ Scheduler: {scheduler}"""
                         outputs=custom_enhance_padding,
                         queue=False
                     )
-                with gr.Accordion("🔍 Standalone Image Upscaler with GFPGAN (don't use while an image is being generated)", open=False) as standalone_upscaler_accordion:
+                with gr.Row():
+                    generate_alt_3 = gr.Button("Generate (Extra Bottom Section Button)", variant="primary")
+                    stop_btn_3 = gr.Button("⏹", scale=0, min_width=60, variant="stop")
+                    open_folder_btn = gr.Button("📁", min_width=60, scale=0)
+                    open_folder_btn.click(
+                        fn=open_output_folder,
+                        inputs=[],
+                        outputs=[],
+                        queue=False
+                    )
+                with gr.Accordion("✨ Standalone Image Upscaler with GFPGAN (don't use while an image is being generated)", open=False):
                     with gr.Row():
                         standalone_upscale_input = gr.Image(
                             label="Image to Upscale",
@@ -4060,16 +4071,6 @@ Scheduler: {scheduler}"""
                         fn=run_standalone_upscale,
                         inputs=[standalone_upscale_input, standalone_upscaler_model, standalone_upscale_by, delete_pipe_checkbox, standalone_restore_faces, standalone_gfpgan_weight],
                         outputs=[standalone_upscale_output, standalone_upscale_status]
-                    )
-                with gr.Row():
-                    generate_alt_3 = gr.Button("Generate (Extra Bottom Section Button)", variant="primary")
-                    stop_btn_3 = gr.Button("⏹", scale=0, min_width=60, variant="stop")
-                    open_folder_btn = gr.Button("📁", min_width=60, scale=0)
-                    open_folder_btn.click(
-                        fn=open_output_folder,
-                        inputs=[],
-                        outputs=[],
-                        queue=False
                     )
             with gr.Column(scale=1):
                 gallery = gr.Gallery(label="Generation preview", height=400, object_fit="contain", elem_id="gen_gallery")
@@ -4999,7 +5000,7 @@ Scheduler: {scheduler}"""
                     "canny_strength": 0.30,
                     "depth_strength": 0.30,
                     "style_adapter_enabled": False,
-                    "style_strength": 0.6,
+                    "style_strength": 0.7,
                     "style_adapter_variant": "plus",
                     "style_independent_strength": False,
                     "style_injection_budget": 2.0,
@@ -5712,7 +5713,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID Unlocked v9.5.2</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v9.5.3</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
