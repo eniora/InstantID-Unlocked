@@ -1474,6 +1474,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         style_overlap_additive,
         style_overlap_retention,
         faceid_lora_scale,
+        style_main_strength,
         progress=gr.Progress(),
     ):
         def _fix_guidance_range(start, end, label):
@@ -2225,6 +2226,8 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 )
 
         style_multiid_active = bool(style_multiid_individual) and multi_id_active and (bool(style_first_image_path) or bool(style_second_image_path) or (bool(style_third_image_path) and isinstance(control_mask, list) and len(control_mask) >= 3))
+        style_main_strength = min(2.0, max(0.1, float(style_main_strength))) if style_main_strength is not None else 1.0
+        main_style_multiplier = style_main_strength if bool(style_multiid_individual) and multi_id_active else 1.0
         style_first_strength = min(2.0, max(0.1, float(style_first_strength))) if style_first_strength is not None else 1.0
         style_second_strength = min(2.0, max(0.1, float(style_second_strength))) if style_second_strength is not None else 1.0
         style_third_strength = min(2.0, max(0.1, float(style_third_strength))) if style_third_strength is not None else 1.0
@@ -2274,8 +2277,8 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 if style_image_path:
                     style_images_to_encode.append(load_image(style_image_path))
                     style_masks_to_use.append(None)
-                    style_scales_to_use.append(1.0)
-                    style_ref_labels.append(f"background: {style_image_filename}")
+                    style_scales_to_use.append(main_style_multiplier)
+                    style_ref_labels.append(f"background: {style_image_filename} (relative strength: {main_style_multiplier})")
                 for side, region_path, region_mask_pil, region_strength in regional_style_images:
                     style_images_to_encode.append(load_image(region_path))
                     style_masks_to_use.append(region_mask_pil)
@@ -2302,6 +2305,8 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 set_independent_style_strength(pipe, bool(style_independent_strength), budget=float(style_injection_budget))
                 set_style_block_restriction(pipe, bool(style_restrict_to_style_layers), bleed_through=float(style_restrict_bleed_through))
                 set_multi_style_enabled(pipe, False)
+                if main_style_multiplier != 1.0:
+                    set_style_scale(pipe, float(style_strength) * main_style_multiplier)
                 style_image_embeds = encode_style_image(
                     pipe, style_ref_image, num_images_per_prompt=1,
                     do_classifier_free_guidance=(guidance_scale > 1.0 and pipe.unet.config.time_cond_proj_dim is None),
@@ -2309,7 +2314,8 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 budget_info = f", injection budget: {style_injection_budget}" if style_independent_strength else ""
                 restrict_info = f", style-only layers (bleed-through: {style_restrict_bleed_through})" if style_restrict_to_style_layers else ""
                 faceid_lora_info = f", FaceID LoRA strength: {faceid_lora_scale}" if style_variant in ("faceid", "faceid_plusv2") else ""
-                print(f"Style/content reference: {os.path.basename(style_image_path)} (strength: {style_strength}, variant: {style_variant}, limit combined influence: {bool(style_independent_strength)}{budget_info}{restrict_info}{faceid_lora_info})\n")
+                main_style_info = f", main relative strength: {main_style_multiplier}" if bool(style_multiid_individual) and multi_id_active else ""
+                print(f"Style/content reference: {os.path.basename(style_image_path)}{main_style_info} (strength: {style_strength}, variant: {style_variant}, limit combined influence: {bool(style_independent_strength)}{budget_info}{restrict_info}{faceid_lora_info})\n")
 
         for i in range(num_outputs):
             if stop_event.is_set():
@@ -2492,6 +2498,7 @@ Style/content reference overlap strength retention (Multi-ID): {style_overlap_re
 Style/content reference first image (Multi-ID): {style_first_image_filename}
 Style/content reference second image (Multi-ID): {style_second_image_filename}
 Style/content reference third image (Multi-ID): {style_third_image_filename}
+Style/content reference main strength (Multi-ID): {style_main_strength}
 Style/content reference first strength (Multi-ID): {style_first_strength}
 Style/content reference second strength (Multi-ID): {style_second_strength}
 Style/content reference third strength (Multi-ID): {style_third_strength}
@@ -2580,6 +2587,8 @@ Scheduler: {scheduler}"""
                     )
                     set_style_block_restriction(hires_pipe, bool(style_restrict_to_style_layers), bleed_through=float(style_restrict_bleed_through))
                     set_multi_style_enabled(hires_pipe, style_multiid_active)
+                    if not style_multiid_active and main_style_multiplier != 1.0:
+                        set_style_scale(hires_pipe, float(style_strength) * main_style_multiplier)
                 hires_control_images = resize_control_images(control_images, (hires_width, hires_height))
                 hires_control_mask = resize_control_images(control_mask, (hires_width, hires_height))
                 hires_style_control_mask = resize_control_images(style_control_mask, (hires_width, hires_height))
@@ -2787,7 +2796,7 @@ Scheduler: {scheduler}"""
         });
     }
     """
-    with gr.Blocks(title="InstantID Unlocked v9.5.1", js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v9.5.2", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
@@ -3480,13 +3489,21 @@ Scheduler: {scheduler}"""
                         value=False,
                     )
                     style_image = gr.Image(label="Style/content reference image", height=250, type="filepath", visible=False)
+                    style_main_strength = gr.Slider(
+                        label="Main style image strength (this is visible and effective only when Multi-ID per-ID stylization is enabled)",
+                        minimum=0.1,
+                        maximum=2.0,
+                        step=0.05,
+                        value=1.0,
+                        visible=False,
+                    )
                     style_multiid_individual = gr.Checkbox(
                         label="Enable per-ID style for Multi-ID. Applies to up to three IDs. Increase 'Per-ID region padding' value for better results.",
                         value=False,
                         visible=False,
                     )
                     style_overlap_additive = gr.Checkbox(
-                        label="Adjust or fully keep style strength in overlapping regions. Can increase combined influence.",
+                        label="Adjust or fully keep style strength in overlapping regions. Can increase combined influence when set to a high value.",
                         value=True,
                         visible=False,
                     )
@@ -3607,7 +3624,16 @@ Scheduler: {scheduler}"""
                             outputs=[faceid_lora_scale],
                             queue=False,
                         )
+                    def toggle_main_style_strength(enabled, multi_id_enabled, per_id_enabled):
+                        return gr.update(visible=bool(enabled) and bool(multi_id_enabled) and bool(per_id_enabled))
 
+                    for component in (style_adapter_enabled, enable_multi_id, style_multiid_individual):
+                        component.change(
+                            fn=toggle_main_style_strength,
+                            inputs=[style_adapter_enabled, enable_multi_id, style_multiid_individual],
+                            outputs=[style_main_strength],
+                            queue=False,
+                        )
                     def toggle_style_adapter_section(enabled, independent_strength, restrict_to_style_layers, multi_id_enabled, multiid_individual_style, overlap_enabled):
                         regional_visible = bool(enabled) and bool(multi_id_enabled)
                         per_id_uploads_visible = regional_visible and bool(multiid_individual_style)
@@ -4830,6 +4856,7 @@ Scheduler: {scheduler}"""
                 style_overlap_additive,
                 style_overlap_retention,
                 faceid_lora_scale,
+                style_main_strength,
             ]
             generate.click(fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False).then(
                 fn=generate_image, inputs=shared_inputs, outputs=[gallery]
@@ -4979,6 +5006,7 @@ Scheduler: {scheduler}"""
                     "style_restrict_to_style_layers": True,
                     "style_restrict_bleed_through": 0.6,
                     "style_multiid_individual": False,
+                    "style_main_strength": 1.0,
                     "style_first_strength": 1.0,
                     "style_second_strength": 1.0,
                     "style_third_strength": 1.0,
@@ -5326,6 +5354,11 @@ Scheduler: {scheduler}"""
                                 settings["style_overlap_retention"] = min(1.0, max(0.0, float(line.replace("Style/content reference overlap strength retention (Multi-ID):", "").strip())))
                             except ValueError:
                                 pass
+                        elif line.startswith("Style/content reference main strength (Multi-ID):"):
+                            try:
+                                settings["style_main_strength"] = float(line.replace("Style/content reference main strength (Multi-ID):", "").strip())
+                            except ValueError:
+                                pass
                         elif line.startswith("Style/content reference first strength (Multi-ID):"):
                             try:
                                 settings["style_first_strength"] = float(line.replace("Style/content reference first strength (Multi-ID):", "").strip())
@@ -5537,6 +5570,7 @@ Scheduler: {scheduler}"""
                     settings["style_overlap_additive"],
                     settings["style_overlap_retention"],
                     settings["faceid_lora_scale"],
+                    settings["style_main_strength"],
                     accordion_update,
                     gr.update(open=open_resolution_accordion),
                     gr.update(open=open_advanced_accordion),
@@ -5652,6 +5686,7 @@ Scheduler: {scheduler}"""
                     style_overlap_additive,
                     style_overlap_retention,
                     faceid_lora_scale,
+                    style_main_strength,
                     controlnet_accordion,
                     resolution_settings_accordion,
                     advanced_settings_accordion,
@@ -5677,7 +5712,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID Unlocked v9.5.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v9.5.2</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
