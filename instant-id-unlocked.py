@@ -1475,6 +1475,9 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         style_overlap_retention,
         faceid_lora_scale,
         style_main_strength,
+        style_blend_image_path,
+        style_blend_main_strength,
+        style_blend_second_strength,
         progress=gr.Progress(),
     ):
         def _fix_guidance_range(start, end, label):
@@ -1707,6 +1710,17 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
 
         face_image_filename = os.path.basename(face_image_path) if face_image_path else "None"
         pose_image_filename = os.path.basename(pose_image_path) if pose_image_path else "None"
+        style_blend_main_strength = min(2.0, max(0.1, float(style_blend_main_strength)))
+        style_blend_second_strength = min(2.0, max(0.1, float(style_blend_second_strength)))
+        style_blend_active = bool(style_image_path) and bool(style_blend_image_path)
+        if style_blend_image_path and not style_image_path:
+            style_image_path = style_blend_image_path
+        style_blend_metadata = ""
+        if style_blend_image_path:
+            style_blend_metadata = (
+                f"\nStyle/content reference blend image: {os.path.basename(style_blend_image_path)}"
+                f"\nStyle/content reference blend mode: {'Strength-scaled token blend' if style_blend_active else 'Second slot only'}"
+            )
         style_image_filename = os.path.basename(style_image_path) if style_image_path else "None"
         style_first_image_filename = os.path.basename(style_first_image_path) if style_first_image_path else "None"
         style_second_image_filename = os.path.basename(style_second_image_path) if style_second_image_path else "None"
@@ -2317,6 +2331,27 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 main_style_info = f", main relative strength: {main_style_multiplier}" if bool(style_multiid_individual) and multi_id_active else ""
                 print(f"Style/content reference: {os.path.basename(style_image_path)}{main_style_info} (strength: {style_strength}, variant: {style_variant}, limit combined influence: {bool(style_independent_strength)}{budget_info}{restrict_info}{faceid_lora_info})\n")
 
+        if style_adapter_active and style_blend_active:
+            from style_ip_adapter import encode_style_image
+            blend_embeds = encode_style_image(
+                pipe, load_image(style_blend_image_path), num_images_per_prompt=1,
+                do_classifier_free_guidance=(guidance_scale > 1.0 and pipe.unet.config.time_cond_proj_dim is None),
+            )
+            main_token_count = blend_embeds.shape[1]
+            blended_main_embeds = (
+                style_image_embeds[:, :main_token_count, :] * (0.5 * style_blend_main_strength)
+                + blend_embeds * (0.5 * style_blend_second_strength)
+            )
+            style_image_embeds = torch.cat(
+                [blended_main_embeds, style_image_embeds[:, main_token_count:, :]], dim=1
+            )
+            del blend_embeds, blended_main_embeds
+            print(
+                f"Style/content reference blend: {style_image_filename} + "
+                f"{os.path.basename(style_blend_image_path)} "
+                f"(blend strengths: main {style_blend_main_strength}, second {style_blend_second_strength}).\n"
+            )
+
         for i in range(num_outputs):
             if stop_event.is_set():
                 print("Stop requested - halting before starting generation.\n")
@@ -2484,7 +2519,9 @@ Pose line thickness fix: {enable_pose_line_fix}
 Canny strength: {canny_strength}
 Depth strength: {depth_strength}
 Style/content reference enabled: {style_adapter_active}
-Style/content reference image: {style_image_filename}
+Style/content reference image: {style_image_filename}{style_blend_metadata}
+Style/content reference main blend strength: {style_blend_main_strength}
+Style/content reference second blend strength: {style_blend_second_strength}
 Style/content reference strength: {style_strength}
 Style/content reference variant: {style_variant}
 FaceID LoRA strength: {faceid_lora_scale}
@@ -2796,7 +2833,7 @@ Scheduler: {scheduler}"""
         });
     }
     """
-    with gr.Blocks(title="InstantID Unlocked v9.5.3", js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v9.6.0", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
@@ -3234,9 +3271,40 @@ Scheduler: {scheduler}"""
                         label="🎨 Add a visual prompt image (style/content reference) using IP-Adapter ViT-H and IP-Adapter-FaceID models",
                         value=False,
                     )
-                    style_image = gr.Image(label="Style/content reference image", height=250, type="filepath", visible=False)
+                    with gr.Row():
+                        with gr.Column():
+                            style_image = gr.Image(label="Style/content reference image (main)", height=250, type="filepath", visible=False)
+                            style_blend_main_strength = gr.Slider(
+                                label="Main reference blend strength",
+                                minimum=0.1, maximum=2.0, step=0.05, value=1.0,
+                                visible=False,
+                            )
+                        with gr.Column():
+                            style_blend_image = gr.Image(label="Optional, second style image (blends with main)", height=250, type="filepath", visible=False)
+                            style_blend_second_strength = gr.Slider(
+                                label="Second reference blend strength",
+                                minimum=0.1, maximum=2.0, step=0.05, value=1.0,
+                                visible=False,
+                            )
+                    def toggle_style_blend_strengths(enabled, main_image, second_image):
+                        visible = bool(enabled) and bool(main_image) and bool(second_image)
+                        return gr.update(visible=visible), gr.update(visible=visible)
+
+                    for component in (style_adapter_enabled, style_image, style_blend_image):
+                        component.change(
+                            fn=toggle_style_blend_strengths,
+                            inputs=[style_adapter_enabled, style_image, style_blend_image],
+                            outputs=[style_blend_main_strength, style_blend_second_strength],
+                            queue=False,
+                        )
+                    style_adapter_enabled.change(
+                        fn=lambda enabled: gr.update(visible=bool(enabled)),
+                        inputs=[style_adapter_enabled],
+                        outputs=[style_blend_image],
+                        queue=False,
+                    )
                     style_main_strength = gr.Slider(
-                        label="Main style image strength (this is visible and effective only when Multi-ID per-ID stylization is enabled)",
+                        label="Main style image(s) strength (this is visible and effective only when Multi-ID per-ID stylization is enabled)",
                         minimum=0.1,
                         maximum=2.0,
                         step=0.05,
@@ -3294,11 +3362,11 @@ Scheduler: {scheduler}"""
                             visible=False,
                         )
                     style_strength = gr.Slider(
-                        label="Style strength (briefly describing the reference image's subject/style in the prompt gives better results)",
+                        label="Global (overall) style strength (scales all style references: main, blended, and per-ID if present)",
                         minimum=0,
                         maximum=1.5,
                         step=0.05,
-                        value=0.7,
+                        value=0.8,
                         visible=False,
                     )
                     with gr.Row():
@@ -4858,6 +4926,9 @@ Scheduler: {scheduler}"""
                 style_overlap_retention,
                 faceid_lora_scale,
                 style_main_strength,
+                style_blend_image,
+                style_blend_main_strength,
+                style_blend_second_strength,
             ]
             generate.click(fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False).then(
                 fn=generate_image, inputs=shared_inputs, outputs=[gallery]
@@ -5000,7 +5071,7 @@ Scheduler: {scheduler}"""
                     "canny_strength": 0.30,
                     "depth_strength": 0.30,
                     "style_adapter_enabled": False,
-                    "style_strength": 0.7,
+                    "style_strength": 0.8,
                     "style_adapter_variant": "plus",
                     "style_independent_strength": False,
                     "style_injection_budget": 2.0,
@@ -5008,6 +5079,8 @@ Scheduler: {scheduler}"""
                     "style_restrict_bleed_through": 0.6,
                     "style_multiid_individual": False,
                     "style_main_strength": 1.0,
+                    "style_blend_main_strength": 1.0,
+                    "style_blend_second_strength": 1.0,
                     "style_first_strength": 1.0,
                     "style_second_strength": 1.0,
                     "style_third_strength": 1.0,
@@ -5355,6 +5428,16 @@ Scheduler: {scheduler}"""
                                 settings["style_overlap_retention"] = min(1.0, max(0.0, float(line.replace("Style/content reference overlap strength retention (Multi-ID):", "").strip())))
                             except ValueError:
                                 pass
+                        elif line.startswith("Style/content reference main blend strength:"):
+                            try:
+                                settings["style_blend_main_strength"] = min(2.0, max(0.1, float(line.replace("Style/content reference main blend strength:", "").strip())))
+                            except ValueError:
+                                pass
+                        elif line.startswith("Style/content reference second blend strength:"):
+                            try:
+                                settings["style_blend_second_strength"] = min(2.0, max(0.1, float(line.replace("Style/content reference second blend strength:", "").strip())))
+                            except ValueError:
+                                pass
                         elif line.startswith("Style/content reference main strength (Multi-ID):"):
                             try:
                                 settings["style_main_strength"] = float(line.replace("Style/content reference main strength (Multi-ID):", "").strip())
@@ -5572,6 +5655,8 @@ Scheduler: {scheduler}"""
                     settings["style_overlap_retention"],
                     settings["faceid_lora_scale"],
                     settings["style_main_strength"],
+                    settings["style_blend_main_strength"],
+                    settings["style_blend_second_strength"],
                     accordion_update,
                     gr.update(open=open_resolution_accordion),
                     gr.update(open=open_advanced_accordion),
@@ -5688,6 +5773,8 @@ Scheduler: {scheduler}"""
                     style_overlap_retention,
                     faceid_lora_scale,
                     style_main_strength,
+                    style_blend_main_strength,
+                    style_blend_second_strength,
                     controlnet_accordion,
                     resolution_settings_accordion,
                     advanced_settings_accordion,
@@ -5713,7 +5800,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID Unlocked v9.5.3</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v9.6.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
