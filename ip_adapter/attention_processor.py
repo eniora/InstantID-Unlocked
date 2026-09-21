@@ -158,6 +158,7 @@ class IPAttnProcessor(nn.Module):
         self.multi_style_enabled = False
         self.style_overlap_additive = False
         self.style_overlap_retention = 0.35
+        self.style_normalize_strengths = False
 
     def add_style_branch(self, num_style_tokens, style_scale=1.0):
         self.num_style_tokens = num_style_tokens
@@ -277,6 +278,12 @@ class IPAttnProcessor(nn.Module):
                     style_hidden_states_sum = 0
                     style_mask_sum = None
                     overlap_retention = self.style_overlap_retention if self.style_overlap_additive else 0.0
+                    normalize_strengths = self.style_normalize_strengths and any(
+                        region.get('scale', 1.0) != 1.0
+                        for region in style_region_control.style_image_conditioning[:num_style_images]
+                    )
+                    normalization_mask_sum = None
+                    normalization_weight_sum = None
                     for idx in range(num_style_images):
                         style_tokens_i = style_hidden_states_all[:, idx * self.num_style_tokens: (idx + 1) * self.num_style_tokens, :]
                         style_key = self.to_k_ip_style(style_tokens_i)
@@ -300,8 +307,20 @@ class IPAttnProcessor(nn.Module):
                         else:
                             style_mask = torch.ones((1, query.shape[1], 1), dtype=style_hidden_states_i.dtype, device=style_hidden_states_i.device)
                         style_hidden_states_sum = style_hidden_states_sum + style_hidden_states_i * style_mask * style_region_scale
+                        if normalize_strengths:
+                            normalization_mask_sum = style_mask if normalization_mask_sum is None else normalization_mask_sum + style_mask
+                            weighted_mask = style_mask * style_region_scale
+                            normalization_weight_sum = weighted_mask if normalization_weight_sum is None else normalization_weight_sum + weighted_mask
                         if overlap_retention < 1.0:
                             style_mask_sum = style_mask if style_mask_sum is None else style_mask_sum + style_mask
+
+                    if normalize_strengths:
+                        safe_weight_sum = torch.where(
+                            normalization_weight_sum > 0,
+                            normalization_weight_sum,
+                            torch.ones_like(normalization_weight_sum),
+                        )
+                        style_hidden_states_sum = style_hidden_states_sum * (normalization_mask_sum / safe_weight_sum)
 
                     if overlap_retention == 0.0:
                         style_hidden_states_sum = style_hidden_states_sum / torch.clamp(style_mask_sum, min=1.0)
@@ -486,6 +505,7 @@ class IPAttnProcessor2_0(torch.nn.Module):
         self.multi_style_enabled = False
         self.style_overlap_additive = False
         self.style_overlap_retention = 0.35
+        self.style_normalize_strengths = False
 
     def add_style_branch(self, num_style_tokens, style_scale=1.0):
         self.num_style_tokens = num_style_tokens
@@ -630,6 +650,12 @@ class IPAttnProcessor2_0(torch.nn.Module):
                     style_hidden_states_sum = 0
                     style_mask_sum = None
                     overlap_retention = self.style_overlap_retention if self.style_overlap_additive else 0.0
+                    normalize_strengths = self.style_normalize_strengths and any(
+                        region.get('scale', 1.0) != 1.0
+                        for region in style_region_control.style_image_conditioning[:num_style_images]
+                    )
+                    normalization_mask_sum = None
+                    normalization_weight_sum = None
                     for idx in range(num_style_images):
                         style_tokens_i = style_hidden_states_all[:, idx * self.num_style_tokens: (idx + 1) * self.num_style_tokens, :]
                         style_key = self.to_k_ip_style(style_tokens_i)
@@ -652,8 +678,20 @@ class IPAttnProcessor2_0(torch.nn.Module):
                         else:
                             style_mask = torch.ones((1, query.shape[-2], 1), dtype=style_hidden_states_i.dtype, device=style_hidden_states_i.device)
                         style_hidden_states_sum = style_hidden_states_sum + style_hidden_states_i * style_mask * style_region_scale
+                        if normalize_strengths:
+                            normalization_mask_sum = style_mask if normalization_mask_sum is None else normalization_mask_sum + style_mask
+                            weighted_mask = style_mask * style_region_scale
+                            normalization_weight_sum = weighted_mask if normalization_weight_sum is None else normalization_weight_sum + weighted_mask
                         if overlap_retention < 1.0:
                             style_mask_sum = style_mask if style_mask_sum is None else style_mask_sum + style_mask
+
+                    if normalize_strengths:
+                        safe_weight_sum = torch.where(
+                            normalization_weight_sum > 0,
+                            normalization_weight_sum,
+                            torch.ones_like(normalization_weight_sum),
+                        )
+                        style_hidden_states_sum = style_hidden_states_sum * (normalization_mask_sum / safe_weight_sum)
 
                     if overlap_retention == 0.0:
                         style_hidden_states_sum = style_hidden_states_sum / torch.clamp(style_mask_sum, min=1.0)
@@ -933,3 +971,9 @@ def set_style_overlap_additive(pipe, enabled, retention=0.35):
         if isinstance(processor, (IPAttnProcessor, IPAttnProcessor2_0)):
             processor.style_overlap_additive = bool(enabled)
             processor.style_overlap_retention = retention
+
+
+def set_style_normalize_strengths(pipe, enabled):
+    for processor in pipe.unet.attn_processors.values():
+        if isinstance(processor, (IPAttnProcessor, IPAttnProcessor2_0)):
+            processor.style_normalize_strengths = bool(enabled)
