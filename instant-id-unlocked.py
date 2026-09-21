@@ -3304,10 +3304,25 @@ Scheduler: {scheduler}"""
                         visible = bool(enabled) and bool(main_image) and bool(second_image)
                         return gr.update(visible=visible), gr.update(visible=visible)
 
-                    for component in (style_adapter_enabled, style_image, style_blend_image):
-                        component.change(
+                    for event in (
+                        style_adapter_enabled.change,
+                        style_image.upload,
+                        style_blend_image.upload,
+                    ):
+                        event(
                             fn=toggle_style_blend_strengths,
                             inputs=[style_adapter_enabled, style_image, style_blend_image],
+                            outputs=[style_blend_main_strength, style_blend_second_strength],
+                            queue=False,
+                        )
+
+                    for component in (style_image, style_blend_image):
+                        component.clear(
+                            fn=lambda: (
+                                gr.update(visible=False),
+                                gr.update(visible=False),
+                            ),
+                            inputs=[],
                             outputs=[style_blend_main_strength, style_blend_second_strength],
                             queue=False,
                         )
