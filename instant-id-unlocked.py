@@ -1478,6 +1478,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         style_blend_image_path,
         style_blend_main_strength,
         style_blend_second_strength,
+        style_normalize_strengths,
         progress=gr.Progress(),
     ):
         def _fix_guidance_range(start, end, label):
@@ -1719,7 +1720,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         if style_blend_image_path:
             style_blend_metadata = (
                 f"\nStyle/content reference blend image: {os.path.basename(style_blend_image_path)}"
-                f"\nStyle/content reference blend mode: {'Strength-scaled token blend' if style_blend_active else 'Second slot only'}"
+                f"\nStyle/content reference blend mode: {('Normalized weighted average' if style_normalize_strengths else 'Strength-scaled token blend') if style_blend_active else 'Second slot only'}"
             )
         style_image_filename = os.path.basename(style_image_path) if style_image_path else "None"
         style_first_image_filename = os.path.basename(style_first_image_path) if style_first_image_path else "None"
@@ -2269,9 +2270,10 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
         if style_adapter_active and style_variant in ("faceid", "faceid_plusv2"):
             from style_ip_adapter import set_faceid_lora_scale
             set_faceid_lora_scale(pipe, faceid_lora_scale)
-        from ip_adapter.attention_processor import set_style_overlap_additive
+        from ip_adapter.attention_processor import set_style_overlap_additive, set_style_normalize_strengths
         style_overlap_retention = min(1.0, max(0.0, float(style_overlap_retention))) if style_overlap_retention is not None else 0.35
         set_style_overlap_additive(pipe, style_multiid_active and bool(style_overlap_additive), retention=style_overlap_retention)
+        set_style_normalize_strengths(pipe, style_multiid_active and bool(style_normalize_strengths))
 
         style_image_embeds = None
         style_control_mask = None
@@ -2309,9 +2311,11 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 restrict_info = f", style-only layers (bleed-through: {style_restrict_bleed_through})" if style_restrict_to_style_layers else ""
                 overlap_info = f", overlap strength retention: {style_overlap_retention}" if (style_multiid_active and bool(style_overlap_additive)) else ""
                 faceid_lora_info = f", FaceID LoRA strength: {faceid_lora_scale}" if style_variant in ("faceid", "faceid_plusv2") else ""
-                print(f"Style/content reference(s): {', '.join(style_ref_labels)} (strength: {style_strength}, variant: {style_variant}, limit combined influence: {bool(style_independent_strength)}{budget_info}{restrict_info}{overlap_info}{faceid_lora_info})\n")
-                if len(style_images_to_encode) > 1:
-                    print(f"Style/content reference: {len(style_images_to_encode)} reference images active.\n")
+                normalize_info = ", normalized strengths: True" if bool(style_normalize_strengths) else ""
+                print(f"Style/content reference(s): {', '.join(style_ref_labels)} (strength: {style_strength}, variant: {style_variant}, limit combined influence: {bool(style_independent_strength)}{budget_info}{restrict_info}{overlap_info}{faceid_lora_info}{normalize_info})\n")
+                total_ref_images = len(style_images_to_encode) + (1 if style_blend_active else 0)
+                if total_ref_images > 1:
+                    print(f"Style/content reference: {total_ref_images} reference images active.\n")
             else:
                 from style_ip_adapter import encode_style_image, set_style_scale, set_independent_style_strength, set_style_block_restriction, set_multi_style_enabled
                 style_ref_image = load_image(style_image_path)
@@ -2338,10 +2342,17 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 do_classifier_free_guidance=(guidance_scale > 1.0 and pipe.unet.config.time_cond_proj_dim is None),
             )
             main_token_count = blend_embeds.shape[1]
-            blended_main_embeds = (
-                style_image_embeds[:, :main_token_count, :] * (0.5 * style_blend_main_strength)
-                + blend_embeds * (0.5 * style_blend_second_strength)
-            )
+            if style_normalize_strengths:
+                total_blend_strength = style_blend_main_strength + style_blend_second_strength
+                blended_main_embeds = (
+                    style_image_embeds[:, :main_token_count, :] * (style_blend_main_strength / total_blend_strength)
+                    + blend_embeds * (style_blend_second_strength / total_blend_strength)
+                )
+            else:
+                blended_main_embeds = (
+                    style_image_embeds[:, :main_token_count, :] * (0.5 * style_blend_main_strength)
+                    + blend_embeds * (0.5 * style_blend_second_strength)
+                )
             style_image_embeds = torch.cat(
                 [blended_main_embeds, style_image_embeds[:, main_token_count:, :]], dim=1
             )
@@ -2349,7 +2360,8 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
             print(
                 f"Style/content reference blend: {style_image_filename} + "
                 f"{os.path.basename(style_blend_image_path)} "
-                f"(blend strengths: main {style_blend_main_strength}, second {style_blend_second_strength}).\n"
+                f"(blend strengths: main {style_blend_main_strength}, second {style_blend_second_strength}"
+                f"{', normalized' if style_normalize_strengths else ''}).\n"
             )
 
         for i in range(num_outputs):
@@ -2522,6 +2534,7 @@ Style/content reference enabled: {style_adapter_active}
 Style/content reference image: {style_image_filename}{style_blend_metadata}
 Style/content reference main blend strength: {style_blend_main_strength}
 Style/content reference second blend strength: {style_blend_second_strength}
+Style/content reference normalized strengths: {bool(style_normalize_strengths)}
 Style/content reference strength: {style_strength}
 Style/content reference variant: {style_variant}
 FaceID LoRA strength: {faceid_lora_scale}
@@ -2616,6 +2629,7 @@ Scheduler: {scheduler}"""
                     from style_ip_adapter import set_faceid_lora_scale
                     set_faceid_lora_scale(hires_pipe, faceid_lora_scale)
                 set_style_overlap_additive(hires_pipe, style_multiid_active and bool(style_overlap_additive), retention=style_overlap_retention)
+                set_style_normalize_strengths(hires_pipe, style_multiid_active and bool(style_normalize_strengths))
                 if style_adapter_active:
                     from style_ip_adapter import set_style_scale, set_independent_style_strength, set_style_block_restriction, set_multi_style_enabled
                     set_style_scale(hires_pipe, float(style_strength))
@@ -2745,7 +2759,7 @@ Scheduler: {scheduler}"""
     - Enter a text prompt, as done in normal text-to-image AI tools such as ComfyUI/A1111/ForgeUI etc.
     - Click the Generate button to begin image generation.
     - The "Add more face images" option averages the face embeddings from multiple images into a single identity. Add photos of the same person to improve likeness and consistency, or photos of different people to create a blended identity. The "Additional faces weight" slider controls how strongly the additional faces pull the result compared to the main face image: 1.0 (default) weighs every face equally, lower values keep the result closer to the main face; higher values push it further toward the additional faces; 0.0 makes the additional faces have no effect at all. Keep "Normalize averaged embedding" enabled to preserve the original embedding strength after averaging, or disable it to use the plain average.
-    - The "Multi-ID" option places multiple different people in one image. It needs a reference pose image containing one face per person, positioned where you want each identity to appear. The app draws each person's pose skeleton at their assigned spot instead of using a single shared one. The main face photo claims the leftmost face detected in the pose image, each image you add in the "Additional identities" gallery claims the next face to the right, in the order you add them. Using pose controlnet at strength ~0.30 is recommended. This needs at least 2 valid identity photos to activate. The Per-ID region padding slider controls how far each person's influence is allowed to spread beyond their detected face box in the pose image, higher values blend identities more into shared areas, lower values keep them more separated. It's good to make it higher (0.6 or more) for the "Enable per-ID style" option in the "Add a visual prompt image" area. "Enhance non-face region" has no effect on Multi-ID and that's by design. Expect some trial and error to get clean results and make sure to use a good pose image. First try with just two identities and use controlnet pose if you're struggling to get a good result.
+    - The "Multi-ID" option places multiple different people in one image. It needs a reference pose image containing one face per person, positioned where you want each identity to appear. The app draws each person's pose skeleton at their assigned spot instead of using a single shared one. The main face photo claims the leftmost face detected in the pose image, each image you add in the "Additional identities" gallery claims the next face to the right, in the order you add them. Using pose controlnet at strength ~0.30 is recommended. This needs at least 2 valid identity photos to activate. The Per-ID region padding slider controls how far each person's influence is allowed to spread beyond their detected face box in the pose image, higher values blend identities more into shared areas, lower values keep them more separated. It's good to make it higher (0.6 or more) for the "Enable per-ID style" option in the "Add visual prompt image(s)" area. "Enhance non-face region" has no effect on Multi-ID and that's by design. Expect some trial and error to get clean results and make sure to use a good pose image. First try with just two identities and use controlnet pose if you're struggling to get a good result.
     - img2img mode imports the "pipeline_stable_diffusion_xl_instantid_img2img" (also used by the Hires Fix pass). It is effective at preserving input image details, depending on the denoising strength you set.
     - Upscale and use Enable Hires Fix to generate images with a resolution of what SDXL is best at (usually ~1024-1280 max side) to prevent anatomy errors like long necks while still producing good quality images.
     - Enable i2i Upscaler upscales your input image before the generation pass, using IdentityNet to sharpen and enhance facial detail as it scales. Best for lowres or soft input photos. Recommended settings: LCM Scheduler + DMD2 LoRA, 10–15 steps, ~0.2 img2img denoising strength. You can also use this to upscale an image you've already generated: just feed it back in as the face image, reuse the same seed, prompt and other settings, then bump up the target resolution to make it higher than the input image (no need for Hires Fix).
@@ -3268,7 +3282,7 @@ Scheduler: {scheduler}"""
                 )
                 with gr.Group():
                     style_adapter_enabled = gr.Checkbox(
-                        label="🎨 Add a visual prompt image (style/content reference) using IP-Adapter ViT-H and IP-Adapter-FaceID models",
+                        label="🎨 Add visual prompt image(s) (style/content reference) using IP-Adapter ViT-H and IP-Adapter-FaceID models",
                         value=False,
                     )
                     with gr.Row():
@@ -3364,7 +3378,7 @@ Scheduler: {scheduler}"""
                     style_strength = gr.Slider(
                         label="Global (overall) style strength (scales all style references: main, blended, and per-ID if present)",
                         minimum=0,
-                        maximum=1.5,
+                        maximum=2.0,
                         step=0.05,
                         value=0.8,
                         visible=False,
@@ -3427,6 +3441,17 @@ Scheduler: {scheduler}"""
                         show_label=False,
                         info="How much composition/layout reaches the excluded layers. 0 = fully restricted, higher = closer to the adapter's default",
                         visible=False,
+                    )
+                    style_normalize_strengths = gr.Checkbox(
+                        label="Normalize style strength weights (use strengths as relative weights, applies to per-ID and blended strengths)",
+                        value=True,
+                        visible=False,
+                    )
+                    style_adapter_enabled.change(
+                        fn=lambda enabled: gr.update(visible=bool(enabled)),
+                        inputs=[style_adapter_enabled],
+                        outputs=[style_normalize_strengths],
+                        queue=False,
                     )
                     def toggle_faceid_lora_scale(enabled, variant):
                         return gr.update(visible=bool(enabled) and variant in ("faceid", "faceid_plusv2"))
@@ -4929,6 +4954,7 @@ Scheduler: {scheduler}"""
                 style_blend_image,
                 style_blend_main_strength,
                 style_blend_second_strength,
+                style_normalize_strengths,
             ]
             generate.click(fn=randomize_seed_fn, inputs=[seed, randomize_seed], outputs=seed, queue=False, api_name=False).then(
                 fn=generate_image, inputs=shared_inputs, outputs=[gallery]
@@ -5081,6 +5107,7 @@ Scheduler: {scheduler}"""
                     "style_main_strength": 1.0,
                     "style_blend_main_strength": 1.0,
                     "style_blend_second_strength": 1.0,
+                    "style_normalize_strengths": True,
                     "style_first_strength": 1.0,
                     "style_second_strength": 1.0,
                     "style_third_strength": 1.0,
@@ -5428,6 +5455,8 @@ Scheduler: {scheduler}"""
                                 settings["style_overlap_retention"] = min(1.0, max(0.0, float(line.replace("Style/content reference overlap strength retention (Multi-ID):", "").strip())))
                             except ValueError:
                                 pass
+                        elif line.startswith("Style/content reference normalized strengths:"):
+                            settings["style_normalize_strengths"] = line.replace("Style/content reference normalized strengths:", "").strip().lower() == "true"
                         elif line.startswith("Style/content reference main blend strength:"):
                             try:
                                 settings["style_blend_main_strength"] = min(2.0, max(0.1, float(line.replace("Style/content reference main blend strength:", "").strip())))
@@ -5657,6 +5686,7 @@ Scheduler: {scheduler}"""
                     settings["style_main_strength"],
                     settings["style_blend_main_strength"],
                     settings["style_blend_second_strength"],
+                    settings["style_normalize_strengths"],
                     accordion_update,
                     gr.update(open=open_resolution_accordion),
                     gr.update(open=open_advanced_accordion),
@@ -5775,6 +5805,7 @@ Scheduler: {scheduler}"""
                     style_main_strength,
                     style_blend_main_strength,
                     style_blend_second_strength,
+                    style_normalize_strengths,
                     controlnet_accordion,
                     resolution_settings_accordion,
                     advanced_settings_accordion,
