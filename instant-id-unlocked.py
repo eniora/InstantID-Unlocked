@@ -1351,7 +1351,7 @@ def main(pretrained_model_name_or_path="eniora/Juggernaut_XL_Ragnarok"):
                 print("Unloading style/content reference IP-Adapter to free VRAM...")
                 unload_ip_adapter_style(pipe)
 
-        if enable_style_adapter and style_variant in ("faceid", "faceid_plusv2", "faceid_portrait", "faceid_portrait_unnorm"):
+        if enable_style_adapter and style_variant in ("faceid", "faceid_plusv2"):
             from style_ip_adapter import refresh_faceid_lora_hooks
             refresh_faceid_lora_hooks(pipe)
 
@@ -2847,7 +2847,7 @@ Scheduler: {scheduler}"""
         });
     }
     """
-    with gr.Blocks(title="InstantID Unlocked v9.6.0", js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v9.6.1", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
@@ -3205,7 +3205,7 @@ Scheduler: {scheduler}"""
                                 info="Per-ID region padding (spread of each ID beyond its face box)",
                             )
                             multi_id_separate_identitynet = gr.Checkbox(
-                                label="Process each face separately in IdentityNet (slower)",
+                                label="Process each face separately in IdentityNet",
                                 value=True,
                                 visible=False,
                             )
@@ -4037,7 +4037,7 @@ Scheduler: {scheduler}"""
                         outputs=[],
                         queue=False
                     )
-                with gr.Accordion("✨ Standalone Image Upscaler with GFPGAN (don't use while an image is being generated)", open=False):
+                with gr.Accordion("🆙 Standalone Image Upscaler with GFPGAN (don't use while an image is being generated)", open=False):
                     with gr.Row():
                         standalone_upscale_input = gr.Image(
                             label="Image to Upscale",
@@ -5846,7 +5846,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID Unlocked v9.6.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v9.6.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
