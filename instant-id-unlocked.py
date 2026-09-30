@@ -2543,7 +2543,7 @@ Style/content reference injection budget: {style_injection_budget}
 Style/content reference style-only layers: {bool(style_restrict_to_style_layers)}
 Style/content reference bleed-through: {style_restrict_bleed_through}
 Style/content reference multi-ID individual style: {style_multiid_active}
-Style/content reference additive overlap (Multi-ID): {style_multiid_active and bool(style_overlap_additive)}
+Style/content reference additive overlap (Multi-ID): {bool(style_overlap_additive)}
 Style/content reference overlap strength retention (Multi-ID): {style_overlap_retention}
 Style/content reference first image (Multi-ID): {style_first_image_filename}
 Style/content reference second image (Multi-ID): {style_second_image_filename}
@@ -2847,7 +2847,7 @@ Scheduler: {scheduler}"""
         });
     }
     """
-    with gr.Blocks(title="InstantID Unlocked v9.6.1", js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v9.6.2", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
@@ -4002,7 +4002,7 @@ Scheduler: {scheduler}"""
                 with gr.Row():
                     enhance_face_region = gr.Checkbox(label="Enhance non-face region", scale=2, value=True)
                     enhance_strength = gr.Dropdown(
-                        label="Non-Face Region Mask Size",
+                        label="Non-Face Region Mask Size. This feature is ignored for Multi-ID.",
                         choices=["Default", "Balanced", "High", "Custom"],
                         value="Balanced",
                         scale=4,
@@ -4391,7 +4391,7 @@ Scheduler: {scheduler}"""
                             max_lines=17
                         )
                     with gr.Row():
-                        apply_metadata_btn = gr.Button("Apply to all fields (resets all fields if no generation metadata)", elem_classes="apply-fields-custom")
+                        apply_metadata_btn = gr.Button("Apply to all fields", elem_classes="apply-fields-custom")
                     apply_lcm_profile_btn = gr.Button(
                         "⚡ Apply DMD2 LCM profile (LCMScheduler, CFG 1, 10 steps, and dmd2 sdxl lora in the first empty slot)",
                         size="sm",
@@ -5846,7 +5846,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID Unlocked v9.6.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v9.6.2</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
