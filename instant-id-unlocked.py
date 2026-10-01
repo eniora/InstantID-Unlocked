@@ -3019,10 +3019,10 @@ Scheduler: {scheduler}"""
         font-size: 11px !important;
     }
     #style_template_gallery:not(.fullscreen) {
-        max-height: 440px !important;
+        max-height: 445px !important;
     }
     #style_template_gallery:not(.fullscreen) .grid-wrap {
-        max-height: 440px !important;
+        max-height: 445px !important;
         overflow-y: auto !important;
         box-sizing: border-box !important;
         position: static !important;
@@ -3414,6 +3414,56 @@ Scheduler: {scheduler}"""
                         label="🎨 Add visual prompt image(s) (style/content reference) using IP-Adapter ViT-H and IP-Adapter-FaceID models",
                         value=False,
                     )
+                    STYLE_REFERENCES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "style_references")
+                    STYLE_REFERENCE_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif", ".tif", ".tiff", ".avif", ".jxl")
+                    def scan_style_references():
+                        if not os.path.isdir(STYLE_REFERENCES_DIR):
+                            return []
+                        names = [
+                            f for f in os.listdir(STYLE_REFERENCES_DIR)
+                            if f.lower().endswith(STYLE_REFERENCE_EXTS)
+                            and os.path.isfile(os.path.join(STYLE_REFERENCES_DIR, f))
+                        ]
+                        return [os.path.join(STYLE_REFERENCES_DIR, f) for f in sorted(names, key=str.lower)]
+
+                    with gr.Accordion("🖼️ Style image templates (drag & drop into any style slot, or click one to use as the main style/content reference)", open=False, visible=False) as style_template_accordion:
+                        style_template_gallery = gr.Gallery(
+                            value=scan_style_references,
+                            label="Images found in the style_references folder",
+                            columns=4,
+                            height=445,
+                            object_fit="contain",
+                            allow_preview=False,
+                            interactive=False,
+                            show_label=False,
+                            elem_id="style_template_gallery",
+                        )
+                        style_template_paths = gr.State(scan_style_references())
+                        style_template_refresh_btn = gr.Button("🔄 Rescan style_references folder", size="sm")
+                    def refresh_style_templates():
+                        paths = scan_style_references()
+                        return gr.update(value=paths), paths
+
+                    style_template_refresh_btn.click(
+                        fn=refresh_style_templates,
+                        inputs=None,
+                        outputs=[style_template_gallery, style_template_paths],
+                        queue=False,
+                    )
+                    style_adapter_enabled.change(
+                        fn=lambda enabled: (
+                            (gr.update(visible=True, value=scan_style_references()), scan_style_references())
+                            if enabled else (gr.update(visible=False), [])
+                        ),
+                        inputs=[style_adapter_enabled],
+                        outputs=[style_template_accordion, style_template_paths],
+                        queue=False,
+                    ).then(
+                        fn=lambda paths: gr.update(value=paths),
+                        inputs=[style_template_paths],
+                        outputs=[style_template_gallery],
+                        queue=False,
+                    )
                     with gr.Row():
                         with gr.Column():
                             style_image = gr.Image(label="Style/content reference image (main)", height=250, type="filepath", visible=False, elem_id="style_main_ref_slot", elem_classes=["style-ref-drop"])
@@ -3595,58 +3645,6 @@ Scheduler: {scheduler}"""
                         fn=lambda enabled: gr.update(visible=bool(enabled)),
                         inputs=[style_adapter_enabled],
                         outputs=[style_normalize_strengths],
-                        queue=False,
-                    )
-                    STYLE_REFERENCES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "style_references")
-                    STYLE_REFERENCE_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif", ".tif", ".tiff", ".avif", ".jxl")
-
-                    def scan_style_references():
-                        if not os.path.isdir(STYLE_REFERENCES_DIR):
-                            return []
-                        names = [
-                            f for f in os.listdir(STYLE_REFERENCES_DIR)
-                            if f.lower().endswith(STYLE_REFERENCE_EXTS)
-                            and os.path.isfile(os.path.join(STYLE_REFERENCES_DIR, f))
-                        ]
-                        return [os.path.join(STYLE_REFERENCES_DIR, f) for f in sorted(names, key=str.lower)]
-
-                    with gr.Accordion("🖼️ Style image templates (drag & drop into any style slot, or click one to use as the main style/content reference)", open=False, visible=False) as style_template_accordion:
-                        style_template_gallery = gr.Gallery(
-                            value=scan_style_references,
-                            label="Images found in the style_references folder",
-                            columns=4,
-                            height=440,
-                            object_fit="contain",
-                            allow_preview=False,
-                            interactive=False,
-                            show_label=False,
-                            elem_id="style_template_gallery",
-                        )
-                        style_template_paths = gr.State(scan_style_references())
-                        style_template_refresh_btn = gr.Button("🔄 Rescan style_references folder", size="sm")
-
-                    def refresh_style_templates():
-                        paths = scan_style_references()
-                        return gr.update(value=paths), paths
-
-                    style_template_refresh_btn.click(
-                        fn=refresh_style_templates,
-                        inputs=None,
-                        outputs=[style_template_gallery, style_template_paths],
-                        queue=False,
-                    )
-                    style_adapter_enabled.change(
-                        fn=lambda enabled: (
-                            (gr.update(visible=True, value=scan_style_references()), scan_style_references())
-                            if enabled else (gr.update(visible=False), [])
-                        ),
-                        inputs=[style_adapter_enabled],
-                        outputs=[style_template_accordion, style_template_paths],
-                        queue=False,
-                    ).then(
-                        fn=lambda paths: gr.update(value=paths),
-                        inputs=[style_template_paths],
-                        outputs=[style_template_gallery],
                         queue=False,
                     )
                     def toggle_faceid_lora_scale(enabled, variant):
