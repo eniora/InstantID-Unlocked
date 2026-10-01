@@ -3424,8 +3424,8 @@ Scheduler: {scheduler}"""
                             if f.lower().endswith(STYLE_REFERENCE_EXTS)
                             and os.path.isfile(os.path.join(STYLE_REFERENCES_DIR, f))
                         ]
-                        return [os.path.join(STYLE_REFERENCES_DIR, f) for f in sorted(names, key=str.lower)]
-
+                        natural_key = lambda name: [int(t) if i % 2 else t.lower() for i, t in enumerate(re.split(r"(\d+)", name))]
+                        return [os.path.join(STYLE_REFERENCES_DIR, f) for f in sorted(names, key=natural_key)]
                     with gr.Accordion("🖼️ Style image templates (drag & drop into any style slot, or click one to use as the main style/content reference)", open=False, visible=False) as style_template_accordion:
                         style_template_gallery = gr.Gallery(
                             value=scan_style_references,
