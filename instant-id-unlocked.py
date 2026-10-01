@@ -2776,6 +2776,9 @@ Scheduler: {scheduler}"""
     - If you find that the style or generated images are not good enough, try another model.
     - If you're having trouble detecting faces, try changing the "Face Detection Size" setting or try another input photo.
     """
+    _style_refs_static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "style_references")
+    if os.path.isdir(_style_refs_static_dir):
+        gr.set_static_paths(paths=[_style_refs_static_dir])
     ctrl_enter_js = """
     () => {
         document.addEventListener("keydown", (e) => {
@@ -2845,9 +2848,118 @@ Scheduler: {scheduler}"""
             target.selectionEnd = newSelEnd;
             target.dispatchEvent(new Event("input", { bubbles: true }));
         });
+        (() => {
+            const SRC_TYPE = "application/x-style-template";
+            const TARGET_SEL = ".style-ref-drop";
+
+            const markDraggable = () => {
+                document.querySelectorAll("#style_template_gallery img, #style_template_gallery .thumbnail-item").forEach((el) => {
+                    if (el.getAttribute("draggable") !== "true") el.setAttribute("draggable", "true");
+                });
+            };
+            markDraggable();
+            new MutationObserver(markDraggable).observe(document.body, { childList: true, subtree: true });
+            document.addEventListener("dragstart", (e) => {
+                const t = e.target;
+                if (!t || !t.closest || !t.closest("#style_template_gallery")) return;
+                const img = t.tagName === "IMG" ? t : t.querySelector("img");
+                if (!img || !img.src) return;
+                e.dataTransfer.setData(SRC_TYPE, img.src);
+                e.dataTransfer.effectAllowed = "copy";
+            }, true);
+            const hasTemplate = (e) => !!(e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], SRC_TYPE) !== -1);
+            const findTarget = (e) => (e.target && e.target.closest ? e.target.closest(TARGET_SEL) : null);
+
+            let hovered = null;
+            const setHover = (el) => {
+                if (hovered === el) return;
+                if (hovered) hovered.classList.remove("style-drop-hover");
+                hovered = el;
+                if (el) el.classList.add("style-drop-hover");
+            };
+
+            document.addEventListener("dragover", (e) => {
+                if (!hasTemplate(e)) return;
+                const t = findTarget(e);
+                setHover(t);
+                if (t) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.dataTransfer.dropEffect = "copy";
+                }
+            }, true);
+            document.addEventListener("dragend", () => setHover(null), true);
+
+            const waitFor = (fn, ms) => new Promise((resolve) => {
+                const start = Date.now();
+                const tick = () => {
+                    const v = fn();
+                    if (v) return resolve(v);
+                    if (Date.now() - start > ms) return resolve(null);
+                    setTimeout(tick, 50);
+                };
+                tick();
+            });
+            const findInput = (block) => block.querySelector('input[type="file"]');
+            const putFile = async (block, file) => {
+                let input = findInput(block);
+                if (!input) {
+                    const clearBtn = Array.from(block.querySelectorAll("button[aria-label]")).find(
+                        (b) => (b.getAttribute("aria-label") || "").toLowerCase().indexOf("clear") !== -1
+                    );
+                    if (!clearBtn) return;
+                    clearBtn.click();
+                    input = await waitFor(() => findInput(block), 1500);
+                    if (!input) return;
+                }
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                input.files = dt.files;
+                input.dispatchEvent(new Event("change", { bubbles: true }));
+            };
+            document.addEventListener("drop", async (e) => {
+                if (!hasTemplate(e)) return;
+                const target = findTarget(e);
+                setHover(null);
+                if (!target) return;
+                e.preventDefault();
+                e.stopPropagation();
+                const url = e.dataTransfer.getData(SRC_TYPE);
+                if (!url) return;
+                try {
+                    const resp = await fetch(url);
+                    const blob = await resp.blob();
+                    let name = decodeURIComponent(url.split("?")[0].split("/").pop() || "style_template.png");
+                    if (name.lastIndexOf(".") === -1) name += ".png";
+                    const file = new File([blob], name, { type: blob.type || "image/png" });
+                    await putFile(target, file);
+                } catch (err) {
+                    console.error("Style template drop failed:", err);
+                }
+            }, true);
+            document.addEventListener("click", async (e) => {
+                const t = e.target;
+                if (!t || !t.closest) return;
+                const item = t.closest("#style_template_gallery .thumbnail-item");
+                if (!item) return;
+                const img = item.querySelector("img");
+                const slot = document.querySelector("#style_main_ref_slot");
+                if (!img || !img.src || !slot) return;
+                try {
+                    const resp = await fetch(img.src);
+                    const blob = await resp.blob();
+                    let name = decodeURIComponent(img.src.split("?")[0].split("/").pop() || "style_template.png");
+                    if (name.lastIndexOf(".") === -1) name += ".png";
+                    const file = new File([blob], name, { type: blob.type || "image/png" });
+                    await putFile(slot, file);
+                } catch (err) {
+                    console.error("Style template click failed:", err);
+                }
+            }, true);
+        })();
     }
     """
-    with gr.Blocks(title="InstantID Unlocked v9.6.2", js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v9.6.3", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
@@ -2905,6 +3017,23 @@ Scheduler: {scheduler}"""
     #multi_id_gallery .grid-wrap > .icon-button-wrapper.top-panel::after {
         content: "Clear all";
         font-size: 11px !important;
+    }
+    #style_template_gallery:not(.fullscreen) {
+        max-height: 440px !important;
+    }
+    #style_template_gallery:not(.fullscreen) .grid-wrap {
+        max-height: 440px !important;
+        overflow-y: auto !important;
+        box-sizing: border-box !important;
+        position: static !important;
+    }
+    #style_template_gallery img, #style_template_gallery .thumbnail-item {
+        cursor: grab;
+        -webkit-user-drag: element;
+    }
+    .style-ref-drop.style-drop-hover {
+        outline: 2px dashed #f97316 !important;
+        outline-offset: -2px;
     }
     .apply-fields-custom {
         background: #1d4ed8 !important;
@@ -3287,14 +3416,14 @@ Scheduler: {scheduler}"""
                     )
                     with gr.Row():
                         with gr.Column():
-                            style_image = gr.Image(label="Style/content reference image (main)", height=250, type="filepath", visible=False)
+                            style_image = gr.Image(label="Style/content reference image (main)", height=250, type="filepath", visible=False, elem_id="style_main_ref_slot", elem_classes=["style-ref-drop"])
                             style_blend_main_strength = gr.Slider(
                                 label="Main reference blend strength",
                                 minimum=0.1, maximum=2.0, step=0.05, value=1.0,
                                 visible=False,
                             )
                         with gr.Column():
-                            style_blend_image = gr.Image(label="Optional, second style image (blends with main)", height=250, type="filepath", visible=False)
+                            style_blend_image = gr.Image(label="Optional, second style image (blends with main)", height=250, type="filepath", visible=False, elem_classes=["style-ref-drop"])
                             style_blend_second_strength = gr.Slider(
                                 label="Second reference blend strength",
                                 minimum=0.1, maximum=2.0, step=0.05, value=1.0,
@@ -3362,9 +3491,9 @@ Scheduler: {scheduler}"""
                         interactive=False,
                     )
                     with gr.Row():
-                        style_first_image = gr.Image(label="First ID style/ref", height=180, type="filepath", visible=False)
-                        style_second_image = gr.Image(label="Second ID style/ref", height=180, type="filepath", visible=False)
-                        style_third_image = gr.Image(label="Third ID style/ref (optional, needs 3rd ID)", height=180, type="filepath", visible=False)
+                        style_first_image = gr.Image(label="First ID style/ref", height=180, type="filepath", visible=False, elem_classes=["style-ref-drop"])
+                        style_second_image = gr.Image(label="Second ID style/ref", height=180, type="filepath", visible=False, elem_classes=["style-ref-drop"])
+                        style_third_image = gr.Image(label="Third ID style/ref (optional, needs 3rd ID)", height=180, type="filepath", visible=False, elem_classes=["style-ref-drop"])
                     with gr.Row():
                         style_first_strength = gr.Slider(
                             label="1st ID style strength",
@@ -3466,6 +3595,58 @@ Scheduler: {scheduler}"""
                         fn=lambda enabled: gr.update(visible=bool(enabled)),
                         inputs=[style_adapter_enabled],
                         outputs=[style_normalize_strengths],
+                        queue=False,
+                    )
+                    STYLE_REFERENCES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "style_references")
+                    STYLE_REFERENCE_EXTS = (".png", ".jpg", ".jpeg", ".webp", ".bmp", ".gif", ".tif", ".tiff", ".avif", ".jxl")
+
+                    def scan_style_references():
+                        if not os.path.isdir(STYLE_REFERENCES_DIR):
+                            return []
+                        names = [
+                            f for f in os.listdir(STYLE_REFERENCES_DIR)
+                            if f.lower().endswith(STYLE_REFERENCE_EXTS)
+                            and os.path.isfile(os.path.join(STYLE_REFERENCES_DIR, f))
+                        ]
+                        return [os.path.join(STYLE_REFERENCES_DIR, f) for f in sorted(names, key=str.lower)]
+
+                    with gr.Accordion("🖼️ Style image templates (drag & drop into any style slot, or click one to use as the main style/content reference)", open=False, visible=False) as style_template_accordion:
+                        style_template_gallery = gr.Gallery(
+                            value=scan_style_references,
+                            label="Images found in the style_references folder",
+                            columns=4,
+                            height=440,
+                            object_fit="contain",
+                            allow_preview=False,
+                            interactive=False,
+                            show_label=False,
+                            elem_id="style_template_gallery",
+                        )
+                        style_template_paths = gr.State(scan_style_references())
+                        style_template_refresh_btn = gr.Button("🔄 Rescan style_references folder", size="sm")
+
+                    def refresh_style_templates():
+                        paths = scan_style_references()
+                        return gr.update(value=paths), paths
+
+                    style_template_refresh_btn.click(
+                        fn=refresh_style_templates,
+                        inputs=None,
+                        outputs=[style_template_gallery, style_template_paths],
+                        queue=False,
+                    )
+                    style_adapter_enabled.change(
+                        fn=lambda enabled: (
+                            (gr.update(visible=True, value=scan_style_references()), scan_style_references())
+                            if enabled else (gr.update(visible=False), [])
+                        ),
+                        inputs=[style_adapter_enabled],
+                        outputs=[style_template_accordion, style_template_paths],
+                        queue=False,
+                    ).then(
+                        fn=lambda paths: gr.update(value=paths),
+                        inputs=[style_template_paths],
+                        outputs=[style_template_gallery],
                         queue=False,
                     )
                     def toggle_faceid_lora_scale(enabled, variant):
@@ -5846,7 +6027,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID Unlocked v9.6.2</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v9.6.3</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
