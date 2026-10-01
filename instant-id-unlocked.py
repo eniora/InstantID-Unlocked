@@ -3019,10 +3019,10 @@ Scheduler: {scheduler}"""
         font-size: 11px !important;
     }
     #style_template_gallery:not(.fullscreen) {
-        max-height: 445px !important;
+        max-height: 225px !important;
     }
     #style_template_gallery:not(.fullscreen) .grid-wrap {
-        max-height: 445px !important;
+        max-height: 225px !important;
         overflow-y: auto !important;
         box-sizing: border-box !important;
         position: static !important;
@@ -3430,8 +3430,8 @@ Scheduler: {scheduler}"""
                         style_template_gallery = gr.Gallery(
                             value=scan_style_references,
                             label="Images found in the style_references folder",
-                            columns=4,
-                            height=445,
+                            columns=8,
+                            height=225,
                             object_fit="contain",
                             allow_preview=False,
                             interactive=False,
