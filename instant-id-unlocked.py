@@ -3043,6 +3043,12 @@ Scheduler: {scheduler}"""
     #gen_gallery.fullscreen .exit-fs-btn:hover {
         background: rgba(0, 0, 0, 0.9);
     }
+    #gen_gallery.fullscreen button[aria-label="Close"] {
+        display: none;
+    }
+    #gen_gallery.fullscreen .icon-button-wrapper {
+        margin-right: 15px;
+    }
     #gen_gallery .icon-wrap,
     #gen_gallery .wrap svg {
         display: none !important;
@@ -4432,7 +4438,7 @@ Scheduler: {scheduler}"""
                         outputs=[standalone_upscale_output, standalone_upscale_status]
                     )
             with gr.Column(scale=1):
-                gallery = gr.Gallery(label="Generation preview", height=400, object_fit="contain", elem_id="gen_gallery")
+                gallery = gr.Gallery(label="Output gallery", height=400, object_fit="contain", elem_id="gen_gallery")
                 with gr.Row():
                     generate_alt = gr.Button("Generate (Extra Right Side Button)", variant="primary")
                     stop_btn_alt = gr.Button("⏹", scale=0, min_width=60, variant="stop")
