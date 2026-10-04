@@ -2957,9 +2957,42 @@ Scheduler: {scheduler}"""
                 }
             }, true);
         })();
+        (() => {
+            document.addEventListener("click", (e) => {
+                const t = e.target;
+                if (!t || !t.closest) return;
+                const gal = t.closest("#gen_gallery");
+                if (!gal || gal.classList.contains("fullscreen")) return;
+                if (!t.closest(".thumbnail-item.thumbnail-lg")) return;
+                const start = Date.now();
+                const tick = () => {
+                    const btn = gal.querySelector('button[aria-label="Fullscreen"]');
+                    if (btn) { btn.click(); return; }
+                    if (Date.now() - start < 1500) setTimeout(tick, 30);
+                };
+                tick();
+            });
+        })();
+        (() => {
+            document.addEventListener("click", (e) => {
+                const t = e.target;
+                if (!t || !t.closest) return;
+                const gal = t.closest("#gen_gallery");
+                if (!gal || gal.querySelector(":scope > .exit-fs-btn")) return;
+                const b = document.createElement("button");
+                b.type = "button";
+                b.className = "exit-fs-btn";
+                b.textContent = "Exit fullscreen";
+                b.addEventListener("click", (ev) => {
+                    ev.stopPropagation();
+                    (gal.querySelector(".preview") || gal).dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", code: "Escape", bubbles: true, cancelable: true }));
+                });
+                gal.appendChild(b);
+            }, true);
+        })();
     }
     """
-    with gr.Blocks(title="InstantID Unlocked v9.6.3", js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v9.7.0", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
@@ -2970,6 +3003,45 @@ Scheduler: {scheduler}"""
     }
     #gen_gallery:not(.fullscreen) .grid-container > * {
         height: 384px !important;
+    }
+    #gen_gallery:fullscreen::after,
+    #gen_gallery.fullscreen::after {
+        content: "Press Esc to exit fullscreen or click 'Exit fullscreen'.";
+        position: absolute;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        padding: 6px 14px;
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.7);
+        color: #fff;
+        font-size: 16px;
+        pointer-events: none;
+        animation: esc-hint-fade 0.4s ease 2s forwards;
+    }
+    @keyframes esc-hint-fade {
+        to { opacity: 0; }
+    }
+    #gen_gallery .exit-fs-btn {
+        display: none;
+    }
+    #gen_gallery.fullscreen .exit-fs-btn {
+        display: block;
+        position: absolute;
+        top: 56px;
+        right: 12px;
+        z-index: 1000;
+        padding: 6px 14px;
+        border: 1px solid var(--border-color-primary);
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.7);
+        color: #fff;
+        font-size: 14px;
+        cursor: pointer;
+    }
+    #gen_gallery.fullscreen .exit-fs-btn:hover {
+        background: rgba(0, 0, 0, 0.9);
     }
     #gen_gallery .icon-wrap,
     #gen_gallery .wrap svg {
@@ -4570,7 +4642,7 @@ Scheduler: {scheduler}"""
                             max_lines=17
                         )
                     with gr.Row():
-                        apply_metadata_btn = gr.Button("Apply to all fields", elem_classes="apply-fields-custom")
+                        apply_metadata_btn = gr.Button("Apply generation metadata to all fields", elem_classes="apply-fields-custom")
                     apply_lcm_profile_btn = gr.Button(
                         "⚡ Apply DMD2 LCM profile (LCMScheduler, CFG 1, 10 steps, and dmd2 sdxl lora in the first empty slot)",
                         size="sm",
@@ -6025,7 +6097,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID Unlocked v9.6.3</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v9.7.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
