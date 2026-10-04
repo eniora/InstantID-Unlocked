@@ -3029,8 +3029,8 @@ Scheduler: {scheduler}"""
     #gen_gallery.fullscreen .exit-fs-btn {
         display: block;
         position: absolute;
-        top: 56px;
-        right: 12px;
+        top: 30px;
+        right: 22px;
         z-index: 1000;
         padding: 6px 14px;
         border: 1px solid var(--border-color-primary);
