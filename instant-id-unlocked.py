@@ -2992,7 +2992,7 @@ Scheduler: {scheduler}"""
         })();
     }
     """
-    with gr.Blocks(title="InstantID Unlocked v9.7.0", js=ctrl_enter_js, css="""
+    with gr.Blocks(title="InstantID Unlocked v9.7.1", js=ctrl_enter_js, css="""
     #gen_gallery:not(.fullscreen) {
         max-height: 400px !important;
     }
@@ -3329,7 +3329,8 @@ Scheduler: {scheduler}"""
                             pose_file = gr.Image(
                                 label="Reference pose image (optional for single identity)",
                                 height=400,
-                                type="filepath"
+                                type="filepath",
+                                elem_classes=["style-ref-drop"]
                             )
                             def update_img_resolution(img_path, default_label):
                                 if img_path:
@@ -3508,7 +3509,7 @@ Scheduler: {scheduler}"""
                         style_template_gallery = gr.Gallery(
                             value=scan_style_references,
                             label="Images found in the style_references folder",
-                            columns=8,
+                            columns=5,
                             height=225,
                             object_fit="contain",
                             allow_preview=False,
@@ -3517,10 +3518,22 @@ Scheduler: {scheduler}"""
                             elem_id="style_template_gallery",
                         )
                         style_template_paths = gr.State(scan_style_references())
-                        style_template_refresh_btn = gr.Button("🔄 Rescan style_references folder", size="sm")
+                        with gr.Row():
+                            style_template_refresh_btn = gr.Button("🔄 Rescan style_references folder", size="sm", scale=2)
+                            style_template_open_btn = gr.Button("📁 Open style_references folder", size="sm", scale=1)
+                    def open_style_references_folder():
+                        os.makedirs(STYLE_REFERENCES_DIR, exist_ok=True)
+                        if sys.platform == "win32":
+                            os.system(f'start "" "{STYLE_REFERENCES_DIR}"')
+                        elif sys.platform == "darwin":
+                            subprocess.Popen(["open", STYLE_REFERENCES_DIR])
+                        else:
+                            subprocess.Popen(["xdg-open", STYLE_REFERENCES_DIR])
                     def refresh_style_templates():
                         paths = scan_style_references()
                         return gr.update(value=paths), paths
+
+                    style_template_open_btn.click(fn=open_style_references_folder, inputs=None, outputs=None, queue=False)
 
                     style_template_refresh_btn.click(
                         fn=refresh_style_templates,
@@ -6103,7 +6116,7 @@ Scheduler: {scheduler}"""
 
         with gr.Accordion("📝 Click to show/hide usage tips", open=False):
             gr.Markdown(article)
-        gr.Markdown("<b>InstantID Unlocked v9.7.0</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
+        gr.Markdown("<b>InstantID Unlocked v9.7.1</b> - <a href='https://github.com/eniora/InstantID-Unlocked' target='_blank'><b>Github fork page for InstantID Unlocked</b></a><br>")
 
         with gr.Row():
             with gr.Column():
